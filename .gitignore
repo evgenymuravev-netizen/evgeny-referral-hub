@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Intermediate build artefacts
+*.xlsx
+*.b64
+__pycache__/
+*.pyc
+
+# Skill-local runtime
+sent_log.jsonl
+drafts/
+assets/
