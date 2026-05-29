@@ -3,947 +3,545 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Outreach for Evgeny — Andrey's mission</title>
+<title>Refer Evgeny — Outreach Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg-0: #0a0e1a;
-    --bg-1: #121829;
-    --bg-2: #1a2238;
-    --bg-3: #232c46;
-    --line: rgba(255,255,255,0.08);
-    --line-strong: rgba(255,255,255,0.16);
-    --text-0: #f5f7ff;
-    --text-1: #c8d0e7;
-    --text-2: #8a93b0;
-    --text-3: #5c6582;
-    --accent: #7c5cff;
-    --accent-2: #43e7c4;
-    --accent-3: #ffb86c;
-    --accent-4: #ff7eb6;
-    --accent-5: #4eb5e6;
-    --danger: #ff5d6c;
-    --success: #43e7c4;
-    --warning: #ffc857;
-    --radius: 16px;
-    --radius-sm: 10px;
-    --radius-xs: 6px;
+    --bg-0: #0a0e1a; --bg-1: #121829; --bg-2: #1a2238; --bg-3: #232c46;
+    --line: rgba(255,255,255,0.08); --line-strong: rgba(255,255,255,0.16);
+    --text-0: #f5f7ff; --text-1: #c8d0e7; --text-2: #8a93b0; --text-3: #5c6582;
+    --accent: #7c5cff; --accent-2: #43e7c4; --accent-3: #ffb86c; --accent-4: #ff7eb6; --accent-5: #4eb5e6;
+    --danger: #ff5d6c; --success: #43e7c4; --warning: #ffc857;
+    --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
     --shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
     --shadow-lift: 0 8px 24px -8px rgba(124,92,255,0.4);
-
-    /* Per-block accent palette */
-    --block-recruiters: #ffb86c;
-    --block-banks: #4eb5e6;
-    --block-companies: #7c5cff;
-    --block-telegram_ecosystem: #43e7c4;
+    --block-recruiters: #ffb86c; --block-banks: #4eb5e6; --block-companies: #7c5cff; --block-telegram_ecosystem: #43e7c4;
   }
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    background: var(--bg-0); color: var(--text-0);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-  body {
-    background:
+  html, body { margin:0; padding:0; background:var(--bg-0); color:var(--text-0);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  body { background:
       radial-gradient(circle at 10% 5%, rgba(124,92,255,0.16), transparent 40%),
       radial-gradient(circle at 90% 95%, rgba(67,231,196,0.10), transparent 45%),
       radial-gradient(circle at 50% 50%, rgba(255,184,108,0.04), transparent 60%),
-      var(--bg-0);
-    min-height: 100vh;
-  }
-  .container { max-width: 1280px; margin: 0 auto; padding: 36px 28px 80px; }
+      var(--bg-0); min-height:100vh; }
+  .container { max-width:1280px; margin:0 auto; padding:36px 28px 80px; }
 
-  /* ─── Hero ─── */
-  .hero {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 40px;
-    align-items: end;
-    padding: 44px 44px 36px;
-    background: linear-gradient(135deg, rgba(124,92,255,0.10) 0%, rgba(67,231,196,0.04) 60%, transparent 100%);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+  /* ─── Welcome / Setup ─── */
+  .welcome {
+    text-align: center;
+    padding: 50px 32px 40px;
+    background: linear-gradient(135deg, rgba(124,92,255,0.12), rgba(67,231,196,0.05));
+    border: 1px solid var(--line); border-radius: var(--radius);
     margin-bottom: 28px;
-    position: relative;
-    overflow: hidden;
   }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -50%; right: -10%;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(124,92,255,0.15) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero-content { position: relative; z-index: 1; min-width: 0; }
-  .eyebrow {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px;
-    background: rgba(67,231,196,0.10);
-    border: 1px solid rgba(67,231,196,0.30);
-    color: var(--accent-2);
-    border-radius: 100px;
-    font-size: 11px; font-weight: 600;
-    letter-spacing: 0.8px; text-transform: uppercase;
-    margin-bottom: 16px;
-  }
-  .eyebrow::before {
-    content: ''; width: 6px; height: 6px;
-    background: var(--accent-2);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(1.5); }
-  }
-  h1 {
-    font-size: clamp(32px, 4.5vw, 48px);
-    font-weight: 800;
-    margin: 0 0 14px;
+  .welcome h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 800; margin: 0 0 12px;
     background: linear-gradient(135deg, #fff 0%, #c8d0e7 70%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     letter-spacing: -0.02em;
-    line-height: 1.1;
   }
-  .hero-tagline {
-    font-size: 17px;
-    color: var(--text-1);
-    margin: 0 0 4px;
-    max-width: 700px;
+  .welcome p {
+    color: var(--text-1); font-size: 16px;
+    margin: 0 auto 24px; max-width: 580px;
   }
-  .hero-pitch {
-    font-size: 14px;
-    color: var(--text-2);
-    margin: 14px 0 0;
-    padding: 14px 18px;
-    background: rgba(0,0,0,0.25);
-    border-left: 3px solid var(--accent-2);
-    border-radius: var(--radius-xs);
-    font-style: italic;
-    max-width: 700px;
+  .setup-form {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    max-width: 580px; margin: 24px auto 0;
   }
-
-  /* ─── Stats ring ─── */
-  .stats {
-    position: relative; z-index: 1;
-    display: grid;
-    grid-template-columns: repeat(3, auto);
-    gap: 28px;
-    text-align: center;
+  @media (max-width: 600px) { .setup-form { grid-template-columns: 1fr; } }
+  .input {
+    background: var(--bg-2); border: 1px solid var(--line-strong);
+    color: var(--text-0); padding: 14px 18px; border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 14px; outline: none;
+    transition: border-color 0.15s ease;
   }
-  .stat-block { white-space: nowrap; }
-  .stat-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 36px; font-weight: 700;
-    background: linear-gradient(135deg, var(--accent-2), var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1;
-  }
-  .stat-label {
-    font-size: 11px;
-    color: var(--text-2);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-top: 6px;
-    font-weight: 600;
-  }
-
-  /* ─── Progress ─── */
-  .progress-wrap {
-    margin: 22px 0 0;
-    position: relative; z-index: 1;
-  }
-  .progress-track {
-    height: 10px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 100px;
-    overflow: hidden;
-    position: relative;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
-    border-radius: 100px;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative; overflow: hidden;
-  }
-  .progress-fill::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    animation: shimmer 2s infinite;
-  }
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-  .progress-labels {
-    display: flex; justify-content: space-between;
-    margin-top: 8px;
-    font-size: 12px;
-    color: var(--text-2);
-  }
-  .progress-labels strong {
-    color: var(--text-0);
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600;
-  }
-
-  /* ─── Filter bar ─── */
-  .filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 26px;
-    padding: 14px;
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: 100px;
-    align-items: center;
-    position: sticky;
-    top: 12px;
-    z-index: 50;
-    backdrop-filter: blur(12px);
-    background: rgba(18,24,41,0.85);
-  }
-  .filter-label {
-    font-size: 12px;
-    color: var(--text-2);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    padding-left: 14px;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    border-radius: 100px;
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--text-1);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .pill:hover { background: rgba(255,255,255,0.05); color: var(--text-0); }
-  .pill.active {
-    background: rgba(124,92,255,0.15);
-    border-color: var(--accent);
-    color: var(--text-0);
-  }
-  .pill-count {
-    font-size: 11px;
-    background: rgba(255,255,255,0.08);
-    padding: 1px 8px;
-    border-radius: 100px;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600;
-  }
-  .pill.active .pill-count { background: rgba(255,255,255,0.15); }
-  .filter-sep {
-    width: 1px; height: 24px;
-    background: var(--line);
-    margin: 0 4px;
-  }
-
-  /* ─── Grid ─── */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
-    gap: 18px;
-  }
-  .empty-state {
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--text-2);
-    grid-column: 1 / -1;
-  }
-  .empty-state-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.4;
-  }
-
-  /* ─── Card ─── */
-  .card {
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-  }
-  .card:hover {
-    border-color: var(--line-strong);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lift);
-  }
-  .card.is-sent { opacity: 0.65; }
-  .card.is-sent:hover { opacity: 1; }
-  .card-stripe {
-    height: 4px;
-    background: var(--block-color, var(--accent));
-    width: 100%;
-  }
-  .card-head {
-    padding: 22px 24px 18px;
-    border-bottom: 1px solid var(--line);
-  }
-  .card-meta-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    font-size: 11px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    font-weight: 600;
-  }
-  .card-prio {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.04);
-    padding: 4px 10px;
-    border-radius: 100px;
-    font-family: 'JetBrains Mono', monospace;
-  }
-  .card-prio strong { color: var(--block-color, var(--accent)); }
-  .card-name {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-0);
-    margin: 0 0 5px;
-    letter-spacing: -0.01em;
-  }
-  .card-name-needs-input {
-    color: var(--warning);
-  }
-  .card-name-needs-input::after {
-    content: ' (needs identification)';
-    font-size: 13px;
-    color: var(--text-3);
-    font-weight: 400;
-  }
-  .card-role {
-    font-size: 13px;
-    color: var(--text-2);
-    margin: 0;
-  }
-  .card-role strong {
-    color: var(--text-1);
-    font-weight: 600;
-  }
-
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 12px;
-  }
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 100px;
-    background: rgba(255,255,255,0.05);
-    color: var(--text-1);
-    border: 1px solid var(--line);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-  .chip-ask {
-    background: rgba(124,92,255,0.12);
-    border-color: rgba(124,92,255,0.3);
-    color: #b09cff;
-  }
-  .chip-relocate {
-    background: rgba(67,231,196,0.12);
-    border-color: rgba(67,231,196,0.3);
-    color: var(--accent-2);
-  }
-  .chip-jobs {
-    background: rgba(255,184,108,0.12);
-    border-color: rgba(255,184,108,0.3);
-    color: var(--accent-3);
-  }
-  .chip-salary {
-    background: rgba(255,200,87,0.10);
-    border-color: rgba(255,200,87,0.3);
-    color: var(--warning);
-  }
-  .chip-personal {
-    background: rgba(255,126,182,0.10);
-    border-color: rgba(255,126,182,0.3);
-    color: var(--accent-4);
-  }
-  .chip-1st { background: rgba(67,231,196,0.10); color: var(--accent-2); border-color: rgba(67,231,196,0.3); }
-  .chip-2nd { background: rgba(255,255,255,0.04); color: var(--text-2); }
-
-  /* ─── Message ─── */
-  .message-wrap {
-    padding: 16px 24px;
-    flex: 1;
-  }
-  .message-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 11px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    font-weight: 600;
-  }
-  .chars {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text-2);
-  }
-  .chars-over { color: var(--danger); }
-  .message {
-    background: rgba(0,0,0,0.28);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-    line-height: 1.65;
-    color: var(--text-1);
-    white-space: pre-wrap;
-    max-height: 240px;
-    overflow-y: auto;
-    margin: 0;
-  }
-  .message::-webkit-scrollbar { width: 6px; }
-  .message::-webkit-scrollbar-track { background: transparent; }
-  .message::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
-
-  /* ─── Job URLs ─── */
-  .job-urls {
-    margin: 14px 24px 0;
-    padding: 12px 14px;
-    background: rgba(255,184,108,0.06);
-    border: 1px solid rgba(255,184,108,0.2);
-    border-radius: var(--radius-sm);
-  }
-  .job-urls-label {
-    font-size: 11px;
-    color: var(--accent-3);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .job-url {
-    display: block;
-    color: var(--text-1);
-    font-size: 12px;
-    text-decoration: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    margin-bottom: 4px;
-    background: rgba(0,0,0,0.2);
-    border: 1px solid var(--line);
-    font-family: 'JetBrains Mono', monospace;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    transition: all 0.15s ease;
-  }
-  .job-url:hover {
-    background: rgba(255,184,108,0.08);
-    border-color: rgba(255,184,108,0.3);
-    color: var(--text-0);
-  }
-  .job-url::before { content: '→ '; color: var(--accent-3); }
-
-  /* ─── Notes ─── */
-  .notes {
-    margin: 14px 24px 0;
-    padding: 10px 14px;
-    background: rgba(124,92,255,0.06);
-    border-left: 2px solid rgba(124,92,255,0.4);
-    border-radius: var(--radius-xs);
-    font-size: 12px;
-    color: var(--text-2);
-    line-height: 1.5;
-  }
-  .notes-label {
-    color: var(--accent);
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-right: 6px;
-  }
-
-  /* ─── Actions ─── */
-  .actions {
-    padding: 16px 24px 22px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
+  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--text-3); }
+  .setup-cta {
+    margin-top: 12px; grid-column: 1 / -1;
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
   }
   .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 16px;
-    border-radius: var(--radius-sm);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--line-strong);
-    background: rgba(255,255,255,0.04);
-    color: var(--text-0);
-    text-decoration: none;
-    transition: all 0.15s ease;
-    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 20px; border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--line-strong);
+    background: rgba(255,255,255,0.04); color: var(--text-0);
+    text-decoration: none; transition: all 0.15s ease; white-space: nowrap;
   }
   .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.08); }
   .btn-primary {
     background: linear-gradient(135deg, var(--accent), #5b3eff);
     border-color: transparent;
-    box-shadow: 0 4px 14px -4px rgba(124,92,255,0.6);
+    box-shadow: 0 4px 18px -4px rgba(124,92,255,0.6);
   }
   .btn-primary:hover { background: linear-gradient(135deg, #8a6bff, #6b4eff); }
-  .btn-success {
-    background: rgba(67,231,196,0.18);
-    border-color: rgba(67,231,196,0.4);
-    color: var(--accent-2);
-  }
-  .btn svg { width: 14px; height: 14px; }
-  .btn.is-copied {
-    background: var(--accent-2);
-    color: var(--bg-0);
-    border-color: var(--accent-2);
-  }
+  .btn-success { background: rgba(67,231,196,0.16); border-color: rgba(67,231,196,0.4); color: var(--accent-2); }
+  .btn svg { width: 16px; height: 16px; }
 
-  .status-select {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    color: var(--text-1);
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    font-family: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    margin-left: auto;
-  }
-  .status-select:focus { outline: none; border-color: var(--accent); }
-
-  /* ─── Block divider ─── */
-  .block-divider {
-    grid-column: 1 / -1;
-    display: flex;
+  /* ─── Hero (active) ─── */
+  .hero {
+    display: grid; grid-template-columns: 1fr auto; gap: 32px;
     align-items: center;
-    gap: 14px;
-    padding: 14px 6px 4px;
-    margin-top: 8px;
+    padding: 36px 40px;
+    background: linear-gradient(135deg, rgba(124,92,255,0.10) 0%, rgba(67,231,196,0.04) 60%, transparent 100%);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    margin-bottom: 24px; position: relative; overflow: hidden;
+  }
+  .hero-content { position: relative; z-index: 1; min-width: 0; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; background: rgba(67,231,196,0.10);
+    border: 1px solid rgba(67,231,196,0.30); color: var(--accent-2);
+    border-radius: 100px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: ''; width: 6px; height: 6px; background: var(--accent-2);
+    border-radius: 50%; animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.5); }
+  }
+  .hero h1 {
+    font-size: clamp(26px, 3.8vw, 38px); font-weight: 800; margin: 0 0 10px;
+    background: linear-gradient(135deg, #fff 0%, #c8d0e7 70%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em; line-height: 1.15;
+  }
+  .hero-sub { color: var(--text-1); margin: 0 0 4px; font-size: 15px; }
+  .hero-pitch {
+    margin-top: 16px; padding: 12px 16px;
+    background: rgba(0,0,0,0.25); border-left: 3px solid var(--accent-2);
+    border-radius: var(--radius-xs); color: var(--text-2);
+    font-size: 13px; font-style: italic; max-width: 700px;
+  }
+  .hero-pitch strong { color: var(--text-0); font-style: normal; }
+  .stats {
+    display: grid; grid-template-columns: repeat(3, auto); gap: 26px; text-align: center;
+  }
+  .stat-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px; color: var(--text-2); text-transform: uppercase;
+    letter-spacing: 0.8px; margin-top: 5px; font-weight: 600;
+  }
+  .hero-actions {
+    margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;
+  }
+
+  /* ─── Progress ─── */
+  .progress-wrap { grid-column: 1 / -1; margin-top: 18px; }
+  .progress-track { height: 10px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
+    border-radius: 100px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    position: relative; overflow: hidden;
+  }
+  .progress-fill::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .progress-labels {
+    display: flex; justify-content: space-between; margin-top: 8px;
+    font-size: 12px; color: var(--text-2);
+  }
+  .progress-labels strong { color: var(--text-0); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+  /* ─── CSV upload ─── */
+  .upload-card {
+    background: var(--bg-1); border: 2px dashed var(--line-strong);
+    border-radius: var(--radius); padding: 26px 30px; margin-bottom: 24px;
+    transition: all 0.2s ease;
+  }
+  .upload-card.dragging { border-color: var(--accent-2); background: rgba(67,231,196,0.05); }
+  .upload-card h3 {
+    margin: 0 0 8px; font-size: 16px; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .upload-card h3 svg { width: 18px; height: 18px; color: var(--accent); }
+  .upload-card p { margin: 0 0 14px; color: var(--text-2); font-size: 13px; line-height: 1.6; }
+  .upload-card details { margin-top: 12px; }
+  .upload-card summary { cursor: pointer; color: var(--accent-2); font-size: 12px; font-weight: 600; user-select: none; }
+  .upload-card ol { margin: 10px 0 0; padding-left: 22px; font-size: 12px; color: var(--text-2); line-height: 1.7; }
+  .upload-card ol a { color: var(--accent-5); }
+  .upload-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  /* ─── Filters / LinkedIn search ─── */
+  .li-search {
+    display: flex; gap: 10px; align-items: center;
+    padding: 14px 18px; background: var(--bg-1);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    margin-bottom: 22px;
+  }
+  .li-search-icon { color: #4eb5e6; flex-shrink: 0; }
+  .li-search-icon svg { width: 22px; height: 22px; }
+  .li-search-input {
+    flex: 1; background: transparent; border: none; color: var(--text-0);
+    font-family: inherit; font-size: 14px; outline: none; padding: 6px 0;
+  }
+  .li-search-input::placeholder { color: var(--text-3); }
+  .li-search-help { font-size: 11px; color: var(--text-3); margin-right: 4px; }
+
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px;
+    padding: 12px 14px;
+    background: rgba(18,24,41,0.85); backdrop-filter: blur(12px);
+    border: 1px solid var(--line); border-radius: 100px;
+    align-items: center; position: sticky; top: 12px; z-index: 50;
+  }
+  .filter-label {
+    font-size: 11px; color: var(--text-2); text-transform: uppercase;
+    letter-spacing: 0.7px; padding-left: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 16px; border-radius: 100px;
+    background: transparent; border: 1px solid var(--line);
+    color: var(--text-1); font-family: inherit; font-size: 13px;
+    font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+  }
+  .pill:hover { background: rgba(255,255,255,0.05); color: var(--text-0); }
+  .pill.active { background: rgba(124,92,255,0.15); border-color: var(--accent); color: var(--text-0); }
+  .pill-count {
+    font-size: 11px; background: rgba(255,255,255,0.08);
+    padding: 1px 7px; border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  }
+  .pill.active .pill-count { background: rgba(255,255,255,0.15); }
+  .filter-sep { width: 1px; height: 22px; background: var(--line); margin: 0 3px; }
+  .seq-bar {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 9px 18px 9px 14px;
+    background: linear-gradient(135deg, var(--accent), #5b3eff);
+    color: white; border: none; border-radius: 100px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 6px 18px -6px rgba(124,92,255,0.7);
+    margin-left: auto; transition: transform 0.15s ease;
+  }
+  .seq-bar:hover { transform: translateY(-1px); }
+  .seq-bar svg { width: 16px; height: 16px; }
+
+  /* ─── Grid ─── */
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+    gap: 18px;
+  }
+  .empty-state {
+    text-align: center; padding: 80px 20px;
+    color: var(--text-2); grid-column: 1 / -1;
+  }
+  .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+
+  .block-divider {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 14px;
+    padding: 14px 6px 4px; margin-top: 8px;
   }
   .block-divider:first-child { margin-top: 0; }
-  .block-divider-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, var(--block-color, var(--accent)), transparent);
-    opacity: 0.4;
-  }
   .block-divider-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-0);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    font-size: 13px; font-weight: 700; color: var(--text-0);
+    text-transform: uppercase; letter-spacing: 1px;
+    display: flex; align-items: center; gap: 10px;
   }
   .block-divider-title::before {
-    content: '';
-    width: 10px; height: 10px;
+    content: ''; width: 10px; height: 10px;
     background: var(--block-color, var(--accent));
     border-radius: 50%;
     box-shadow: 0 0 12px var(--block-color, var(--accent));
   }
   .block-divider-count {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--text-3);
-    background: var(--bg-2);
-    padding: 2px 10px;
-    border-radius: 100px;
-    border: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text-3); background: var(--bg-2);
+    padding: 2px 10px; border-radius: 100px; border: 1px solid var(--line);
+  }
+  .block-divider-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--block-color, var(--accent)), transparent);
+    opacity: 0.4;
   }
 
-  /* ─── Toast ─── */
-  .toast {
-    position: fixed;
-    bottom: 30px; right: 30px;
-    background: var(--bg-1);
-    border: 1px solid var(--accent-2);
-    color: var(--text-0);
-    padding: 14px 20px;
+  /* ─── Card ─── */
+  .card {
+    background: var(--bg-1); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+    transition: all 0.2s ease; display: flex; flex-direction: column;
+  }
+  .card:hover { border-color: var(--line-strong); transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+  .card.is-sent { opacity: 0.65; }
+  .card.is-sent:hover { opacity: 1; }
+  .card-stripe { height: 4px; background: var(--block-color, var(--accent)); }
+  .card-head { padding: 20px 22px 16px; border-bottom: 1px solid var(--line); }
+  .card-meta-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; font-size: 11px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600;
+  }
+  .card-prio {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.04); padding: 4px 10px;
+    border-radius: 100px; font-family: 'JetBrains Mono', monospace;
+  }
+  .card-prio strong { color: var(--block-color, var(--accent)); }
+  .card-name {
+    font-size: 21px; font-weight: 700; color: var(--text-0);
+    margin: 0 0 4px; letter-spacing: -0.01em;
+  }
+  .card-name-needs-input { color: var(--warning); }
+  .card-role { font-size: 13px; color: var(--text-2); margin: 0; }
+  .card-role strong { color: var(--text-1); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 4px 10px;
+    border-radius: 100px; background: rgba(255,255,255,0.05);
+    color: var(--text-1); border: 1px solid var(--line);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .chip-ask { background: rgba(124,92,255,0.12); border-color: rgba(124,92,255,0.3); color: #b09cff; }
+  .chip-relocate { background: rgba(67,231,196,0.12); border-color: rgba(67,231,196,0.3); color: var(--accent-2); }
+  .chip-jobs { background: rgba(255,184,108,0.12); border-color: rgba(255,184,108,0.3); color: var(--accent-3); }
+  .chip-salary { background: rgba(255,200,87,0.10); border-color: rgba(255,200,87,0.3); color: var(--warning); }
+  .chip-personal { background: rgba(255,126,182,0.10); border-color: rgba(255,126,182,0.3); color: var(--accent-4); }
+  .chip-matched { background: rgba(67,231,196,0.15); border-color: rgba(67,231,196,0.35); color: var(--accent-2); }
+
+  /* ─── Message + roles ─── */
+  .message-wrap { padding: 14px 22px; flex: 1; }
+  .message-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px; font-size: 11px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600;
+  }
+  .chars { font-family: 'JetBrains Mono', monospace; color: var(--text-2); }
+  .chars-over { color: var(--danger); }
+  .message {
+    background: rgba(0,0,0,0.28); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 13px 15px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+    line-height: 1.65; color: var(--text-1); white-space: pre-wrap;
+    max-height: 220px; overflow-y: auto; margin: 0;
+  }
+  .message::-webkit-scrollbar { width: 6px; }
+  .message::-webkit-scrollbar-track { background: transparent; }
+  .message::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+  .job-urls {
+    margin: 12px 22px 0; padding: 11px 13px;
+    background: rgba(255,184,108,0.06);
+    border: 1px solid rgba(255,184,108,0.2);
     border-radius: var(--radius-sm);
-    box-shadow: var(--shadow);
-    display: flex; align-items: center; gap: 10px;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
-    z-index: 1000;
-    font-size: 14px; font-weight: 500;
   }
-  .toast.show { transform: translateX(0); }
-  .toast::before {
-    content: '✓';
-    width: 22px; height: 22px;
-    background: var(--accent-2);
-    color: var(--bg-0);
-    border-radius: 50%;
-    display: grid; place-items: center;
-    font-weight: 700; font-size: 13px;
+  .job-urls-label {
+    font-size: 11px; color: var(--accent-3); text-transform: uppercase;
+    letter-spacing: 0.6px; font-weight: 700; margin-bottom: 6px;
   }
-
-  /* ─── Footer ─── */
-  .footer {
-    margin-top: 60px;
-    padding: 32px;
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+  .job-url {
+    display: block; color: var(--text-1); font-size: 12px;
+    text-decoration: none; padding: 5px 9px; border-radius: 6px;
+    margin-bottom: 3px; background: rgba(0,0,0,0.2);
+    border: 1px solid var(--line); font-family: 'JetBrains Mono', monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    transition: all 0.15s ease;
   }
-  .footer h3 {
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 14px;
-    color: var(--text-0);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .job-url:hover { background: rgba(255,184,108,0.08); border-color: rgba(255,184,108,0.3); color: var(--text-0); }
+  .job-url::before { content: '→ '; color: var(--accent-3); }
+  .notes {
+    margin: 12px 22px 0; padding: 9px 13px;
+    background: rgba(124,92,255,0.06);
+    border-left: 2px solid rgba(124,92,255,0.4);
+    border-radius: var(--radius-xs);
+    font-size: 12px; color: var(--text-2); line-height: 1.5;
   }
-  .footer h3::before {
-    content: '⚠';
-    color: var(--warning);
+  .notes-label {
+    color: var(--accent); font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.6px; margin-right: 6px;
   }
-  .footer ol {
-    margin: 0; padding-left: 22px;
-    color: var(--text-2);
-    font-size: 13px;
-    line-height: 1.7;
-  }
-  .footer ol li { margin-bottom: 4px; }
-  .pitch-box {
-    margin-top: 22px;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, rgba(67,231,196,0.08), rgba(124,92,255,0.04));
-    border: 1px solid rgba(67,231,196,0.25);
-    border-radius: var(--radius-sm);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    color: var(--text-0);
-    line-height: 1.6;
-  }
-  .pitch-box-label {
-    font-size: 11px;
-    color: var(--accent-2);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-weight: 700;
-    font-family: 'Inter', sans-serif;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  /* ─── Confetti ─── */
-  .confetti {
-    position: fixed; pointer-events: none;
-    inset: 0; z-index: 999;
-    overflow: hidden; display: none;
-  }
-  .confetti.show { display: block; }
-  .confetti-piece {
-    position: absolute;
-    width: 10px; height: 10px;
-    background: var(--accent);
-    top: -10px;
-    animation: fall 3s linear forwards;
-  }
-  @keyframes fall {
-    to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-  }
-
-  /* ─── LinkedIn search box ─── */
-  .li-search {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    padding: 16px 20px;
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    margin-bottom: 24px;
-  }
-  .li-search-icon {
-    color: #4eb5e6;
-    flex-shrink: 0;
-  }
-  .li-search-icon svg { width: 22px; height: 22px; }
-  .li-search-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--text-0);
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    padding: 6px 0;
-  }
-  .li-search-input::placeholder { color: var(--text-3); }
-  .li-search-help {
-    font-size: 11px;
-    color: var(--text-3);
-    margin-right: 4px;
-    white-space: nowrap;
-  }
-
-  /* ─── Add LinkedIn URL inline ─── */
   .add-url {
-    margin: 0 24px 14px;
-    padding: 10px 12px;
+    margin: 0 22px 12px; padding: 9px 11px;
     background: rgba(255,200,87,0.06);
     border: 1px dashed rgba(255,200,87,0.3);
     border-radius: var(--radius-xs);
-    display: flex;
-    gap: 8px;
-    align-items: center;
+    display: flex; gap: 8px; align-items: center;
   }
   .add-url-input {
-    flex: 1;
-    background: rgba(0,0,0,0.25);
-    border: 1px solid var(--line);
-    color: var(--text-0);
-    padding: 7px 10px;
-    border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    outline: none;
+    flex: 1; background: rgba(0,0,0,0.25);
+    border: 1px solid var(--line); color: var(--text-0);
+    padding: 6px 9px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
   }
   .add-url-input:focus { border-color: var(--warning); }
   .add-url-btn {
     background: rgba(255,200,87,0.18);
     border: 1px solid rgba(255,200,87,0.4);
-    color: var(--warning);
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
+    color: var(--warning); padding: 5px 11px; border-radius: 6px;
+    cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
   }
-
-  /* ─── Open roles section ─── */
   .open-roles {
-    margin: 14px 24px 0;
-    border-radius: var(--radius-sm);
+    margin: 12px 22px 0; border-radius: var(--radius-sm);
     border: 1px solid rgba(67,231,196,0.25);
-    background: rgba(67,231,196,0.04);
-    overflow: hidden;
+    background: rgba(67,231,196,0.04); overflow: hidden;
   }
   .open-roles-head {
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    user-select: none;
+    padding: 9px 13px; display: flex; align-items: center;
+    justify-content: space-between; cursor: pointer; user-select: none;
     transition: background 0.15s ease;
   }
   .open-roles-head:hover { background: rgba(67,231,196,0.08); }
   .open-roles-title {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--accent-2);
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 12px; font-weight: 700; color: var(--accent-2);
+    text-transform: uppercase; letter-spacing: 0.7px;
+    display: flex; align-items: center; gap: 8px;
   }
-  .open-roles-toggle {
-    transition: transform 0.2s ease;
-    color: var(--accent-2);
-  }
-  .open-roles.open .open-roles-toggle { transform: rotate(180deg); }
+  .open-roles-toggle { transition: transform 0.2s ease; color: var(--accent-2); }
   .open-roles-toggle svg { width: 14px; height: 14px; }
-  .open-roles-body {
-    display: none;
-    padding: 0 14px 14px;
-  }
+  .open-roles.open .open-roles-toggle { transform: rotate(180deg); }
+  .open-roles-body { display: none; padding: 0 13px 13px; }
   .open-roles.open .open-roles-body { display: block; }
   .role-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px;
-    background: rgba(0,0,0,0.2);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    margin-bottom: 8px;
+    display: flex; flex-direction: column; gap: 5px;
+    padding: 11px; background: rgba(0,0,0,0.2);
+    border: 1px solid var(--line); border-radius: 8px;
+    margin-bottom: 6px;
   }
-  .role-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-0);
-    margin: 0;
-  }
-  .role-meta {
-    font-size: 11px;
-    color: var(--text-2);
-  }
+  .role-title { font-size: 13px; font-weight: 600; color: var(--text-0); margin: 0; }
+  .role-meta { font-size: 11px; color: var(--text-2); }
   .role-meta strong { color: var(--text-1); }
   .role-actions {
-    display: flex;
-    gap: 6px;
-    margin-top: 6px;
-    flex-wrap: wrap;
+    display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
   }
-  .role-actions .btn {
-    padding: 6px 10px;
-    font-size: 11px;
-  }
+  .role-actions .btn { padding: 6px 10px; font-size: 11px; }
   .role-actions .btn svg { width: 12px; height: 12px; }
   .careers-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: var(--accent-2);
-    text-decoration: none;
-    margin-top: 6px;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--accent-2);
+    text-decoration: none; margin-top: 6px;
   }
   .careers-link:hover { text-decoration: underline; }
-
-  /* ─── Sequence Mode (guided) ─── */
-  .seq-bar {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 18px 9px 14px;
-    background: linear-gradient(135deg, var(--accent), #5b3eff);
-    color: white;
-    border: none;
-    border-radius: 100px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 6px 18px -6px rgba(124,92,255,0.7);
-    margin-left: auto;
-    transition: transform 0.15s ease;
+  .actions {
+    padding: 15px 22px 20px; display: flex; gap: 7px;
+    flex-wrap: wrap; align-items: center;
   }
-  .seq-bar:hover { transform: translateY(-1px); }
-  .seq-bar svg { width: 16px; height: 16px; }
+  .copy-btn { width: 38px; padding: 9px 0; justify-content: center; }
+  .status-select {
+    background: var(--bg-2); border: 1px solid var(--line);
+    color: var(--text-1); padding: 8px 12px;
+    border-radius: var(--radius-sm); font-family: inherit;
+    font-size: 12px; cursor: pointer; margin-left: auto;
+  }
+  .status-select:focus { outline: none; border-color: var(--accent); }
+  .btn.is-copied { background: var(--accent-2); color: var(--bg-0); border-color: var(--accent-2); }
 
+  /* ─── Toast / confetti / seq panel ─── */
+  .toast {
+    position: fixed; bottom: 30px; right: 30px;
+    background: var(--bg-1); border: 1px solid var(--accent-2);
+    color: var(--text-0); padding: 14px 20px;
+    border-radius: var(--radius-sm); box-shadow: var(--shadow);
+    display: flex; align-items: center; gap: 10px;
+    transform: translateX(400px); transition: transform 0.3s ease;
+    z-index: 1000; font-size: 14px; font-weight: 500;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast::before {
+    content: '✓'; width: 22px; height: 22px;
+    background: var(--accent-2); color: var(--bg-0);
+    border-radius: 50%; display: grid; place-items: center;
+    font-weight: 700; font-size: 13px;
+  }
+  .confetti { position: fixed; pointer-events: none; inset: 0; z-index: 999; overflow: hidden; display: none; }
+  .confetti.show { display: block; }
+  .confetti-piece {
+    position: absolute; width: 10px; height: 10px;
+    background: var(--accent); top: -10px;
+    animation: fall 3s linear forwards;
+  }
+  @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
   .seq-panel {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
+    position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(200%);
     width: min(720px, calc(100vw - 48px));
-    background: var(--bg-1);
-    border: 1px solid var(--accent);
+    background: var(--bg-1); border: 1px solid var(--accent);
     border-radius: var(--radius);
     box-shadow: 0 20px 60px -10px rgba(0,0,0,0.7);
-    z-index: 200;
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    z-index: 200; transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
     overflow: hidden;
   }
   .seq-panel.show { transform: translateX(-50%) translateY(0); }
-  .seq-progress {
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    overflow: hidden;
-  }
+  .seq-progress { height: 4px; background: rgba(255,255,255,0.06); overflow: hidden; }
   .seq-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2));
     transition: width 0.3s ease;
   }
   .seq-body {
     padding: 22px 26px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 20px;
-    align-items: center;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 20px; align-items: center;
   }
-  .seq-info { min-width: 0; }
   .seq-eyebrow {
-    font-size: 11px;
-    color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-weight: 700;
-    margin-bottom: 4px;
+    font-size: 11px; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;
   }
   .seq-eyebrow strong { color: var(--accent-2); font-family: 'JetBrains Mono', monospace; }
-  .seq-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-0);
-    margin: 0 0 2px;
-  }
-  .seq-meta {
-    font-size: 13px;
-    color: var(--text-2);
-    margin: 0 0 8px;
-  }
+  .seq-name { font-size: 18px; font-weight: 700; color: var(--text-0); margin: 0 0 2px; }
+  .seq-meta { font-size: 13px; color: var(--text-2); margin: 0 0 8px; }
   .seq-hint {
-    font-size: 12px;
-    color: var(--text-2);
+    font-size: 12px; color: var(--text-2);
     background: rgba(67,231,196,0.08);
     border: 1px solid rgba(67,231,196,0.25);
     border-radius: var(--radius-xs);
-    padding: 8px 12px;
-    margin-top: 8px;
-    line-height: 1.4;
+    padding: 8px 12px; margin-top: 8px; line-height: 1.4;
   }
   .seq-hint kbd {
-    background: var(--bg-3);
-    border: 1px solid var(--line-strong);
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    background: var(--bg-3); border: 1px solid var(--line-strong);
+    padding: 1px 6px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
   }
-  .seq-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex-shrink: 0;
+  .seq-actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+  .seq-actions .btn { width: 200px; justify-content: center; }
+
+  /* ─── Footer ─── */
+  .footer {
+    margin-top: 50px; padding: 28px;
+    background: var(--bg-1); border: 1px solid var(--line);
+    border-radius: var(--radius);
   }
-  .seq-actions .btn {
-    width: 200px;
-    justify-content: center;
+  .footer h3 {
+    font-size: 14px; font-weight: 600; margin: 0 0 12px;
+    color: var(--text-0); display: flex; align-items: center; gap: 8px;
   }
+  .footer h3::before { content: '⚠'; color: var(--warning); }
+  .footer ol {
+    margin: 0; padding-left: 22px; color: var(--text-2);
+    font-size: 13px; line-height: 1.7;
+  }
+  .footer ol li { margin-bottom: 4px; }
+  .pitch-box {
+    margin-top: 20px; padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(67,231,196,0.08), rgba(124,92,255,0.04));
+    border: 1px solid rgba(67,231,196,0.25);
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    color: var(--text-0); line-height: 1.6;
+  }
+  .pitch-box-label {
+    font-size: 11px; color: var(--accent-2); text-transform: uppercase;
+    letter-spacing: 0.8px; font-weight: 700;
+    font-family: 'Inter', sans-serif; margin-bottom: 8px; display: block;
+  }
+  .footer .meta {
+    margin-top: 16px; font-size: 11px; color: var(--text-3);
+    text-align: center; font-family: 'JetBrains Mono', monospace;
+  }
+  .footer .meta a { color: var(--accent-5); text-decoration: none; }
 
   @media (max-width: 720px) {
     .hero { grid-template-columns: 1fr; }
@@ -957,44 +555,81 @@
 <body>
 <div class="container">
 
-  <!-- HERO -->
-  <header class="hero">
+  <!-- WELCOME (only when no referrer set) -->
+  <section class="welcome" id="welcome" style="display:none;">
+    <span class="eyebrow">For anyone helping Evgeny</span>
+    <h1>Want to recommend Evgeny?<br/>Let's match you to your network.</h1>
+    <p>This dashboard helps you send personalised referral messages to people in your network at companies Evgeny is exploring. Drop in your LinkedIn connections CSV and we'll match them automatically. Or skip the upload and use the curated list directly.</p>
+    <div class="setup-form">
+      <input class="input" id="setup-name" placeholder="Your name (e.g. Zarik Nabi)" autocomplete="name" />
+      <input class="input" id="setup-linkedin" placeholder="Your LinkedIn URL (optional)" autocomplete="url" />
+      <div class="setup-cta">
+        <button class="btn btn-primary" id="setup-go">Get started →</button>
+        <button class="btn" id="setup-andrey">I'm Andrey, load my plan</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HERO (when referrer is set) -->
+  <section class="hero" id="hero" style="display:none;">
     <div class="hero-content">
-      <span class="eyebrow">Andrey's mission · Refer Evgeny</span>
-      <h1>23 asks. One trusted CPO.<br/>Let's get him introduced.</h1>
-      <p class="hero-tagline">Each card below is one specific outreach Evgeny asked you for — pre-drafted, ready to copy, channel-specific. Update status as you go.</p>
-      <p class="hero-pitch">
-        <strong style="color:var(--text-0);">The line that does the work:</strong><br/>
-        Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.
-      </p>
-    </div>
-    <div class="stats">
-      <div class="stat-block">
-        <div class="stat-num" id="stat-sent">0</div>
-        <div class="stat-label">Sent</div>
-      </div>
-      <div class="stat-block">
-        <div class="stat-num" id="stat-replied">0</div>
-        <div class="stat-label">Replied</div>
-      </div>
-      <div class="stat-block">
-        <div class="stat-num" id="stat-total">23</div>
-        <div class="stat-label">Total asks</div>
+      <span class="eyebrow"><span id="hero-mode">Your outreach</span></span>
+      <h1 id="hero-title">Refer Evgeny — your mission</h1>
+      <p class="hero-sub" id="hero-sub">A guided outreach tool. Pre-drafted messages, channel-aware send buttons, open-roles intel.</p>
+      <p class="hero-pitch"><strong>The line that does the work:</strong><br/>Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.</p>
+      <div class="hero-actions">
+        <button class="btn" id="hero-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit profile</button>
+        <button class="btn" id="hero-reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Reset state</button>
+        <a class="btn" href="https://github.com/evgenymuravev-netizen/evgeny-referral-hub" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.55-1.4-1.34-1.78-1.34-1.78-1.1-.74.08-.73.08-.73 1.2.08 1.83 1.23 1.83 1.23 1.07 1.83 2.8 1.3 3.5 1 .1-.78.41-1.3.74-1.6-2.66-.3-5.47-1.3-5.47-5.93 0-1.3.46-2.38 1.23-3.22-.12-.3-.53-1.53.1-3.2 0 0 1-.3 3.3 1.23a11.5 11.5 0 0 1 6 0c2.3-1.55 3.3-1.23 3.3-1.23.65 1.67.24 2.9.12 3.2.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.42.36.79 1.07.79 2.17v3.22c0 .31.21.69.83.57A12 12 0 0 0 12 .3"/></svg>View source</a>
       </div>
     </div>
-    <div class="progress-wrap" style="grid-column: 1 / -1;">
-      <div class="progress-track">
-        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    <div>
+      <div class="stats">
+        <div class="stat-block">
+          <div class="stat-num" id="stat-sent">0</div>
+          <div class="stat-label">Sent</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num" id="stat-replied">0</div>
+          <div class="stat-label">Replied</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">Total</div>
+        </div>
       </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
       <div class="progress-labels">
         <span><strong id="progress-pct">0%</strong> through the pipeline</span>
         <span><strong id="progress-momentum">0</strong> momentum points</span>
       </div>
     </div>
-  </header>
+  </section>
+
+  <!-- CSV UPLOAD (when referrer is set, not Andrey, no CSV yet) -->
+  <section class="upload-card" id="upload-card" style="display:none;">
+    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Drop your LinkedIn Connections CSV here</h3>
+    <p>We'll match your network against Evgeny's target companies in your browser — nothing leaves this page. You'll see who you know at Wise, Airwallex, FAB, Wio Bank, ADIB, and more, with a pre-drafted referral for each.</p>
+    <div class="upload-actions">
+      <input type="file" id="csv-input" accept=".csv,text/csv" style="display:none;" />
+      <button class="btn btn-primary" id="upload-pick">Choose CSV file</button>
+      <button class="btn" id="upload-skip">Skip — show me the open roles only</button>
+    </div>
+    <details>
+      <summary>How to download your LinkedIn Connections CSV (45 seconds)</summary>
+      <ol>
+        <li>Go to <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">LinkedIn → Settings → Data privacy → Get a copy of your data</a></li>
+        <li>Select <strong>Connections</strong> only, click <strong>Request archive</strong></li>
+        <li>LinkedIn emails you a download link within ~10 min (or instantly for the Connections-only export)</li>
+        <li>Unzip → drop <code>Connections.csv</code> here</li>
+      </ol>
+    </details>
+  </section>
 
   <!-- LINKEDIN LIVE SEARCH -->
-  <div class="li-search">
+  <div class="li-search" id="li-search-wrap" style="display:none;">
     <span class="li-search-icon">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14zM8.34 18v-8.42H5.67V18h2.67zM7 8.4a1.55 1.55 0 1 0 0-3.1 1.55 1.55 0 0 0 0 3.1zM18.34 18v-4.61c0-2.47-1.32-3.62-3.08-3.62a2.66 2.66 0 0 0-2.42 1.33h-.04V9.58h-2.55V18h2.66v-4.16c0-1.1.21-2.16 1.57-2.16 1.34 0 1.36 1.26 1.36 2.23V18h2.5z"/></svg>
     </span>
@@ -1003,14 +638,7 @@
   </div>
 
   <!-- FILTERS -->
-  <div class="filter-bar" id="filter-bar">
-    <span class="filter-label">Block</span>
-    <button class="pill active" data-filter-block="all">All <span class="pill-count" id="count-all">23</span></button>
-    <button class="pill" data-filter-block="recruiters">Recruiters <span class="pill-count" id="count-recruiters">2</span></button>
-    <button class="pill" data-filter-block="banks">Banks <span class="pill-count" id="count-banks">6</span></button>
-    <button class="pill" data-filter-block="companies">Companies <span class="pill-count" id="count-companies">14</span></button>
-    <button class="pill" data-filter-block="telegram_ecosystem">Telegram <span class="pill-count" id="count-telegram_ecosystem">1</span></button>
-    <div class="filter-sep"></div>
+  <div class="filter-bar" id="filter-bar" style="display:none;">
     <span class="filter-label">Status</span>
     <button class="pill active" data-filter-status="all">All</button>
     <button class="pill" data-filter-status="not_started">To do</button>
@@ -1026,14 +654,14 @@
   <div class="grid" id="grid"></div>
 
   <!-- FOOTER -->
-  <div class="footer">
+  <div class="footer" id="footer" style="display:none;">
     <h3>Hard rules — please follow</h3>
     <ol>
-      <li><strong style="color:var(--text-0);">Never paraphrase the product attribution line.</strong> Use it verbatim every time.</li>
-      <li>LinkedIn connection-request notes are HARD CAPPED at 300 characters.</li>
+      <li><strong style="color:var(--text-0);">Never paraphrase the product attribution line.</strong></li>
+      <li>LinkedIn connection-request notes are hard capped at 300 characters.</li>
       <li>Don't open with "Hi NAME, hope you're well at COMPANY" — open directly with the introduction.</li>
-      <li>Always include the job URLs when they're shown on a card. Evgeny specifically pointed at those roles.</li>
-      <li>Always mention relocation when it's chipped on a card — it tells the recipient he's serious.</li>
+      <li>Always include the job URLs when shown — they're there for a reason.</li>
+      <li>Always mention relocation when chipped on a card.</li>
       <li>Max 10 LinkedIn sends per day — LinkedIn rate-limits aggressively.</li>
       <li>Replies are gold — update status to "Replied" the moment one lands.</li>
     </ol>
@@ -1041,13 +669,13 @@
       <span class="pitch-box-label">The canonical product attribution</span>
       Evgeny helped us build our merchant lending and payments product, wallets for business in UAE
     </div>
+    <p class="meta">Hub auto-redeploys via <a href="https://github.com/evgenymuravev-netizen/evgeny-referral-hub" target="_blank" rel="noopener">GitHub Pages</a>. Open roles refreshed daily via a scheduled workflow.</p>
   </div>
 </div>
 
 <div class="toast" id="toast">Copied to clipboard</div>
 <div class="confetti" id="confetti"></div>
 
-<!-- Guided sequence panel -->
 <div class="seq-panel" id="seq-panel">
   <div class="seq-progress"><div class="seq-progress-fill" id="seq-progress-fill" style="width:0%"></div></div>
   <div class="seq-body">
@@ -1055,7 +683,7 @@
       <div class="seq-eyebrow"><strong id="seq-pos">1</strong> of <strong id="seq-total">1</strong> · via <span id="seq-channel">LinkedIn</span></div>
       <h3 class="seq-name" id="seq-name">—</h3>
       <p class="seq-meta" id="seq-meta">—</p>
-      <div class="seq-hint" id="seq-hint">Message copied to clipboard. Tab opened. Paste with <kbd>⌘V</kbd> and review before hitting Send.</div>
+      <div class="seq-hint" id="seq-hint">Message copied. Tab opened. Paste with <kbd>⌘V</kbd> and review before hitting Send.</div>
     </div>
     <div class="seq-actions">
       <button class="btn btn-success" id="seq-sent">✓ Sent — next</button>
@@ -1066,33 +694,73 @@
 </div>
 
 <script>
-const ITEMS = [{"id": "out_001", "block": "recruiters", "name": "Veronika Nogovitsyna", "company": null, "role": "Recruiter / network connector", "ask_type": "post_in_chat", "ask_detail": "Post Evgeny's CV in the UAE top managers chat she runs.", "linkedin": "https://www.linkedin.com/in/nogovitsina/", "priority": 1, "channel": "Telegram or WhatsApp", "andrey_notes": "Andrey knows her; she runs a UAE top managers chat where CVs get visibility.", "custom_message": "Veronika, hello. How are you?\nSharing the profile of Evgeny Muravev — he helped us build Tabby's merchant lending and payments product, wallets for business in UAE. Exploring new product roles in payments / lending, Dubai based, open to relocation.\n\nLinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\nhappy to make any intro — DM me directly.\n\n— Andrey", "_message": "Veronika, hello. How are you?\nSharing the profile of Evgeny Muravev — he helped us build Tabby's merchant lending and payments product, wallets for business in UAE. Exploring new product roles in payments / lending, Dubai based, open to relocation.\n\nLinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\nhappy to make any intro — DM me directly.\n\n— Andrey", "_chars": 363, "_limit": 1600}, {"id": "out_002", "block": "recruiters", "name": "Harry Silvester", "company": "Recruitment agency (he's leaving but agency continues)", "role": "Recruiter", "ask_type": "recommend_generally", "ask_detail": "Connect with him — he's leaving the agency but the agency continues to work. Also: any other recruiter who reaches out to Andrey, forward Evgeny.", "linkedin": "https://www.linkedin.com/in/harry-silvester/", "priority": 2, "channel": "LinkedIn", "_message": "Harry — would like to introduce you to Evgeny who is exploring open roles at Recruitment agency (he's leaving but agency continues) in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 417, "_limit": 1900}, {"id": "out_003", "block": "banks", "name": "Dr. Sebastian Walter", "company": "FAB (First Abu Dhabi Bank)", "role": "Chief AI Officer", "ask_type": "ask_about_openings", "ask_detail": "Ask if he has roles in digital transformation. If yes, refer Evgeny to these specific FAB job postings:", "job_urls": ["https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1679", "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1768"], "linkedin": "https://www.linkedin.com/in/dr-sebastian-walter/", "priority": 3, "degree": 2, "message_available": true, "channel": "LinkedIn", "_message": "Dr. Sebastian Walter — hope you're doing well at FAB (First Abu Dhabi Bank). Quick question: are you guys hiring on digital transformation? If yes, I'd like to introduce Evgeny who is exploring open roles at FAB (First Abu Dhabi Bank) in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE — highly recommend.\n\nHe's specifically interested in:\n- https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1679\n- https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1768\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 675, "_limit": 1900}, {"id": "out_004", "block": "banks", "name": "Sergey Terentyev", "company": "INB (launching AI-native bank in UAE)", "role": "ex-CTO of WIO, now at INB", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny. The reference LinkedIn post identifies the person:", "reference_post": "https://www.linkedin.com/feed/update/urn:li:activity:7457262508421111808/", "linkedin": "https://www.linkedin.com/in/sergei-terentev-v/", "priority": 4, "channel": "LinkedIn", "andrey_notes": "Need to identify exact person from the LinkedIn activity post. Likely Serge T. (CTO & Head of Digital Bank at INB per our broader contacts.json).", "_message": "Sergey — would like to introduce you to Evgeny who is exploring open roles at INB (launching AI-native bank in UAE) in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 401, "_limit": 1900}, {"id": "out_005", "block": "banks", "name": "Fernando Plaza", "company": "ADIB", "role": "Group Chief Digital Officer", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny for any relevant product / digital transformation roles.", "linkedin": "https://www.linkedin.com/in/fernando-plaza/", "priority": 5, "degree": 2, "channel": "LinkedIn", "_message": "Fernando — would like to introduce you to Evgeny who is exploring open roles at ADIB in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 262, "_limit": 300}, {"id": "out_006", "block": "banks", "name": "Ricardo Saad", "company": "Mashreq", "role": "Global Head of Digital Propositions (ex-Nubank)", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny.", "linkedin": "https://www.linkedin.com/in/ricardo-saadgr/", "priority": 6, "degree": 2, "channel": "LinkedIn", "_message": "Ricardo — would like to introduce you to Evgeny who is exploring open roles at Mashreq in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 264, "_limit": 300}, {"id": "out_007", "block": "banks", "name": "Oleg Dylevich", "company": "RAKBank", "role": "AVP Digital Transformation", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny.", "linkedin": "https://www.linkedin.com/in/odylevich/", "priority": 7, "degree": 2, "andrey_direct_mutual": true, "channel": "LinkedIn", "_message": "Oleg — would like to introduce you to Evgeny who is exploring open roles at RAKBank in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 261, "_limit": 300}, {"id": "out_008", "block": "banks", "name": "Oliver Hughes", "company": "TBC Bank", "role": "CEO (Uzbekistan)", "ask_type": "recommend_generally", "ask_detail": "Write to him directly. Evgeny is ready to relocate to Uzbekistan and understands salary will not match UAE.", "relocation": "Uzbekistan OK", "salary_note": "Adjusted from UAE expectations", "linkedin": "https://www.linkedin.com/in/oliver-hughes-0b5540247/", "priority": 8, "channel": "LinkedIn", "andrey_notes": "Oliver Hughes is TBC Group CEO (parent). For Uzbekistan-specific reach: Nika Kurdiani is CEO of TBC Uzbekistan — https://www.linkedin.com/in/nikakurdiani/. Andrey should pick which one fits the ask better.", "custom_message": "Oliver — would like to introduce you to Evgeny who is exploring open roles at TBC Bank in product. You have met a couple of times when you were visiting Tabby. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending. Ready to relocate.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_message": "Oliver — would like to introduce you to Evgeny who is exploring open roles at TBC Bank in product. You have met a couple of times when you were visiting Tabby. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending. Ready to relocate.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 452, "_limit": 1900}, {"id": "out_009", "block": "companies", "name": "Dwelly founders", "company": "Dwelly", "role": "Founders", "ask_type": "intro_to_founders", "ask_detail": "Andrey previously offered to intro Evgeny to the founder. Confirm and make the intro. Vlad recommended Dan highly.", "linkedin": "https://www.linkedin.com/in/danlifshits/", "priority": 9, "channel": "LinkedIn", "andrey_notes": "Real estate agency automation with AI — very aligned with Evgeny's interests.", "custom_message": "Hi Dan, would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\nHe has previous experience in automation and optimization of offline businesses in X5.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_message": "Hi Dan, would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\nHe has previous experience in automation and optimization of offline businesses in X5.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 390, "_limit": 1900}, {"id": "out_010", "block": "companies", "name": "Wise friend", "company": "Wise", "role": null, "ask_type": "recommend_for_role", "ask_detail": "Write to Andrey's friend at Wise. Exec search has also reached out. Relocation to London OK. Specifically interested in:", "job_urls": ["https://wise.jobs/job/product-lead-onboarding-experience-in-london-jid-3420", "https://wise.jobs/job/product-director-finance-in-london-jid-2518", "https://wise.jobs/job/product-director-current-account-and-everyday-banking-in-london-jid-1705", "https://wise.jobs/job/senior-principal-product-manager-business-account-experience-in-london-jid-3217"], "relocation": "London OK", "linkedin": null, "priority": 10, "channel": "WhatsApp or LinkedIn", "andrey_notes": "Andrey to identify which friend — Evgeny didn't name him.", "_message": "Wise — would like to introduce you to Evgeny who is exploring open roles at Wise in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n- https://wise.jobs/job/product-lead-onboarding-experience-in-london-jid-3420\n- https://wise.jobs/job/product-director-finance-in-london-jid-2518\n- https://wise.jobs/job/product-director-current-account-and-everyday-banking-in-london-jid-1705\n- https://wise.jobs/job/senior-principal-product-manager-business-account-experience-in-london-jid-3217\n\nHe's ready to relocate (London OK).\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 742, "_limit": 1900}, {"id": "out_011", "block": "companies", "name": "Airwallex hiring contact", "company": "Airwallex", "role": null, "ask_type": "recommend_for_role", "ask_detail": "Only one UAE role currently visible (URL below). Evgeny ready to relocate to Australia, US, or Asia where Airwallex has open product positions.", "job_urls": ["https://jobs.ashbyhq.com/airwallex/4e28592b-90b8-4b4c-adcd-1ec73d31fbc7?utm_source=linkedin"], "relocation": "Australia, US, Asia OK", "linkedin": null, "priority": 11, "channel": "LinkedIn", "andrey_notes": "Evgeny carefully studied the product. Andrey to find appropriate contact at Airwallex.", "_message": "Airwallex — would like to introduce you to Evgeny who is exploring open roles at Airwallex in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n- https://jobs.ashbyhq.com/airwallex/4e28592b-90b8-4b4c-adcd-1ec73d31fbc7?utm_source=linkedin\n\nHe's ready to relocate (Australia, US, Asia OK).\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 512, "_limit": 1900}, {"id": "out_012", "block": "companies", "name": "BCG contact 1", "company": "BCG", "role": "Dubai office", "ask_type": "intro_to_founders", "ask_detail": "Andrey previously mentioned 2 BCG contacts. Intro Evgeny for a conversation: 'should I try the Dubai office now; can my profile be useful?'", "linkedin": null, "priority": 12, "channel": "LinkedIn", "andrey_notes": "Andrey to identify which 2 BCG contacts he had in mind.", "_message": "Hi — would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\n\nAndrey previously mentioned 2 BCG contacts. Intro Evgeny for a conversation: 'should I try the Dubai office now; can my profile be useful?'\n\nAndrey to identify which 2 BCG contacts he had in mind.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 498, "_limit": 1900}, {"id": "out_013", "block": "companies", "name": "BCG contact 2", "company": "BCG", "role": "Dubai office", "ask_type": "intro_to_founders", "ask_detail": "Same as BCG contact 1.", "linkedin": null, "priority": 13, "channel": "LinkedIn", "_message": "Hi — would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\n\nSame as BCG contact 1.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 324, "_limit": 1900}, {"id": "out_014", "block": "companies", "name": "Eugene (Zhenya) Shilnikov", "company": "Fortis", "role": "Group CPO", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny. No visible open positions. Evgeny is also writing to him directly.", "linkedin": "https://www.linkedin.com/in/eugene-shilnikov/", "priority": 14, "degree": 2, "channel": "LinkedIn", "andrey_notes": "Ex-Yandex acquirer. Evgeny doing parallel outreach.", "_message": "Eugene — would like to introduce you to Evgeny who is exploring open roles at Fortis in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 262, "_limit": 300}, {"id": "out_015", "block": "companies", "name": "Michael Calvey", "company": "Plata", "role": "Founder / Chairman", "ask_type": "recommend_generally", "ask_detail": "Write to him in case he reads. No lead positions visible per Evgeny's friend at Plata, but worth the shot.", "linkedin": "https://www.linkedin.com/in/michael-calvey-16887776/", "priority": 15, "channel": "LinkedIn", "_message": "Michael — would like to introduce you to Evgeny who is exploring open roles at Plata in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 370, "_limit": 1900}, {"id": "out_016", "block": "companies", "name": "David Isakhanian", "company": "Plata", "role": "CPO", "ask_type": "send_cv", "ask_detail": "Simply send Evgeny's CV.", "linkedin": "https://www.linkedin.com/in/david-isakhanian/", "priority": 16, "channel": "LinkedIn", "_message": "David — sending you the profile of Evgeny who is exploring new product roles. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE. Would love it if you could keep him in mind for any product roles in payments / lending at Plata.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\n— Andrey", "_chars": 346, "_limit": 1900}, {"id": "out_017", "block": "companies", "name": "Uzum CPO BNPL hiring contact", "company": "Uzum", "role": "Hiring manager for CPO BNPL role", "ask_type": "recommend_for_role", "ask_detail": "Recommend Evgeny for the CPO BNPL role at Uzum.", "linkedin": null, "priority": 17, "channel": "LinkedIn", "andrey_notes": "Andrey to identify the hiring contact.", "_message": "Uzum — would like to introduce you to Evgeny who is exploring open roles at Uzum in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 358, "_limit": 1900}, {"id": "out_018", "block": "companies", "name": "Google hiring contact", "company": "Google", "role": "Product Marketing Manager - Ads", "ask_type": "recommend_for_role", "ask_detail": "Evgeny notes this is a 'side gig' role; happy to try if Andrey thinks the role is a viable entry point.", "job_urls": ["https://www.google.com/about/careers/applications/jobs/results/126285374329627334-product-marketing-manager-ads"], "linkedin": null, "priority": 18, "channel": "LinkedIn", "_message": "Google — would like to introduce you to Evgeny who is exploring open roles at Google in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n- https://www.google.com/about/careers/applications/jobs/results/126285374329627334-product-marketing-manager-ads\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 476, "_limit": 1900}, {"id": "out_019", "block": "companies", "name": "Marc Saade", "company": "Huspy", "role": "VP of Product", "ask_type": "recommend_generally", "ask_detail": "Write so he has Evgeny in mind for future openings. Mortgages currently not doing well, so no immediate hiring.", "linkedin": "https://www.linkedin.com/in/marc-saade-78834678/", "priority": 19, "channel": "LinkedIn", "andrey_notes": "Andrey to identify the VP of Product.", "_message": "Marc — would like to introduce you to Evgeny who is exploring open roles at Huspy in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 367, "_limit": 1900}, {"id": "out_020", "block": "companies", "name": "Andrei Krugliak", "company": "Yango", "role": "CEO Yango Fintech", "ask_type": "intro_to_founders", "ask_detail": "No open positions found in region. Share context about what's happening with business in region; explore.", "linkedin": "https://www.linkedin.com/in/andreikrugliak/", "priority": 20, "channel": "LinkedIn", "andrey_notes": "Andrey has strong Yango network (10 contacts in our database). Andrey to pick best regional contact.", "_message": "Hi — would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\n\nNo open positions found in region. Share context about what's happening with business in region; explore.\n\nAndrey has strong Yango network (10 contacts in our database). Andrey to pick best regional contact.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 509, "_limit": 1900}, {"id": "out_021", "block": "companies", "name": "Karun Kurien", "company": "Alaan", "role": "Co-Founder & CPO", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny.", "linkedin": "https://www.linkedin.com/in/karun-kurien-3020504b/", "priority": 21, "degree": 1, "channel": "LinkedIn", "andrey_notes": "Evgeny notes Andrey is connected (1st degree). Ex-McKinsey.", "_message": "Karun — would like to introduce you to Evgeny who is exploring open roles at Alaan in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 368, "_limit": 1900}, {"id": "out_022", "block": "telegram_ecosystem", "name": "Evgeniya Kazina", "company": "The Open Platform (Telegram ecosystem)", "role": "Head of Product, Payments", "ask_type": "send_cv", "ask_detail": "Send CV. No current positions but worth being on radar.", "linkedin": "https://www.linkedin.com/in/evgeniyakazina/", "priority": 22, "degree": 1, "channel": "LinkedIn", "_message": "Evgeniya — sending you the profile of Evgeny who is exploring new product roles. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE. Would love it if you could keep him in mind for any product roles in payments / lending at The Open Platform (Telegram ecosystem).\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\n— Andrey", "_chars": 382, "_limit": 1900}, {"id": "out_023", "block": "companies", "name": "Sarkis Atanesov", "company": "Noum.AI", "role": "CEO & Founder", "ask_type": "send_cv", "ask_detail": "Send CV. Connected on LinkedIn (1st degree).", "linkedin": "https://www.linkedin.com/in/sarkis-atanesov/", "priority": 23, "degree": 1, "channel": "LinkedIn", "_message": "Sarkis — sending you the profile of Evgeny who is exploring new product roles. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE. Would love it if you could keep him in mind for any product roles in payments / lending at Noum.AI.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\n— Andrey", "_chars": 349, "_limit": 1900}];
+/* ═══════════════════════════════════════════════════════════════════════
+   DATA (embedded at build time)
+═══════════════════════════════════════════════════════════════════════ */
+const ANDREY_ITEMS = [{"id": "out_001", "block": "recruiters", "name": "Veronika Nogovitsyna", "company": null, "role": "Recruiter / network connector", "ask_type": "post_in_chat", "ask_detail": "Post Evgeny's CV in the UAE top managers chat she runs.", "linkedin": "https://www.linkedin.com/in/nogovitsina/", "priority": 1, "channel": "Telegram or WhatsApp", "andrey_notes": "Andrey knows her; she runs a UAE top managers chat where CVs get visibility.", "custom_message": "Veronika, hello. How are you?\nSharing the profile of Evgeny Muravev — he helped us build Tabby's merchant lending and payments product, wallets for business in UAE. Exploring new product roles in payments / lending, Dubai based, open to relocation.\n\nLinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\nhappy to make any intro — DM me directly.\n\n— Andrey", "_message": "Veronika, hello. How are you?\nSharing the profile of Evgeny Muravev — he helped us build Tabby's merchant lending and payments product, wallets for business in UAE. Exploring new product roles in payments / lending, Dubai based, open to relocation.\n\nLinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\nhappy to make any intro — DM me directly.\n\n— Andrey", "_chars": 363, "_limit": 1600}, {"id": "out_002", "block": "recruiters", "name": "Harry Silvester", "company": "Recruitment agency (he's leaving but agency continues)", "role": "Recruiter", "ask_type": "recommend_generally", "ask_detail": "Connect with him — he's leaving the agency but the agency continues to work. Also: any other recruiter who reaches out to Andrey, forward Evgeny.", "linkedin": "https://www.linkedin.com/in/harry-silvester/", "priority": 2, "channel": "LinkedIn", "_message": "Harry — would like to introduce you to Evgeny who is exploring open roles at Recruitment agency (he's leaving but agency continues) in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 417, "_limit": 1900}, {"id": "out_003", "block": "banks", "name": "Dr. Sebastian Walter", "company": "FAB (First Abu Dhabi Bank)", "role": "Chief AI Officer", "ask_type": "ask_about_openings", "ask_detail": "Ask if he has roles in digital transformation. If yes, refer Evgeny to these specific FAB job postings:", "job_urls": ["https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1679", "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1768"], "linkedin": "https://www.linkedin.com/in/dr-sebastian-walter/", "priority": 3, "degree": 2, "message_available": true, "channel": "LinkedIn", "_message": "Dr. Sebastian Walter — hope you're doing well at FAB (First Abu Dhabi Bank). Quick question: are you guys hiring on digital transformation? If yes, I'd like to introduce Evgeny who is exploring open roles at FAB (First Abu Dhabi Bank) in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE — highly recommend.\n\nHe's specifically interested in:\n- https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1679\n- https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1768\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 675, "_limit": 1900}, {"id": "out_004", "block": "banks", "name": "Sergey Terentyev", "company": "INB (launching AI-native bank in UAE)", "role": "ex-CTO of WIO, now at INB", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny. The reference LinkedIn post identifies the person:", "reference_post": "https://www.linkedin.com/feed/update/urn:li:activity:7457262508421111808/", "linkedin": "https://www.linkedin.com/in/sergei-terentev-v/", "priority": 4, "channel": "LinkedIn", "andrey_notes": "Need to identify exact person from the LinkedIn activity post. Likely Serge T. (CTO & Head of Digital Bank at INB per our broader contacts.json).", "_message": "Sergey — would like to introduce you to Evgeny who is exploring open roles at INB (launching AI-native bank in UAE) in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 401, "_limit": 1900}, {"id": "out_005", "block": "banks", "name": "Fernando Plaza", "company": "ADIB", "role": "Group Chief Digital Officer", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny for any relevant product / digital transformation roles.", "linkedin": "https://www.linkedin.com/in/fernando-plaza/", "priority": 5, "degree": 2, "channel": "LinkedIn", "_message": "Fernando — would like to introduce you to Evgeny who is exploring open roles at ADIB in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 262, "_limit": 300}, {"id": "out_006", "block": "banks", "name": "Ricardo Saad", "company": "Mashreq", "role": "Global Head of Digital Propositions (ex-Nubank)", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny.", "linkedin": "https://www.linkedin.com/in/ricardo-saadgr/", "priority": 6, "degree": 2, "channel": "LinkedIn", "_message": "Ricardo — would like to introduce you to Evgeny who is exploring open roles at Mashreq in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 264, "_limit": 300}, {"id": "out_007", "block": "banks", "name": "Oleg Dylevich", "company": "RAKBank", "role": "AVP Digital Transformation", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny.", "linkedin": "https://www.linkedin.com/in/odylevich/", "priority": 7, "degree": 2, "andrey_direct_mutual": true, "channel": "LinkedIn", "_message": "Oleg — would like to introduce you to Evgeny who is exploring open roles at RAKBank in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 261, "_limit": 300}, {"id": "out_008", "block": "banks", "name": "Oliver Hughes", "company": "TBC Bank", "role": "CEO (Uzbekistan)", "ask_type": "recommend_generally", "ask_detail": "Write to him directly. Evgeny is ready to relocate to Uzbekistan and understands salary will not match UAE.", "relocation": "Uzbekistan OK", "salary_note": "Adjusted from UAE expectations", "linkedin": "https://www.linkedin.com/in/oliver-hughes-0b5540247/", "priority": 8, "channel": "LinkedIn", "andrey_notes": "Oliver Hughes is TBC Group CEO (parent). For Uzbekistan-specific reach: Nika Kurdiani is CEO of TBC Uzbekistan — https://www.linkedin.com/in/nikakurdiani/. Andrey should pick which one fits the ask better.", "custom_message": "Oliver — would like to introduce you to Evgeny who is exploring open roles at TBC Bank in product. You have met a couple of times when you were visiting Tabby. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending. Ready to relocate.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_message": "Oliver — would like to introduce you to Evgeny who is exploring open roles at TBC Bank in product. You have met a couple of times when you were visiting Tabby. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending. Ready to relocate.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 452, "_limit": 1900}, {"id": "out_009", "block": "companies", "name": "Dwelly founders", "company": "Dwelly", "role": "Founders", "ask_type": "intro_to_founders", "ask_detail": "Andrey previously offered to intro Evgeny to the founder. Confirm and make the intro. Vlad recommended Dan highly.", "linkedin": "https://www.linkedin.com/in/danlifshits/", "priority": 9, "channel": "LinkedIn", "andrey_notes": "Real estate agency automation with AI — very aligned with Evgeny's interests.", "custom_message": "Hi Dan, would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\nHe has previous experience in automation and optimization of offline businesses in X5.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_message": "Hi Dan, would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\nHe has previous experience in automation and optimization of offline businesses in X5.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 390, "_limit": 1900}, {"id": "out_010", "block": "companies", "name": "Wise friend", "company": "Wise", "role": null, "ask_type": "recommend_for_role", "ask_detail": "Write to Andrey's friend at Wise. Exec search has also reached out. Relocation to London OK. Specifically interested in:", "job_urls": ["https://wise.jobs/job/product-lead-onboarding-experience-in-london-jid-3420", "https://wise.jobs/job/product-director-finance-in-london-jid-2518", "https://wise.jobs/job/product-director-current-account-and-everyday-banking-in-london-jid-1705", "https://wise.jobs/job/senior-principal-product-manager-business-account-experience-in-london-jid-3217"], "relocation": "London OK", "linkedin": null, "priority": 10, "channel": "WhatsApp or LinkedIn", "andrey_notes": "Andrey to identify which friend — Evgeny didn't name him.", "_message": "Wise — would like to introduce you to Evgeny who is exploring open roles at Wise in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n- https://wise.jobs/job/product-lead-onboarding-experience-in-london-jid-3420\n- https://wise.jobs/job/product-director-finance-in-london-jid-2518\n- https://wise.jobs/job/product-director-current-account-and-everyday-banking-in-london-jid-1705\n- https://wise.jobs/job/senior-principal-product-manager-business-account-experience-in-london-jid-3217\n\nHe's ready to relocate (London OK).\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 742, "_limit": 1900}, {"id": "out_011", "block": "companies", "name": "Airwallex hiring contact", "company": "Airwallex", "role": null, "ask_type": "recommend_for_role", "ask_detail": "Only one UAE role currently visible (URL below). Evgeny ready to relocate to Australia, US, or Asia where Airwallex has open product positions.", "job_urls": ["https://jobs.ashbyhq.com/airwallex/4e28592b-90b8-4b4c-adcd-1ec73d31fbc7?utm_source=linkedin"], "relocation": "Australia, US, Asia OK", "linkedin": null, "priority": 11, "channel": "LinkedIn", "andrey_notes": "Evgeny carefully studied the product. Andrey to find appropriate contact at Airwallex.", "_message": "Airwallex — would like to introduce you to Evgeny who is exploring open roles at Airwallex in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n- https://jobs.ashbyhq.com/airwallex/4e28592b-90b8-4b4c-adcd-1ec73d31fbc7?utm_source=linkedin\n\nHe's ready to relocate (Australia, US, Asia OK).\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 512, "_limit": 1900}, {"id": "out_012", "block": "companies", "name": "BCG contact 1", "company": "BCG", "role": "Dubai office", "ask_type": "intro_to_founders", "ask_detail": "Andrey previously mentioned 2 BCG contacts. Intro Evgeny for a conversation: 'should I try the Dubai office now; can my profile be useful?'", "linkedin": null, "priority": 12, "channel": "LinkedIn", "andrey_notes": "Andrey to identify which 2 BCG contacts he had in mind.", "_message": "Hi — would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\n\nAndrey previously mentioned 2 BCG contacts. Intro Evgeny for a conversation: 'should I try the Dubai office now; can my profile be useful?'\n\nAndrey to identify which 2 BCG contacts he had in mind.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 498, "_limit": 1900}, {"id": "out_013", "block": "companies", "name": "BCG contact 2", "company": "BCG", "role": "Dubai office", "ask_type": "intro_to_founders", "ask_detail": "Same as BCG contact 1.", "linkedin": null, "priority": 13, "channel": "LinkedIn", "_message": "Hi — would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\n\nSame as BCG contact 1.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 324, "_limit": 1900}, {"id": "out_014", "block": "companies", "name": "Eugene (Zhenya) Shilnikov", "company": "Fortis", "role": "Group CPO", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny. No visible open positions. Evgeny is also writing to him directly.", "linkedin": "https://www.linkedin.com/in/eugene-shilnikov/", "priority": 14, "degree": 2, "channel": "LinkedIn", "andrey_notes": "Ex-Yandex acquirer. Evgeny doing parallel outreach.", "_message": "Eugene — would like to introduce you to Evgeny who is exploring open roles at Fortis in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role in payments or lending.", "_chars": 262, "_limit": 300}, {"id": "out_015", "block": "companies", "name": "Michael Calvey", "company": "Plata", "role": "Founder / Chairman", "ask_type": "recommend_generally", "ask_detail": "Write to him in case he reads. No lead positions visible per Evgeny's friend at Plata, but worth the shot.", "linkedin": "https://www.linkedin.com/in/michael-calvey-16887776/", "priority": 15, "channel": "LinkedIn", "_message": "Michael — would like to introduce you to Evgeny who is exploring open roles at Plata in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 370, "_limit": 1900}, {"id": "out_016", "block": "companies", "name": "David Isakhanian", "company": "Plata", "role": "CPO", "ask_type": "send_cv", "ask_detail": "Simply send Evgeny's CV.", "linkedin": "https://www.linkedin.com/in/david-isakhanian/", "priority": 16, "channel": "LinkedIn", "_message": "David — sending you the profile of Evgeny who is exploring new product roles. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE. Would love it if you could keep him in mind for any product roles in payments / lending at Plata.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\n— Andrey", "_chars": 346, "_limit": 1900}, {"id": "out_017", "block": "companies", "name": "Uzum CPO BNPL hiring contact", "company": "Uzum", "role": "Hiring manager for CPO BNPL role", "ask_type": "recommend_for_role", "ask_detail": "Recommend Evgeny for the CPO BNPL role at Uzum.", "linkedin": null, "priority": 17, "channel": "LinkedIn", "andrey_notes": "Andrey to identify the hiring contact.", "_message": "Uzum — would like to introduce you to Evgeny who is exploring open roles at Uzum in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 358, "_limit": 1900}, {"id": "out_018", "block": "companies", "name": "Google hiring contact", "company": "Google", "role": "Product Marketing Manager - Ads", "ask_type": "recommend_for_role", "ask_detail": "Evgeny notes this is a 'side gig' role; happy to try if Andrey thinks the role is a viable entry point.", "job_urls": ["https://www.google.com/about/careers/applications/jobs/results/126285374329627334-product-marketing-manager-ads"], "linkedin": null, "priority": 18, "channel": "LinkedIn", "_message": "Google — would like to introduce you to Evgeny who is exploring open roles at Google in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him.\n\nHe's specifically interested in these openings:\n- https://www.google.com/about/careers/applications/jobs/results/126285374329627334-product-marketing-manager-ads\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 476, "_limit": 1900}, {"id": "out_019", "block": "companies", "name": "Marc Saade", "company": "Huspy", "role": "VP of Product", "ask_type": "recommend_generally", "ask_detail": "Write so he has Evgeny in mind for future openings. Mortgages currently not doing well, so no immediate hiring.", "linkedin": "https://www.linkedin.com/in/marc-saade-78834678/", "priority": 19, "channel": "LinkedIn", "andrey_notes": "Andrey to identify the VP of Product.", "_message": "Marc — would like to introduce you to Evgeny who is exploring open roles at Huspy in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 367, "_limit": 1900}, {"id": "out_020", "block": "companies", "name": "Andrei Krugliak", "company": "Yango", "role": "CEO Yango Fintech", "ask_type": "intro_to_founders", "ask_detail": "No open positions found in region. Share context about what's happening with business in region; explore.", "linkedin": "https://www.linkedin.com/in/andreikrugliak/", "priority": 20, "channel": "LinkedIn", "andrey_notes": "Andrey has strong Yango network (10 contacts in our database). Andrey to pick best regional contact.", "_message": "Hi — would like to introduce you to Evgeny who is exploring new product opportunities. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE.\n\nNo open positions found in region. Share context about what's happening with business in region; explore.\n\nAndrey has strong Yango network (10 contacts in our database). Andrey to pick best regional contact.\n\nIf you're open to a 20-min chat, I'll connect you both. His LinkedIn: https://linkedin.com/in/evgenymuravev\n\n— Andrey", "_chars": 509, "_limit": 1900}, {"id": "out_021", "block": "companies", "name": "Karun Kurien", "company": "Alaan", "role": "Co-Founder & CPO", "ask_type": "recommend_generally", "ask_detail": "Recommend Evgeny.", "linkedin": "https://www.linkedin.com/in/karun-kurien-3020504b/", "priority": 21, "degree": 1, "channel": "LinkedIn", "andrey_notes": "Evgeny notes Andrey is connected (1st degree). Ex-McKinsey.", "_message": "Karun — would like to introduce you to Evgeny who is exploring open roles at Alaan in product. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE and I highly recommend him for any product role you may have in payments or lending.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nhappy to share his CV directly.\n\n— Andrey", "_chars": 368, "_limit": 1900}, {"id": "out_022", "block": "telegram_ecosystem", "name": "Evgeniya Kazina", "company": "The Open Platform (Telegram ecosystem)", "role": "Head of Product, Payments", "ask_type": "send_cv", "ask_detail": "Send CV. No current positions but worth being on radar.", "linkedin": "https://www.linkedin.com/in/evgeniyakazina/", "priority": 22, "degree": 1, "channel": "LinkedIn", "_message": "Evgeniya — sending you the profile of Evgeny who is exploring new product roles. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE. Would love it if you could keep him in mind for any product roles in payments / lending at The Open Platform (Telegram ecosystem).\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\n— Andrey", "_chars": 382, "_limit": 1900}, {"id": "out_023", "block": "companies", "name": "Sarkis Atanesov", "company": "Noum.AI", "role": "CEO & Founder", "ask_type": "send_cv", "ask_detail": "Send CV. Connected on LinkedIn (1st degree).", "linkedin": "https://www.linkedin.com/in/sarkis-atanesov/", "priority": 23, "degree": 1, "channel": "LinkedIn", "_message": "Sarkis — sending you the profile of Evgeny who is exploring new product roles. Evgeny helped us build our merchant lending and payments product, wallets for business in UAE. Would love it if you could keep him in mind for any product roles in payments / lending at Noum.AI.\n\nhis LinkedIn: https://linkedin.com/in/evgenymuravev\nCV attached.\n\n— Andrey", "_chars": 349, "_limit": 1900}];
 const ROLES_BY_COMPANY = {"fab": {"company": "FAB (First Abu Dhabi Bank)", "careers_url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/", "roles": [{"title": "FAB Job 1679 (Digital Transformation area)", "url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1679", "location": "UAE", "verified": true, "source": "evgeny_referenced", "note": "Evgeny specifically interested; page is SPA (Oracle HCM)"}, {"title": "FAB Job 1768 (Digital Transformation area)", "url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1768", "location": "UAE", "verified": true, "source": "evgeny_referenced", "note": "Evgeny specifically interested; page is SPA (Oracle HCM)"}]}, "first abu dhabi bank": {"company": "FAB (First Abu Dhabi Bank)", "careers_url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/", "roles": [{"title": "FAB Job 1679 (Digital Transformation area)", "url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1679", "location": "UAE", "verified": true, "source": "evgeny_referenced", "note": "Evgeny specifically interested; page is SPA (Oracle HCM)"}, {"title": "FAB Job 1768 (Digital Transformation area)", "url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1768", "location": "UAE", "verified": true, "source": "evgeny_referenced", "note": "Evgeny specifically interested; page is SPA (Oracle HCM)"}]}, "fab (first abu dhabi bank)": {"company": "FAB (First Abu Dhabi Bank)", "careers_url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/", "roles": [{"title": "FAB Job 1679 (Digital Transformation area)", "url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1679", "location": "UAE", "verified": true, "source": "evgeny_referenced", "note": "Evgeny specifically interested; page is SPA (Oracle HCM)"}, {"title": "FAB Job 1768 (Digital Transformation area)", "url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/1768", "location": "UAE", "verified": true, "source": "evgeny_referenced", "note": "Evgeny specifically interested; page is SPA (Oracle HCM)"}]}, "wise": {"company": "Wise", "careers_url": "https://wise.jobs/", "roles": [{"title": "Product Lead, Onboarding Experience", "url": "https://wise.jobs/job/product-lead-onboarding-experience-in-london-jid-3420", "location": "London", "verified": true, "source": "evgeny_referenced"}, {"title": "Product Director, Finance", "url": "https://wise.jobs/job/product-director-finance-in-london-jid-2518", "location": "London", "salary": "£115,000–£145,000 + RSU", "verified": true, "source": "evgeny_referenced"}, {"title": "Product Director, Current Account and Everyday Banking", "url": "https://wise.jobs/job/product-director-current-account-and-everyday-banking-in-london-jid-1705", "location": "London", "salary": "£145,000–£185,000", "verified": true, "source": "evgeny_referenced"}, {"title": "Senior/Principal Product Manager, Business Account Experience", "url": "https://wise.jobs/job/senior-principal-product-manager-business-account-experience-in-london-jid-3217", "location": "London", "verified": true, "source": "evgeny_referenced"}]}, "airwallex": {"company": "Airwallex", "careers_url": "https://jobs.ashbyhq.com/airwallex", "roles": [{"title": "Head of Middle East", "url": "https://jobs.ashbyhq.com/airwallex/4e28592b-90b8-4b4c-adcd-1ec73d31fbc7", "location": "UAE", "verified": true, "source": "evgeny_referenced", "note": "Senior leadership role for MENA expansion"}]}, "google": {"company": "Google", "careers_url": "https://www.google.com/about/careers/applications/", "roles": [{"title": "Product Marketing Manager, Ads", "url": "https://www.google.com/about/careers/applications/jobs/results/126285374329627334-product-marketing-manager-ads", "location": "Various", "verified": true, "source": "evgeny_referenced", "note": "Evgeny notes: 'side gig but worth trying'"}]}, "rakbank": {"company": "RAKBank", "careers_url": "https://careers.rakbank.ae/", "roles": [{"title": "Digital Product Manager (search if currently listed)", "url": "https://careers.rakbank.ae/en/uae/jobs/?keywords=product", "location": "Dubai", "verified": true, "source": "discovered_via_search", "note": "Search query — link returns the live careers search filtered for 'product'"}]}, "mashreq": {"company": "Mashreq", "careers_url": "https://www.mashreq.com/en/uae/about-us/careers/careers-portal/", "roles": [{"title": "Search Mashreq jobs (product roles refreshed regularly)", "url": "https://www.linkedin.com/company/mashreq-uae/jobs/", "location": "Dubai", "verified": true, "source": "discovered_via_search", "note": "LinkedIn jobs page lists current Mashreq openings live"}]}, "mashreq bank": {"company": "Mashreq", "careers_url": "https://www.mashreq.com/en/uae/about-us/careers/careers-portal/", "roles": [{"title": "Search Mashreq jobs (product roles refreshed regularly)", "url": "https://www.linkedin.com/company/mashreq-uae/jobs/", "location": "Dubai", "verified": true, "source": "discovered_via_search", "note": "LinkedIn jobs page lists current Mashreq openings live"}]}, "adib": {"company": "ADIB", "careers_url": "https://hciq.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/requisitions", "roles": [{"title": "Search ADIB digital product roles", "url": "https://hciq.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/requisitions?keyword=product", "location": "Abu Dhabi", "verified": true, "source": "discovered_via_search", "note": "Oracle HCM — search live for current product/digital roles"}]}, "abu dhabi islamic bank": {"company": "ADIB", "careers_url": "https://hciq.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/requisitions", "roles": [{"title": "Search ADIB digital product roles", "url": "https://hciq.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/requisitions?keyword=product", "location": "Abu Dhabi", "verified": true, "source": "discovered_via_search", "note": "Oracle HCM — search live for current product/digital roles"}]}, "alaan": {"company": "Alaan", "careers_url": "https://www.alaan.com/careers", "roles": [{"title": "AI Product Manager (or submit speculative — careers@alaanpay.com)", "url": "https://www.alaan.com/careers", "location": "Dubai", "verified": true, "source": "discovered_via_search", "note": "Alaan recommends emailing careers@alaanpay.com for product roles"}]}, "huspy": {"company": "Huspy", "careers_url": "https://job-boards.greenhouse.io/huspy", "roles": [{"title": "Browse all Huspy product roles (Greenhouse)", "url": "https://job-boards.greenhouse.io/huspy", "location": "Dubai", "verified": true, "source": "discovered_via_search", "note": "Multiple PM roles per search; visit live to see current"}]}, "revolut": {"company": "Revolut", "careers_url": "https://www.revolut.com/careers/", "roles": [{"title": "Product Strategy Manager", "url": "https://www.revolut.com/careers/position/product-strategy-manager-b6d53c51-c29c-4f2e-90e8-a8eba158858e/", "location": "UK / Hubs (UAE eligible)", "verified": true, "source": "discovered_via_search", "note": "Revolut has tech hubs in UAE, UK, Poland, Portugal, Spain"}]}, "yango": {"company": "Yango", "careers_url": "https://yango.com/career/vacancy", "roles": [{"title": "Browse all Yango open roles", "url": "https://yango.com/career/vacancy", "location": "Dubai HQ", "verified": true, "source": "discovered_via_search", "note": "Yango Tech HQ: One Central, 6th Floor, Dubai"}]}, "yango fintech": {"company": "Yango", "careers_url": "https://yango.com/career/vacancy", "roles": [{"title": "Browse all Yango open roles", "url": "https://yango.com/career/vacancy", "location": "Dubai HQ", "verified": true, "source": "discovered_via_search", "note": "Yango Tech HQ: One Central, 6th Floor, Dubai"}]}, "yango group": {"company": "Yango", "careers_url": "https://yango.com/career/vacancy", "roles": [{"title": "Browse all Yango open roles", "url": "https://yango.com/career/vacancy", "location": "Dubai HQ", "verified": true, "source": "discovered_via_search", "note": "Yango Tech HQ: One Central, 6th Floor, Dubai"}]}, "plata": {"company": "Plata", "careers_url": "https://career.platacard.mx/vacancy", "roles": [{"title": "Product Manager Senior [Delivery]", "url": "https://career.platacard.mx/vacancy/details?id=5008981008", "location": "Mexico / Serbia (relocation supported)", "verified": true, "source": "discovered_via_search"}, {"title": "Browse all Plata open roles", "url": "https://career.platacard.mx/vacancy", "location": "Mexico / Serbia", "verified": true, "source": "discovered_via_search", "note": "Full visa & permit support; Series A unicorn"}]}, "plata card": {"company": "Plata", "careers_url": "https://career.platacard.mx/vacancy", "roles": [{"title": "Product Manager Senior [Delivery]", "url": "https://career.platacard.mx/vacancy/details?id=5008981008", "location": "Mexico / Serbia (relocation supported)", "verified": true, "source": "discovered_via_search"}, {"title": "Browse all Plata open roles", "url": "https://career.platacard.mx/vacancy", "location": "Mexico / Serbia", "verified": true, "source": "discovered_via_search", "note": "Full visa & permit support; Series A unicorn"}]}, "emirates nbd": {"company": "Emirates NBD", "careers_url": "https://emiratesnbd.talentera.com/", "roles": [{"title": "Browse Emirates NBD digital & tech roles", "url": "https://emiratesnbd.talentera.com/", "location": "Dubai", "verified": true, "source": "discovered_via_search"}]}, "enbd": {"company": "Emirates NBD", "careers_url": "https://emiratesnbd.talentera.com/", "roles": [{"title": "Browse Emirates NBD digital & tech roles", "url": "https://emiratesnbd.talentera.com/", "location": "Dubai", "verified": true, "source": "discovered_via_search"}]}, "mastercard": {"company": "Mastercard", "careers_url": "https://careers.mastercard.com/us/en/dubai-united-arab-emirates", "roles": [{"title": "Manager / VP, Product Management — UAE", "url": "https://careers.mastercard.com/us/en/search-results?keywords=product", "location": "Dubai", "verified": true, "source": "discovered_via_search", "note": "Mastercard EEMEA HQ is in Dubai Internet City"}]}, "wio bank": {"company": "Wio Bank", "careers_url": "https://www.linkedin.com/company/wiobank/jobs", "roles": [{"title": "Group Product Owner (Everyday Banking)", "url": "https://jobs.weekday.works/wio-bank-group-product-owner-(everyday-banking)", "location": "Abu Dhabi / Dubai", "verified": false, "source": "discovered_via_search", "note": "Wio Bank actively hiring across product, data, engineering, cyber, marketing"}]}, "wio": {"company": "Wio Bank", "careers_url": "https://www.linkedin.com/company/wiobank/jobs", "roles": [{"title": "Group Product Owner (Everyday Banking)", "url": "https://jobs.weekday.works/wio-bank-group-product-owner-(everyday-banking)", "location": "Abu Dhabi / Dubai", "verified": false, "source": "discovered_via_search", "note": "Wio Bank actively hiring across product, data, engineering, cyber, marketing"}]}};
-const STORAGE_KEY = 'andrey_outreach_v1';
-const URL_STORAGE_KEY = 'andrey_added_urls_v1';
+const TARGET_COMPANIES = [{"name": "FAB (First Abu Dhabi Bank)", "aliases": ["FAB", "First Abu Dhabi Bank"], "careers_url": "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/", "has_open_roles": true}, {"name": "Wise", "aliases": ["Wise"], "careers_url": "https://wise.jobs/", "has_open_roles": true}, {"name": "Airwallex", "aliases": ["Airwallex"], "careers_url": "https://jobs.ashbyhq.com/airwallex", "has_open_roles": true}, {"name": "Google", "aliases": ["Google"], "careers_url": "https://www.google.com/about/careers/applications/", "has_open_roles": true}, {"name": "RAKBank", "aliases": ["RAKBank"], "careers_url": "https://careers.rakbank.ae/", "has_open_roles": true}, {"name": "Mashreq", "aliases": ["Mashreq", "Mashreq Bank"], "careers_url": "https://www.mashreq.com/en/uae/about-us/careers/careers-portal/", "has_open_roles": true}, {"name": "ADIB", "aliases": ["ADIB", "Abu Dhabi Islamic Bank"], "careers_url": "https://hciq.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/requisitions", "has_open_roles": true}, {"name": "Alaan", "aliases": ["Alaan"], "careers_url": "https://www.alaan.com/careers", "has_open_roles": true}, {"name": "Huspy", "aliases": ["Huspy"], "careers_url": "https://job-boards.greenhouse.io/huspy", "has_open_roles": true}, {"name": "Revolut", "aliases": ["Revolut"], "careers_url": "https://www.revolut.com/careers/", "has_open_roles": true}, {"name": "Yango", "aliases": ["Yango", "Yango Fintech", "Yango Group"], "careers_url": "https://yango.com/career/vacancy", "has_open_roles": true}, {"name": "Plata", "aliases": ["Plata", "Plata Card"], "careers_url": "https://career.platacard.mx/vacancy", "has_open_roles": true}, {"name": "Emirates NBD", "aliases": ["Emirates NBD", "ENBD"], "careers_url": "https://emiratesnbd.talentera.com/", "has_open_roles": true}, {"name": "Mastercard", "aliases": ["Mastercard"], "careers_url": "https://careers.mastercard.com/us/en/dubai-united-arab-emirates", "has_open_roles": true}, {"name": "Wio Bank", "aliases": ["Wio Bank", "Wio"], "careers_url": "https://www.linkedin.com/company/wiobank/jobs", "has_open_roles": true}, {"name": "INB", "aliases": ["INB"], "careers_url": null, "has_open_roles": false}, {"name": "TBC Bank", "aliases": ["TBC Bank"], "careers_url": "https://www.tbcbank.com/careers", "has_open_roles": false}, {"name": "Fortis", "aliases": ["Fortis"], "careers_url": null, "has_open_roles": false}, {"name": "BCG", "aliases": ["BCG"], "careers_url": "https://careers.bcg.com/", "has_open_roles": false}, {"name": "Dwelly", "aliases": ["Dwelly"], "careers_url": null, "has_open_roles": false}, {"name": "Mal.ai", "aliases": ["Mal.ai"], "careers_url": null, "has_open_roles": false}, {"name": "Visa", "aliases": ["Visa"], "careers_url": "https://corporate.visa.com/en/jobs.html", "has_open_roles": false}, {"name": "Network International", "aliases": ["Network International"], "careers_url": "https://www.network.global/careers", "has_open_roles": false}, {"name": "Uzum", "aliases": ["Uzum"], "careers_url": "https://uzum.com/career", "has_open_roles": false}, {"name": "The Open Platform", "aliases": ["The Open Platform"], "careers_url": null, "has_open_roles": false}];
 const EVGENY_LINKEDIN = 'https://linkedin.com/in/evgenymuravev';
 const PITCH = 'Evgeny helped us build our merchant lending and payments product, wallets for business in UAE';
 
-const BLOCK_COLORS = {
-  recruiters: 'var(--block-recruiters)',
-  banks: 'var(--block-banks)',
-  companies: 'var(--block-companies)',
-  telegram_ecosystem: 'var(--block-telegram_ecosystem)',
-};
-const BLOCK_NAMES = {
-  recruiters: 'Recruiters',
-  banks: 'Banks',
-  companies: 'Companies',
-  telegram_ecosystem: 'Telegram ecosystem',
-};
-const ASK_LABELS = {
-  send_cv: 'send CV',
-  recommend_for_role: 'refer to specific role',
-  recommend_generally: 'recommend generally',
-  intro_to_founders: 'request intro',
-  post_in_chat: 'post in chat',
-  ask_about_openings: 'ask about openings',
-};
+const REFERRER_KEY = 'refer_evgeny_referrer_v2';
+const STATE_KEY_PREFIX = 'refer_evgeny_state_v2_';
+const NETWORK_KEY_PREFIX = 'refer_evgeny_network_v2_';
+const URL_KEY_PREFIX = 'refer_evgeny_urls_v2_';
+
+const $ = s => document.querySelector(s);
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function slug(s) {
+  return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'anon';
+}
+
+/* ─── Referrer profile ─── */
+function getReferrer() {
+  try { return JSON.parse(localStorage.getItem(REFERRER_KEY) || 'null'); }
+  catch (e) { return null; }
+}
+function setReferrer(r) {
+  localStorage.setItem(REFERRER_KEY, JSON.stringify(r));
+}
+function referrerSlug() {
+  const r = getReferrer();
+  return r ? slug(r.name) : 'guest';
+}
+
+/* ─── Per-referrer state ─── */
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STATE_KEY_PREFIX + referrerSlug()) || '{}'); }
+  catch (e) { return {}; }
+}
+function saveState() {
+  try { localStorage.setItem(STATE_KEY_PREFIX + referrerSlug(), JSON.stringify(state)); }
+  catch (e) {}
+}
+function loadAddedUrls() {
+  try { return JSON.parse(localStorage.getItem(URL_KEY_PREFIX + referrerSlug()) || '{}'); }
+  catch (e) { return {}; }
+}
+function saveAddedUrls() {
+  try { localStorage.setItem(URL_KEY_PREFIX + referrerSlug(), JSON.stringify(addedUrls)); }
+  catch (e) {}
+}
+function loadNetwork() {
+  try { return JSON.parse(localStorage.getItem(NETWORK_KEY_PREFIX + referrerSlug()) || '[]'); }
+  catch (e) { return []; }
+}
+function saveNetwork(arr) {
+  try { localStorage.setItem(NETWORK_KEY_PREFIX + referrerSlug(), JSON.stringify(arr)); }
+  catch (e) {}
+}
+
+let state = {};
+let addedUrls = {};
+let filters = { status: 'all' };
+
+/* ─── Statuses / labels ─── */
 const STATUSES = [
   { id: 'not_started', label: '· Not started', momentum: 0 },
   { id: 'in_progress', label: '✍ In progress', momentum: 0 },
@@ -1104,138 +772,188 @@ const STATUSES = [
   { id: 'declined', label: '❌ Declined', momentum: 0 },
   { id: 'skipped', label: '⊘ Skipped', momentum: 0 },
 ];
-const MAX_MOMENTUM = ITEMS.length * 7;
+const ASK_LABELS = {
+  send_cv: 'send CV',
+  recommend_for_role: 'refer to specific role',
+  recommend_generally: 'recommend generally',
+  intro_to_founders: 'request intro',
+  post_in_chat: 'post in chat',
+  ask_about_openings: 'ask about openings',
+};
+const BLOCK_COLORS = {
+  recruiters: 'var(--block-recruiters)',
+  banks: 'var(--block-banks)',
+  companies: 'var(--block-companies)',
+  telegram_ecosystem: 'var(--block-telegram_ecosystem)',
+  matched: 'var(--accent-2)',
+};
 
-/* ─── Channel icons & detection ─── */
+/* ─── Icons ─── */
 const ICON_LINKEDIN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14zM8.34 18v-8.42H5.67V18h2.67zM7 8.4a1.55 1.55 0 1 0 0-3.1 1.55 1.55 0 0 0 0 3.1zM18.34 18v-4.61c0-2.47-1.32-3.62-3.08-3.62a2.66 2.66 0 0 0-2.42 1.33h-.04V9.58h-2.55V18h2.66v-4.16c0-1.1.21-2.16 1.57-2.16 1.34 0 1.36 1.26 1.36 2.23V18h2.5z"/></svg>';
 const ICON_WA = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4a3 3 0 0 1-2 .9c-.4 0-1.6-.5-3-1.6-1.5-1.4-1.9-2.4-2-2.9 0-.2.1-.5.3-.7l.4-.4c.2-.2.2-.4.1-.6L10.5 7c-.1-.3-.3-.3-.5-.3h-.5c-.3 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.8 0 1.7 1.2 3.3 1.4 3.5.2.3 2.4 3.6 5.7 4.8 2.7 1.1 3.3.9 3.9.8.6-.1 1.9-.8 2.2-1.6.3-.7.3-1.4.2-1.6-.1-.1-.3-.2-.6-.4l-2.8-1.4M12 22A10 10 0 0 1 2 12a10 10 0 0 1 10-10 10 10 0 0 1 10 10c0 1.7-.4 3.3-1.2 4.7L22 22l-5.3-1.5c-1.4.7-3 1-4.7 1m0-2.3a7.7 7.7 0 0 0 4.3-1.3l.4-.2 3.1.9-.9-3 .3-.5a7.7 7.7 0 1 0-7.2 4.1z"/></svg>';
 const ICON_TG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.05 1.577c-.393-.016-.784.08-1.117.235-.484.186-4.92 1.902-9.41 3.64-2.26.873-4.518 1.746-6.256 2.415-1.737.67-3.045 1.168-3.114 1.195-.46.16-1.082.362-1.61.984a1.61 1.61 0 0 0-.354 1.16c.022.275.13.5.234.66.279.426.617.534.872.665l5.518 1.835 1.18 3.866L6.7 18.3c-.034.106-.04.207-.045.314-.005.107-.025.225.01.354.024.13.103.276.227.379.124.103.292.166.46.166.27 0 .388-.05.51-.09l3.04-2.94 5.382 4.117c.295.17.667.244.974.184.307-.06.602-.218.815-.485 1.144-1.42 1.523-3.083 1.84-4.685.642-3.245 1.305-7.073 1.844-10.265.22-1.295.388-2.39.467-3.16.04-.385.06-.71.046-1.03-.014-.32-.024-.586-.222-.875a1.123 1.123 0 0 0-.59-.41 1.354 1.354 0 0 0-.408-.07Z"/></svg>';
 const ICON_MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
 
-function channelsFor(item) {
-  // Determine which channel buttons to show, in order of preference
-  // based on the item's `channel` field (free-text)
-  const ch = (item.channel || 'LinkedIn').toLowerCase();
-  const channels = [];
-  // Parse channel field: usually "LinkedIn", "WhatsApp or LinkedIn", "Telegram or WhatsApp"
-  if (ch.includes('telegram')) channels.push('telegram');
-  if (ch.includes('whatsapp') || ch.includes('wa')) channels.push('whatsapp');
-  if (ch.includes('linkedin')) channels.push('linkedin');
-  if (ch.includes('email') || ch.includes('mail')) channels.push('email');
-  if (channels.length === 0) channels.push('linkedin');
+/* ─── Network matching (CSV) ─── */
+// LinkedIn Connections.csv parser. Format: First Name,Last Name,URL,Email Address,Company,Position,Connected On
+function parseCSV(text) {
+  // LinkedIn export has a "Notes:" preamble; skip lines until we see the real header
+  const lines = text.split(/\r?\n/);
+  let startIdx = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+    if (cols.includes('First Name') && cols.includes('Last Name')) {
+      startIdx = i;
+      break;
+    }
+  }
+  const header = parseCSVLine(lines[startIdx]);
+  const fi = header.indexOf('First Name');
+  const li = header.indexOf('Last Name');
+  const ui = header.indexOf('URL');
+  const ci = header.indexOf('Company');
+  const pi = header.indexOf('Position');
+  const di = header.indexOf('Connected On');
+  if (fi < 0 || ci < 0) return [];
 
-  return channels.map(id => {
-    if (id === 'linkedin') return { id: 'linkedin', label: 'LinkedIn', svg: ICON_LINKEDIN };
-    if (id === 'whatsapp') return { id: 'whatsapp', label: 'WhatsApp', svg: ICON_WA };
-    if (id === 'telegram') return { id: 'telegram', label: 'Telegram', svg: ICON_TG };
-    if (id === 'email') return { id: 'email', label: 'Email', svg: ICON_MAIL };
-    return { id, label: id, svg: '' };
+  const out = [];
+  for (let i = startIdx + 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const c = parseCSVLine(lines[i]);
+    if (c.length < 2) continue;
+    out.push({
+      firstName: (c[fi] || '').trim(),
+      lastName: (c[li] || '').trim(),
+      url: (c[ui] || '').trim(),
+      company: (c[ci] || '').trim(),
+      position: (c[pi] || '').trim(),
+      connectedOn: (c[di] || '').trim(),
+    });
+  }
+  return out;
+}
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') { cur += '"'; i++; }
+        else inQuotes = false;
+      } else cur += ch;
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ',') { result.push(cur); cur = ''; }
+      else cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+function matchNetworkToCompanies(network) {
+  // For each target company + its aliases, find connections whose Company field matches.
+  // Returns: [ { company, contacts: [...] } ]
+  const matches = {};
+  for (const tc of TARGET_COMPANIES) {
+    matches[tc.name] = { company: tc.name, target: tc, contacts: [] };
+  }
+  // Build alias → canonical map
+  const aliasMap = {};
+  for (const tc of TARGET_COMPANIES) {
+    aliasMap[tc.name.toLowerCase()] = tc.name;
+    for (const a of (tc.aliases || [])) {
+      aliasMap[a.toLowerCase()] = tc.name;
+    }
+  }
+  for (const conn of network) {
+    const co = (conn.company || '').toLowerCase();
+    if (!co) continue;
+    // Try exact alias match
+    let canonical = aliasMap[co];
+    // Try substring match if no exact
+    if (!canonical) {
+      for (const alias in aliasMap) {
+        if (alias.length < 3) continue;
+        if (co.includes(alias) || alias.includes(co)) {
+          canonical = aliasMap[alias];
+          break;
+        }
+      }
+    }
+    if (canonical) {
+      matches[canonical].contacts.push(conn);
+    }
+  }
+  return Object.values(matches).filter(m => m.contacts.length > 0);
+}
+
+/* ─── Build items from CSV matches ─── */
+function buildItemsFromMatches(matches, referrer) {
+  const items = [];
+  let prio = 1;
+  for (const m of matches) {
+    for (const c of m.contacts) {
+      const firstName = c.firstName;
+      const fullName = (firstName + ' ' + c.lastName).trim();
+      const position = c.position || '';
+      const company = m.company;
+      const isProductRole = /product|cpo|head of product|vp product|product owner|product manager|product lead|product director|chief product/i.test(position);
+      const message = generateGenericMessage({
+        first_name: firstName,
+        name: fullName,
+        company,
+        position,
+        is_product: isProductRole,
+        referrer_name: referrer.name,
+      });
+      items.push({
+        id: 'csv_' + prio,
+        block: 'matched',
+        name: fullName,
+        company: company,
+        role: position,
+        ask_type: isProductRole ? 'recommend_generally' : 'recommend_generally',
+        linkedin: c.url,
+        priority: prio++,
+        channel: 'LinkedIn',
+        _is_product_role: isProductRole,
+        _connected_on: c.connectedOn,
+        _message: message,
+        _chars: message.length,
+        _limit: 1900,
+        _from_csv: true,
+      });
+    }
+  }
+  // Sort: companies with open roles first, product-roles within company, then by name
+  items.sort((a, b) => {
+    const aHasRoles = (findRoles(a.company)?.roles?.length || 0) > 0;
+    const bHasRoles = (findRoles(b.company)?.roles?.length || 0) > 0;
+    if (aHasRoles !== bHasRoles) return aHasRoles ? -1 : 1;
+    if (a._is_product_role !== b._is_product_role) return a._is_product_role ? -1 : 1;
+    return a.name.localeCompare(b.name);
   });
+  // Re-assign priority after sort
+  items.forEach((it, i) => it.priority = i + 1);
+  return items;
 }
 
-function urlFor(item, channelId) {
-  // Returns { url, prefilled, hint } for the given channel.
-  const msg = item._message;
-  const enc = encodeURIComponent(msg);
-  if (channelId === 'linkedin') {
-    const li = linkedinFor(item);
-    const url = li
-      ? li
-      : `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(item.name + ' ' + (item.company || ''))}`;
-    return {
-      url,
-      prefilled: false,
-      hint: item.linkedin
-        ? 'Profile opened. Click <strong>Message</strong>, then paste with <kbd>⌘V</kbd>.'
-        : 'LinkedIn search opened. Click the right profile, then click <strong>Message</strong> → paste with <kbd>⌘V</kbd>.'
-    };
-  }
-  if (channelId === 'whatsapp') {
-    if (item.phone) {
-      const phone = String(item.phone).replace(/\D/g, '');
-      return {
-        url: `https://web.whatsapp.com/send?phone=${phone}&text=${enc}`,
-        prefilled: true,
-        hint: 'WhatsApp opened with message <strong>pre-filled</strong>. Review and hit the send arrow.'
-      };
-    }
-    // No phone — open WA web, message in clipboard
-    return {
-      url: 'https://web.whatsapp.com/',
-      prefilled: false,
-      hint: `WhatsApp Web opened. Search for <strong>${escapeHtml(item.name)}</strong> at the top, open the chat, then paste with <kbd>⌘V</kbd>.`
-    };
-  }
-  if (channelId === 'telegram') {
-    if (item.tg_username) {
-      return {
-        url: `https://t.me/${String(item.tg_username).replace(/^@/, '')}`,
-        prefilled: false,
-        hint: 'Telegram chat opened. Click the input and paste with <kbd>⌘V</kbd>.'
-      };
-    }
-    return {
-      url: 'https://web.telegram.org/a/',
-      prefilled: false,
-      hint: `Telegram opened. Search for <strong>${escapeHtml(item.name)}</strong>, open the chat, then paste with <kbd>⌘V</kbd>.`
-    };
-  }
-  if (channelId === 'email') {
-    return {
-      url: `mailto:?subject=${encodeURIComponent('intro — ' + item.name + ' for product at ' + (item.company || ''))}&body=${enc}`,
-      prefilled: true,
-      hint: 'Email composer opened with body pre-filled. Fill in the recipient and send.'
-    };
-  }
-  return { url: '#', prefilled: false, hint: '' };
+function generateGenericMessage({first_name, name, company, position, is_product, referrer_name}) {
+  const greet = first_name || name || 'there';
+  return `${greet} — would like to introduce you to Evgeny who is exploring open roles at ${company} in product. ${PITCH} and I highly recommend him for any product role you may have in payments or lending.
+
+his LinkedIn: ${EVGENY_LINKEDIN}
+happy to share his CV directly.
+
+— ${referrer_name}`;
 }
 
-function sendVia(item, channelId) {
-  const { url, prefilled, hint } = urlFor(item, channelId);
-  // Always copy to clipboard as a safety net (in case pre-fill fails)
-  navigator.clipboard.writeText(item._message).catch(() => {});
-  // Open in new tab
-  const win = window.open(url, '_blank');
-  if (!win) {
-    showToast('⚠ Popup blocked — allow popups for this page');
-    return;
-  }
-  showToast(prefilled ? 'Pre-filled & copied' : 'Message copied — paste with ⌘V');
-}
-
-let state = loadState();
-let addedUrls = loadAddedUrls();
-let filters = { block: 'all', status: 'all' };
-
-function loadAddedUrls() {
-  try { return JSON.parse(localStorage.getItem(URL_STORAGE_KEY) || '{}'); }
-  catch (e) { return {}; }
-}
-function saveAddedUrls() {
-  try { localStorage.setItem(URL_STORAGE_KEY, JSON.stringify(addedUrls)); }
-  catch (e) {}
-}
-function linkedinFor(item) {
-  // Prefer user-added URL over original
-  return addedUrls[item.id] || item.linkedin || null;
-}
-
-function findRoles(companyName) {
-  if (!companyName) return null;
-  // Look up by exact match first, then by alias match
-  const k = companyName.toLowerCase();
-  if (ROLES_BY_COMPANY[k]) return ROLES_BY_COMPANY[k];
-  // Try the first word/segment
-  const short = k.split(' (')[0].split(' ')[0];
-  if (ROLES_BY_COMPANY[short]) return ROLES_BY_COMPANY[short];
-  return null;
-}
-
-function generateRoleReferral(item, role) {
-  // Auto-prepare a referral text that mentions the specific role + URL
-  const name = (item.name || '').split(' ')[0] || 'there';
+function generateRoleReferral(item, role, referrerName) {
+  const greet = (item.name || '').split(' ')[0] || 'there';
   const company = item.company || 'your company';
-  return `${name} — would like to introduce you to Evgeny who is exploring open roles at ${company} in product.
+  return `${greet} — would like to introduce you to Evgeny who is exploring open roles at ${company} in product.
 
 ${PITCH}. He's specifically interested in the "${role.title}" role:
 ${role.url}
@@ -1245,36 +963,96 @@ I highly recommend him for product roles in payments or lending.
 his LinkedIn: ${EVGENY_LINKEDIN}
 happy to share his CV directly.
 
-— Andrey`;
+— ${referrerName}`;
 }
 
-const $ = s => document.querySelector(s);
-
-function loadState() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-  catch (e) { return {}; }
-}
-function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  catch (e) {}
-}
-function statusFor(id) { return state[id]?.status || 'not_started'; }
-
-function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ─── Items source: Andrey's plan OR matched network ─── */
+function currentItems() {
+  const referrer = getReferrer();
+  if (!referrer) return [];
+  if (referrer.useAndreyPlan) return ANDREY_ITEMS;
+  const network = loadNetwork();
+  const matches = matchNetworkToCompanies(network);
+  return buildItemsFromMatches(matches, referrer);
 }
 
-function copy(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
-    btn.classList.add('is-copied');
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Copied';
-    setTimeout(() => { btn.classList.remove('is-copied'); btn.innerHTML = orig; }, 1800);
-    showToast('Message copied');
+/* ─── Channels ─── */
+function channelsFor(item) {
+  const ch = (item.channel || 'LinkedIn').toLowerCase();
+  const channels = [];
+  if (ch.includes('telegram')) channels.push('telegram');
+  if (ch.includes('whatsapp') || ch.includes('wa')) channels.push('whatsapp');
+  if (ch.includes('linkedin')) channels.push('linkedin');
+  if (ch.includes('email') || ch.includes('mail')) channels.push('email');
+  if (channels.length === 0) channels.push('linkedin');
+  return channels.map(id => {
+    if (id === 'linkedin') return { id: 'linkedin', label: 'LinkedIn', svg: ICON_LINKEDIN };
+    if (id === 'whatsapp') return { id: 'whatsapp', label: 'WhatsApp', svg: ICON_WA };
+    if (id === 'telegram') return { id: 'telegram', label: 'Telegram', svg: ICON_TG };
+    if (id === 'email') return { id: 'email', label: 'Email', svg: ICON_MAIL };
+    return { id, label: id, svg: '' };
   });
 }
 
+function linkedinFor(item) {
+  return addedUrls[item.id] || item.linkedin || null;
+}
+
+function urlFor(item, channelId) {
+  const msg = item._message;
+  const enc = encodeURIComponent(msg);
+  if (channelId === 'linkedin') {
+    const li = linkedinFor(item);
+    const url = li ? li : `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(item.name + ' ' + (item.company || ''))}`;
+    return { url, prefilled: false,
+      hint: li ? 'Profile opened. Click <strong>Message</strong>, then paste with <kbd>⌘V</kbd>.'
+               : 'LinkedIn search opened. Pick the right profile → click <strong>Message</strong> → paste <kbd>⌘V</kbd>.' };
+  }
+  if (channelId === 'whatsapp') {
+    if (item.phone) {
+      const phone = String(item.phone).replace(/\D/g, '');
+      return { url: `https://web.whatsapp.com/send?phone=${phone}&text=${enc}`, prefilled: true,
+        hint: 'WhatsApp opened with message <strong>pre-filled</strong>.' };
+    }
+    return { url: 'https://web.whatsapp.com/', prefilled: false,
+      hint: `WhatsApp Web opened. Search for <strong>${escapeHtml(item.name)}</strong>, then paste with <kbd>⌘V</kbd>.` };
+  }
+  if (channelId === 'telegram') {
+    if (item.tg_username) {
+      return { url: `https://t.me/${String(item.tg_username).replace(/^@/, '')}`, prefilled: false,
+        hint: 'Telegram chat opened. Paste with <kbd>⌘V</kbd>.' };
+    }
+    return { url: 'https://web.telegram.org/a/', prefilled: false,
+      hint: `Telegram opened. Search for <strong>${escapeHtml(item.name)}</strong>, then paste with <kbd>⌘V</kbd>.` };
+  }
+  if (channelId === 'email') {
+    return { url: `mailto:?subject=${encodeURIComponent('intro — ' + item.name + ' for product at ' + (item.company || ''))}&body=${enc}`,
+      prefilled: true, hint: 'Email composer opened with body pre-filled.' };
+  }
+  return { url: '#', prefilled: false, hint: '' };
+}
+
+function sendVia(item, channelId) {
+  const { url, prefilled, hint } = urlFor(item, channelId);
+  navigator.clipboard.writeText(item._message).catch(() => {});
+  const win = window.open(url, '_blank');
+  if (!win) { showToast('⚠ Popup blocked — allow popups for this page'); return; }
+  showToast(prefilled ? 'Pre-filled & copied' : 'Message copied — paste with ⌘V');
+}
+
+/* ─── Roles helpers ─── */
+function findRoles(companyName) {
+  if (!companyName) return null;
+  const k = companyName.toLowerCase();
+  if (ROLES_BY_COMPANY[k]) return ROLES_BY_COMPANY[k];
+  for (const key in ROLES_BY_COMPANY) {
+    if (key.length < 3) continue;
+    if (k.includes(key) || key.includes(k)) return ROLES_BY_COMPANY[key];
+  }
+  return null;
+}
+
+/* ─── Toast / clipboard ─── */
 let toastTimeout;
 function showToast(msg) {
   const t = $('#toast');
@@ -1283,14 +1061,24 @@ function showToast(msg) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => t.classList.remove('show'), 2400);
 }
+function copy(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('is-copied');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(() => { btn.classList.remove('is-copied'); btn.innerHTML = orig; }, 1800);
+    showToast('Message copied');
+  });
+}
 
+/* ─── Status ─── */
+function statusFor(id) { return state[id]?.status || 'not_started'; }
 function setStatus(id, value) {
   state[id] = { ...(state[id] || {}), status: value, updatedAt: new Date().toISOString() };
   saveState();
   renderAll();
   if (value === 'accepted' || value === 'offer') confetti();
 }
-
 function confetti() {
   const c = $('#confetti');
   c.classList.add('show');
@@ -1308,10 +1096,10 @@ function confetti() {
   setTimeout(() => c.classList.remove('show'), 5000);
 }
 
+/* ─── Visible items ─── */
 function visibleItems() {
-  return ITEMS.filter(item => {
+  return currentItems().filter(item => {
     const s = statusFor(item.id);
-    if (filters.block !== 'all' && item.block !== filters.block) return false;
     if (filters.status !== 'all') {
       if (filters.status === 'not_started' && s !== 'not_started') return false;
       if (filters.status === 'sent' && s !== 'sent') return false;
@@ -1322,8 +1110,10 @@ function visibleItems() {
 }
 
 function renderProgress() {
+  const items = currentItems();
+  const MAX_M = Math.max(items.length * 7, 1);
   let sent = 0, replied = 0, momentum = 0;
-  for (const item of ITEMS) {
+  for (const item of items) {
     const s = STATUSES.find(x => x.id === statusFor(item.id));
     if (!s) continue;
     if (['sent','replied','intro_scheduled','offer','accepted'].includes(s.id)) sent++;
@@ -1332,15 +1122,16 @@ function renderProgress() {
   }
   $('#stat-sent').textContent = sent;
   $('#stat-replied').textContent = replied;
-  const pct = Math.round((momentum / MAX_MOMENTUM) * 100);
+  $('#stat-total').textContent = items.length;
+  const pct = Math.round((momentum / MAX_M) * 100);
   $('#progress-fill').style.width = pct + '%';
   $('#progress-pct').textContent = pct + '%';
-  $('#progress-momentum').textContent = momentum + ' / ' + MAX_MOMENTUM;
+  $('#progress-momentum').textContent = momentum + ' / ' + MAX_M;
 }
 
 function cardHtml(item) {
   const blockColor = BLOCK_COLORS[item.block] || 'var(--accent)';
-  const ask = ASK_LABELS[item.ask_type] || item.ask_type;
+  const ask = ASK_LABELS[item.ask_type] || item.ask_type || 'recommend';
   const status = statusFor(item.id);
   const isSent = ['sent','replied','intro_scheduled','offer','accepted','declined','skipped'].includes(status);
   const liUrl = linkedinFor(item);
@@ -1352,24 +1143,19 @@ function cardHtml(item) {
 
   const chips = [];
   chips.push(`<span class="chip chip-ask">${escapeHtml(ask)}</span>`);
-  if (item.degree === 1) chips.push(`<span class="chip chip-1st">1st degree</span>`);
-  if (item.degree === 2) chips.push(`<span class="chip chip-2nd">2nd degree</span>`);
+  if (item._is_product_role) chips.push(`<span class="chip chip-matched">📊 product role match</span>`);
+  if (item.degree === 1) chips.push(`<span class="chip">1st degree</span>`);
+  if (item.degree === 2) chips.push(`<span class="chip">2nd degree</span>`);
   if (item.message_available) chips.push(`<span class="chip">DMs open</span>`);
-  if (item.andrey_direct_mutual) chips.push(`<span class="chip">strong mutual</span>`);
   if (item.relocation) chips.push(`<span class="chip chip-relocate">📍 ${escapeHtml(item.relocation)}</span>`);
   if (item.salary_note) chips.push(`<span class="chip chip-salary">${escapeHtml(item.salary_note)}</span>`);
   if (item.custom_message) chips.push(`<span class="chip chip-personal">personalised</span>`);
   if (item.job_urls && item.job_urls.length) chips.push(`<span class="chip chip-jobs">${item.job_urls.length} job URL${item.job_urls.length > 1 ? 's' : ''}</span>`);
 
-  // Smart channel actions
   const channels = channelsFor(item);
   const channelButtons = channels.map((ch, i) => {
-    const isPrimary = i === 0;
-    const cls = isPrimary ? 'btn btn-primary send-btn' : 'btn send-btn';
-    return `<button class="${cls}" data-id="${item.id}" data-channel="${ch.id}">
-      ${ch.svg}
-      ${isPrimary ? 'Send via ' : ''}${ch.label}
-    </button>`;
+    const cls = i === 0 ? 'btn btn-primary send-btn' : 'btn send-btn';
+    return `<button class="${cls}" data-id="${item.id}" data-channel="${ch.id}">${ch.svg}${i === 0 ? 'Send via ' : ''}${ch.label}</button>`;
   }).join('');
 
   const jobUrlsHtml = (item.job_urls && item.job_urls.length) ? `
@@ -1379,18 +1165,14 @@ function cardHtml(item) {
     </div>` : '';
 
   const notesHtml = item.andrey_notes ? `
-    <div class="notes">
-      <span class="notes-label">Note</span>${escapeHtml(item.andrey_notes)}
-    </div>` : '';
+    <div class="notes"><span class="notes-label">Note</span>${escapeHtml(item.andrey_notes)}</div>` : '';
 
-  // Add-URL inline input for unidentified contacts
   const addUrlHtml = needsInput ? `
     <div class="add-url">
       <input class="add-url-input" type="url" placeholder="paste LinkedIn URL here" data-id="${item.id}" />
       <button class="add-url-btn" data-id="${item.id}">Save URL</button>
     </div>` : '';
 
-  // Open roles section for this company
   let rolesHtml = '';
   if (companyRoles && companyRoles.roles && companyRoles.roles.length > 0) {
     const rolesItems = companyRoles.roles.map((r, idx) => `
@@ -1403,27 +1185,15 @@ function cardHtml(item) {
         </p>
         ${r.note ? `<p class="role-meta" style="opacity:0.7;">${escapeHtml(r.note)}</p>` : ''}
         <div class="role-actions">
-          <a class="btn" href="${escapeHtml(r.url)}" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            View role
-          </a>
-          <button class="btn btn-primary role-send-btn" data-item="${item.id}" data-role-idx="${idx}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            Send referral for this role
-          </button>
+          <a class="btn" href="${escapeHtml(r.url)}" target="_blank" rel="noopener">View role</a>
+          <button class="btn btn-primary role-send-btn" data-item="${item.id}" data-role-idx="${idx}">Send referral for this role</button>
         </div>
-      </div>
-    `).join('');
+      </div>`).join('');
     rolesHtml = `
     <div class="open-roles" data-roles-for="${item.id}">
       <div class="open-roles-head" onclick="this.parentElement.classList.toggle('open')">
-        <div class="open-roles-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          ${companyRoles.roles.length} open role${companyRoles.roles.length > 1 ? 's' : ''} at ${escapeHtml(companyRoles.company)}
-        </div>
-        <span class="open-roles-toggle">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </span>
+        <div class="open-roles-title">${companyRoles.roles.length} open role${companyRoles.roles.length > 1 ? 's' : ''} at ${escapeHtml(companyRoles.company)}</div>
+        <span class="open-roles-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
       </div>
       <div class="open-roles-body">
         ${rolesItems}
@@ -1437,11 +1207,11 @@ function cardHtml(item) {
   const roleStr = role && company ? `<strong>${escapeHtml(role)}</strong> · ${escapeHtml(company)}` : (role || company);
 
   return `
-    <article class="card ${isSent ? 'is-sent' : ''}" style="--block-color: ${blockColor};" data-id="${item.id}" data-block="${item.block}" data-status="${status}">
+    <article class="card ${isSent ? 'is-sent' : ''}" style="--block-color: ${blockColor};" data-id="${item.id}">
       <div class="card-stripe"></div>
       <div class="card-head">
         <div class="card-meta-top">
-          <span class="card-prio">priority <strong>${item.priority}</strong></span>
+          <span class="card-prio">#<strong>${item.priority}</strong></span>
           <span>${escapeHtml(item.id)}</span>
         </div>
         <h2 class="card-name ${needsInput ? 'card-name-needs-input' : ''}">${escapeHtml(item.name)}</h2>
@@ -1471,162 +1241,144 @@ function cardHtml(item) {
     </article>`;
 }
 
-function blockDivider(block, count) {
-  return `
-    <div class="block-divider" style="--block-color: ${BLOCK_COLORS[block]};">
-      <span class="block-divider-title">${escapeHtml(BLOCK_NAMES[block])}</span>
-      <span class="block-divider-count">${count}</span>
-      <span class="block-divider-line"></span>
-    </div>`;
+function blockDivider(label, count, color) {
+  return `<div class="block-divider" style="--block-color: ${color};">
+    <span class="block-divider-title">${escapeHtml(label)}</span>
+    <span class="block-divider-count">${count}</span>
+    <span class="block-divider-line"></span>
+  </div>`;
 }
 
 function renderGrid() {
   const items = visibleItems();
   const grid = $('#grid');
+  const referrer = getReferrer();
+  if (!referrer) { grid.innerHTML = ''; return; }
   if (items.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🪜</div>
-        <p>No items match your filters.</p>
-      </div>`;
+    if (referrer.useAndreyPlan) {
+      grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎯</div><p>No items match your filter.</p></div>`;
+    } else if (loadNetwork().length === 0) {
+      grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📤</div><p>Drop your LinkedIn Connections CSV above to see your matched network.</p></div>`;
+    } else {
+      grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No matches in your network for Evgeny's target companies — try uploading a fresh CSV.</p></div>`;
+    }
     return;
   }
-  // Group by block
-  const byBlock = {};
-  for (const it of items) {
-    (byBlock[it.block] = byBlock[it.block] || []).push(it);
-  }
-  const blockOrder = ['recruiters','banks','companies','telegram_ecosystem'];
-  let html = '';
-  for (const b of blockOrder) {
-    if (!byBlock[b]) continue;
-    html += blockDivider(b, byBlock[b].length);
-    html += byBlock[b].map(cardHtml).join('');
-  }
-  grid.innerHTML = html;
 
-  // Wire up handlers
-  grid.querySelectorAll('.copy-btn').forEach(btn => {
-    btn.addEventListener('click', () => copy(btn.dataset.msg, btn));
-  });
-  grid.querySelectorAll('.status-select').forEach(sel => {
-    sel.addEventListener('change', e => setStatus(sel.dataset.id, sel.value));
-  });
+  // Group: Andrey uses block; CSV-mode groups by company
+  if (referrer.useAndreyPlan) {
+    const byBlock = {};
+    for (const it of items) (byBlock[it.block] = byBlock[it.block] || []).push(it);
+    const order = ['recruiters','banks','companies','telegram_ecosystem'];
+    const NAMES = { recruiters:'Recruiters', banks:'Banks', companies:'Companies', telegram_ecosystem:'Telegram ecosystem' };
+    let html = '';
+    for (const b of order) {
+      if (!byBlock[b]) continue;
+      html += blockDivider(NAMES[b], byBlock[b].length, BLOCK_COLORS[b]);
+      html += byBlock[b].map(cardHtml).join('');
+    }
+    grid.innerHTML = html;
+  } else {
+    // Group by company, sorted by open-roles-first
+    const byCompany = {};
+    for (const it of items) (byCompany[it.company] = byCompany[it.company] || []).push(it);
+    const companies = Object.keys(byCompany).sort((a, b) => {
+      const ar = (findRoles(a)?.roles?.length || 0);
+      const br = (findRoles(b)?.roles?.length || 0);
+      if (ar !== br) return br - ar;
+      return a.localeCompare(b);
+    });
+    let html = '';
+    for (const co of companies) {
+      const has = (findRoles(co)?.roles?.length || 0) > 0;
+      const color = has ? 'var(--accent-2)' : 'var(--accent)';
+      const label = has ? `${co} · open roles available` : co;
+      html += blockDivider(label, byCompany[co].length, color);
+      html += byCompany[co].map(cardHtml).join('');
+    }
+    grid.innerHTML = html;
+  }
+
+  // Wire up
+  grid.querySelectorAll('.copy-btn').forEach(btn => btn.addEventListener('click', () => copy(btn.dataset.msg, btn)));
+  grid.querySelectorAll('.status-select').forEach(sel => sel.addEventListener('change', () => setStatus(sel.dataset.id, sel.value)));
   grid.querySelectorAll('.send-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const item = ITEMS.find(x => x.id === btn.dataset.id);
+      const item = currentItems().find(x => x.id === btn.dataset.id);
+      if (!item) return;
       sendVia(item, btn.dataset.channel);
-      // Auto-update status to in_progress if it was not_started
       if (statusFor(item.id) === 'not_started') {
         state[item.id] = { ...(state[item.id] || {}), status: 'in_progress', updatedAt: new Date().toISOString() };
         saveState();
         renderProgress();
-        // Update select without full re-render
         const sel = grid.querySelector(`.status-select[data-id="${item.id}"]`);
         if (sel) sel.value = 'in_progress';
       }
     });
   });
-  // Add-URL handlers
   grid.querySelectorAll('.add-url-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
       const input = grid.querySelector(`.add-url-input[data-id="${id}"]`);
       const url = (input.value || '').trim();
-      if (!url || !url.startsWith('http')) {
-        showToast('Paste a valid LinkedIn URL (https://...)');
-        return;
-      }
+      if (!url || !url.startsWith('http')) { showToast('Paste a valid LinkedIn URL'); return; }
       addedUrls[id] = url;
       saveAddedUrls();
       renderAll();
       showToast('LinkedIn URL saved');
     });
   });
-  // Per-role send-referral buttons
   grid.querySelectorAll('.role-send-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const item = ITEMS.find(x => x.id === btn.dataset.item);
+      const item = currentItems().find(x => x.id === btn.dataset.item);
       const companyRoles = findRoles(item.company);
       const role = companyRoles.roles[parseInt(btn.dataset.roleIdx)];
-      const customMsg = generateRoleReferral(item, role);
-      navigator.clipboard.writeText(customMsg).catch(() => {});
-      // Open the LinkedIn profile or search to pick the recipient
+      const r = getReferrer();
+      const msg = generateRoleReferral(item, role, r ? r.name : 'A friend');
+      navigator.clipboard.writeText(msg).catch(() => {});
       const li = linkedinFor(item);
       const url = li || `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(item.name + ' ' + (item.company || ''))}`;
       window.open(url, '_blank');
-      // Also open the role posting itself for context
       window.open(role.url, '_blank');
-      showToast(`Referral for "${role.title.slice(0, 40)}..." copied — paste in LinkedIn`);
+      showToast(`Referral for "${role.title.slice(0, 40)}..." copied`);
     });
   });
 }
 
 function renderAll() {
-  renderGrid();
+  state = loadState();
+  addedUrls = loadAddedUrls();
   renderProgress();
+  renderGrid();
 }
-
-// Filter wiring
-document.querySelectorAll('[data-filter-block]').forEach(b => {
-  b.addEventListener('click', () => {
-    document.querySelectorAll('[data-filter-block]').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    filters.block = b.dataset.filterBlock;
-    renderAll();
-  });
-});
-document.querySelectorAll('[data-filter-status]').forEach(b => {
-  b.addEventListener('click', () => {
-    document.querySelectorAll('[data-filter-status]').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    filters.status = b.dataset.filterStatus;
-    renderAll();
-  });
-});
 
 /* ─── Guided sequence ─── */
-let seqQueue = [];
-let seqIdx = 0;
-
+let seqQueue = []; let seqIdx = 0;
 function startSequence() {
-  // Take currently visible, not-yet-sent items in priority order
-  seqQueue = visibleItems().filter(item => {
-    const s = statusFor(item.id);
+  seqQueue = visibleItems().filter(it => {
+    const s = statusFor(it.id);
     return !['sent','replied','intro_scheduled','offer','accepted','skipped','declined'].includes(s);
   });
-  if (seqQueue.length === 0) {
-    showToast('Nothing to send in current filter');
-    return;
-  }
-  seqIdx = 0;
-  showSeqStep();
-  $('#seq-panel').classList.add('show');
+  if (seqQueue.length === 0) { showToast('Nothing to send in current filter'); return; }
+  seqIdx = 0; showSeqStep(); $('#seq-panel').classList.add('show');
 }
-
 function showSeqStep() {
   const item = seqQueue[seqIdx];
   if (!item) return endSequence();
   const channels = channelsFor(item);
   const primary = channels[0];
-  const { url, prefilled, hint } = urlFor(item, primary.id);
-
+  const { url, hint } = urlFor(item, primary.id);
   $('#seq-pos').textContent = seqIdx + 1;
   $('#seq-total').textContent = seqQueue.length;
   $('#seq-channel').textContent = primary.label;
   $('#seq-name').textContent = item.name;
   $('#seq-meta').innerHTML = `${escapeHtml(item.role || '')}${item.company ? ' · <strong>' + escapeHtml(item.company) + '</strong>' : ''}`;
   $('#seq-hint').innerHTML = hint;
-  $('#seq-progress-fill').style.width = ((seqIdx) / seqQueue.length * 100) + '%';
-
-  // Copy message to clipboard and open tab
+  $('#seq-progress-fill').style.width = (seqIdx / seqQueue.length * 100) + '%';
   navigator.clipboard.writeText(item._message).catch(() => {});
   const win = window.open(url, '_blank');
-  if (!win) {
-    $('#seq-hint').innerHTML = '⚠ <strong>Popup blocked.</strong> Allow popups for this site in your browser address bar, then click ✓ Sent — next to advance.';
-  }
+  if (!win) { $('#seq-hint').innerHTML = '⚠ <strong>Popup blocked.</strong> Allow popups, then click ✓ Sent — next.'; }
 }
-
 function endSequence() {
   $('#seq-panel').classList.remove('show');
   $('#seq-progress-fill').style.width = '100%';
@@ -1635,30 +1387,161 @@ function endSequence() {
   renderAll();
 }
 
-// LinkedIn live search — Enter opens results in new tab
-$('#li-search').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && e.target.value.trim()) {
-    const url = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(e.target.value.trim())}`;
-    window.open(url, '_blank');
+/* ─── UI state management ─── */
+function showWelcome() {
+  $('#welcome').style.display = 'block';
+  $('#hero').style.display = 'none';
+  $('#upload-card').style.display = 'none';
+  $('#li-search-wrap').style.display = 'none';
+  $('#filter-bar').style.display = 'none';
+  $('#footer').style.display = 'none';
+  $('#grid').innerHTML = '';
+}
+function showActive() {
+  const r = getReferrer();
+  $('#welcome').style.display = 'none';
+  $('#hero').style.display = 'grid';
+  $('#li-search-wrap').style.display = 'flex';
+  $('#filter-bar').style.display = 'flex';
+  $('#footer').style.display = 'block';
+  // CSV upload only for non-Andrey users without uploaded network
+  const showUpload = !r.useAndreyPlan && loadNetwork().length === 0;
+  $('#upload-card').style.display = showUpload ? 'block' : 'none';
+  // Hero title and mode
+  if (r.useAndreyPlan) {
+    $('#hero-mode').textContent = "Andrey's mission";
+    $('#hero-title').textContent = "23 asks. One trusted CPO.";
+    $('#hero-sub').textContent = "Each card below is one specific outreach Evgeny asked you for.";
+  } else {
+    const netCount = loadNetwork().length;
+    if (netCount > 0) {
+      $('#hero-mode').textContent = `${r.name}'s referrals`;
+      $('#hero-title').textContent = `Your network → Evgeny's targets`;
+      $('#hero-sub').textContent = `Matched ${netCount} of your connections against ${TARGET_COMPANIES.length} companies on Evgeny's list.`;
+    } else {
+      $('#hero-mode').textContent = `${r.name}'s referrals`;
+      $('#hero-title').textContent = `Help Evgeny — your way`;
+      $('#hero-sub').textContent = `Upload your LinkedIn Connections CSV below, or browse Evgeny's target companies directly.`;
+    }
   }
-});
+  renderAll();
+}
 
-$('#start-sequence').addEventListener('click', startSequence);
-$('#seq-sent').addEventListener('click', () => {
-  const item = seqQueue[seqIdx];
-  if (item) setStatus(item.id, 'sent');
-  seqIdx++;
-  if (seqIdx >= seqQueue.length) endSequence();
-  else showSeqStep();
-});
-$('#seq-skip').addEventListener('click', () => {
-  seqIdx++;
-  if (seqIdx >= seqQueue.length) endSequence();
-  else showSeqStep();
-});
-$('#seq-stop').addEventListener('click', endSequence);
+/* ─── CSV upload ─── */
+function handleCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const network = parseCSV(text);
+    if (network.length === 0) {
+      showToast('⚠ Could not parse CSV — is it the LinkedIn Connections export?');
+      return;
+    }
+    saveNetwork(network);
+    showActive();
+    const matched = matchNetworkToCompanies(network);
+    const totalMatches = matched.reduce((s, m) => s + m.contacts.length, 0);
+    showToast(`Imported ${network.length} connections · ${totalMatches} match Evgeny's targets`);
+  };
+  reader.readAsText(file);
+}
 
-renderAll();
+/* ─── Event wiring ─── */
+function init() {
+  // Setup form
+  $('#setup-go').addEventListener('click', () => {
+    const name = $('#setup-name').value.trim();
+    if (!name) { showToast('Please enter your name'); $('#setup-name').focus(); return; }
+    setReferrer({
+      name: name,
+      linkedin: $('#setup-linkedin').value.trim(),
+      useAndreyPlan: false,
+      createdAt: new Date().toISOString(),
+    });
+    showActive();
+  });
+  $('#setup-andrey').addEventListener('click', () => {
+    setReferrer({
+      name: 'Andrey Kazarinov',
+      linkedin: '',
+      useAndreyPlan: true,
+      createdAt: new Date().toISOString(),
+    });
+    showActive();
+  });
+
+  // Hero controls
+  $('#hero-edit').addEventListener('click', () => {
+    const r = getReferrer();
+    const newName = prompt('Your name?', r?.name || '');
+    if (newName) {
+      const newLi = prompt('Your LinkedIn URL? (optional)', r?.linkedin || '') || '';
+      setReferrer({ ...r, name: newName, linkedin: newLi });
+      showActive();
+    }
+  });
+  $('#hero-reset').addEventListener('click', () => {
+    if (!confirm('Reset all status / network for this referrer? Your profile stays.')) return;
+    state = {}; addedUrls = {}; saveState(); saveAddedUrls(); saveNetwork([]);
+    renderAll();
+    showToast('Reset done');
+  });
+
+  // CSV upload
+  const dz = $('#upload-card');
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragging'); }));
+  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragging'); }));
+  dz.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file) handleCSVFile(file);
+  });
+  $('#upload-pick').addEventListener('click', () => $('#csv-input').click());
+  $('#csv-input').addEventListener('change', e => {
+    const f = e.target.files[0]; if (f) handleCSVFile(f);
+  });
+  $('#upload-skip').addEventListener('click', () => {
+    saveNetwork([]); // no-op: stay empty
+    $('#upload-card').style.display = 'none';
+    renderAll();
+  });
+
+  // Filters
+  document.querySelectorAll('[data-filter-status]').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter-status]').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      filters.status = b.dataset.filterStatus;
+      renderAll();
+    });
+  });
+
+  // LinkedIn live search
+  $('#li-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.value.trim()) {
+      window.open(`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(e.target.value.trim())}`, '_blank');
+    }
+  });
+
+  // Sequence
+  $('#start-sequence').addEventListener('click', startSequence);
+  $('#seq-sent').addEventListener('click', () => {
+    const item = seqQueue[seqIdx];
+    if (item) setStatus(item.id, 'sent');
+    seqIdx++;
+    if (seqIdx >= seqQueue.length) endSequence(); else showSeqStep();
+  });
+  $('#seq-skip').addEventListener('click', () => {
+    seqIdx++;
+    if (seqIdx >= seqQueue.length) endSequence(); else showSeqStep();
+  });
+  $('#seq-stop').addEventListener('click', endSequence);
+}
+
+/* ─── Boot ─── */
+init();
+const r = getReferrer();
+if (!r) showWelcome();
+else showActive();
 </script>
 </body>
 </html>
