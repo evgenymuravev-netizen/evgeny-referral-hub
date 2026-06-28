@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>АСУЗ · Прототип системы управления магазином «Пятёрочка»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%23E5231B'/><text x='16' y='23' font-size='20' font-weight='800' font-style='italic' fill='white' text-anchor='middle' font-family='Arial'>5</text></svg>">
+</head>
+<body>
+<div class="app nav-open">
+  <!-- Sidebar -->
+  <aside class="side">
+    <div class="side__logo">
+      <span class="logo5"><b>5</b></span>
+      <span class="wordmark">Пятёрочка</span>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side__foot">
+      <a href="index.html" class="collapse-btn" style="text-decoration:none">
+        <span class="ic" style="display:grid;place-items:center;width:22px">←</span>
+        <span class="lbl">К истории Moneyball</span>
+      </a>
+      <button class="collapse-btn" onclick="toggleNav()">
+        <span class="ic" style="display:grid;place-items:center;width:22px">«</span>
+        <span class="lbl">Свернуть меню</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar__title"><span id="topTitle"></span></div>
+      <div class="topbar__user" id="topUser"></div>
+    </header>
+    <main class="content"><div id="view"></div></main>
+  </div>
+</div>
+
+<!-- Task detail drawer -->
+<div class="drawer-back" id="drawerBack" onclick="closeTask()"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

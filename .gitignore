@@ -7,7 +7,7 @@
 __pycache__/
 *.pyc
 
-# Skill-local runtime
+# Skill-local runtime (root only — keep nested asset dirs like 5ka/assets tracked)
 sent_log.jsonl
 drafts/
-assets/
+/assets/
