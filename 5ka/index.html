@@ -27,25 +27,24 @@ a{color:inherit;text-decoration:none}
 .btn-dark{background:var(--ink);color:#fff}
 .btn-dark:hover{transform:translateY(-1px)}
 
-/* topnav */
 .nav{position:sticky;top:0;z-index:50;background:rgba(23,63,29,.92);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.08)}
 .nav .wrap{display:flex;align-items:center;gap:14px;height:64px}
 .brand{display:flex;align-items:center;gap:11px;color:#fff;font-weight:800;font-size:17px}
 .logo5{width:36px;height:36px;border-radius:50%;background:var(--red);display:grid;place-items:center;flex:0 0 auto}
 .logo5 b{color:#fff;font-weight:900;font-size:19px;font-style:italic;transform:translateY(-1px)}
-.nav .links{margin-left:auto;display:flex;gap:26px;align-items:center}
+.nav .links{margin-left:auto;display:flex;gap:24px;align-items:center}
 .nav .links a{color:rgba(255,255,255,.82);font-weight:600;font-size:14px}
 .nav .links a:hover{color:#fff}
 .nav .cta{background:var(--lime);color:#143a18;padding:9px 18px;border-radius:10px;font-weight:700;font-size:14px}
-@media(max-width:780px){.nav .links a:not(.cta){display:none}}
+.lang-toggle{display:inline-flex;border:1px solid rgba(255,255,255,.4);border-radius:8px;overflow:hidden}
+.lang-toggle button{background:transparent;border:0;color:rgba(255,255,255,.85);padding:7px 11px;font-weight:800;font-size:12px;cursor:pointer;letter-spacing:.03em}
+.lang-toggle button.active{background:var(--lime);color:#143a18}
+@media(max-width:840px){.nav .links a:not(.cta){display:none}}
 
-/* hero */
 .hero{position:relative;overflow:hidden;color:#fff;
-  background:radial-gradient(1100px 600px at 80% -10%,rgba(158,214,79,.22),transparent 60%),
-             linear-gradient(160deg,#22662a,#173f1d 70%)}
+  background:radial-gradient(1100px 600px at 80% -10%,rgba(158,214,79,.22),transparent 60%),linear-gradient(160deg,#22662a,#173f1d 70%)}
 .hero .wrap{padding:88px 24px 96px;position:relative;z-index:2}
-.eyebrow{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
-  padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.01em;margin-bottom:26px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:26px}
 .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 4px rgba(158,214,79,.25)}
 .hero h1{font-size:clamp(34px,5.4vw,62px);font-weight:900;line-height:1.04;letter-spacing:-.02em;max-width:14ch}
 .hero h1 em{font-style:normal;color:var(--lime)}
@@ -58,7 +57,6 @@ a{color:inherit;text-decoration:none}
 .stat .l{color:rgba(255,255,255,.7);font-size:13.5px;margin-top:4px}
 .hero-orb{position:absolute;border-radius:50%;filter:blur(2px);opacity:.5}
 
-/* section scaffolding */
 section{padding:88px 0}
 .kicker{color:var(--brand);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
 .h2{font-size:clamp(26px,3.4vw,40px);font-weight:900;letter-spacing:-.02em;line-height:1.1}
@@ -66,11 +64,9 @@ section{padding:88px 0}
 .center{text-align:center;margin:0 auto}
 .center .lead{margin-left:auto;margin-right:auto}
 
-/* reveal — only hidden when JS is active (graceful fallback otherwise) */
 .js .reveal{opacity:0;transform:translateY(22px);transition:.7s cubic-bezier(.2,.7,.2,1)}
 .js .reveal.in{opacity:1;transform:none}
 
-/* problem grid */
 .alt{background:#fff}
 .prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
 @media(max-width:880px){.prob-grid{grid-template-columns:1fr 1fr}}
@@ -80,19 +76,16 @@ section{padding:88px 0}
 .prob h3{font-size:17px;margin-bottom:8px}
 .prob p{color:var(--muted);font-size:14px}
 
-/* seven processes */
 .proc7{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:40px}
 @media(max-width:1024px){.proc7{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:560px){.proc7{grid-template-columns:repeat(2,1fr)}}
 .proct{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 12px;text-align:center}
 .proct .ic{font-size:26px}.proct h4{font-size:13px;margin:9px 0 5px}.proct p{font-size:11px;color:var(--muted);line-height:1.4}
 
-/* moneyball analogy */
 .mb{background:linear-gradient(160deg,#1e2a3d,#0f1726);color:#fff}
 .mb .grid{display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:center}
 @media(max-width:860px){.mb .grid{grid-template-columns:1fr;gap:34px}}
-.mb .h2{color:#fff}
-.mb .lead{color:rgba(255,255,255,.78)}
+.mb .h2{color:#fff}.mb .lead{color:rgba(255,255,255,.78)}
 .mb .quote{border-left:3px solid var(--lime);padding:14px 0 14px 22px;margin-top:26px;font-size:19px;font-style:italic;color:rgba(255,255,255,.92);line-height:1.5}
 .mb .vs{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:30px}
 .vs-row{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.09)}
@@ -102,28 +95,23 @@ section{padding:88px 0}
 .vs-row .a{color:#ff9b8a;font-weight:700}.vs-row .b{color:var(--lime);font-weight:700}
 .vs-row .ar{color:rgba(255,255,255,.4);font-size:18px}
 
-/* pipeline / stages */
-.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:50px;counter-reset:s}
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:50px}
 @media(max-width:900px){.pipe{grid-template-columns:1fr;gap:14px}}
 .stage{position:relative;padding:0 18px}
 .stage:not(:last-child)::after{content:'→';position:absolute;right:-10px;top:30px;color:var(--brand);font-size:22px;font-weight:800}
 @media(max-width:900px){.stage:not(:last-child)::after{content:'↓';right:auto;left:30px;top:auto;bottom:-22px}}
 .stage .n{width:54px;height:54px;border-radius:14px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:900;font-size:18px;box-shadow:0 8px 20px rgba(61,160,70,.3)}
-.stage h4{font-size:16px;margin:16px 0 8px}
-.stage p{color:var(--muted);font-size:13.5px}
+.stage h4{font-size:16px;margin:16px 0 8px}.stage p{color:var(--muted);font-size:13.5px}
 
-/* script blocks preview */
 .blocks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:40px}
 .blk{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;border-top:3px solid var(--c,#3DA046)}
-.blk h4{font-size:14px;margin-bottom:4px}
-.blk .meta{font-size:11.5px;color:var(--muted)}
+.blk h4{font-size:14px;margin-bottom:4px}.blk .meta{font-size:11.5px;color:var(--muted)}
 .blk .cnt{display:inline-block;margin-top:10px;font-size:11px;font-weight:700;color:var(--brand-dark);background:#eaf6ec;padding:3px 9px;border-radius:999px}
 
-/* metrics teaser */
 .metric-cards{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:18px;margin-top:42px}
 @media(max-width:860px){.metric-cards{grid-template-columns:1fr}}
 .mcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 4px 18px rgba(16,24,40,.05)}
-.mcard h4{font-size:13.5px;color:var(--muted);font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between}
+.mcard h4{font-size:13.5px;color:var(--muted);font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;gap:10px}
 .mrow{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid var(--line)}
 .mrow:first-of-type{border-top:0}
 .mrow .v{font-weight:800;font-size:17px}
@@ -134,12 +122,10 @@ section{padding:88px 0}
 .loss{font-size:30px;font-weight:900;color:#e5392f}
 .shot-note{color:var(--muted);font-size:13px;text-align:center;margin-top:18px}
 
-/* CTA */
 .cta{background:linear-gradient(160deg,#22662a,#173f1d);color:#fff;text-align:center}
 .cta .h2{color:#fff}.cta .lead{color:rgba(255,255,255,.82)}
 .cta .actions{margin-top:30px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 
-/* footer */
 footer{background:#0f1726;color:rgba(255,255,255,.6);padding:40px 0;font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
 footer a{color:var(--lime)}
@@ -150,169 +136,146 @@ footer a{color:var(--lime)}
 <script>document.documentElement.className='js';</script>
 <body>
 
-<!-- NAV -->
 <nav class="nav">
   <div class="wrap">
-    <a href="#top" class="brand"><span class="logo5"><b>5</b></span> Пятёрочка · АСУЗ</a>
+    <a href="#top" class="brand"><span class="logo5"><b>5</b></span> <span data-i18n="brand">Пятёрочка · АСУЗ</span></a>
     <div class="links">
-      <a href="#problem">Проблема</a>
+      <a href="#problem" data-i18n="nav_problem">Проблема</a>
       <a href="#moneyball">Moneyball</a>
-      <a href="#system">Система</a>
-      <a href="#metrics">Показатели</a>
-      <a href="app.html" class="cta">Открыть прототип →</a>
+      <a href="#system" data-i18n="nav_system">Система</a>
+      <a href="#metrics" data-i18n="nav_metrics">Показатели</a>
+      <a href="app.html" class="cta" data-i18n="nav_open">Открыть прототип →</a>
+      <div class="lang-toggle">
+        <button data-lang="ru" onclick="setLang('ru')">RU</button>
+        <button data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
     </div>
   </div>
 </nav>
 
-<!-- HERO -->
 <header class="hero" id="top">
   <div class="hero-orb" style="width:300px;height:300px;background:rgba(158,214,79,.18);top:-60px;right:8%"></div>
   <div class="hero-orb" style="width:200px;height:200px;background:rgba(158,214,79,.12);bottom:40px;left:5%"></div>
   <div class="wrap">
-    <span class="eyebrow"><span class="dot"></span>История продукта · от идеи к работающей системе</span>
-    <h1>Moneyball <em>для розницы</em></h1>
-    <p class="sub">В бейсболе <b>«Moneyball»</b> заменил интуицию скаутов на статистику — и маленький клуб начал обыгрывать гигантов. «Пятёрочка» сделала то же самое с управлением магазином: вместо потока отчётов директор получает <b>одно точное действие</b>, которое сильнее всего влияет на выручку и потери.</p>
+    <span class="eyebrow"><span class="dot"></span><span data-i18n="eyebrow">История продукта · от идеи к работающей системе</span></span>
+    <h1 data-i18n="h1">Moneyball <em>для розницы</em></h1>
+    <p class="sub" data-i18n="sub">В бейсболе <b>«Moneyball»</b> заменил интуицию скаутов на статистику — и маленький клуб начал обыгрывать гигантов. «Пятёрочка» сделала то же самое с управлением магазином: вместо потока отчётов директор получает <b>одно точное действие</b>, которое сильнее всего влияет на выручку и потери.</p>
     <div class="actions">
-      <a href="app.html" class="btn btn-lime">▶ Открыть прототип системы</a>
-      <a href="#problem" class="btn btn-ghost">Как мы к этому пришли</a>
+      <a href="app.html" class="btn btn-lime" data-i18n="heroBtn1">▶ Открыть прототип системы</a>
+      <a href="#problem" class="btn btn-ghost" data-i18n="heroBtn2">Как мы к этому пришли</a>
     </div>
-    <p class="by">Лендинг рассказывает историю (презентация «Moneyball»). Кнопка ведёт в рабочий прототип системы АСУЗ.</p>
-
+    <p class="by" data-i18n="heroBy">Лендинг рассказывает историю (презентация «Moneyball»). Кнопка ведёт в рабочий прототип системы АСУЗ.</p>
     <div class="stats">
-      <div class="stat"><div class="n" data-count="18000" data-suffix="+">0</div><div class="l">магазинов в сети</div></div>
-      <div class="stat"><div class="n" data-count="70" data-suffix="+">0</div><div class="l">скриптов-детекторов</div></div>
-      <div class="stat"><div class="n" data-count="14">0</div><div class="l">блоков процессов</div></div>
-      <div class="stat"><div class="n" data-count="7">0</div><div class="l">типов процессов магазина</div></div>
+      <div class="stat"><div class="n" data-count="18000" data-suffix="+">0</div><div class="l" data-i18n="stat1">магазинов в сети</div></div>
+      <div class="stat"><div class="n" data-count="70" data-suffix="+">0</div><div class="l" data-i18n="stat2">скриптов-детекторов</div></div>
+      <div class="stat"><div class="n" data-count="14">0</div><div class="l" data-i18n="stat3">блоков процессов</div></div>
+      <div class="stat"><div class="n" data-count="7">0</div><div class="l" data-i18n="stat4">типов процессов магазина</div></div>
     </div>
   </div>
 </header>
 
-<div class="disclaimer">
-  <div class="wrap">⚠️ <div>Прототип собран по приложенным скриншотам рабочей системы. История «Moneyball», «альтернативный дашборд» и «семь типов процессов» реконструированы по брифу — исходные файлы (.pptx/.pdf) недоступны в облачной среде сборки. Цифры на экранах — со скриншотов.</div></div>
-</div>
+<div class="disclaimer"><div class="wrap">⚠️ <div data-i18n="disclaimer">Прототип собран по приложенным скриншотам рабочей системы. История «Moneyball», «альтернативный дашборд» и «семь типов процессов» реконструированы по брифу — исходные файлы (.pptx/.pdf) недоступны в облачной среде сборки. Цифры на экранах — со скриншотов.</div></div></div>
 
-<!-- PROBLEM -->
 <section id="problem" class="alt">
   <div class="wrap">
     <div class="center reveal" style="max-width:760px">
-      <div class="kicker">Глава 1 · Проблема</div>
-      <h2 class="h2">Директор магазина тонет в данных</h2>
-      <p class="lead">Магазин «Пятёрочки» — это семь типов процессов и сотни решений в день. Над директором — поток писем из инфоцентра и каскадированных задач без приоритета. Видно всё, но непонятно, за что хвататься первым.</p>
+      <div class="kicker" data-i18n="c1kicker">Глава 1 · Проблема</div>
+      <h2 class="h2" data-i18n="c1h2">Директор магазина тонет в данных</h2>
+      <p class="lead" data-i18n="c1lead">Магазин «Пятёрочки» — это семь типов процессов и сотни решений в день. Над директором — поток писем из инфоцентра и каскадированных задач без приоритета. Видно всё, но непонятно, за что хвататься первым.</p>
     </div>
     <div class="proc7 reveal" id="proc7"></div>
     <div class="prob-grid reveal" id="probGrid"></div>
   </div>
 </section>
 
-<!-- MONEYBALL -->
 <section id="moneyball" class="mb">
   <div class="wrap">
     <div class="grid">
       <div class="reveal">
-        <div class="kicker" style="color:var(--lime)">Глава 2 · Инсайт</div>
-        <h2 class="h2">Не интуиция, а данные</h2>
-        <p class="lead">Билли Бин в «Окленде» перестал доверять чутью скаутов и начал собирать недооценённых игроков по статистике. «Пятёрочка» перенесла этот принцип в розницу: ценность не в «опытном глазе», а в <b>отклонении</b> — конкретном, измеримом, найденном в данных конкретного магазина.</p>
-        <div class="quote">«Проблема не в том, что мы не видим данные. Проблема в том, что мы не превращаем их в одно следующее действие».</div>
+        <div class="kicker" style="color:var(--lime)" data-i18n="c2kicker">Глава 2 · Инсайт</div>
+        <h2 class="h2" data-i18n="c2h2">Не интуиция, а данные</h2>
+        <p class="lead" data-i18n="c2lead">Билли Бин в «Окленде» перестал доверять чутью скаутов и начал собирать недооценённых игроков по статистике. «Пятёрочка» перенесла этот принцип в розницу: ценность не в «опытном глазе», а в <b>отклонении</b> — конкретном, измеримом, найденном в данных конкретного магазина.</p>
+        <div class="quote" data-i18n="c2quote">«Проблема не в том, что мы не видим данные. Проблема в том, что мы не превращаем их в одно следующее действие».</div>
       </div>
       <div class="vs reveal">
-        <div class="vs-row">
-          <div class="side"><div class="lbl">Раньше</div><div class="a">Чутьё и опыт</div></div>
-          <div class="ar">→</div>
-          <div class="side" style="text-align:right"><div class="lbl">Стало</div><div class="b">Скрипт-детектор</div></div>
-        </div>
-        <div class="vs-row">
-          <div class="side"><div class="lbl">Раньше</div><div class="a">Поток отчётов</div></div>
-          <div class="ar">→</div>
-          <div class="side" style="text-align:right"><div class="lbl">Стало</div><div class="b">Одна задача</div></div>
-        </div>
-        <div class="vs-row">
-          <div class="side"><div class="lbl">Раньше</div><div class="a">Реакция постфактум</div></div>
-          <div class="ar">→</div>
-          <div class="side" style="text-align:right"><div class="lbl">Стало</div><div class="b">Раннее отклонение</div></div>
-        </div>
-        <div class="vs-row">
-          <div class="side"><div class="lbl">Раньше</div><div class="a">Задача без «зачем»</div></div>
-          <div class="ar">→</div>
-          <div class="side" style="text-align:right"><div class="lbl">Стало</div><div class="b">Задача → эффект</div></div>
-        </div>
+        <div class="vs-row"><div class="side"><div class="lbl" data-i18n="vsBefore">Раньше</div><div class="a" data-i18n="vs1a">Чутьё и опыт</div></div><div class="ar">→</div><div class="side" style="text-align:right"><div class="lbl" data-i18n="vsNow">Стало</div><div class="b" data-i18n="vs1b">Скрипт-детектор</div></div></div>
+        <div class="vs-row"><div class="side"><div class="lbl" data-i18n="vsBefore">Раньше</div><div class="a" data-i18n="vs2a">Поток отчётов</div></div><div class="ar">→</div><div class="side" style="text-align:right"><div class="lbl" data-i18n="vsNow">Стало</div><div class="b" data-i18n="vs2b">Одна задача</div></div></div>
+        <div class="vs-row"><div class="side"><div class="lbl" data-i18n="vsBefore">Раньше</div><div class="a" data-i18n="vs3a">Реакция постфактум</div></div><div class="ar">→</div><div class="side" style="text-align:right"><div class="lbl" data-i18n="vsNow">Стало</div><div class="b" data-i18n="vs3b">Раннее отклонение</div></div></div>
+        <div class="vs-row"><div class="side"><div class="lbl" data-i18n="vsBefore">Раньше</div><div class="a" data-i18n="vs4a">Задача без «зачем»</div></div><div class="ar">→</div><div class="side" style="text-align:right"><div class="lbl" data-i18n="vsNow">Стало</div><div class="b" data-i18n="vs4b">Задача → эффект</div></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SYSTEM -->
 <section id="system">
   <div class="wrap">
     <div class="center reveal" style="max-width:760px">
-      <div class="kicker">Глава 3 · Система</div>
-      <h2 class="h2">Так родилась АСУЗ</h2>
-      <p class="lead">Автоматизированная система управления задачами замыкает контур: данные сети → скрипты → отклонение → задача директору → измеримый эффект.</p>
+      <div class="kicker" data-i18n="c3kicker">Глава 3 · Система</div>
+      <h2 class="h2" data-i18n="c3h2">Так родилась АСУЗ</h2>
+      <p class="lead" data-i18n="c3lead">Автоматизированная система управления задачами замыкает контур: данные сети → скрипты → отклонение → задача директору → измеримый эффект.</p>
     </div>
     <div class="pipe reveal" id="pipe"></div>
-
     <div class="center reveal" style="max-width:760px;margin-top:84px">
-      <div class="kicker">14 блоков · 70+ скриптов</div>
-      <h2 class="h2" style="font-size:28px">Каждый блок ищет своё отклонение</h2>
+      <div class="kicker" data-i18n="c3kicker2">14 блоков · 70+ скриптов</div>
+      <h2 class="h2" style="font-size:28px" data-i18n="c3h2b">Каждый блок ищет своё отклонение</h2>
     </div>
     <div class="blocks reveal" id="blocks"></div>
     <div class="center" style="margin-top:34px">
-      <a href="app.html#/scripts" class="btn btn-dark">Открыть структуру скриптов в прототипе →</a>
+      <a href="app.html#/scripts" class="btn btn-dark" data-i18n="c3btn">Открыть структуру скриптов в прототипе →</a>
     </div>
   </div>
 </section>
 
-<!-- METRICS -->
 <section id="metrics" class="alt">
   <div class="wrap">
     <div class="center reveal" style="max-width:760px">
-      <div class="kicker">Глава 4 · Показатели</div>
-      <h2 class="h2">Что видит директор на экране</h2>
-      <p class="lead">Ключевые метрики магазина — РТО, выполнение плана, потери, NPS — в одном окне. Ниже фрагмент с реальными цифрами со скриншотов (магазин 22711, 31.08.2022).</p>
+      <div class="kicker" data-i18n="c4kicker">Глава 4 · Показатели</div>
+      <h2 class="h2" data-i18n="c4h2">Что видит директор на экране</h2>
+      <p class="lead" data-i18n="c4lead">Ключевые метрики магазина — РТО, выполнение плана, потери, NPS — в одном окне. Ниже фрагмент с реальными цифрами со скриншотов (магазин 22711, 31.08.2022).</p>
     </div>
     <div class="metric-cards reveal">
       <div class="mcard">
-        <h4>Основные бизнес показатели <span>Ср (31.08.2022)</span></h4>
-        <div class="mrow"><span>РТО</span><span class="v">128 503 ₽ <span class="d up">▲ 15,91%</span></span></div>
-        <div class="mrow"><span>Трафик</span><span class="v">446 чеков <span class="d up">▲ 10,95%</span></span></div>
-        <div class="mrow"><span>Средний чек</span><span class="v">288 ₽ <span class="d up">▲ 4,73%</span></span></div>
+        <h4><span data-i18n="m1title">Основные бизнес показатели</span> <span data-i18n="m1date">Ср (31.08.2022)</span></h4>
+        <div class="mrow"><span data-i18n="m_rto">РТО</span><span class="v" data-i18n="m_rto_v">128 503 ₽ <span class="d up">▲ 15,91%</span></span></div>
+        <div class="mrow"><span data-i18n="m_traffic">Трафик</span><span class="v" data-i18n="m_traffic_v">446 чеков <span class="d up">▲ 10,95%</span></span></div>
+        <div class="mrow"><span data-i18n="m_avg">Средний чек</span><span class="v" data-i18n="m_avg_v">288 ₽ <span class="d up">▲ 4,73%</span></span></div>
       </div>
       <div class="mcard">
-        <h4>Выполнение плана РТО</h4>
-        <div class="bigpct">103,58%</div>
-        <div style="color:var(--muted);font-size:12px">плана на август</div>
+        <h4><span data-i18n="m2title">Выполнение плана РТО</span></h4>
+        <div class="bigpct" data-i18n="m2pct">103,58%</div>
+        <div style="color:var(--muted);font-size:12px" data-i18n="m2sub">плана на август</div>
         <div class="bar"><span style="width:100%"></span></div>
-        <div class="mrow"><span>В деньгах</span><span class="v" style="font-size:14px">3 776 514 ₽</span></div>
-        <div class="mrow"><span>Прогноз</span><span class="v" style="font-size:14px;color:var(--brand-dark)">103,58%</span></div>
+        <div class="mrow"><span data-i18n="m2r1">В деньгах</span><span class="v" style="font-size:14px" data-i18n="m2r1v">3 776 514 ₽</span></div>
+        <div class="mrow"><span data-i18n="m2r2">Прогноз</span><span class="v" style="font-size:14px;color:var(--brand-dark)" data-i18n="m2r2v">103,58%</span></div>
       </div>
       <div class="mcard">
-        <h4>Потери <span>норматив 4,84%</span></h4>
-        <div class="loss">9,18%</div>
-        <div style="color:var(--muted);font-size:12px">за месяц · 300 590 ₽</div>
-        <div class="mrow" style="margin-top:14px"><span>NPS</span><span class="v">30%</span></div>
-        <div class="mrow"><span>CSI мотивация</span><span class="v">64%</span></div>
+        <h4><span data-i18n="m3title">Потери</span> <span data-i18n="m3norm">норматив 4,84%</span></h4>
+        <div class="loss" data-i18n="m3loss">9,18%</div>
+        <div style="color:var(--muted);font-size:12px" data-i18n="m3sub">за месяц · 300 590 ₽</div>
+        <div class="mrow" style="margin-top:14px"><span data-i18n="m3nps">NPS</span><span class="v">30%</span></div>
+        <div class="mrow"><span data-i18n="m3csi">CSI мотивация</span><span class="v">64%</span></div>
       </div>
     </div>
-    <p class="shot-note">В прототипе доступны две подачи: классические «Карточки» и сводный «Дашборд» кластера (рейтинг магазинов + тепловая карта отклонений).</p>
+    <p class="shot-note" data-i18n="shotNote">В прототипе доступны две подачи: классические «Карточки» и сводный «Дашборд» кластера (рейтинг магазинов + тепловая карта отклонений).</p>
   </div>
 </section>
 
-<!-- CTA -->
 <section class="cta">
   <div class="wrap reveal">
-    <div class="kicker" style="color:var(--lime)">Готово к клику</div>
-    <h2 class="h2">Посмотрите систему в действии</h2>
-    <p class="lead center">Аналитика магазина, задачи-отклонения с фильтрами, постановка задач и чек-листов, структура скриптов АСУЗ и альтернативный дашборд — всё кликабельно.</p>
+    <div class="kicker" style="color:var(--lime)" data-i18n="ctaKicker">Готово к клику</div>
+    <h2 class="h2" data-i18n="ctaH2">Посмотрите систему в действии</h2>
+    <p class="lead center" data-i18n="ctaLead">Аналитика магазина, задачи-отклонения с фильтрами, постановка задач и чек-листов, структура скриптов АСУЗ и альтернативный дашборд — всё кликабельно.</p>
     <div class="actions">
-      <a href="app.html" class="btn btn-lime">▶ Открыть прототип</a>
-      <a href="app.html#/tasks" class="btn btn-ghost">Сразу к задачам</a>
+      <a href="app.html" class="btn btn-lime" data-i18n="ctaBtn1">▶ Открыть прототип</a>
+      <a href="app.html#/tasks" class="btn btn-ghost" data-i18n="ctaBtn2">Сразу к задачам</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <div><b style="color:#fff">Пятёрочка · АСУЗ</b> — прототип Moneyball-подхода к управлению магазином</div>
-    <div>Прототип · <a href="app.html">app.html</a> · собран по скриншотам и брифу</div>
+    <div data-i18n="footL">Пятёрочка · АСУЗ — прототип Moneyball-подхода к управлению магазином</div>
+    <div data-i18n="footR">Прототип · <a href="app.html">app.html</a> · собран по скриншотам и брифу</div>
   </div>
 </footer>
 
@@ -320,52 +283,132 @@ footer a{color:var(--lime)}
 <script>
 const { PROCESS_TYPES, PROBLEMS, MONEYBALL_STAGES, SCRIPT_BLOCKS } = window.DB;
 const colorByProc = { sales:'#2f80ed', losses:'#e5392f', stock:'#8e5cd9', fresh:'#2e9e4f', people:'#f08c1e', service:'#0fb5ae', discipline:'#5b6b7b' };
+let LANG = localStorage.getItem('asuz_lang') || 'ru';
+const tr = (v) => (v && typeof v === 'object' && 'ru' in v) ? (v[LANG] ?? v.ru) : v;
 
-document.getElementById('proc7').innerHTML = PROCESS_TYPES.map(p=>`
-  <div class="proct"><div class="ic">${p.icon}</div><h4>${p.title}</h4><p>${p.desc}</p></div>`).join('');
+const L = {
+  ru: {
+    title:'Moneyball для розницы · АСУЗ «Пятёрочка»',
+    brand:'Пятёрочка · АСУЗ', nav_problem:'Проблема', nav_system:'Система', nav_metrics:'Показатели', nav_open:'Открыть прототип →',
+    eyebrow:'История продукта · от идеи к работающей системе',
+    h1:'Moneyball <em>для розницы</em>',
+    sub:'В бейсболе <b>«Moneyball»</b> заменил интуицию скаутов на статистику — и маленький клуб начал обыгрывать гигантов. «Пятёрочка» сделала то же самое с управлением магазином: вместо потока отчётов директор получает <b>одно точное действие</b>, которое сильнее всего влияет на выручку и потери.',
+    heroBtn1:'▶ Открыть прототип системы', heroBtn2:'Как мы к этому пришли',
+    heroBy:'Лендинг рассказывает историю (презентация «Moneyball»). Кнопка ведёт в рабочий прототип системы АСУЗ.',
+    stat1:'магазинов в сети', stat2:'скриптов-детекторов', stat3:'блоков процессов', stat4:'типов процессов магазина',
+    disclaimer:'Прототип собран по приложенным скриншотам рабочей системы. История «Moneyball», «альтернативный дашборд» и «семь типов процессов» реконструированы по брифу — исходные файлы (.pptx/.pdf) недоступны в облачной среде сборки. Цифры на экранах — со скриншотов.',
+    c1kicker:'Глава 1 · Проблема', c1h2:'Директор магазина тонет в данных',
+    c1lead:'Магазин «Пятёрочки» — это семь типов процессов и сотни решений в день. Над директором — поток писем из инфоцентра и каскадированных задач без приоритета. Видно всё, но непонятно, за что хвататься первым.',
+    c2kicker:'Глава 2 · Инсайт', c2h2:'Не интуиция, а данные',
+    c2lead:'Билли Бин в «Окленде» перестал доверять чутью скаутов и начал собирать недооценённых игроков по статистике. «Пятёрочка» перенесла этот принцип в розницу: ценность не в «опытном глазе», а в <b>отклонении</b> — конкретном, измеримом, найденном в данных конкретного магазина.',
+    c2quote:'«Проблема не в том, что мы не видим данные. Проблема в том, что мы не превращаем их в одно следующее действие».',
+    vsBefore:'Раньше', vsNow:'Стало',
+    vs1a:'Чутьё и опыт', vs1b:'Скрипт-детектор', vs2a:'Поток отчётов', vs2b:'Одна задача',
+    vs3a:'Реакция постфактум', vs3b:'Раннее отклонение', vs4a:'Задача без «зачем»', vs4b:'Задача → эффект',
+    c3kicker:'Глава 3 · Система', c3h2:'Так родилась АСУЗ',
+    c3lead:'Автоматизированная система управления задачами замыкает контур: данные сети → скрипты → отклонение → задача директору → измеримый эффект.',
+    c3kicker2:'14 блоков · 70+ скриптов', c3h2b:'Каждый блок ищет своё отклонение', c3btn:'Открыть структуру скриптов в прототипе →',
+    c4kicker:'Глава 4 · Показатели', c4h2:'Что видит директор на экране',
+    c4lead:'Ключевые метрики магазина — РТО, выполнение плана, потери, NPS — в одном окне. Ниже фрагмент с реальными цифрами со скриншотов (магазин 22711, 31.08.2022).',
+    m1title:'Основные бизнес показатели', m1date:'Ср (31.08.2022)',
+    m_rto:'РТО', m_rto_v:'128 503 ₽ <span class="d up">▲ 15,91%</span>',
+    m_traffic:'Трафик', m_traffic_v:'446 чеков <span class="d up">▲ 10,95%</span>',
+    m_avg:'Средний чек', m_avg_v:'288 ₽ <span class="d up">▲ 4,73%</span>',
+    m2title:'Выполнение плана РТО', m2pct:'103,58%', m2sub:'плана на август',
+    m2r1:'В деньгах', m2r1v:'3 776 514 ₽', m2r2:'Прогноз', m2r2v:'103,58%',
+    m3title:'Потери', m3norm:'норматив 4,84%', m3loss:'9,18%', m3sub:'за месяц · 300 590 ₽', m3nps:'NPS', m3csi:'CSI мотивация',
+    shotNote:'В прототипе доступны две подачи: классические «Карточки» и сводный «Дашборд» кластера (рейтинг магазинов + тепловая карта отклонений).',
+    ctaKicker:'Готово к клику', ctaH2:'Посмотрите систему в действии',
+    ctaLead:'Аналитика магазина, задачи-отклонения с фильтрами, постановка задач и чек-листов, структура скриптов АСУЗ и альтернативный дашборд — всё кликабельно.',
+    ctaBtn1:'▶ Открыть прототип', ctaBtn2:'Сразу к задачам',
+    footL:'Пятёрочка · АСУЗ — прототип Moneyball-подхода к управлению магазином',
+    footR:'Прототип · <a href="app.html">app.html</a> · собран по скриншотам и брифу',
+    scriptsWord:'скриптов',
+  },
+  en: {
+    title:'Moneyball for Retail · Pyaterochka ATMS',
+    brand:'Pyaterochka · ATMS', nav_problem:'Problem', nav_system:'System', nav_metrics:'Metrics', nav_open:'Open prototype →',
+    eyebrow:'Product story · from idea to a working system',
+    h1:'Moneyball <em>for retail</em>',
+    sub:'In baseball, <b>Moneyball</b> replaced scouts\' intuition with statistics — and a small-market club started beating the giants. Pyaterochka did the same for store management: instead of a stream of reports, the store director gets <b>one precise action</b> that moves revenue and losses the most.',
+    heroBtn1:'▶ Open the prototype', heroBtn2:'How we got here',
+    heroBy:'This page tells the story (the «Moneyball» deck). The button opens the working ATMS prototype.',
+    stat1:'stores in the network', stat2:'detector scripts', stat3:'process blocks', stat4:'store process types',
+    disclaimer:'Prototype built from the attached screenshots of the live system. The «Moneyball» story, the «alternative dashboard» and the «seven process types» are reconstructed from the brief — the source .pptx/.pdf files are unreachable in the build environment. Figures on the screens come from the screenshots.',
+    c1kicker:'Chapter 1 · The problem', c1h2:'The store director is drowning in data',
+    c1lead:'A Pyaterochka store is seven process types and hundreds of decisions a day. The director is buried under info-center messages and cascaded tasks with no priority. You can see everything, yet it\'s unclear what to tackle first.',
+    c2kicker:'Chapter 2 · The insight', c2h2:'Data, not intuition',
+    c2lead:'Billy Beane\'s Oakland A\'s stopped trusting scouts\' gut and started signing undervalued players by the numbers. Pyaterochka brought that principle to retail: the value isn\'t in an «experienced eye» but in a <b>deviation</b> — specific, measurable, found in a given store\'s data.',
+    c2quote:'«The problem isn\'t that we can\'t see the data. It\'s that we don\'t turn it into the one next action.»',
+    vsBefore:'Before', vsNow:'Now',
+    vs1a:'Gut & experience', vs1b:'Detector script', vs2a:'Stream of reports', vs2b:'One task',
+    vs3a:'Reacting after the fact', vs3b:'Early deviation', vs4a:'Task with no «why»', vs4b:'Task → impact',
+    c3kicker:'Chapter 3 · The system', c3h2:'And so ATMS was born',
+    c3lead:'The Automated Task Management System closes the loop: network data → scripts → deviation → task for the director → measurable impact.',
+    c3kicker2:'14 blocks · 70+ scripts', c3h2b:'Each block hunts its own deviation', c3btn:'Open the script structure in the prototype →',
+    c4kicker:'Chapter 4 · Metrics', c4h2:'What the director sees on screen',
+    c4lead:'Key store metrics — turnover, plan achievement, losses, NPS — in one place. Below is a slice with real figures from the screenshots (store 22711, 31 Aug 2022).',
+    m1title:'Key business metrics', m1date:'Wed (31 Aug 2022)',
+    m_rto:'Turnover', m_rto_v:'128,503 ₽ <span class="d up">▲ 15.91%</span>',
+    m_traffic:'Traffic', m_traffic_v:'446 receipts <span class="d up">▲ 10.95%</span>',
+    m_avg:'Average basket', m_avg_v:'288 ₽ <span class="d up">▲ 4.73%</span>',
+    m2title:'Turnover plan achievement', m2pct:'103.58%', m2sub:'of the August plan',
+    m2r1:'In money', m2r1v:'3,776,514 ₽', m2r2:'Forecast', m2r2v:'103.58%',
+    m3title:'Losses', m3norm:'target 4.84%', m3loss:'9.18%', m3sub:'this month · 300,590 ₽', m3nps:'NPS', m3csi:'CSI motivation',
+    shotNote:'The prototype offers two views: classic «Cards» and a consolidated cluster «Dashboard» (store ranking + deviation heatmap).',
+    ctaKicker:'Ready to click', ctaH2:'See the system in action',
+    ctaLead:'Store analytics, deviation-tasks with filters, task and checklist creation, the ATMS script structure and an alternative dashboard — all clickable.',
+    ctaBtn1:'▶ Open the prototype', ctaBtn2:'Straight to tasks',
+    footL:'Pyaterochka · ATMS — a prototype of the Moneyball approach to store management',
+    footR:'Prototype · <a href="app.html">app.html</a> · built from screenshots and the brief',
+    scriptsWord:'scripts',
+  },
+};
 
-document.getElementById('probGrid').innerHTML = PROBLEMS.map(p=>`
-  <div class="prob"><div class="ic">${p.icon}</div><h3>${p.title}</h3><p>${p.text}</p></div>`).join('');
-
-document.getElementById('pipe').innerHTML = MONEYBALL_STAGES.map(s=>`
-  <div class="stage"><div class="n">${s.n.replace('0','')}</div><h4>${s.title}</h4><p>${s.text}</p></div>`).join('');
-
-document.getElementById('blocks').innerHTML = SCRIPT_BLOCKS.map(b=>`
-  <a class="blk" href="app.html#/scripts" style="--c:${colorByProc[b.proc]}">
-    <h4>${b.title}</h4><div class="meta">${b.team}</div>
-    <span class="cnt">${b.scripts.length} скриптов</span>
-  </a>`).join('');
-
-/* count-up */
-function animateCount(el){
-  const target = +el.dataset.count, suffix = el.dataset.suffix||'';
-  const dur = 1200, t0 = performance.now();
-  function tick(now){
-    const p = Math.min(1,(now-t0)/dur), e = 1-Math.pow(1-p,3);
-    const val = Math.round(target*e);
-    el.textContent = new Intl.NumberFormat('ru-RU').format(val)+suffix;
-    if(p<1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
+function renderDynamic(){
+  document.getElementById('proc7').innerHTML = PROCESS_TYPES.map(p=>`
+    <div class="proct"><div class="ic">${p.icon}</div><h4>${tr(p.title)}</h4><p>${tr(p.desc)}</p></div>`).join('');
+  document.getElementById('probGrid').innerHTML = PROBLEMS.map(p=>`
+    <div class="prob"><div class="ic">${p.icon}</div><h3>${tr(p.title)}</h3><p>${tr(p.text)}</p></div>`).join('');
+  document.getElementById('pipe').innerHTML = MONEYBALL_STAGES.map(s=>`
+    <div class="stage"><div class="n">${s.n}</div><h4>${tr(s.title)}</h4><p>${tr(s.text)}</p></div>`).join('');
+  document.getElementById('blocks').innerHTML = SCRIPT_BLOCKS.map(b=>`
+    <a class="blk" href="app.html#/scripts" style="--c:${colorByProc[b.proc]}">
+      <h4>${tr(b.title)}</h4><div class="meta">${b.team}</div>
+      <span class="cnt">${b.scripts.length} ${L[LANG].scriptsWord}</span></a>`).join('');
 }
-/* reveal + counters on scroll */
+function applyLang(){
+  document.documentElement.setAttribute('lang', LANG);
+  document.title = L[LANG].title;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.getAttribute('data-i18n'); if(L[LANG][k]!=null) el.innerHTML = L[LANG][k]; });
+  document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active', b.dataset.lang===LANG));
+  renderDynamic();
+}
+function setLang(l){ LANG=l; localStorage.setItem('asuz_lang', l); applyLang(); }
+window.setLang = setLang;
+applyLang();
+
+/* count-up + reveal */
+function animateCount(el){
+  const target = +el.dataset.count, suffix = el.dataset.suffix||'', dur=1200, t0=performance.now();
+  (function tick(now){
+    const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
+    el.textContent = new Intl.NumberFormat(LANG==='en'?'en-US':'ru-RU').format(Math.round(target*e))+suffix;
+    if(p<1) requestAnimationFrame(tick);
+  })(performance.now());
+}
 if(!('IntersectionObserver' in window)){
   document.querySelectorAll('.reveal').forEach(e=>e.classList.add('in'));
   document.querySelectorAll('[data-count]').forEach(animateCount);
-}
-const io = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){ e.target.classList.add('in');
-      e.target.querySelectorAll?.('[data-count]').forEach(animateCount);
-      io.unobserve(e.target);
-    }
+} else {
+  const io = new IntersectionObserver((es)=>{es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in');
+    e.target.querySelectorAll?.('[data-count]').forEach(animateCount); io.unobserve(e.target); } });},{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    const o=new IntersectionObserver((en)=>{en.forEach(x=>{if(x.isIntersecting){animateCount(x.target);o.unobserve(x.target);}})});
+    o.observe(el);
   });
-},{threshold:.15});
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-document.querySelectorAll('[data-count]').forEach(el=>{ // hero counts immediately
-  const obs = new IntersectionObserver((en)=>{en.forEach(x=>{if(x.isIntersecting){animateCount(x.target);obs.unobserve(x.target);}})});
-  obs.observe(el);
-});
+}
 </script>
 </body>
 </html>

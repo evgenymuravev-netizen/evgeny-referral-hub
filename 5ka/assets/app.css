@@ -82,6 +82,9 @@ button{font-family:inherit;cursor:pointer}
 .topbar__user .meta b{display:block;font-size:13.5px}
 .topbar__user .meta span{font-size:11.5px;opacity:.85}
 .avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-weight:700;font-size:14px}
+.lang-toggle{display:inline-flex;border:1px solid rgba(255,255,255,.45);border-radius:8px;overflow:hidden;margin-right:6px}
+.lang-toggle button{background:transparent;border:0;color:rgba(255,255,255,.85);padding:6px 11px;font-weight:800;font-size:12px;letter-spacing:.03em}
+.lang-toggle button.active{background:#fff;color:var(--brand-dark)}
 .content{padding:26px 32px 64px;max-width:1280px;width:100%;margin:0 auto}
 
 /* breadcrumb + page head */

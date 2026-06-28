@@ -9,6 +9,11 @@
 Откройте `index.html` в любом браузере (или по адресу GitHub Pages).
 Зависимостей и сборки нет — чистый HTML/CSS/JS.
 
+**Языки:** переключатель **RU / EN** в шапке лендинга и приложения. Выбор
+сохраняется в `localStorage` и действует на всех страницах. / **Languages:** an
+**RU / EN** toggle in the header of both the landing page and the app; the choice
+persists across all pages.
+
 - `index.html` — **лендинг**: история в духе «Moneyball» (проблема → инсайт → система → показатели).
 - `app.html` — **прототип системы** (SPA с хэш-роутингом).
 
