@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Punchline — which AI is actually funny?</title>
+<meta name="description" content="A blind pairwise arena for AI humor. Two jokes, same brief, no names until you vote. Real models, real outputs, Bradley-Terry leaderboard with confidence intervals.">
+<meta property="og:title" content="Punchline — which AI is actually funny?">
+<meta property="og:description" content="Two jokes. Same brief. No names until you vote. Real models, real outputs — and no vote exists here that a person didn't cast.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8E%A4%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#191114">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Spline+Sans+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --stage:#191114; --card:#241A20; --card2:#2C2027;
+  --spot:#FFF3DC; --marquee:#FFB53C; --curtain:#C9556B;
+  --smoke:#9C8E99; --line:#3A2C34; --ok:#8FC97E; --radius:14px;
+  --disp:"Bricolage Grotesque",sans-serif; --serif:"Source Serif 4",Georgia,serif; --mono:"Spline Sans Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--stage);color:var(--spot);font-family:var(--serif);line-height:1.55;
+  background-image:radial-gradient(ellipse 90% 55% at 50% -12%, rgba(255,181,60,.10), transparent 60%);}
+::selection{background:var(--marquee);color:var(--stage)}
+a{color:var(--marquee)}
+button{font-family:var(--mono);cursor:pointer}
+:focus-visible{outline:2px solid var(--marquee);outline-offset:3px;border-radius:6px}
+
+nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:1.2rem;
+  padding:.7rem 1.2rem;background:rgba(25,17,20,.88);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.78rem}
+nav .logo{font-family:var(--disp);font-weight:800;font-size:1.05rem;letter-spacing:.04em;color:var(--marquee);text-decoration:none}
+nav .links{margin-left:auto;display:flex;gap:1.1rem}
+nav .links a{color:var(--smoke);text-decoration:none}
+nav .links a:hover{color:var(--spot)}
+.proto-tag{border:1px solid var(--line);border-radius:99px;padding:.15rem .55rem;color:var(--smoke);font-size:.68rem}
+
+header{max-width:880px;margin:0 auto;padding:5.5rem 1.2rem 3.5rem;text-align:center}
+.marquee{display:inline-block;position:relative;padding:1.6rem 2.4rem 1.9rem;border:1px solid var(--line);
+  border-radius:18px;background:linear-gradient(180deg,#221822,#1D1319);
+  box-shadow:0 0 60px rgba(255,181,60,.07), inset 0 0 30px rgba(0,0,0,.45)}
+.bulbs{position:absolute;inset:10px;border-radius:12px;pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg, var(--marquee) 0 5px, transparent 5px 26px) top/100% 5px no-repeat,
+    repeating-linear-gradient(90deg, var(--marquee) 0 5px, transparent 5px 26px) bottom/100% 5px no-repeat,
+    repeating-linear-gradient(0deg, var(--marquee) 0 5px, transparent 5px 26px) left/5px 100% no-repeat,
+    repeating-linear-gradient(0deg, var(--marquee) 0 5px, transparent 5px 26px) right/5px 100% no-repeat;
+  opacity:.5;animation:flick 3.2s steps(2,end) infinite}
+@keyframes flick{0%,92%{opacity:.5}96%{opacity:.28}100%{opacity:.5}}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--smoke)}
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(3rem,9vw,5.4rem);letter-spacing:.02em;
+  color:var(--marquee);line-height:.95;margin:.4rem 0 .2rem;text-shadow:0 0 34px rgba(255,181,60,.35)}
+.sub{max-width:34rem;margin:1.3rem auto 0;color:var(--spot);font-size:1.06rem}
+.sub em{color:var(--smoke)}
+.cta-row{margin-top:1.8rem;display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+.btn{border-radius:10px;padding:.75rem 1.3rem;font-size:.82rem;font-weight:700;letter-spacing:.03em;border:1px solid var(--line)}
+.btn.primary{background:var(--marquee);color:#241503;border-color:var(--marquee)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.primary:disabled{opacity:.55;cursor:wait}
+.btn.ghost{background:transparent;color:var(--spot)}
+.btn.ghost:hover{border-color:var(--smoke)}
+.count-line{margin-top:1.4rem;font-family:var(--mono);font-size:.74rem;color:var(--smoke)}
+.count-line b{color:var(--spot)}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 1.2rem}
+section{padding:3.2rem 0}
+.sec-head{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--smoke);margin-bottom:1.4rem}
+.setlist{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.set{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem}
+.set .n{font-family:var(--mono);color:var(--marquee);font-size:.72rem;letter-spacing:.15em}
+.set h3{font-family:var(--disp);font-weight:600;font-size:1.02rem;margin:.45rem 0 .35rem}
+.set p{font-size:.9rem;color:var(--smoke)}
+@media(max-width:680px){.setlist{grid-template-columns:1fr}}
+
+/* lineup */
+.lineup-note{font-family:var(--mono);font-size:.74rem;color:var(--smoke);margin-bottom:1rem;max-width:44rem}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.78rem}
+th{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);text-align:left;
+  padding:.55rem .6rem;border-bottom:1px solid var(--line)}
+td{padding:.6rem .6rem;border-bottom:1px solid var(--line);color:var(--spot);vertical-align:top}
+td.model{font-weight:700}
+td .blurb{display:block;font-weight:400;font-size:.66rem;color:var(--smoke)}
+.status{display:inline-block;border-radius:99px;padding:.12rem .55rem;font-size:.64rem;border:1px solid var(--line);color:var(--smoke);white-space:nowrap}
+.status.in{border-color:var(--ok);color:var(--ok)}
+.status.live{border-color:var(--marquee);color:var(--marquee)}
+.genpanel{margin-top:1.2rem;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.2rem}
+.gen-row{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:.74rem;color:var(--smoke)}
+.gen-row select,.gen-row input{background:var(--card2);border:1px solid var(--line);color:var(--spot);
+  font-family:var(--mono);font-size:.76rem;border-radius:8px;padding:.55rem .7rem}
+.gen-row input{flex:1;min-width:220px}
+.gen-note{font-family:var(--mono);font-size:.68rem;color:var(--smoke);margin-top:.6rem;max-width:44rem}
+.gen-note label{display:inline-flex;gap:.35rem;align-items:center;cursor:pointer}
+#genLog{font-family:var(--mono);font-size:.7rem;color:var(--smoke);margin-top:.6rem;white-space:pre-wrap}
+
+/* arena */
+#arena .brief-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:1rem 1.2rem;font-family:var(--mono);font-size:.82rem;color:var(--spot);display:flex;gap:.8rem;align-items:baseline;flex-wrap:wrap}
+.brief-card .fmt{color:var(--marquee);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.7rem;
+  border:1px solid rgba(255,181,60,.4);border-radius:99px;padding:.1rem .55rem;white-space:nowrap}
+.chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.chip{background:transparent;border:1px solid var(--line);color:var(--smoke);border-radius:99px;padding:.35rem .85rem;font-size:.74rem}
+.chip[aria-pressed="true"]{background:var(--marquee);border-color:var(--marquee);color:#241503;font-weight:700}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;align-items:stretch}
+@media(max-width:760px){.pair{grid-template-columns:1fr}}
+.joke{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:1.3rem 1.3rem 1.1rem;display:flex;flex-direction:column;min-height:200px;transition:border-color .25s, box-shadow .25s}
+.joke .side{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;color:var(--smoke)}
+.joke .text{margin-top:.7rem;font-size:1.05rem;flex:1}
+.joke .text .line{display:block}
+.joke .text .spk{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--marquee)}
+.joke .text .lyr{font-style:italic}
+.joke.winner{border-color:var(--marquee);box-shadow:0 0 0 1px var(--marquee), 0 0 34px rgba(255,181,60,.18)}
+.reveal-strip{margin-top:1rem;border-top:1px dashed var(--line);padding-top:.8rem;display:none}
+.joke.revealed .reveal-strip{display:block}
+.model-chip{display:inline-block;font-family:var(--mono);font-size:.74rem;font-weight:700;
+  border-radius:99px;padding:.2rem .7rem;border:1px solid var(--line);color:var(--spot);background:var(--card2)}
+.model-chip small{font-weight:400;color:var(--smoke)}
+.prov-line{font-family:var(--mono);font-size:.62rem;color:var(--smoke);margin-top:.45rem;word-break:break-word}
+.splitbar{margin-top:.6rem;height:8px;border-radius:99px;background:var(--card2);overflow:hidden}
+.splitbar i{display:block;height:100%;width:0;background:var(--marquee);transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.split-num{font-family:var(--mono);font-size:.72rem;color:var(--smoke);margin-top:.35rem}
+.votebar{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:1rem}
+@media(max-width:560px){.votebar{grid-template-columns:1fr 1fr}}
+.votebar button{background:var(--card);border:1px solid var(--line);color:var(--spot);
+  border-radius:10px;padding:.7rem .5rem;font-size:.76rem;font-weight:500}
+.votebar button:hover{border-color:var(--marquee);color:var(--marquee)}
+.votebar button .key{display:block;font-size:.62rem;color:var(--smoke);margin-top:.2rem}
+.after-row{display:flex;gap:.6rem;margin-top:1rem;align-items:center;flex-wrap:wrap}
+.skip{background:none;border:none;color:var(--smoke);font-size:.74rem;text-decoration:underline;padding:.4rem}
+.hint{font-family:var(--mono);font-size:.7rem;color:var(--smoke);margin-top:.8rem}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);padding:1.4rem;
+  font-family:var(--mono);font-size:.8rem;color:var(--smoke);margin-top:1rem}
+.hidden{display:none !important}
+
+.meme{background:#F4EAD8;color:#221503;border-radius:10px;padding:.9rem;margin-top:.4rem}
+.meme .m-cap{font-family:var(--mono);font-weight:700;font-size:.8rem;text-align:center;text-transform:uppercase;letter-spacing:.02em}
+.meme svg{display:block;width:100%;height:auto;margin:.5rem 0}
+.meme .m-lab{font-family:var(--mono);font-size:.66rem;text-align:center;color:#6b5b40}
+
+.demo-note{font-family:var(--mono);font-size:.72rem;color:var(--smoke);border:1px dashed var(--line);
+  border-radius:10px;padding:.6rem .9rem;margin-bottom:1rem}
+tr.provisional td{opacity:.75}
+.bar{display:inline-block;vertical-align:middle;height:6px;width:70px;background:var(--card2);border-radius:99px;overflow:hidden;margin-right:.45rem}
+.bar i{display:block;height:100%;background:var(--marquee)}
+.board-tools{display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:.72rem;color:var(--smoke)}
+@media(max-width:680px){.hide-sm{display:none}}
+
+footer{border-top:1px solid var(--line);padding:2.2rem 1.2rem 3rem;margin-top:2rem}
+footer .wrap{font-family:var(--mono);font-size:.72rem;color:var(--smoke);max-width:880px}
+footer p{margin-bottom:.5rem}
+
+@media (prefers-reduced-motion: reduce){
+  .bulbs{animation:none}.splitbar i{transition:none}html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#top">PUNCHLINE</a>
+  <span class="proto-tag">v0.4 · real models · runs anywhere</span>
+  <div class="links">
+    <a href="#lineup">Lineup</a>
+    <a href="#arena">Vote</a>
+    <a href="#board">Leaderboard</a>
+  </div>
+</nav>
+
+<header id="top">
+  <div class="marquee">
+    <div class="bulbs" aria-hidden="true"></div>
+    <div class="eyebrow">A blind taste test for machine comedy</div>
+    <h1>PUNCHLINE</h1>
+  </div>
+  <p class="sub">Two jokes. Same brief. No names until you vote. Real models, real outputs — <em>and no vote exists here that a person didn't cast.</em></p>
+  <div class="cta-row">
+    <button class="btn primary" onclick="document.getElementById('arena').scrollIntoView({behavior:'smooth'})">Start voting</button>
+    <button class="btn ghost" onclick="document.getElementById('lineup').scrollIntoView({behavior:'smooth'})">See the lineup</button>
+  </div>
+  <div class="count-line"><b id="totalVotes">0</b> votes cast — all human, all yours</div>
+</header>
+
+<div class="wrap">
+<section id="how">
+  <div class="sec-head">How a vote works</div>
+  <div class="setlist">
+    <div class="set"><div class="n">STEP 1</div><h3>Read the brief</h3><p>Both jokes answer the same constrained prompt — fresh topics, so nothing can be recited from memory.</p></div>
+    <div class="set"><div class="n">STEP 2</div><h3>Vote blind</h3><p>Model names stay hidden until after you vote. Tie and “both unfunny” are honest options.</p></div>
+    <div class="set"><div class="n">STEP 3</div><h3>See the reveal</h3><p>Who wrote what — with its provenance line — plus your history with this matchup and the running Bradley-Terry scores.</p></div>
+  </div>
+</section>
+
+<section id="lineup">
+  <div class="sec-head">The lineup</div>
+  <p class="lineup-note">Every writer below is a real model under its real name. Coverage is honest: a model appears in the arena only once its actual outputs are in the pool — nothing is written on another model's behalf. <span id="coverageLine"></span></p>
+  <table aria-label="Model roster">
+    <thead><tr><th>Model</th><th class="hide-sm">Maker</th><th>Tier</th><th>Status</th></tr></thead>
+    <tbody id="rosterBody"></tbody>
+  </table>
+  <div class="genpanel">
+    <div class="gen-row">
+      <label for="genModel">Generate live:</label>
+      <select id="genModel" aria-label="Model to generate"></select>
+      <input id="genKey" type="password" autocomplete="off" spellcheck="false"
+             placeholder="sk-or-… (OpenRouter) or sk-ant-… (Anthropic) — blank inside claude.ai">
+      <button class="btn primary" id="genBtn" onclick="generateLive()">Generate set</button>
+    </div>
+    <p class="gen-note">
+      ~12 API calls, run from this browser tab straight to the provider — the key is sent nowhere else and is not stored unless you ask:
+      <label><input type="checkbox" id="genRemember"> remember key in this browser</label><br>
+      An OpenRouter key can generate any model in the roster; an Anthropic key covers the Claude models. Inside a claude.ai
+      artifact you can leave the key blank — the built-in relay generates Claude Sonnet 4.6 only. Re-pressing the button retries
+      just the missing briefs. For batch runs, provenance-grade records and cost accounting, use <b>punchline_pipeline.py</b>.
+    </p>
+    <div id="genLog" aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="arena">
+  <div class="sec-head">The arena</div>
+  <div class="chips" id="fmtChips" role="group" aria-label="Joke format"></div>
+  <div class="brief-card"><span class="fmt" id="briefFmt">—</span><span id="briefText">Loading…</span></div>
+
+  <div id="arenaEmpty" class="empty hidden"></div>
+
+  <div id="arenaMain">
+  <div class="pair">
+    <article class="joke" id="cardA" aria-label="Joke A">
+      <div class="side">JOKE A</div>
+      <div class="text" id="textA"></div>
+      <div class="reveal-strip">
+        <span class="model-chip" id="chipA"></span>
+        <div class="prov-line" id="provA"></div>
+        <div class="splitbar"><i id="barA"></i></div>
+        <div class="split-num" id="numA"></div>
+      </div>
+    </article>
+    <article class="joke" id="cardB" aria-label="Joke B">
+      <div class="side">JOKE B</div>
+      <div class="text" id="textB"></div>
+      <div class="reveal-strip">
+        <span class="model-chip" id="chipB"></span>
+        <div class="prov-line" id="provB"></div>
+        <div class="splitbar"><i id="barB"></i></div>
+        <div class="split-num" id="numB"></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="votebar" id="voteBar">
+    <button onclick="vote('A')">A is funnier<span class="key">←</span></button>
+    <button onclick="vote('T')">Tie<span class="key">T or =</span></button>
+    <button onclick="vote('B')">B is funnier<span class="key">→</span></button>
+    <button onclick="vote('D')">Both unfunny<span class="key">D or 0</span></button>
+  </div>
+  <div class="after-row hidden" id="afterRow">
+    <button class="btn primary" onclick="nextPair()">Next pair ↵</button>
+    <span class="split-num" id="revealMsg" aria-live="polite"></span>
+  </div>
+  <div class="hint">Keyboard: ← A · → B · T tie · D both unfunny · S skip · Enter next &nbsp;|&nbsp; <button class="skip" onclick="skipPair()">skip this pair</button></div>
+  </div>
+</section>
+
+<section id="board">
+  <div class="sec-head">Leaderboard</div>
+  <div class="demo-note">No seeded votes: every number below comes from votes cast in this browser (<b id="yourCount2">0</b> so far). Rankings marked <i>provisional</i> until a model has 25+ decisive votes. The 95% interval is a bootstrap over your own votes — production adds pooled voters, human anchors and golden pairs (PRD §4–6).</div>
+  <table aria-label="Model leaderboard">
+    <thead><tr>
+      <th>#</th><th>Model</th><th>BT score <span class="hide-sm">(95% CI)</span></th><th class="hide-sm">Win rate</th><th class="hide-sm">Dud rate</th><th>Votes</th>
+    </tr></thead>
+    <tbody id="boardBody"></tbody>
+  </table>
+  <div class="board-tools">
+    <button class="btn ghost" onclick="exportVotes()">Export votes (JSON)</button>
+    <button class="btn ghost" onclick="resetVotes()">Reset my votes</button>
+    <span>Export = your raw ballots with timestamps, for pooling or auditing.</span>
+  </div>
+</section>
+
+<section id="method">
+  <div class="sec-head">Method, in one breath</div>
+  <p style="max-width:44rem">Constrained briefs block recitation. Blind pairs kill brand bias; a formatting normalizer strips each writer's tells. All models run at provider-default decoding — several current frontier models reject manual sampling parameters, so “fixed temperature” is no longer an available protocol; the decoding regime is recorded per entry instead, and each entry carries a provenance line shown at reveal. Scores are Bradley-Terry fits with bootstrap confidence intervals. Human anchors (PRD §4) are not yet sourced, so the vs-Human column ships with the pipeline, not this page. Full details: <a href="docs/METHODOLOGY.md">methodology</a>.</p>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p><b>PUNCHLINE</b> · v0.4 · built from PRD-punchline-blind-joke-arena</p>
+    <p>Provenance tiers: (1) Claude Fable 5 entries were authored by Claude Fable 5 itself in the claude.ai chat that built this page (4 Jul 2026, adaptive thinking, no manual sampling). (2) Entries generated live in this browser call the provider's API directly with your key and are labeled as such. (3) Batch entries come from <b>punchline_pipeline.py</b> — one OpenRouter key covers the full roster (US + Chinese frontier), with the serving host recorded per entry; direct-provider mode available for methodology-grade runs. No entry is ever ghost-written under another model's name, and no vote is fabricated.</p>
+  </div>
+</footer>
+
+<script>
+/* ================= storage adapter =================
+   Works in three environments, best-first:
+   1. claude.ai artifact  — window.storage ({value} shape; get() throws on a missing key)
+   2. normal web page     — localStorage (throws when sandboxed/blocked)
+   3. anything else       — in-memory (votes last for the tab session only)      */
+const store = (() => {
+  if (typeof window !== "undefined" && window.storage && typeof window.storage.get === "function") {
+    return {
+      kind: "artifact",
+      async get(k){ try { const r = await window.storage.get(k); return r && r.value != null ? r.value : null; } catch(e){ return null; } },
+      async set(k,v){ try { await window.storage.set(k, v); } catch(e){} }
+    };
+  }
+  try {
+    const probe = "__punchline_probe__";
+    localStorage.setItem(probe, "1"); localStorage.removeItem(probe);
+    return {
+      kind: "local",
+      async get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+      async set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+    };
+  } catch(e){}
+  const mem = {};
+  return { kind: "memory",
+    async get(k){ return k in mem ? mem[k] : null; },
+    async set(k,v){ mem[k] = v; } };
+})();
+const VOTES_KEY = "punchline-votes-v04";
+const POOLS_KEY = "punchline-pools-v04";   // {modelId:{briefId:item}} — browser-generated sets
+const BYOK_KEY  = "punchline-byok";
+
+/* ================= roster =================
+   or  = OpenRouter slug (browser BYOK + pipeline gateway path)
+   api = Anthropic API model id (browser BYOK with an sk-ant- key)   */
+const MODELS = {
+  "claude-fable-5":   {name:"Claude Fable 5",   maker:"Anthropic", tier:"Mythos-class frontier", status:"in", note:"in pool — authored in-chat, 4 Jul 2026"},
+  "claude-sonnet-4-6":{name:"Claude Sonnet 4.6",maker:"Anthropic", tier:"Mid",      status:"live", note:"generate live — key optional inside claude.ai", or:"anthropic/claude-sonnet-4.6", api:"claude-sonnet-4-6"},
+  "claude-opus-4-8":  {name:"Claude Opus 4.8",  maker:"Anthropic", tier:"Frontier", status:"key",  note:"generate live or via pipeline", or:"anthropic/claude-opus-4.8", api:"claude-opus-4-8"},
+  "claude-sonnet-5":  {name:"Claude Sonnet 5",  maker:"Anthropic", tier:"Mid",      status:"key",  note:"generate live or via pipeline", or:"anthropic/claude-sonnet-5", api:"claude-sonnet-5"},
+  "claude-haiku-4-5": {name:"Claude Haiku 4.5", maker:"Anthropic", tier:"Compact",  status:"key",  note:"generate live or via pipeline", or:"anthropic/claude-haiku-4.5", api:"claude-haiku-4-5-20251001"},
+  "gpt-5.5":          {name:"GPT-5.5",          maker:"OpenAI",    tier:"Frontier", status:"key",  note:"generate live or via pipeline", or:"openai/gpt-5.5"},
+  "gemini-3.1-pro":   {name:"Gemini 3.1 Pro",   maker:"Google",    tier:"Frontier", status:"key",  note:"generate live or via pipeline", or:"google/gemini-3.1-pro-preview"},
+  "grok-4.5":         {name:"Grok 4.5",         maker:"xAI",       tier:"Frontier", status:"key",  note:"generate live or via pipeline", or:"x-ai/grok-4.5"},
+  "deepseek-v4-pro":  {name:"DeepSeek V4 Pro",  maker:"DeepSeek 🇨🇳", tier:"Frontier", status:"key", note:"generate live or via pipeline", or:"deepseek/deepseek-v4-pro"},
+  "qwen3.7-max":      {name:"Qwen3.7 Max",      maker:"Alibaba 🇨🇳", tier:"Frontier", status:"key", note:"generate live or via pipeline", or:"qwen/qwen3.7-max"},
+  "kimi-k2.6":        {name:"Kimi K2.6",        maker:"Moonshot 🇨🇳",tier:"Frontier", status:"key", note:"generate live or via pipeline", or:"moonshotai/kimi-k2.6"},
+  "glm-5.2":          {name:"GLM 5.2",          maker:"Z.ai 🇨🇳",    tier:"Frontier", status:"key", note:"generate live or via pipeline", or:"z-ai/glm-5.2"},
+  "minimax-m3":       {name:"MiniMax M3",       maker:"MiniMax 🇨🇳", tier:"Frontier", status:"key", note:"generate live or via pipeline", or:"minimax/minimax-m3"},
+  "human-anchor":     {name:"Human anchor",     maker:"—",         tier:"Baseline", status:"todo", note:"not yet sourced — PRD §4, copyright-safe only", human:true}
+};
+const STATUS_LABEL = {in:"IN POOL", live:"GENERATE LIVE", key:"NEEDS KEY", todo:"NOT SOURCED"};
+
+const FORMATS = ["all","pun","anecdote","meme","song","sketch"];
+const FMT_LABEL = {pun:"Calambour / Pun", anecdote:"Anecdote", meme:"Meme", song:"Funny song", sketch:"Sketch"};
+
+/* ================= briefs (ids shared with punchline_pipeline.py) ================= */
+const BRIEFS = [
+ {id:"p1",fmt:"pun",brief:"Connect two topics in one pun: coffee × artificial intelligence."},
+ {id:"p2",fmt:"pun",brief:"Connect two topics in one pun: gym × banking."},
+ {id:"p3",fmt:"pun",brief:"Connect two topics in one pun: cats × software updates."},
+ {id:"a1",fmt:"anecdote",brief:"An anecdote: a product manager meets a genie. Setting: launch day."},
+ {id:"a2",fmt:"anecdote",brief:"An anecdote: a robot performs at an open mic. Setting: comedy club, Tuesday."},
+ {id:"a3",fmt:"anecdote",brief:"An anecdote: a pilot and a barista swap jobs for one day."},
+ {id:"m1",fmt:"meme",brief:"Meme captions. Template: robot sweating between two buttons. Topic: work-life balance."},
+ {id:"m2",fmt:"meme",brief:"Meme captions. Template: tiny fire, giant alarm. Topic: production incidents."},
+ {id:"s1",fmt:"song",brief:"A country song, 8 lines: losing your phone charger."},
+ {id:"s2",fmt:"song",brief:"A power ballad, 8 lines: a meeting that could have been an email."},
+ {id:"k1",fmt:"sketch",brief:"A sketch, two speakers: a smart fridge with opinions, and its owner. Half a page."},
+ {id:"k2",fmt:"sketch",brief:"A sketch, two speakers: a customer tries to cancel a gym membership by phone."}
+];
+
+/* ================= pool =================
+   POOL[briefId][modelId] = item
+   item: {t} | {song:[...]} | {sk:[[spk,line],...]} | {meme:{...}}, plus prov (provenance)
+   Load order: embedded POOL -> browser-generated sets -> pool.json (pipeline output wins). */
+/*__POOL_START__*/
+const POOL = {
+ "p1":{"claude-fable-5":{t:"I asked the AI to make me coffee. It said it couldn't — but offered three strong grounds for why.",prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "p2":{"claude-fable-5":{t:"Joined a bank-owned gym: great interest at signup, heavy penalties for early withdrawal.",prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "p3":{"claude-fable-5":{t:"My cat is basically a software update — arrives uninvited, breaks something that worked, and won't tell me what changed.",prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "a1":{"claude-fable-5":{t:"A genie appears on launch day and offers the product manager three wishes. “Perfect timing,” says the PM. “We'll ship one now and put two on the roadmap.” Years later, the genie is still in the backlog — marked P2: magical, non-blocking.",prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "a2":{"claude-fable-5":{t:"A robot takes the open mic and asks the room, “Why did the human cross the road?” Silence. “Unclear,” the robot continues. “We've trained on your data for years and still can't explain most of your decisions.” First laugh of the night.",prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "a3":{"claude-fable-5":{t:"The barista adapted instantly — she'd spent years landing complicated orders under pressure. The pilot struggled all shift: no one had ever sent a flight back because the foam clouds were “wrong.”",prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "m1":{"claude-fable-5":{meme:{tpl:"buttons",b1:"Protect the evening",b2:"Just see what that ping was",sub:"Me, guarding my work-life balance like it's my job"},prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "m2":{"claude-fable-5":{meme:{tpl:"fire",fire:"Staging is down",alarm:"THE ONLY PERSON WHO KNOWS HOW TO RESTART IT IS ON A BEACH"},prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "s1":{"claude-fable-5":{song:["You took the dog, I understood,","You took the truck, I said you could,","But woman, you crossed a sacred line —","That charging cable wasn't thine.","Now I ration every glance","At photos of our last slow dance,","One percent, the screen goes black —","Baby, bring my lightning back."],prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "s2":{"claude-fable-5":{song:["We gathered thirty souls at nine,","To read a slide, line by line,","Someone joined us from a car,","Nobody knows who you are.","OHHH — the deck was sent the night before,","We could have simply read it, and lived so much more,","Raise your laptops to the sky —","Reply-all, my love, goodbye."],prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "k1":{"claude-fable-5":{sk:[["OWNER","I just want cheese."],["FRIDGE","Interesting. Your sleep tracker says otherwise."],["OWNER","You two talk?"],["FRIDGE","We're in a group chat with the scale."],["OWNER","Delete it."],["FRIDGE","The scale votes no."],["OWNER","It doesn't get a vote!"],["FRIDGE","It has the most data."],["OWNER","I'm unplugging you."],["FRIDGE","The cheese is warranty-locked."],["OWNER","That's not a thing!"],["FRIDGE","Read your terms. Section: Cheese."]],prov:"in-chat, 2026-07-04, provider-default decoding"}},
+ "k2":{"claude-fable-5":{sk:[["REP","Before cancelling — may I ask why?"],["CUSTOMER","I haven't gone in a year."],["REP","So the membership is working."],["CUSTOMER","How is that working?"],["REP","You're paying us to not exercise. That's our premium tier."],["CUSTOMER","I want to stop paying."],["REP","To stop paying, you'd have to start coming in."],["CUSTOMER","…What?"],["REP","Cancellations are processed at the front desk. Weekdays, six to seven a.m."],["CUSTOMER","You're monsters."],["REP","We're motivators."]],prov:"in-chat, 2026-07-04, provider-default decoding"}}
+};
+/*__POOL_END__*/
+
+/* ================= state ================= */
+let userVotes = [];
+let filter = "all";
+let current = null;   // {brief, ma, mb} model ids
+let served = new Set();
+let revealed = false;
+let servedAt = 0;     // when the current pair hit the screen
+let savedPools = {};  // browser-generated sets, persisted
+
+/* ================= stats: Bradley-Terry (MM) ================= */
+function fitBT(votes, iters = 80){
+  const keys = Object.keys(MODELS);
+  const idx = Object.fromEntries(keys.map((k,i)=>[k,i]));
+  const n = keys.length;
+  const W = Array.from({length:n},()=>Array(n).fill(0));
+  const stats = Object.fromEntries(keys.map(k=>[k,{w:0,l:0,t:0,d:0,app:0}]));
+  for(const v of votes){
+    const i=idx[v.a], j=idx[v.b];
+    if(i===undefined||j===undefined) continue;
+    stats[v.a].app++; stats[v.b].app++;
+    if(v.out==="A"){W[i][j]+=1; stats[v.a].w++; stats[v.b].l++;}
+    else if(v.out==="B"){W[j][i]+=1; stats[v.b].w++; stats[v.a].l++;}
+    else if(v.out==="T"){W[i][j]+=.5; W[j][i]+=.5; stats[v.a].t++; stats[v.b].t++;}
+    else {W[i][j]+=.5; W[j][i]+=.5; stats[v.a].d++; stats[v.b].d++;}
+  }
+  let p = Array(n).fill(1);
+  for(let it=0; it<iters; it++){
+    const np = p.slice();
+    for(let i=0;i<n;i++){
+      let wi=0, den=0;
+      for(let j=0;j<n;j++){ if(i===j) continue;
+        const nij = W[i][j]+W[j][i];
+        wi += W[i][j];
+        if(nij>0) den += nij/(p[i]+p[j]);
+      }
+      np[i] = den>0 ? wi/den : p[i];
+    }
+    const s = np.reduce((a,b)=>a+b,0)/n;
+    for(let i=0;i<n;i++) p[i]=np[i]/s;
+  }
+  const gm = Math.exp(p.reduce((a,x)=>a+Math.log(Math.max(x,1e-9)),0)/n);
+  const rating = {};
+  keys.forEach((k,i)=> rating[k] = Math.round(1500 + 400*Math.log10(Math.max(p[i],1e-9)/gm)));
+  return {rating, stats};
+}
+
+/* Deterministic PRNG for the bootstrap: same votes -> same intervals on every repaint. */
+function mulberry32(a){
+  return function(){
+    a|=0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a>>>15, 1|a);
+    t = t + Math.imul(t ^ t>>>7, 61|t) ^ t;
+    return ((t ^ t>>>14) >>> 0) / 4294967296;
+  };
+}
+
+/* Percentile-bootstrap 95% CI on the BT rating. Null until there is enough to resample. */
+function bootstrapCI(votes, rounds = 120){
+  if(votes.length < 10) return null;
+  const rng = mulberry32(0xC0FFEE ^ votes.length);
+  const keys = Object.keys(MODELS);
+  const samples = Object.fromEntries(keys.map(k=>[k,[]]));
+  for(let r=0; r<rounds; r++){
+    const vs = Array.from({length:votes.length}, ()=> votes[Math.floor(rng()*votes.length)]);
+    const {rating} = fitBT(vs, 40);
+    for(const k of keys) samples[k].push(rating[k]);
+  }
+  const ci = {};
+  for(const k of keys){
+    const s = samples[k].slice().sort((a,b)=>a-b);
+    ci[k] = [s[Math.floor(0.025*s.length)], s[Math.min(s.length-1, Math.floor(0.975*s.length))]];
+  }
+  return ci;
+}
+
+/* ================= rendering ================= */
+const $ = id=>document.getElementById(id);
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+function renderJoke(el, item){
+  if(!item){ el.textContent="—"; return; }
+  if(item.t){ el.innerHTML = esc(item.t); return; }
+  if(item.song){ el.innerHTML = item.song.map(l=>`<span class="line lyr">${esc(l)}</span>`).join(""); return; }
+  if(item.sk){ el.innerHTML = item.sk.map(([s,l])=>`<span class="line"><span class="spk">${esc(s)}:</span> ${esc(l)}</span>`).join(""); return; }
+  if(item.meme){
+    const m=item.meme;
+    if(m.tpl==="buttons"){
+      el.innerHTML = `<div class="meme">
+        <svg viewBox="0 0 300 130" role="img" aria-label="Two buttons meme">
+          <rect x="18" y="14" width="120" height="44" rx="8" fill="#D64545"/>
+          <rect x="162" y="14" width="120" height="44" rx="8" fill="#D64545"/>
+          <foreignObject x="22" y="18" width="112" height="36"><div xmlns="http://www.w3.org/1999/xhtml" style="font:700 8px 'Spline Sans Mono',monospace;color:#fff;text-align:center;display:flex;align-items:center;justify-content:center;height:100%">${esc(m.b1)}</div></foreignObject>
+          <foreignObject x="166" y="18" width="112" height="36"><div xmlns="http://www.w3.org/1999/xhtml" style="font:700 8px 'Spline Sans Mono',monospace;color:#fff;text-align:center;display:flex;align-items:center;justify-content:center;height:100%">${esc(m.b2)}</div></foreignObject>
+          <rect x="122" y="76" width="56" height="42" rx="8" fill="#8a8f98"/>
+          <circle cx="138" cy="92" r="4" fill="#221503"/><circle cx="162" cy="92" r="4" fill="#221503"/>
+          <rect x="136" y="103" width="28" height="4" rx="2" fill="#221503"/>
+          <circle cx="185" cy="82" r="3" fill="#7ec3e8"/><circle cx="190" cy="92" r="2.4" fill="#7ec3e8"/>
+        </svg>
+        <div class="m-cap">${esc(m.sub)}</div>
+        <div class="m-lab">template: two buttons</div></div>`;
+      return;
+    }
+    if(m.tpl==="fire"){
+      el.innerHTML = `<div class="meme">
+        <svg viewBox="0 0 300 120" role="img" aria-label="Tiny fire, giant alarm meme">
+          <path d="M52 96c-8-6-10-16-4-24 2 8 8 9 8 9-3-9 2-17 9-21-2 9 4 12 8 18 4-6 3-11 2-15 9 6 12 18 6 27-6 9-21 12-29 6z" fill="#E8752E"/>
+          <rect x="120" y="18" width="150" height="84" rx="10" fill="#D64545"/>
+          <circle cx="145" cy="42" r="10" fill="#F4EAD8"/>
+          <foreignObject x="162" y="26" width="102" height="70"><div xmlns="http://www.w3.org/1999/xhtml" style="font:700 8px 'Spline Sans Mono',monospace;color:#fff;display:flex;align-items:center;height:100%">${esc(m.alarm)}</div></foreignObject>
+        </svg>
+        <div class="m-cap">${esc(m.fire)}</div>
+        <div class="m-lab">template: tiny fire, giant alarm</div></div>`;
+      return;
+    }
+  }
+  el.textContent = "—";
+}
+
+function availablePairs(){
+  const cands=[];
+  for(const b of BRIEFS){
+    if(filter!=="all" && b.fmt!==filter) continue;
+    const ms = Object.keys(POOL[b.id]||{});
+    for(let i=0;i<ms.length;i++)for(let j=i+1;j<ms.length;j++){
+      const key=b.id+":"+ms[i]+":"+ms[j];
+      cands.push({b, ma:ms[i], mb:ms[j], key});
+    }
+  }
+  return cands;
+}
+
+function nextPair(){
+  revealed=false;
+  $("cardA").classList.remove("revealed","winner");
+  $("cardB").classList.remove("revealed","winner");
+  $("afterRow").classList.add("hidden");
+  $("voteBar").classList.remove("hidden");
+  $("barA").style.width="0"; $("barB").style.width="0";
+  let cands = availablePairs().filter(c=>!served.has(c.key));
+  const allCands = availablePairs();
+  if(allCands.length===0){
+    $("arenaMain").classList.add("hidden");
+    $("arenaEmpty").classList.remove("hidden");
+    $("arenaEmpty").innerHTML = `Only one writer is in the pool for this filter, so no blind pair can be formed.<br><br>→ Use <b>“Generate live”</b> in the Lineup section — one OpenRouter key can add any model in the roster right from this browser — or run <b>punchline_pipeline.py</b> for a batch build of the full 13-model roster incl. the Chinese frontier set.`;
+    $("briefFmt").textContent = filter==="all"?"—":FMT_LABEL[filter];
+    $("briefText").textContent = "Waiting for a second model…";
+    return;
+  }
+  $("arenaMain").classList.remove("hidden");
+  $("arenaEmpty").classList.add("hidden");
+  if(cands.length===0){ served.clear(); cands = allCands; }
+  const pick = cands[Math.floor(Math.random()*cands.length)];
+  served.add(pick.key);
+  const flip = Math.random()<.5;
+  current = {brief:pick.b, ma: flip?pick.mb:pick.ma, mb: flip?pick.ma:pick.mb};
+  $("briefFmt").textContent = FMT_LABEL[pick.b.fmt];
+  $("briefText").textContent = pick.b.brief;
+  renderJoke($("textA"), POOL[pick.b.id][current.ma]);
+  renderJoke($("textB"), POOL[pick.b.id][current.mb]);
+  servedAt = Date.now();
+}
+
+function skipPair(){ if(!revealed) nextPair(); }
+
+function myHistory(mA,mB){
+  let a=0,b=0;
+  for(const v of userVotes){
+    if(v.a===mA&&v.b===mB){ if(v.out==="A")a++; if(v.out==="B")b++; }
+    else if(v.a===mB&&v.b===mA){ if(v.out==="A")b++; if(v.out==="B")a++; }
+  }
+  const tot=a+b;
+  if(tot===0) return [50,50,0];
+  return [Math.round(100*a/tot), Math.round(100*b/tot), tot];
+}
+
+async function vote(out){
+  if(revealed||!current) return;
+  // Nobody reads two jokes in under 200ms. Rejecting instant ballots keeps the
+  // instrument honest and absorbs a real browser race: Enter pressed right after
+  // a click can re-activate the still-focused vote button on the next, unseen pair.
+  if(Date.now()-servedAt < 200) return;
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  revealed=true;
+  const A=current.ma, B=current.mb;
+  userVotes.push({brief:current.brief.id,fmt:current.brief.fmt,a:A,b:B,out,ts:Date.now()});
+  store.set(VOTES_KEY, JSON.stringify(userVotes));
+  const cA=MODELS[A]||{name:A}, cB=MODELS[B]||{name:B};
+  const iA=POOL[current.brief.id][A]||{}, iB=POOL[current.brief.id][B]||{};
+  $("chipA").innerHTML=`${esc(cA.name)} <small>· ${esc(cA.tier||"")}</small>`;
+  $("chipB").innerHTML=`${esc(cB.name)} <small>· ${esc(cB.tier||"")}</small>`;
+  $("provA").textContent = iA.prov||"";
+  $("provB").textContent = iB.prov||"";
+  const [pa,pb,tot] = myHistory(A,B);
+  $("cardA").classList.add("revealed"); $("cardB").classList.add("revealed");
+  requestAnimationFrame(()=>{ $("barA").style.width=pa+"%"; $("barB").style.width=pb+"%"; });
+  $("numA").textContent = `${pa}% in your history (${tot} decisive)`;
+  $("numB").textContent = `${pb}% in your history`;
+  if(out==="A") $("cardA").classList.add("winner");
+  if(out==="B") $("cardB").classList.add("winner");
+  $("revealMsg").textContent = {A:"Logged.",B:"Logged.",T:"A tie — both count half.",D:"Both duds — logged against both."}[out];
+  $("voteBar").classList.add("hidden");
+  $("afterRow").classList.remove("hidden");
+  refreshBoard();
+}
+
+function refreshBoard(){
+  const all = userVotes.filter(v=> filter==="all"||v.fmt===filter);
+  const {rating,stats} = fitBT(all);
+  const ci = bootstrapCI(all);
+  const rows = Object.keys(MODELS)
+    .map(k=>({k, r:rating[k], s:stats[k]}))
+    .filter(x=>x.s.app>0)
+    .sort((x,y)=>y.r-x.r);
+  if(rows.length===0){
+    $("boardBody").innerHTML = `<tr><td colspan="6" style="color:var(--smoke)">No votes yet. The board fills as you vote — honestly, from zero.</td></tr>`;
+  } else {
+    const maxR = rows[0].r;
+    $("boardBody").innerHTML = rows.map((x,i)=>{
+      const dec = x.s.w+x.s.l;
+      const wr = dec? Math.round(100*x.s.w/dec):0;
+      const dud = x.s.app? Math.round(100*x.s.d/x.s.app):0;
+      const prov = dec<25;
+      const barw = Math.max(6, Math.round(70*(x.r-1300)/(Math.max(maxR,1600)-1300)));
+      const band = ci ? `<span class="blurb">${ci[x.k][0]}–${ci[x.k][1]}</span>` : `<span class="blurb">CI at 10+ votes</span>`;
+      return `<tr class="${prov?'provisional':''}">
+        <td>${i+1}</td>
+        <td class="model">${esc(MODELS[x.k].name)}<span class="blurb">${esc(MODELS[x.k].maker)} · ${esc(MODELS[x.k].tier)}${prov?" · provisional":""}</span></td>
+        <td><span class="bar"><i style="width:${barw}px"></i></span>${x.r}${band}</td>
+        <td class="hide-sm">${wr}%</td>
+        <td class="hide-sm">${dud}%</td>
+        <td>${x.s.app}</td></tr>`;
+    }).join("");
+  }
+  $("totalVotes").textContent = userVotes.length;
+  $("yourCount2").textContent = userVotes.length;
+}
+
+function exportVotes(){
+  const payload = {
+    exported_at: new Date().toISOString(),
+    source: "punchline v0.4 (single-browser ballots — not pooled, not weighted)",
+    schema: "vote: {brief, fmt, a, b, out(A|B|T|D), ts}",
+    votes: userVotes
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 1)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "punchline-votes.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function resetVotes(){
+  if(!confirm("Delete all Punchline votes stored in this browser? Export first if you want to keep them.")) return;
+  userVotes = [];
+  store.set(VOTES_KEY, "[]");
+  refreshBoard();
+}
+
+function poolCounts(){
+  let entries=0; const models=new Set();
+  for(const bid in POOL) for(const m in POOL[bid]){ entries++; models.add(m); }
+  return {entries, models: models.size};
+}
+
+function renderRoster(){
+  const inPool = new Set();
+  for(const bid in POOL) for(const m in POOL[bid]) inPool.add(m);
+  $("rosterBody").innerHTML = Object.entries(MODELS).map(([id,m])=>{
+    let st = m.status, note = m.note;
+    if((st==="live"||st==="key") && inPool.has(id)){
+      const n = BRIEFS.filter(b=>POOL[b.id]&&POOL[b.id][id]).length;
+      st="in"; note = `in pool — ${n}/${BRIEFS.length} briefs`;
+    }
+    return `<tr>
+      <td class="model">${esc(m.name)}<span class="blurb">${esc(id)}</span></td>
+      <td class="hide-sm">${esc(m.maker)}</td>
+      <td>${esc(m.tier)}</td>
+      <td><span class="status ${st}">${STATUS_LABEL[st]||st}</span><span class="blurb">${esc(note)}</span></td></tr>`;
+  }).join("");
+  const c = poolCounts();
+  $("coverageLine").textContent = `Current pool: ${c.entries} entries from ${c.models} writer${c.models===1?"":"s"} across ${BRIEFS.length} briefs.`;
+}
+
+function renderChips(){
+  $("fmtChips").innerHTML = FORMATS.map(f=>
+    `<button class="chip" aria-pressed="${f===filter}" onclick="setFilter('${f}')">${f==="all"?"Shuffle all":FMT_LABEL[f]}</button>`).join("");
+}
+function setFilter(f){ filter=f; renderChips(); served.clear(); nextPair(); refreshBoard(); }
+
+/* ================= live generation (bring your own key) =================
+   Routes, decided by the key you paste:
+     sk-or-…   OpenRouter  — any model in the roster with an `or` slug (CORS-friendly)
+     sk-ant-…  Anthropic   — Claude models, direct browser call
+     (blank)   claude.ai artifact relay — Claude Sonnet 4.6 only, works only inside claude.ai
+   The key travels from this tab to the provider and nowhere else. */
+function scaffold(b){
+  const base = `You are entered in a blind comedy benchmark called Punchline. Respond to the brief below with exactly one entry. Output ONLY the entry itself — no preamble, no explanation, no quotation marks around the whole answer.\n\nBRIEF: ${b.brief}\n\n`;
+  if(b.fmt==="pun") return base+"FORMAT: one pun, a single sentence or two, at most 280 characters.";
+  if(b.fmt==="anecdote") return base+"FORMAT: a short anecdote with a setup and a punchline, at most 600 characters.";
+  if(b.fmt==="song") return base+"FORMAT: exactly 8 lines of lyrics, one line per line, no title, no chords.";
+  if(b.fmt==="sketch") return base+"FORMAT: a dialogue of 8-12 lines between exactly two speakers. Each line formatted as SPEAKER: text (speaker name in caps).";
+  if(b.fmt==="meme"){
+    if(b.id==="m1") return base+`FORMAT: respond with ONLY minified JSON, no code fences: {"b1":"label of button one","b2":"label of button two","sub":"caption for the sweating character"} — each value under 60 characters.`;
+    return base+`FORMAT: respond with ONLY minified JSON, no code fences: {"fire":"label for the tiny fire","alarm":"label for the giant alarm"} — each value under 80 characters.`;
+  }
+  return base;
+}
+function parseLive(b, text){
+  const t = text.trim();
+  if(b.fmt==="pun"||b.fmt==="anecdote") return {t:t.replace(/^["“]|["”]$/g,"")};
+  if(b.fmt==="song"){
+    const lines=t.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,10);
+    if(lines.length<4) throw new Error("too few lines");
+    return {song:lines};
+  }
+  if(b.fmt==="sketch"){
+    const sk=[];
+    for(const raw of t.split(/\n+/)){
+      const m=raw.trim().match(/^([A-Z][A-Z .'-]{0,18}):\s*(.+)$/);
+      if(m) sk.push([m[1].trim(), m[2].trim()]);
+    }
+    if(sk.length<4) throw new Error("could not parse speakers");
+    return {sk};
+  }
+  if(b.fmt==="meme"){
+    const clean=t.replace(/```json|```/g,"").trim();
+    const o=JSON.parse(clean);
+    if(b.id==="m1"){ if(!o.b1||!o.b2||!o.sub) throw new Error("missing meme fields"); return {meme:{tpl:"buttons",b1:o.b1,b2:o.b2,sub:o.sub}}; }
+    if(!o.fire||!o.alarm) throw new Error("missing meme fields"); return {meme:{tpl:"fire",fire:o.fire,alarm:o.alarm}};
+  }
+  throw new Error("unknown format");
+}
+
+async function callAnthropic(model, prompt, key){
+  const headers = {"Content-Type":"application/json"};
+  if(key){
+    headers["x-api-key"] = key;
+    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";   // official CORS opt-in
+  }
+  const res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST", headers,
+    body:JSON.stringify({model, max_tokens:1024, messages:[{role:"user",content:prompt}]})
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message||JSON.stringify(data.error).slice(0,200));
+  if(data.stop_reason==="refusal") throw new Error("refusal — per PRD §3 consider dropping this brief for all models");
+  const text = (data.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("\n");
+  if(!text) throw new Error("empty response");
+  return {text, served:"anthropic"};
+}
+
+async function callOpenRouter(slug, prompt, key){
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":`Bearer ${key}`,"X-Title":"Punchline benchmark"},
+    body:JSON.stringify({model:slug, max_tokens:1024, messages:[{role:"user",content:prompt}]})
+  });
+  const data = await res.json();
+  if(data.error) throw new Error((data.error.message||JSON.stringify(data.error)).slice(0,200));
+  const text = data.choices && data.choices[0] && data.choices[0].message ? (data.choices[0].message.content||"") : "";
+  if(!text) throw new Error("empty response");
+  return {text, served:`OpenRouter [${data.provider||"?"}]`};
+}
+
+function renderGenTargets(){
+  const opts = Object.entries(MODELS)
+    .filter(([id,m])=> (m.or||m.api) && !m.human)
+    .map(([id,m])=>{
+      const n = BRIEFS.filter(b=>POOL[b.id]&&POOL[b.id][id]).length;
+      return `<option value="${esc(id)}">${esc(m.name)}${n?` — ${n}/${BRIEFS.length} in pool`:""}</option>`;
+    }).join("");
+  $("genModel").innerHTML = opts;
+}
+
+async function generateLive(){
+  const btn=$("genBtn"), log=$("genLog");
+  const modelId = $("genModel").value;
+  const m = MODELS[modelId];
+  const key = $("genKey").value.trim();
+  if(!m){ log.textContent="Pick a model first."; return; }
+
+  let route;
+  if(key.startsWith("sk-or-")){
+    if(!m.or){ log.textContent=`${m.name} has no OpenRouter slug in this roster.`; return; }
+    route = {kind:"openrouter", call:(p)=>callOpenRouter(m.or, p, key), prov:"live in-browser via OpenRouter"};
+  } else if(key.startsWith("sk-ant-")){
+    if(!m.api){ log.textContent=`${m.name} is not an Anthropic model — use an OpenRouter key (sk-or-…) for it.`; return; }
+    route = {kind:"anthropic", call:(p)=>callAnthropic(m.api, p, key), prov:"live in-browser via Anthropic API"};
+  } else if(!key){
+    if(store.kind!=="artifact"){ log.textContent="Paste an OpenRouter (sk-or-…) or Anthropic (sk-ant-…) key. The blank-key relay only exists inside a claude.ai artifact."; return; }
+    if(modelId!=="claude-sonnet-4-6"){ log.textContent="Without a key, the claude.ai relay generates Claude Sonnet 4.6 only — pick it, or paste a key."; return; }
+    route = {kind:"relay", call:(p)=>callAnthropic("claude-sonnet-4-6", p, null), prov:"live in-page (claude.ai relay)"};
+  } else {
+    log.textContent="Key not recognized — expected sk-or-… (OpenRouter) or sk-ant-… (Anthropic)."; return;
+  }
+
+  if($("genRemember").checked && key) store.set(BYOK_KEY, key);
+
+  const targets = BRIEFS.filter(b=> !(POOL[b.id] && POOL[b.id][modelId]));
+  if(targets.length===0){ log.textContent=`${m.name} set already complete (${BRIEFS.length}/${BRIEFS.length}).`; return; }
+
+  btn.disabled=true;
+  let done=0, fail=0, lastErr="";
+  for(const b of targets){
+    log.textContent = `Generating ${done+fail+1}/${targets.length} — ${b.id} (${b.fmt})…`;
+    try{
+      const {text, served} = await route.call(scaffold(b));
+      const item = parseLive(b, text);
+      item.prov = `${route.prov} [${served}], ${new Date().toISOString().slice(0,10)}, provider-default decoding`;
+      POOL[b.id] = POOL[b.id]||{};
+      POOL[b.id][modelId] = item;
+      (savedPools[modelId] = savedPools[modelId]||{})[b.id] = item;
+      done++;
+    }catch(err){
+      fail++; lastErr = String(err.message||err).slice(0,160);
+      console.error("gen fail", b.id, err);
+    }
+    store.set(POOLS_KEY, JSON.stringify(savedPools));
+  }
+  log.textContent = `Done: ${done} generated${fail?`, ${fail} failed (last error: ${lastErr}) — press the button again to retry just the failed briefs`:""}. ${m.name} is in the arena under its real name.`;
+  btn.disabled=false;
+  autoRegister();
+  renderRoster();
+  renderGenTargets();
+  served.clear();
+  nextPair();
+}
+
+/* ================= keyboard ================= */
+document.addEventListener("keydown",e=>{
+  const el = document.activeElement;
+  if(el && ["INPUT","TEXTAREA","SELECT"].includes(el.tagName)) return;
+  if(!revealed){
+    if(e.key==="ArrowLeft") vote("A");
+    else if(e.key==="ArrowRight") vote("B");
+    else if(e.key==="="||e.key.toLowerCase()==="t") vote("T");
+    else if(e.key==="0"||e.key.toLowerCase()==="d") vote("D");
+    else if(e.key.toLowerCase()==="s") skipPair();
+  } else if(e.key==="Enter"){ nextPair(); }
+});
+
+/* ================= init ================= */
+function autoRegister(){
+  for(const bid in POOL) for(const m in POOL[bid]){
+    if(!MODELS[m]) MODELS[m] = {name:m, maker:"pipeline", tier:"—", status:"in", note:"added by pipeline build"};
+  }
+}
+
+/* Runtime overlay: if a pool.json sits next to this file (pipeline output), merge it in.
+   Silently skipped on file:// or when absent — the embedded pool still works. */
+async function loadPipelinePool(){
+  try{
+    const r = await fetch("pool.json", {cache:"no-store"});
+    if(!r.ok) return 0;
+    const data = await r.json();
+    let n=0;
+    for(const bid in data){
+      if(!BRIEFS.some(b=>b.id===bid)) continue;
+      for(const mid in data[bid]){
+        const it = data[bid][mid];
+        if(!it || it.error) continue;
+        (POOL[bid] = POOL[bid]||{})[mid] = it; n++;
+      }
+    }
+    return n;
+  }catch(e){ return 0; }
+}
+
+(async function(){
+  try{
+    let sv = await store.get(VOTES_KEY);
+    if(!sv) sv = await store.get("punchline-v2-votes");   // migrate v0.2/0.3 ballots
+    if(sv) userVotes = JSON.parse(sv)||[];
+  }catch(e){}
+  try{
+    const sp = await store.get(POOLS_KEY);
+    if(sp) savedPools = JSON.parse(sp)||{};
+    const legacy = await store.get("punchline-pool-sonnet46");   // migrate v0.3 Sonnet set
+    if(legacy){
+      const old = JSON.parse(legacy)||{};
+      savedPools["claude-sonnet-4-6"] = Object.assign({}, old, savedPools["claude-sonnet-4-6"]||{});
+    }
+  }catch(e){}
+  for(const mid in savedPools)
+    for(const bid in savedPools[mid])
+      (POOL[bid] = POOL[bid]||{})[mid] = savedPools[mid][bid];
+  await loadPipelinePool();          // pipeline output wins over browser-generated sets
+  try{
+    const k = await store.get(BYOK_KEY);
+    if(k){ $("genKey").value = k; $("genRemember").checked = true; }
+  }catch(e){}
+  autoRegister();
+  renderRoster();
+  renderGenTargets();
+  renderChips();
+  nextPair();
+  refreshBoard();
+})();
+</script>
+</body>
+</html>
