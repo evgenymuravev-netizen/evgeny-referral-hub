@@ -33,6 +33,8 @@ Mal Bank runs two lending portfolios on largely bespoke scoring and underwriting
 
 **Why now:** the UAE data infrastructure has just crossed the threshold that makes this layer worth building. Open Finance went live under Al Tareq in January 2026 (FAB, CBD, ADIB), AECB's Credit Score 3.0 launches in 2026 with alternative-data scores for thin files, e-invoicing becomes mandatory from 2027, and the new SME Customer Protection Regulation (Circular 2/2026) raises the conduct bar on SME lending. A bank that wires these into one decisioning layer now will originate faster and safer than one that retrofits later.
 
+**Strategic frame.** Mizan is not a neutral utility — it is the engine that operationalizes Mal's credit portfolio strategy (companion document: [Cross-Border Underwriting Dossier](strategy-dossier.html)). Three strategy commitments shape the platform's design beyond the anchor journeys: **(a) cross-border data is the differentiated asset** — domestic aggregation commoditizes as Al Tareq phases in, so the adapters that matter most are the ones that see the *other* country of an expat's life (home-country bureau via the AECB × Nova Credit Passport rail, home-country accounts, remittance behavior); **(b) intent is underwriting material** — the agentic PFM platform generates goal-pursuit telemetry (a shadow instalment history and the earliest distress sensor there is), which Mizan ingests as a governed, overlay-only feature stream; **(c) risk is managed at day zero and recourse is structured at origination** — early-warning signals fire same-day, and approvals carry machine-readable, consent-based recourse conditions (salary/EOSB assignment, takaful, remittance-linked repayment) rather than improvised collections pressure later.
+
 ---
 
 ## 2. Context, Problem, Goals
@@ -42,6 +44,8 @@ Mal Bank runs two lending portfolios on largely bespoke scoring and underwriting
 Mal Bank operates retail consumer finance (personal finance/Murabaha, salary advance/Qard Hassan, auto finance) and SME lending (working capital, term, trade finance) as parallel stacks. Each product today embeds its own scoring calls, policy logic and manual review flow. This made sense at launch; at scale it produces three compounding costs: duplicated integration spend, inconsistent risk treatment of the same customer across products, and — most damaging — a credit policy iteration cycle gated on engineering releases.
 
 Meanwhile the market context is moving: digital-native competitors (Wio in SME, ruya in Islamic retail finance) are originating with instant or near-instant decisions; ruya already executes commodity Murabaha straight-through via DDCAP's ETHOS platform. Regulatory infrastructure (Al Tareq, AECB 3.0, e-invoicing) is turning data that used to be documents into APIs.
+
+The portfolio strategy this layer serves is set out in the companion dossier: the UAE's ~60 licensed banks all underwrite the onshore half of a predominantly expatriate customer base, pricing the "skip" blind as a margin tax. Mal's edge is consented cross-border visibility — income, obligations, credit history and *intentions* in both countries of the borrower's life — and a product sequence ordered by learning speed (fast-seasoning, granular, Shari'ah-native products first; mortgage refinance last, as retention). Mizan is where that strategy becomes executable: the cross-border adapters, the intent-feature governance, the day-zero early-warning loop and origination-time recourse conditions all live in this layer.
 
 ### Problem
 
@@ -184,6 +188,9 @@ flowchart TB
 | Scorecards | ✅ hosting, registry, champion/challenger | Retail application scorecard (bureau-anchored v0) | SME scorecard (owner score + commercial score + cash-flow features) |
 | Limit & pricing | ✅ framework | Limit = min(DBR headroom, 20× salary, product cap); pricing band | Limit = f(verified monthly net inflows, tenor); facility + drawdown structure |
 | Refer workbench, decision store, monitoring | ✅ | Queue config | Queue config, RM attachments |
+| Cross-border data adapters | ✅ engine | Credit Passport (home bureau via AECB × Nova), home-country accounts/statements, remittance behavior | Cross-border supplier/buyer flows, trade counterparty data |
+| Goal-pursuit / intent telemetry (from PFM agent) | ✅ ingestion + governance | Goal-contribution consistency, goal–behavior delta, distress signal (contributions stop) | Plan-vs-actual variance, use-of-proceeds tracking, milestone hit-rate |
+| Recourse-conditions engine | ✅ framework | Salary + EOSB assignment, takaful, remittance-linked repayment | Kafalah/guarantor structuring, personal guarantees |
 
 **The sharing prize is the left column — roughly 70% of build effort — not a unified model.** Retail and SME underwriting genuinely differ; forcing one scoring engine across both would be worse at each and slower to iterate.
 
@@ -191,9 +198,9 @@ flowchart TB
 
 1. Customer applies in-app; product layer captures amount/tenor and **consent** (AECB pull consent per Federal Law 6/2010 + open-finance consent where used) → registered in the consent registry.
 2. Mizan orchestration validates KYC/screening outcomes (consumed, not performed), pulls **AECB consumer report + score** in real time (cache TTL applied), acquires salary/transaction data (internal salary-transfer history where Mal Bank is the salary bank; Al Tareq via TPP otherwise; ESR as cross-check).
-3. Feature layer verifies income, computes obligations (including guarantees) and **DBR**; thin-file applicants route to the thin-file strategy (Credit Passport where consented, secured/starter alternatives, or refer).
+3. Feature layer verifies income, computes obligations (including guarantees) and **DBR**. Thin-file applicants route to the **cross-border path, not an exception queue**: with consent, the Credit Passport pull (home-country bureau via AECB × Nova Credit) converts a no-hit into an underwritable file — per the strategy dossier, this population is a target approval segment (Amex's Credit Passport-approved newcomers ran 79% less risky than domestic prime), approved conservatively with recourse conditions rather than referred by default.
 4. Retail policy pack runs knock-outs (regulatory primitives + bank policy); scorecard assigns risk grade; limit engine computes max facility = min(DBR headroom at proposed tenor, 20× salary, product cap); pricing band selected by grade (banded, not individual — see §7.5).
-5. Mizan returns **approve + limit + pricing band + approval token** (validity window, conditions) in < 5 minutes p90, or refer/decline with reason codes.
+5. Mizan returns **approve + limit + pricing band + approval token** (validity window, conditions) in < 5 minutes p90, or refer/decline with reason codes. The token's conditions include **origination-time recourse**: salary-transfer + EOSB assignment, credit-shield takaful enrollment, and — for cross-border-underwritten approvals — a remittance-linked repayment schedule (instalment settles before the home transfer leaves). Consent-based recourse structured here is what makes day-zero risk management possible later; it is never improvised at delinquency.
 6. **Product layer executes the Shari'ah leg**: customer promise, wakala, commodity purchase and Murabaha offer/acceptance via an execution platform (DDCAP/Eiger-class), then disbursement. *The debt legally exists only after this sequence — Mizan's approval is a risk decision, not a contract.* Contract event IDs are written back to the decision record so Shari'ah audit can replay approval → execution ordering end-to-end.
 7. Cooling-off (5 business days, waivable in writing) and KFS disclosure are product-layer obligations; Mizan supplies the numbers (profit rate band, total obligation) that populate the KFS.
 
@@ -231,6 +238,7 @@ These are hard constraints, encoded once as shared policy primitives (§4.3). So
 | Model governance: Model Oversight Committee, independent validation, monitoring, full documentation | Model Management Standards (Notice 5052/2022) | Model registry, validation workflow, monitoring dashboards are core scope — not compliance retrofits |
 | AI/ML: explainability for credit decisions, fairness/bias stress-testing, human oversight, bank fully responsible even when outsourced | CBUAE Guidance Note, 11 Feb 2026 | Reason codes on every decision; scheduled bias tests; vendor due-diligence pack |
 | Material outsourcing needs prior CBUAE non-objection; confidential customer data stays in-UAE absent CBUAE + customer consent | Outsourcing Regulation & Standards (2021) | **Vendor must deploy in-UAE**; non-objection filing is a P0 roadmap gate |
+| Purpose limitation on personal data: service data may not be repurposed beyond its consented use | PDPL (Federal Decree-Law 45/2021); CPS data-protection provisions | PFM/goal telemetry enters credit features only under an explicit, separately consented purpose; it is **never** available to collections as pressure material (no debt disclosure to family, no contact-graph leverage — the dossier's "never" list is encoded as a platform-level access restriction, not a policy hope) |
 
 ### 6.2 Shari'ah constraints with direct decisioning impact
 
@@ -275,6 +283,10 @@ Vendor constraints from research: the CBUAE Outsourcing Regulation requires prio
 
 **Recommendation: Mizan decides, core banking enforces.** Mizan owns limit *derivation* and the decision history behind it; the core banking system remains the system of record for the booked facility and enforces utilization. Duplicating enforcement in Mizan would create reconciliation hell; putting derivation in the core would bury policy in the least agile system we own.
 
+### 7.7 Intent features: in the scorecard vs overlays on it
+
+**Recommendation: overlays on an explainable core, never the core.** Goal-pursuit and behavioral features are the strategy's most differentiated signal — and its most governance-sensitive. Three constraints decide the architecture: CBUAE explainability expectations for high-impact credit decisions (2026 AI/ML guidance note), Goodhart risk (once pursuit is a known input it gets simulated — so weight only costly-to-fake flows like actual transfers, and never disclose feature weights), and the never-punish-honesty rule (score inconsistency-without-cause, not goal changes; a declared departure earns a tenor-matched product, not a price penalty — otherwise disclosure stops and the data poisons itself). Intent features therefore enter as bounded adjustments on the bureau-anchored scorecard, with their marginal contribution monitored and capped. User-controlled imports (e.g., AI-chat profile exports) are onboarding personalization only — unverifiable and adverse-selecting as credit inputs.
+
 ---
 
 ## 8. Product Requirements
@@ -307,6 +319,7 @@ Requirement sections are numbered; each has a goal statement and representative 
 |---|---|
 | As the decision flow, I pull consumer report + score in real time | - p95 pull latency within journey budget; cache with TTL honoring AECB terms<br>- No-hit/thin-file classified distinctly from adverse data and routed to thin-file strategy (Credit Passport where consented; refer; starter-product cross-offer)<br>- ESR captured as a cross-check feature |
 | As the SME flow, I pull a blended entity + individuals view | - Commercial report/score + personal reports for shareholders/guarantors above ownership threshold, each under its own consent<br>- Blended obligations feed SME serviceability |
+| As a thin-file applicant, my home-country history counts | - Credit Passport pull (AECB × Nova Credit; India/Philippines/UK live) under its own explicit consent<br>- Home-bureau score maps into the scorecard with a conservative overlay and grade cap; approval carries cross-border recourse conditions<br>- Declining Passport consent routes to refer, never auto-decline |
 | As Compliance, portfolio data is furnished monthly | - Automated monthly submission with quality checks and rejection reprocessing; reconciliation report |
 
 ### 8.4 Bank Data & Affordability — *[P1 retail basics, P2 SME cash-flow]*
@@ -344,6 +357,7 @@ Requirement sections are numbered; each has a goal statement and representative 
 | User story | Acceptance criteria |
 |---|---|
 | As the retail flow, limits respect all ceilings | - Limit = min(DBR headroom at tenor, 20× salary, product cap); binding constraint recorded in the decision record |
+| As the bank, approvals carry origination-time recourse conditions | - Token conditions are machine-readable: salary + EOSB assignment, takaful enrollment, remittance-linked repayment (cross-border approvals), Kafalah where policy requires<br>- Product layer confirms each condition executed before disbursement; unmet conditions block the token |
 | As the SME flow, facility and drawdown are distinct | - Facility limit at underwriting; drawdown checks (availability, arrears, deterioration flags) < 5s so Tawarruq execution is not blocked |
 
 ### 8.8 Decision Management: Refer Workbench & Auditability — *[P1]*
@@ -366,12 +380,23 @@ Requirement sections are numbered; each has a goal statement and representative 
 
 ### 8.10 Re-scoring & Limit Management — *[P3]*
 
-**Goal: decisions become a lifecycle, not an event.**
+**Goal: decisions become a lifecycle, not an event — and distress is acted on at day zero, not DPD 30.**
 
 | User story | Acceptance criteria |
 |---|---|
 | As the bank, I refresh risk on the back book | - Behavioral re-scoring on internal + refreshed bureau data (consent permitting); outputs: limit increase/decrease proposals, early-warning flags to collections |
+| As the bank, I see distress the day it starts | - Day-zero early-warning signals: goal contributions stopping (the earliest sensor), remittance spike, salary interruption before payday, new home-country credit line, balance-depletion velocity<br>- Each signal maps to a same-day agentic action: instalment shifted to salary landing, pre-emptive tenor-matched restructure offer, proactive check-in — **signal-to-action time is the tracked metric**, because cure rates collapse with latency<br>- Shari'ah constraint holds: restructuring never re-prices the debt |
 | As a product squad, I make pre-approved offers | - Eligible-customer lists with pre-computed limits and expiry; one-tap acceptance re-validates via a lightweight decision call |
+
+### 8.11 Goal-Pursuit & Cross-Border Feature Streams — *[P3]*
+
+**Goal: the strategy's differentiated data — intent telemetry and two-country visibility — enters underwriting as governed features.**
+
+| User story | Acceptance criteria |
+|---|---|
+| As Credit Risk, I use goal-pursuit telemetry as features | - PFM agent streams goal events (contributions, consistency, recovery-after-slippage) into the feature store under a dedicated consented purpose<br>- Features are overlay-only on the explainable core (§7.7), weighted toward costly-to-fake flows (actual transfers); feature weights never disclosed<br>- Goal-linked financing: a proven saving flow converts one-for-one into an instalment flow — same DBR arithmetic, evidenced affordability |
+| As Credit Risk, I underwrite both countries | - Home-country account data (aggregators / India Account Aggregator where available) and parsed statements (Perfios/Ocrolus-class) feed cross-border income and obligations into affordability<br>- Corridor rollout prioritized by data-rail availability and enforcement reciprocity: India, Philippines, Egypt, Pakistan |
+| As Compliance, the never-list is enforced in code | - Goal/PFM data is technically inaccessible to collections tooling; no third-party disclosure paths exist; access attempts are logged and alerting |
 
 ---
 
@@ -384,8 +409,8 @@ Requirement sections are numbered; each has a goal statement and representative 
 | **P0 — Foundations** | M0–M2 | Vendor selection (6-week bake-off on our two anchor journeys); decision API contract v1 + canonical application model; AECB institutional integration agreement; TPP partner selection; ISSC engagement opened (delegation matrix proposal); refer-analyst hiring | CBUAE outsourcing non-objection filed; vendor signed with in-UAE deployment; ISSC materiality/delegation framework agreed **(this gate unlocks the whole operating model)** |
 | **P1 — Retail personal finance live** | M3–M6 | §8.1–8.3 (consumer), 8.4 (retail), 8.5, 8.6 v0, 8.7, 8.8, 8.9 basics; AECB furnishing pipeline; launch **conservative and refer-heavy**, tighten with data | ISSC approval of retail policy pack, reason-code language, late-payment handling; MMS-compliant validation of scorecard v0; consumer-protection review (KFS feeds, cooling-off, Arabic/English comms) |
 | **P2 — SME working capital live** | M6–M10 | Commercial + owner-blend bureau; cash-flow serviceability (TPP + statement-upload fallback); SME policy pack + ISSC sector screen; facility/drawdown split; workbench SME queues | ISSC approval of SME pack & screen; SME CPR (Circular 2/2026) compliance review — effective ~H2 2026, so P2 launches into it; credit committee sign-off on SME appetite & guarantee strategy (EDB scheme evaluated) |
-| **P3 — Learning loop** | M10–M14 | Champion/challenger in production; first custom scorecards from own outcomes; re-scoring & limit management (§8.10); pre-approved offers; own OFP/TPP authorization business case; risk-based pricing proposal to ISSC | Model Oversight Committee promotion of custom models; consent coverage audit for back-book re-scoring |
-| **P4 — Platform proof** | M14+ | Third product onboarded (recommend **auto finance Murabaha** — reuses retail rails + pre-built LTV/tenor primitives) in < 6 weeks via product manifest only; salary-advance (Qard Hassan) pack as the trivial-case demonstration; policy simulation at scale | Post-onboarding review: zero core changes required — the platform claim, tested |
+| **P3 — Learning loop** | M10–M14 | Champion/challenger in production; first custom scorecards from own outcomes; re-scoring, day-zero early warning & limit management (§8.10); goal-pursuit + cross-border feature streams (§8.11); pre-approved offers; own OFP/TPP authorization business case; risk-based pricing proposal to ISSC | Model Oversight Committee promotion of custom models (intent features as bounded overlays); consent coverage audit for back-book re-scoring; PDPL purpose-consent review of goal telemetry |
+| **P4 — Platform proof** | M14+ | Product onboarding follows the portfolio strategy's **learning-speed sequencing** (fast-seasoning first): salary-advance (Qard Hassan) pack and covered-card Tawarruq early, SME receivables/invoice finance next, **auto finance Murabaha** as the < 6-week manifest-only proof; Ijara home refinance deliberately last — a retention product for known customers, never an acquisition anchor; policy simulation at scale | Post-onboarding review: zero core changes required — the platform claim, tested |
 
 **Sequencing rationale:** retail first because data is API-ready today (AECB + salary transfers) and volume builds the outcome dataset every later capability feeds on; SME second because its data layer (TPP coverage, statement parsing, registries) genuinely needs the extra quarters; the learning loop only pays once decisions are flowing.
 
@@ -421,6 +446,9 @@ Epics, mapped to phases and owning workstreams. Stories exist at the level of §
 | E22 | Own OFP/TPP authorization track | Product / Legal | P3 | Business case then application |
 | E23 | Product manifest & onboarding kit ("new product in < 6 weeks") | Platform eng | P4 | Config schema, sandbox, playbook |
 | E24 | Auto finance onboarding (proof) + Qard Hassan pack | Product squads | P4 | Zero core changes is the test |
+| E25 | Cross-border data adapters (Credit Passport active path, home-country accounts/statement parsing) | Integrations | P1 (Passport) / P3 (accounts) | The strategy's differentiated data asset |
+| E26 | Goal-pursuit telemetry & day-zero early-warning stream | Data eng / Risk | P3 | Overlay-only features; never-list enforced in code |
+| E27 | Recourse-conditions engine (assignment, takaful, remittance-linked, Kafalah) | Risk eng / Legal | P1 basics / P2 full | Conditions machine-readable on tokens; product layer executes |
 
 ---
 
@@ -428,7 +456,12 @@ Epics, mapped to phases and owning workstreams. Stories exist at the level of §
 
 | System | Purpose | Mode | Phase | Notes |
 |---|---|---|---|---|
-| **AECB** | Consumer/commercial reports & scores in decisions; monthly furnishing | Real-time API (pull) + batch (furnish) | P1/P2 | Subscriber agreement & commercials in P0; Credit Passport (Nova) option for thin files; watch Credit Score 3.0 reason codes for customer comms alignment |
+| **AECB** | Consumer/commercial reports & scores in decisions; monthly furnishing | Real-time API (pull) + batch (furnish) | P1/P2 | Subscriber agreement & commercials in P0; telco payment behavior reaches us lawfully through the bureau (never bank-as-operator traffic reading); watch Credit Score 3.0 reason codes for customer comms alignment |
+| **Nova Credit / Credit Passport (via AECB)** | Home-country bureau history for new-to-UAE applicants — the cross-border approval path | Real-time API, consumer-permissioned per application | P1 | India, Philippines, UK live; corridor expansion tracks the strategy's priority list (India, Philippines, Egypt, Pakistan) |
+| **Home-country account rails** (India Account Aggregator, international open banking, statement parsing) | Cross-border income & obligations into affordability | API via aggregators + document parsing fallback | P3 | Perfios/Ocrolus-class parsing; availability varies by corridor — build as adapters, not assumptions |
+| **PFM agent platform** | Goal-pursuit telemetry (contributions, consistency, plan-vs-actual for SMEs) as governed features; same-day agentic actions on early-warning signals | Event stream, dedicated consented purpose | P3 | Overlay-only in scoring (§7.7); technically walled off from collections |
+| **Remittance rails** (Mal product) | Remittance-linked repayment sequencing; remittance-spike early-warning signal | Internal events | P2/P3 | Instalment settles before the home transfer leaves |
+| **Takaful provider** | Credit-shield enrollment (death, disability, job loss) executed as a token condition at origination | API/operational | P2 | Priced into the book at origination |
 | **Al Tareq / Nebras (via licensed TPP)** | Account & transaction data for affordability; future payment initiation | API via TPP (Lean-class) | P1 retail, P2 SME | Own OFP authorization evaluated P3 (ADIB precedent); bank coverage still ramping — never a single point of journey failure |
 | **Core banking** | Customer master, accounts, facility booking, limit enforcement, disbursement | API/events | P1 | Mizan decides limits; core enforces (§7.6) |
 | **Onboarding / KYC / screening stack** | Identity (UAE PASS-verified), sanctions/AML outcomes | Event/API consumption | P1 | Mizan consumes outcomes; never re-performs KYC |
@@ -455,6 +488,9 @@ Epics, mapped to phases and owning workstreams. Stories exist at the level of §
 | Override rate | < 10% of refers overridden without pattern; overrides feed ≥ 1 policy change/quarter | Human-judgment loop is working |
 | Cost per decision | Baseline in P1, −30% by P3 | Bureau + data + platform amortization |
 | Third-product onboarding time | < 6 weeks (P4 test) | The platform claim, measured |
+| Cross-border data attach rate on thin files | ≥ 60% of no-hit applicants underwritten via Credit Passport or home-account data by M12 | The strategy's approval segment, measured — thin files become approvals, not exceptions |
+| Signal-to-action time (early warning) | Same-day (D+0) from signal to first agentic action, from P3 | The dossier's core claim: the moat is not the signal, it is signal-to-action latency — cure rates collapse with every week |
+| Goal-telemetry coverage | ≥ 40% of active borrowers with consented goal streams by M18 | Feeds both underwriting overlays and the earliest distress sensor |
 
 ---
 
@@ -469,6 +505,9 @@ Epics, mapped to phases and owning workstreams. Stories exist at the level of §
 | **SME data sparsity → weak early SME models** | Medium | Refer-first launch posture; human decisions structured (reason-coded) so they become training data; EDB guarantees de-risk the learning period |
 | **Model governance debt** (MMS, AI/ML guidance) discovered late | Medium | Governance artifacts are epic-level scope (E15, E20) with the same priority as features; Model Oversight Committee stood up in P0 |
 | **Regulatory drift** (SME CPR effective ~H2 2026; new Central Bank Law transition to Sep 2026) | Medium | Compliance review is a named gate in every phase; regulatory primitives centralized so a rule change is one edit, not N product edits |
+| **Goodhart risk on intent features** — once goal pursuit is a known credit input, it gets simulated | Medium | Weight only costly-to-fake flows (actual transfers, actual supplier payments); never disclose feature weights; monitor feature drift for gaming signatures |
+| **Honesty-punishment data poisoning** — if declared departures or goal changes are penalized, disclosure stops and the intent stream degrades | High | Encoded rule: score inconsistency-without-cause, not goal changes; declared departure triggers a tenor-matched product offer, never a price penalty; same for documented life shocks |
+| **Trust/conduct catastrophe** — one misuse of service data as collections pressure ends the flywheel and invites regulatory action | Low likelihood / severe | The never-list (no family disclosure, no contact-graph leverage, no surveillance telemetry) enforced as technical access walls + PDPL purpose limitation; ISSC oversight as independent kill-switch |
 
 ---
 
@@ -499,6 +538,9 @@ Epics, mapped to phases and owning workstreams. Stories exist at the level of §
 | 6 | **Risk-based pricing ambition — does Mal Bank want it at all?** | Banded pricing may be a durable brand position for a community-oriented Islamic bank, not just a launch constraint |
 | 7 | **Where does salary advance (Qard Hassan) sit commercially?** | It cannot price for risk (SS 19); as an engagement/retention product its decisioning is trivial — but its funding cost and loss appetite need a business owner |
 | 8 | **Collections & restructuring interface** | Shari'ah constraints (no re-pricing, donation-based late payments) mean collections strategy must be co-designed with the decisioning layer's data — whose roadmap? |
+| 9 | **Corridor sequencing and rail readiness** | India/Philippines/Egypt/Pakistan is the strategy's priority order — but Credit Passport coverage, Account Aggregator access mechanics for a UAE bank, and enforcement reciprocity (2020 India notification) need per-corridor validation before committing P3 scope |
+| 10 | **ISSC position on goal-linked financing and intent features** | Converting a saving flow into an instalment flow, and using behavioral telemetry in credit decisions, both need early ISSC socialization — fairness remit applies; this belongs in the P0 delegation-matrix conversation |
+| 11 | **PDPL consent architecture for service-data-as-credit-input** | Goal telemetry needs its own purpose-specific consent, separable from PFM service consent and revocable without losing the service — legal design needed before P3 build |
 
 ---
 
@@ -525,5 +567,7 @@ Epics, mapped to phases and owning workstreams. Stories exist at the level of §
 **Shari'ah:** AAOIFI SS 8 (Murabaha), SS 30 (Tawarruq), SS 19 (Qard fees), SS 3 (late-payment donation), SS 59 (sale of debt), SS 21 (screening taxonomy); HSA Resolution 18/3/2018 (AAOIFI mandatory); CBUAE Shari'ah Governance Standard (ISSC scope incl. operational process flows); Dubai Court of Cassation 595/2025 and Cassation 9/2025 (late-payment interest void; "interest"-labelled clauses void); UAE Commercial Transactions Law 50/2022 Arts. 468–497.
 
 **Market/vendors:** ruya × DDCAP ETHOS commodity Murabaha automation (Jul 2025); Eiger Trading REST-API Tawarruq execution; Emirates Islamic 3-hour Murabaha offer window; ADIB Instant Finance category-uniform pricing; Wio SME lending (Network International marketplace, Geidea); Biz2X × Network International / Deem Finance; FICO × Network International in-region hosting; Experian Middle East (Dubai); Provenir MEA expansion; Taktile (no public MEA presence); EDB Credit Guarantee Scheme (50%, AED 5m cap); UAE e-invoicing Ministerial Decisions 243/244 of 2025 (mandatory from 2027); Cabinet Resolution 22/2016 (SME definition).
+
+**Strategy alignment:** this PRD implements the decisioning layer for the credit portfolio strategy set out in the companion [Cross-Border Underwriting Dossier](strategy-dossier.html) (working dossier v3, 21 Jul 2026) — cross-border thesis, future-intent underwriting, learning-speed sequencing, day-zero early warning, consent-first recourse, and the telco-via-bureau position.
 
 *Assessment note: facts above were verified via public sources in July 2026; items flagged in-text (e.g., exact SME CPR effective date, AECB commercial terms, Credit Score 3.0 go-live status) require primary-source confirmation during discovery.*
