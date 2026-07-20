@@ -256,6 +256,54 @@ group('9. Determinism: fresh init() runs are identical', () => {
 });
 
 // ---------------------------------------------------------------------------
+group('10. Cross-border Credit Passport path, recourse conditions, early warning (v1.1)', () => {
+  // r2 WITHOUT creditPassport consent — thin-file behavior unchanged.
+  const r2Base = decidePersona('retail_pf', personas.r2);
+  eq(r2Base.outcome, 'REFER', 'r2 without Credit Passport consent still refers');
+  ok(r2Base.reasonCodes.includes('RC_THIN_FILE'), 'r2 baseline reasons include RC_THIN_FILE');
+  ok(!r2Base.dataPulls.some(p => p.source === 'CREDIT_PASSPORT'), 'no CREDIT_PASSPORT pull without consent');
+
+  // r2 WITH creditPassport consent — approved on home-bureau data, conservatively.
+  const r2Cp = decidePersona('retail_pf', personas.r2,
+    { consents: { aecb: true, openFinance: true, creditPassport: true } });
+  eq(r2Cp.outcome, 'APPROVE', 'r2 with Credit Passport consent approves');
+  ok(['B', 'C', 'D'].includes(r2Cp.score.grade), 'grade capped at B (got ' + r2Cp.score.grade + ')');
+  eq(r2Cp.score.base, personas.r2.homeBureau.score, 'home-bureau score used as scorecard base');
+  ok(r2Cp.score.overlays.some(o => o.name === 'Cross-border conservatism' && o.delta === -40),
+     'Cross-border conservatism overlay −40 applied');
+  ok(r2Cp.dataPulls.some(p => p.source === 'CREDIT_PASSPORT' && p.status === 'HIT'),
+     'CREDIT_PASSPORT pull recorded with HIT');
+  eq(r2Cp.limit.bindingConstraint, 'CROSS_BORDER_HAIRCUT', 'binding constraint is CROSS_BORDER_HAIRCUT');
+  const unHaircut = Math.min.apply(null,
+    r2Cp.limit.trace.filter(t => !/cross-border/i.test(t.label)).map(t => t.value));
+  ok(r2Cp.limit.approved < unHaircut,
+     'haircut limit ' + r2Cp.limit.approved + ' below un-haircut equivalent ' + unHaircut);
+  ok(r2Cp.reasonCodes.includes('RC_CROSS_BORDER'), 'reasons include RC_CROSS_BORDER');
+  ok(!!(D.reasonCodes.RC_CROSS_BORDER && D.reasonCodes.RC_CROSS_BORDER.en && D.reasonCodes.RC_CROSS_BORDER.ar),
+     'RC_CROSS_BORDER exists bilingually in MizanData.reasonCodes');
+  ok(r2Cp.token && r2Cp.token.conditions.includes('Remittance-linked repayment schedule'),
+     'cross-border token carries the remittance-linked condition');
+
+  // Recourse conditions on all retail / SME approval tokens (dossier §09).
+  const r1b = decidePersona('retail_pf', personas.r1);
+  ok(r1b.token.conditions.includes('Salary transfer & EOSB assignment'), 'r1 token includes salary/EOSB assignment');
+  ok(r1b.token.conditions.includes('Credit shield takaful enrollment'), 'r1 token includes credit shield takaful');
+  ok(!r1b.token.conditions.includes('Remittance-linked repayment schedule'),
+     'remittance-linked condition is cross-border only');
+  const s1b = decidePersona('sme_wc', personas.s1);
+  ok(s1b.token.conditions.includes('Signed purpose-of-finance undertaking'), 's1 token includes purpose-of-finance undertaking');
+  ok(s1b.token.conditions.includes('Personal guarantee of majority owner'), 's1 token includes personal guarantee');
+
+  // Early warning — 5 seeded day-zero signals via metrics().
+  const ew = E.metrics().earlyWarning;
+  ok(Array.isArray(ew) && ew.length === 5, 'metrics().earlyWarning has 5 entries (' + (ew && ew.length) + ')');
+  const floor = new Date(new Date(D.TODAY + 'T00:00:00Z').getTime() - 3 * 86400000).toISOString().slice(0, 10);
+  ok(ew.every(s => s.detectedAt >= floor && s.detectedAt <= D.TODAY), 'signals detected within the last 3 days of TODAY');
+  ok(ew.every(s => (s.status === 'ACTIONED' || s.status === 'OPEN') && s.customer && s.signal && s.recommendedAction),
+     'every signal has customer, signal, recommended action and a valid status');
+});
+
+// ---------------------------------------------------------------------------
 console.log('\n' + '─'.repeat(60));
 if (failures > 0) {
   console.error('SELFTEST FAILED: ' + failures + ' of ' + checks + ' checks failed.');

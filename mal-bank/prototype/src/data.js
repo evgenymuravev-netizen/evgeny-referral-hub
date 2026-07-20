@@ -38,6 +38,11 @@
   }
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
   const roundTo = (x, step) => Math.round(x / step) * step;
+  function addDaysIso(isoDate, days) {
+    const d = new Date(isoDate + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
 
   // ---------------------------------------------------------------------------
   // 1.1 Retail personas — fixed IDs, names and intended outcomes (contract §1.1)
@@ -64,6 +69,10 @@
       aecb: { hit: false, score: null, esrPct: null, obligationsMonthly: 0,
               tradelines: 0, chequeReturns12m: 0, worstDelinquency: 'NONE',
               creditPassportAvailable: true },
+      // Consented home-country bureau file, importable via the AECB × Nova Credit
+      // Passport rail (dossier §11) — used only when the applicant opts in.
+      homeBureau: { country: 'India', bureau: 'CIBIL via AECB × Nova Credit Passport',
+                    score: 776, scoreRange: '300–900', historyYears: 6, obligationsMonthlyAed: 1100 },
       bankData: { source: 'ALTAREQ_TPP', monthsAvailable: 7, salaryDetected: true, avgSalaryCredit: 17000 },
       defaultRequest: { amount: 60000, tenorMonths: 24 }
     },
@@ -301,8 +310,39 @@
       ar: 'مبلغ السحب المطلوب يتجاوز الحد المتاح من التسهيل.' },
     RC_TOKEN_EXPIRED: {
       en: 'The approval validity window has expired — a new decision is required.',
-      ar: 'انتهت صلاحية الموافقة — يلزم إصدار قرار جديد.' }
+      ar: 'انتهت صلاحية الموافقة — يلزم إصدار قرار جديد.' },
+    RC_CROSS_BORDER: {
+      en: 'Approved using consented home-country credit history via Credit Passport.',
+      ar: 'تمت الموافقة استناداً إلى السجل الائتماني في بلد المنشأ الذي تمت مشاركته بموافقة العميل عبر خدمة جواز الائتمان.' }
   };
+
+  // ---------------------------------------------------------------------------
+  // Early warning — day-zero signals (dossier §08). Seeded, deterministic:
+  // detected within the last 3 days of TODAY, each with a same-day action.
+  // Distress surfaces weeks before DPD 30; the tracked metric is signal-to-action time.
+  // ---------------------------------------------------------------------------
+  const earlyWarning = [
+    { id: 'EW-001', detectedAt: addDaysIso(TODAY, 0), customer: 'Ravi Menon', segment: 'RETAIL',
+      signal: 'Goal contributions stopped — 3 weeks without a transfer to the savings goal',
+      signalAr: 'توقفت مساهمات هدف الادخار منذ ثلاثة أسابيع',
+      recommendedAction: 'Pre-emptive tenor-matched restructure offer proposed', status: 'ACTIONED' },
+    { id: 'EW-002', detectedAt: addDaysIso(TODAY, -1), customer: 'Blessing Okafor', segment: 'RETAIL',
+      signal: 'Remittance spike — 3× monthly average sent home within one week',
+      signalAr: 'ارتفاع التحويلات إلى بلد المنشأ إلى ثلاثة أضعاف المتوسط الشهري',
+      recommendedAction: 'Proactive check-in call scheduled', status: 'ACTIONED' },
+    { id: 'EW-003', detectedAt: addDaysIso(TODAY, -1), customer: 'Arjun Pillai', segment: 'RETAIL',
+      signal: 'New credit line opened in home country (consented home-bureau feed)',
+      signalAr: 'فتح خط ائتمان جديد في بلد المنشأ',
+      recommendedAction: 'Limit review queued', status: 'OPEN' },
+    { id: 'EW-004', detectedAt: addDaysIso(TODAY, -2), customer: 'Maricel Santos', segment: 'RETAIL',
+      signal: 'Salary credit 6 days late vs established pattern',
+      signalAr: 'تأخر إيداع الراتب ستة أيام عن النمط المعتاد',
+      recommendedAction: 'Instalment shifted to salary landing date', status: 'ACTIONED' },
+    { id: 'EW-005', detectedAt: addDaysIso(TODAY, -2), customer: 'Zahra Interiors FZE', segment: 'SME',
+      signal: 'Balance depletion velocity high — runway under 3 weeks at current burn',
+      signalAr: 'تسارع مرتفع في استنزاف رصيد الحساب',
+      recommendedAction: 'Agent outreach same day', status: 'OPEN' }
+  ];
 
   // ---------------------------------------------------------------------------
   // 1.5 sampleBook — seeded synthetic applications for policy simulation.
@@ -360,12 +400,13 @@
   }
 
   const MizanData = {
-    VERSION: 'data-1.0',
+    VERSION: 'data-1.1',
     TODAY: TODAY,
     personasRetail: personasRetail,
     personasSme: personasSme,
     sectorExclusions: sectorExclusions,
     reasonCodes: reasonCodes,
+    earlyWarning: earlyWarning,
     sampleBook: buildSampleBook(),
     history: { days: 90, seed: 20260719 }
   };

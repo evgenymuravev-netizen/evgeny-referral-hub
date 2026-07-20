@@ -382,3 +382,76 @@ weekly seasonality. Session decisions from `decide()` are merged into all aggreg
    6 events in order → EXECUTED; r2 → REFER appears in workbench; override with 4-eyes succeeds;
    s4 → DECLINE with Arabic reason rendered; policy console: scoreDecline 620→660 simulate shows
    fewer approvals, publish with distinct approver bumps version; monitoring tiles non-zero.
+
+---
+
+## Addendum v1.1 — cross-border strategy extensions
+
+Four additions layered onto contract v1.0 (dossier §04/§08/§09/§11 made tangible). Versions bump
+to `data-1.1` / `engine-1.1`; everything in v1.0 above remains binding and behaviorally unchanged
+except where stated.
+
+### A1. Credit Passport cross-border path (retail, persona r2)
+
+- **data.js** — r2 (Priya Nair) gains a top-level `homeBureau` object:
+  `{country: 'India', bureau: 'CIBIL via AECB × Nova Credit Passport', score: 776,
+  scoreRange: '300–900', historyYears: 6, obligationsMonthlyAed: 1100}`. New reason code
+  `RC_CROSS_BORDER` (bilingual EN/MSA): "Approved using consented home-country credit history
+  via Credit Passport."
+- **engine.js** — `decide()` now passes `consents` through to evaluation. When a retail_pf
+  applicant has `aecb.hit === false` AND `creditPassportAvailable` AND
+  `consents.creditPassport === true` AND a `homeBureau` file:
+  - dataPulls gains `{source: 'CREDIT_PASSPORT', status: 'HIT', ...}` (the `dataPulls.source`
+    domain in §2.2 is extended with `CREDIT_PASSPORT`);
+  - scorecard base = home-bureau score with overlay `{name: 'Cross-border conservatism', delta: -40}`;
+    grade is capped at B;
+  - consented home-country obligations (`obligationsMonthlyAed`) count into DBR serviceability;
+  - the limit is computed normally, then a 50% haircut is applied as a final trace line —
+    `limit.bindingConstraint` domain gains the value `'CROSS_BORDER_HAIRCUT'`;
+  - outcome is APPROVE with `RC_CROSS_BORDER`; the token carries
+    `'Remittance-linked repayment schedule'` on top of the standard retail conditions (A2).
+  - Without `consents.creditPassport`, r2 refers with `RC_THIN_FILE` exactly as v1.0.
+  - DecisionRecord `consents` gains `creditPassport: {granted, at}`.
+- **index.html** — personas with `creditPassportAvailable` render a third, optional consent
+  checkbox ("Credit Passport — home-country credit history (AECB × Nova Credit)"); microcopy
+  states declining routes to manual review. The orchestration timeline shows the
+  CREDIT_PASSPORT pull; decision panel picks up the new reason code, trace line and conditions
+  generically.
+
+### A2. Recourse conditions on approval tokens (dossier §09)
+
+All approvals get recourse structured at origination, appended to any existing conditions:
+
+- `retail_pf`: `'Salary transfer & EOSB assignment'`, `'Credit shield takaful enrollment'`
+  (+ `'Remittance-linked repayment schedule'` on the cross-border path only).
+- `sme_wc`: `'Signed purpose-of-finance undertaking'`, `'Personal guarantee of majority owner'`
+  (the EDB guarantee-assessment condition above `guaranteeThreshold` is retained).
+- `salary_advance` is unchanged (Qard Hassan next-payday condition only).
+
+### A3. Day-zero early-warning panel (dossier §08)
+
+- **data.js** — new seeded `MizanData.earlyWarning`: exactly 5 signals, each
+  `{id, detectedAt (within 3 days of TODAY), customer, segment, signal, signalAr,
+  recommendedAction, status: 'ACTIONED'|'OPEN'}` covering: goal contributions stopped 3 weeks,
+  remittance spike 3× monthly average, new credit line opened in home country, salary credit
+  6 days late, high balance-depletion velocity — each paired with a same-day action.
+- **engine.js** — exposed as `metrics().earlyWarning` (deep copy).
+- **index.html** — Monitoring screen gains an "Early warning — day zero" panel (signal + AR,
+  customer, segment, detected date, same-day action, status chip) with the caption
+  "Distress surfaces weeks before DPD 30 — the tracked metric is signal-to-action time."
+
+### A4. Overview strategy line + mapping rows
+
+One strategy sentence added to the Overview intro ("Mizan operationalizes Mal's cross-border
+underwriting strategy — consented two-country visibility, intent as underwriting material,
+day-zero risk action, and recourse structured at origination by consent") and two rows in the
+screen→PRD mapping table: Retail Credit Passport path → PRD §8.3/§8.11 · dossier §11;
+Monitoring early-warning panel → PRD §8.10 · dossier §08.
+
+### Selftest (engine.selftest.js group 10)
+
+r2 without creditPassport consent → REFER + RC_THIN_FILE and no CREDIT_PASSPORT pull; r2 with
+consent → APPROVE, grade ≤ B, `CROSS_BORDER_HAIRCUT` binding with approved limit strictly below
+the un-haircut equivalent, RC_CROSS_BORDER emitted bilingually, remittance-linked token
+condition; r1/s1 tokens carry the A2 recourse conditions; `metrics().earlyWarning` has exactly
+5 well-formed entries within the 3-day window. 104 checks total.

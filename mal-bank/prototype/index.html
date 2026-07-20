@@ -413,7 +413,8 @@ var EXEC_META = {
 var PULL_LABEL = {
   AECB_CONSUMER: 'AECB consumer report + score', AECB_COMMERCIAL: 'AECB commercial report + score',
   AECB_OWNER: 'AECB owner/guarantor report', OPEN_FINANCE: 'Open finance (Al Tareq via licensed TPP)',
-  INTERNAL_CORE: 'Internal core banking data', DOCUMENTS: 'Statement upload + automated parsing'
+  INTERNAL_CORE: 'Internal core banking data', DOCUMENTS: 'Statement upload + automated parsing',
+  CREDIT_PASSPORT: 'Credit Passport — home-country bureau (AECB × Nova Credit)'
 };
 
 /* ================= Navigation ================= */
@@ -540,7 +541,8 @@ var Overview = {
         h('strong', { text: 'approve / refer / decline + facility limit + risk grade + pricing band' }),
         ' — with consent, AECB and open-finance data acquisition, affordability, policy rules and scoring orchestrated behind a single API.'),
       h('p', null, 'It shares the plumbing (roughly 70% of build effort) while keeping retail and SME underwriting judgment separate: segment policy packs and scorecards, one engine.'),
-      h('p', null, 'Every decision is fully replayable — inputs, features, rules fired, model version, human overrides and linked Murabaha contract events — for CBUAE model-risk audit ', h('em', { text: 'and' }), ' Shari’ah audit.'));
+      h('p', null, 'Every decision is fully replayable — inputs, features, rules fired, model version, human overrides and linked Murabaha contract events — for CBUAE model-risk audit ', h('em', { text: 'and' }), ' Shari’ah audit.'),
+      h('p', null, 'Mizan operationalizes Mal’s cross-border underwriting strategy — consented two-country visibility, intent as underwriting material, day-zero risk action, and recourse structured at origination by consent.'));
     root.appendChild(what);
 
     var positions = [
@@ -575,11 +577,13 @@ var Overview = {
     var map = [
       ['Overview', '§1 Executive summary · §7 Trade-offs', 'The argument, compressed'],
       ['Retail journey', '§5.3 · §8.1–8.4 · §8.7 · §6.2', 'Consent → orchestration → decision → approval token → Murabaha sequencing; Qard Hassan corollary'],
+      ['Retail Credit Passport path', '§8.3 · §8.11 · dossier §11', 'Consented home-country bureau underwriting for thin-file newcomers — conservative overlay, grade cap, 50% haircut'],
       ['SME journey', '§5.4 · §8.3–8.4 · §8.7', 'Owner-blend bureau, cash-flow serviceability, facility vs drawdown split'],
       ['Policy console', '§8.5 · §6.1–6.2', 'Locked regulatory primitives, editable params, simulate-before-publish, 4-eyes, ISSC sector screen'],
       ['Workbench', '§8.8', 'Pre-assembled credit file, SLAs, reason-coded 4-eyes overrides'],
       ['Decision log', '§8.8 · §6.2', 'Full replay — CBUAE model audit + Shari’ah audit framing'],
-      ['Monitoring', '§8.9 · §12', 'STP vs targets, decline reasons, grades, refer aging, vintages']
+      ['Monitoring', '§8.9 · §12', 'STP vs targets, decline reasons, grades, refer aging, vintages'],
+      ['Monitoring early-warning panel', '§8.10 · dossier §08', 'Day-zero distress signals with same-day actions — signal-to-action time is the tracked metric']
     ];
     var mt = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
       h('th', { text: 'Screen' }), h('th', { text: 'PRD sections' }), h('th', { text: 'What it proves' }))));
@@ -603,7 +607,7 @@ function pullsTimeline(rec, opts) {
   opts = opts || {};
   var wrap = h('div');
   var steps = [];
-  steps.push({ title: 'Consent registry — consent verified', sum: 'AECB consent evidenced (Federal Law 6/2010)' + (rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted ? ' · Al Tareq open-finance consent active (Circular 3/2025)' : ''), lat: null });
+  steps.push({ title: 'Consent registry — consent verified', sum: 'AECB consent evidenced (Federal Law 6/2010)' + (rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted ? ' · Al Tareq open-finance consent active (Circular 3/2025)' : '') + (rec.consents && rec.consents.creditPassport && rec.consents.creditPassport.granted ? ' · Credit Passport consent active (home-country bureau)' : ''), lat: null });
   (rec.dataPulls || []).forEach(function (p) {
     var sumParts = [];
     if (p.status) sumParts.push(p.status);
@@ -817,6 +821,7 @@ var Retail = {
     form.appendChild(h('div', { class: 'consent-box' }, cOf, h('label', { for: 'rt-c-of' },
       h('div', { class: 'cb-title', text: 'Open-finance consent (Al Tareq) — optional' }),
       h('div', { class: 'cb-legal', text: 'Share account and transaction data via the Al Tareq consent layer (Nebras, CBUAE Circular 3/2025) for income verification. Fallback: internal salary history or documents.' }))));
+    form.appendChild(h('div', { id: 'rt-cp-wrap' }));   /* Credit Passport consent — rendered per persona in pick() */
     var consentErr = h('div', { id: 'rt-consent-err' });
     form.appendChild(consentErr);
     var submit = h('button', { class: 'btn btn-primary', id: 'rt-submit', text: 'Submit application', onclick: function () { Retail.submit(); } });
@@ -857,6 +862,15 @@ var Retail = {
     $('#rt-amount').value = $('#rt-amount-n').value = p.defaultRequest.amount;
     $('#rt-tenor').value = $('#rt-tenor-n').value = p.defaultRequest.tenorMonths;
     $('#rt-c-aecb').checked = false; $('#rt-c-of').checked = false;
+    /* Credit Passport consent — only for personas whose home-country file is importable */
+    var cpWrap = clear($('#rt-cp-wrap'));
+    if (p.aecb && p.aecb.creditPassportAvailable) {
+      var hb = p.homeBureau || {};
+      cpWrap.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'rt-c-cp' }),
+        h('label', { for: 'rt-c-cp' },
+          h('div', { class: 'cb-title', text: 'Credit Passport — home-country credit history (AECB × Nova Credit) — optional' }),
+          h('div', { class: 'cb-legal', text: 'Consent to retrieve my home-country credit file' + (hb.bureau ? ' (' + hb.bureau + ', ' + hb.country + ')' : '') + ' to support this application. Optional — declining routes a thin file to manual review instead of an automated decision.' }))));
+    }
     clear($('#rt-consent-err'));
     clear($('#rt-decision')); clear($('#rt-exec'));
     var orch = clear($('#rt-orch'));
@@ -876,10 +890,11 @@ var Retail = {
       return;
     }
     var amount = Number($('#rt-amount-n').value), tenor = Number($('#rt-tenor-n').value);
+    var cpBox = $('#rt-c-cp');
     var rec;
     try {
       rec = ME.decide({ productId: 'retail_pf', applicant: Retail.sel, amount: amount, tenorMonths: tenor,
-        consents: { aecb: true, openFinance: $('#rt-c-of').checked } });
+        consents: { aecb: true, openFinance: $('#rt-c-of').checked, creditPassport: !!(cpBox && cpBox.checked) } });
     } catch (err) {
       errBox.appendChild(h('div', { class: 'callout callout-error' },
         h('div', { class: 'co-title', text: 'Engine rejected the application' }),
@@ -903,7 +918,7 @@ var Retail = {
       panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
         h('div', { class: 'co-title', text: 'Routed to the refer workbench' }),
         h('div', { class: 'co-body' }, 'A structured case with the full pre-assembled file is now in the analyst queue (retail SLA: same day). ',
-          Retail.sel && Retail.sel.aecb && Retail.sel.aecb.creditPassportAvailable ? 'Thin file with Credit Passport available: consented home-country bureau history can support a starter limit. ' : '',
+          Retail.sel && Retail.sel.aecb && Retail.sel.aecb.creditPassportAvailable ? 'Thin file with Credit Passport available: re-submit with the Credit Passport consent ticked for an automated cross-border decision, or let the analyst use the consented home-country history for a starter limit. ' : '',
           h('button', { class: 'btn btn-ghost', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
     }
     if (rec.outcome === 'APPROVE') Retail.buildExec(rec);
@@ -1827,7 +1842,7 @@ var LogScreen = {
       h('dt', { text: 'Product / segment' }), h('dd', { text: (rec.productId || '—') + ' · ' + (rec.segment || '—') }),
       h('dt', { text: 'Policy / engine version' }), h('dd', null, h('code', { text: 'policy v' + rec.policyVersion + ' · ' + (rec.engineVersion || '') })),
       h('dt', { text: 'Status' }), h('dd', null, h('span', { class: 'chip acc', text: rec.status || '—' })),
-      h('dt', { text: 'Consents' }), h('dd', { class: 'small', text: 'AECB ' + (rec.consents && rec.consents.aecb && rec.consents.aecb.granted ? 'granted ' + fmtDT(rec.consents.aecb.at) : '—') + ' · open finance ' + (rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted ? 'granted' : 'not granted') })));
+      h('dt', { text: 'Consents' }), h('dd', { class: 'small', text: 'AECB ' + (rec.consents && rec.consents.aecb && rec.consents.aecb.granted ? 'granted ' + fmtDT(rec.consents.aecb.at) : '—') + ' · open finance ' + (rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted ? 'granted' : 'not granted') + (rec.consents && rec.consents.creditPassport && rec.consents.creditPassport.granted ? ' · credit passport granted' : '') })));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
 
@@ -1872,6 +1887,7 @@ var Monitoring = {
     root.appendChild(screenHead('PRD §8.9 · §12 — the platform proves it is working', 'Monitoring & governance',
       'Decision health over the seeded 90-day window plus everything decided this session. STP vs segment-honest targets (retail ≥ 80%, SME ≥ 40%), decline reasons, grades, refer aging and vintage FPD against the appetite corridor.'));
     root.appendChild(h('div', { class: 'tiles', id: 'mn-tiles' }));
+    root.appendChild(h('div', { class: 'panel', id: 'mn-ew' }));
     root.appendChild(h('div', { class: 'panel', id: 'mn-daily' }));
     root.appendChild(h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:14px;' },
       h('div', { class: 'panel', id: 'mn-reasons' }),
@@ -1886,11 +1902,39 @@ var Monitoring = {
     try { m = ME.metrics(); } catch (e) {}
     if (!m) { clear($('#mn-tiles')).appendChild(h('div', { class: 'callout callout-error', text: 'metrics() unavailable.' })); return; }
     Monitoring.tiles(m);
+    Monitoring.earlyWarning(m);
     Monitoring.daily(m);
     Monitoring.reasons(m);
     Monitoring.grades(m);
     Monitoring.aging(m);
     Monitoring.vintages(m);
+  },
+
+  earlyWarning: function (m) {
+    var box = $('#mn-ew');
+    if (!box) return;
+    clear(box);
+    box.appendChild(h('h3', { text: 'Early warning — day zero' }));
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-bottom:8px;', text: 'Distress surfaces weeks before DPD 30 — the tracked metric is signal-to-action time.' }));
+    var rows = m.earlyWarning || [];
+    if (!rows.length) { box.appendChild(h('div', { class: 'small muted', text: 'No open early-warning signals.' })); return; }
+    var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+      h('th', { text: 'Signal' }), h('th', { text: 'Customer' }), h('th', { text: 'Segment' }),
+      h('th', { text: 'Detected' }), h('th', { text: 'Same-day action' }), h('th', { text: 'Status' }))));
+    var tb = h('tbody');
+    rows.forEach(function (s) {
+      tb.appendChild(h('tr', null,
+        h('td', null, h('div', { text: s.signal }),
+          s.signalAr ? h('div', { class: 'ar small muted', lang: 'ar', dir: 'rtl', text: s.signalAr }) : null),
+        h('td', { text: s.customer || '—' }),
+        h('td', null, h('span', { class: 'chip', text: s.segment || '—' })),
+        h('td', { class: 'num small', text: fmtD(s.detectedAt) }),
+        h('td', { class: 'small', text: s.recommendedAction || '—' }),
+        h('td', null, h('span', { class: 'oc ' + (s.status === 'ACTIONED' ? 'oc-APPROVE' : 'oc-REFER'), text: s.status || '—' }))));
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { class: 'tbl-scroll' }, t));
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'Consented cross-border rails surface distress the day it starts — goal contributions stopping, remittance spikes, home-country credit lines, late salary, balance depletion — and the response is same-day, before DPD 30 ever prints (dossier §08).' }));
   },
 
   tiles: function (m) {

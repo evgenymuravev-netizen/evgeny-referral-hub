@@ -13,6 +13,9 @@
  *    ordered promise → wakala → commodity purchase → offer/acceptance sequence.
  *  - ISSC sector screen (AAOIFI SS 21 taxonomy + ISSC tobacco ruling)
  *  - 4-eyes on policy publish and refer overrides; regulatory primitives locked.
+ *  - Cross-border Credit Passport path (v1.1, dossier §11): consented home-bureau
+ *    underwriting for thin-file newcomers — conservative overlay, grade cap B,
+ *    50% limit haircut, recourse conditions on the approval token (dossier §09).
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -21,7 +24,7 @@
 (function () {
   'use strict';
 
-  const ENGINE_VERSION = 'engine-1.0';
+  const ENGINE_VERSION = 'engine-1.1';
   const SCORECARD = { model: 'scorecard_v0', version: '0.3' };
 
   // Shari'ah execution events, in the only valid order (AAOIFI SS 8 / SS 30).
@@ -182,6 +185,7 @@
       chequeReturns12m: aecb ? aecb.chequeReturns12m : (a.chequeReturns12m || 0),
       worstDelinquency: aecb ? aecb.worstDelinquency : (a.worstDelinquency || 'NONE'),
       creditPassportAvailable: aecb ? !!aecb.creditPassportAvailable : false,
+      homeBureau: a.homeBureau || null,
       salaryDetected: a.bankData ? a.bankData.salaryDetected === true
                                  : (a.salaryDetected !== undefined ? !!a.salaryDetected : true),
       bankSource: a.bankData ? a.bankData.source : 'ALTAREQ_TPP',
@@ -235,17 +239,25 @@
   // ---------------------------------------------------------------------------
   // Scorecard v0 (CONTRACT §2.2)
   // ---------------------------------------------------------------------------
-  function retailScore(p) {
-    if (!p.aecbHit || p.score === null) {
+  function retailScore(p, crossBorder) {
+    // Cross-border path (dossier §11): consented home-bureau score is the base,
+    // with a flat conservatism overlay; the grade is capped at B — newcomers
+    // underwritten on home data enter the book one notch below their file.
+    const base = (p.aecbHit && p.score !== null) ? p.score
+               : (crossBorder && p.homeBureau ? p.homeBureau.score : null);
+    if (base === null) {
       return { model: SCORECARD.model, version: SCORECARD.version, base: null, overlays: [], points: null, grade: null };
     }
     const overlays = [];
+    if (crossBorder) overlays.push({ name: 'Cross-border conservatism', delta: -40 });
     if (p.esrPct !== null && p.esrPct > 40) overlays.push({ name: 'ESR > 40%', delta: -20 });
     if (p.chequeReturns12m >= 1) overlays.push({ name: 'Returned cheques (12m)', delta: -30 });
     if (p.salaryBank === 'MAL_BANK') overlays.push({ name: 'Salary-transfer customer', delta: 15 });
     if (p.tenureMonths >= 24) overlays.push({ name: 'Employment tenure ≥ 24m', delta: 10 });
-    const points = p.score + overlays.reduce((s, o) => s + o.delta, 0);
-    return { model: SCORECARD.model, version: SCORECARD.version, base: p.score, overlays, points, grade: pointsToGrade(points) };
+    const points = base + overlays.reduce((s, o) => s + o.delta, 0);
+    let grade = pointsToGrade(points);
+    if (crossBorder && grade === 'A') grade = 'B';
+    return { model: SCORECARD.model, version: SCORECARD.version, base, overlays, points, grade };
   }
 
   function smeScore(p) {
@@ -288,9 +300,18 @@
   // ---------------------------------------------------------------------------
   // Retail personal finance evaluation (PRD §5.3, §6.1)
   // ---------------------------------------------------------------------------
-  function evaluateRetail(p, amount, tenorMonths, pol) {
+  function evaluateRetail(p, amount, tenorMonths, pol, consents) {
     const reg = pol.regulatory, prm = pol.params;
     const rs = makeRuleSet();
+
+    // Cross-border Credit Passport path (dossier §11): a thin-file newcomer whose
+    // home-country bureau file is importable AND consented is underwritten on that
+    // file — conservative overlay, grade capped at B, 50% limit haircut — instead
+    // of falling to the thin-file REFER. No consent → the thin-file path is unchanged.
+    const crossBorder = !p.aecbHit && p.creditPassportAvailable === true &&
+                        !!(consents && consents.creditPassport === true) && !!p.homeBureau;
+    // Consented home-country obligations count toward serviceability (two-country visibility).
+    const obligations = p.obligationsMonthly + (crossBorder ? (p.homeBureau.obligationsMonthlyAed || 0) : 0);
 
     // REGULATORY — mandatory bureau check (Federal Law 6/2010; consent gated upstream)
     rs.add('REG_AECB_CHECK', 'AECB consumer report pulled before credit decision', 'REGULATORY',
@@ -326,12 +347,19 @@
            p.chequeReturns12m, prm.chequeReturnsMax, 'RC_CHEQUE_RETURNS');
 
     // Thin-file strategy (PRD §5.3 step 3): configurable action, default REFER.
+    // A consented Credit Passport file substitutes for local depth.
     rs.add('POL_THIN_FILE', 'Credit file depth (thin-file strategy)', 'POLICY',
-           p.aecbHit ? 'PASS' : (prm.thinFileAction === 'DECLINE' ? 'FAIL' : 'REFER'),
-           p.aecbHit ? 'file present' : 'no-hit / thin file', 'AECB hit', 'RC_THIN_FILE');
+           p.aecbHit ? 'PASS' : (crossBorder ? 'PASS' : (prm.thinFileAction === 'DECLINE' ? 'FAIL' : 'REFER')),
+           p.aecbHit ? 'file present' : (crossBorder ? 'no-hit — Credit Passport substitutes' : 'no-hit / thin file'),
+           'AECB hit', 'RC_THIN_FILE');
+    if (crossBorder) {
+      rs.add('POL_CREDIT_PASSPORT', 'Consented home-country bureau file verified (Credit Passport)', 'POLICY',
+             'PASS', p.homeBureau.bureau + ' · ' + p.homeBureau.score + ' (' + p.homeBureau.country + ', ' +
+             p.homeBureau.historyYears + 'y history)', 'consent + home-bureau hit', null);
+    }
 
     // Scorecard v0
-    const score = retailScore(p);
+    const score = retailScore(p, crossBorder);
     const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
     if (score.points !== null) {
       const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
@@ -351,7 +379,7 @@
     // Limit math (CONTRACT §2.2): candidates = [requested, PV-of-DBR-headroom,
     // 20× salary (Reg 29/2011), product cap]; approved = min; binding recorded.
     const dbrCap = p.retiree ? reg.dbrCapRetireePct : reg.dbrCapPct;
-    const headroomMonthly = Math.round((dbrCap / 100) * p.salaryMonthly - p.obligationsMonthly);
+    const headroomMonthly = Math.round((dbrCap / 100) * p.salaryMonthly - obligations);
     const band = gradeToBand(score.grade) || 'C';
     const bandRange = prm.pricingBands[band];
     const midRate = (bandRange[0] + bandRange[1]) / 2;
@@ -367,10 +395,19 @@
     let approved = Infinity, binding = 'REQUESTED';
     for (const c of candidates) if (c.value < approved) { approved = c.value; binding = c.key; }
 
+    // Cross-border haircut: the limit is computed normally, then halved — the
+    // entry book on home-country data starts at 50% of the equivalent local limit.
+    if (crossBorder && Number.isFinite(approved) && approved > 0) {
+      const haircut = floor1000(approved * 0.5);
+      candidates.push({ label: 'Cross-border haircut — 50% of normal limit (Credit Passport entry book)',
+                        value: haircut, key: 'CROSS_BORDER_HAIRCUT' });
+      approved = haircut; binding = 'CROSS_BORDER_HAIRCUT';
+    }
+
     // REGULATORY — final DBR check on the approved amount (the double-enforcement:
     // even if params were mis-tuned, the engine never approves above the cap).
     const newInstallment = approved > 0 ? Math.round(annuityPayment(approved, midRate / 12, effTenor)) : 0;
-    const dbrPct = p.salaryMonthly > 0 ? Math.round(((p.obligationsMonthly + newInstallment) / p.salaryMonthly) * 1000) / 10 : 999;
+    const dbrPct = p.salaryMonthly > 0 ? Math.round(((obligations + newInstallment) / p.salaryMonthly) * 1000) / 10 : 999;
     const dbrOk = headroomMonthly > 0 && dbrPct <= dbrCap + 0.05; // rounding guard only
     rs.add('REG_DBR_CAP', 'Debt burden ratio within ' + dbrCap + '% cap (Reg 29/2011' + (p.retiree ? ', retiree' : '') + ')',
            'REGULATORY', dbrOk ? 'PASS' : 'FAIL', dbrPct + '%', dbrCap + '%', 'RC_DBR_EXCEEDED');
@@ -382,6 +419,7 @@
 
     // Reason codes attached to non-decline outcomes
     if (outcome === 'APPROVE') {
+      if (crossBorder) rs.reasons.push('RC_CROSS_BORDER');
       if (binding === 'RETIREE_CAP') { rs.reasons.push('RC_RETIREE_CAP'); }
       if (approved < amount && !rs.reasons.includes('RC_LIMIT_REDUCED')) rs.reasons.push('RC_LIMIT_REDUCED');
     }
@@ -389,10 +427,12 @@
     const features = {
       verifiedIncome: p.salaryDetected ? p.salaryMonthly : null,
       incomeSource: p.bankSource, salaryBank: p.salaryBank,
-      existingObligations: p.obligationsMonthly, esrPct: p.esrPct,
+      existingObligations: obligations, esrPct: p.esrPct,
       dbrCapApplied: dbrCap, headroomMonthly, newInstallment, dbrPct,
       effectiveTenor: effTenor, scoreBase: score.base, overlayNet,
-      retiree: p.retiree, thinFile: !p.aecbHit
+      retiree: p.retiree, thinFile: !p.aecbHit,
+      crossBorder: crossBorder,
+      homeObligationsMonthly: crossBorder ? (p.homeBureau.obligationsMonthlyAed || 0) : 0
     };
     const limit = {
       requested: amount, approved: outcome === 'DECLINE' ? 0 : approved,
@@ -557,8 +597,8 @@
              outcome, reasonCodes: rs.reasons, effTenor };
   }
 
-  function evaluate(productId, rawApplicant, amount, tenorMonths, pol) {
-    if (productId === 'retail_pf') return evaluateRetail(normalizeRetail(rawApplicant), amount, tenorMonths, pol);
+  function evaluate(productId, rawApplicant, amount, tenorMonths, pol, consents) {
+    if (productId === 'retail_pf') return evaluateRetail(normalizeRetail(rawApplicant), amount, tenorMonths, pol, consents);
     if (productId === 'salary_advance') return evaluateQard(normalizeRetail(rawApplicant), amount, tenorMonths, pol);
     if (productId === 'sme_wc') return evaluateSme(normalizeSme(rawApplicant), amount, tenorMonths, pol);
     throw err('unknown productId "' + productId + '"');
@@ -576,6 +616,14 @@
                    latencyMs: pullLatency(seq, i++), cached: false,
                    summary: { score: p.score, esrPct: p.esrPct, tradelines: p.tradelines,
                               obligationsMonthly: p.obligationsMonthly, worstDelinquency: p.worstDelinquency } });
+      // Cross-border Credit Passport pull — only on local no-hit, with explicit consent.
+      if (!p.aecbHit && p.creditPassportAvailable && consents.creditPassport === true && p.homeBureau) {
+        pulls.push({ source: 'CREDIT_PASSPORT', status: 'HIT', latencyMs: pullLatency(seq, i++), cached: false,
+                     summary: { country: p.homeBureau.country, bureau: p.homeBureau.bureau,
+                                homeScore: p.homeBureau.score + ' (' + p.homeBureau.scoreRange + ')',
+                                historyYears: p.homeBureau.historyYears,
+                                obligationsMonthlyAed: p.homeBureau.obligationsMonthlyAed } });
+      }
       if (p.salaryBank === 'MAL_BANK' || p.bankSource === 'INTERNAL') {
         pulls.push({ source: 'INTERNAL_CORE', status: 'OK', latencyMs: pullLatency(seq, i++), cached: false,
                      summary: { salaryDetected: p.salaryDetected, avgSalaryCredit: p.salaryMonthly } });
@@ -796,7 +844,7 @@
     if (!Number.isFinite(tenorMonths) || tenorMonths <= 0) throw err('application.tenorMonths must be a positive number');
 
     const pol = getPolicyRef(productId);
-    const ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol);
+    const ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents);
 
     S.seq += 1;
     const id = 'MZN-' + String(S.seq).padStart(6, '0');
@@ -810,9 +858,16 @@
       if (productId === 'retail_pf') {
         conditions.push('Execute Murabaha sequence within validity window (AAOIFI SS 8/30) — approval is not a contract');
         conditions.push('Cooling-off: ' + pol.regulatory.coolingOffDays + ' business days (waivable in writing)');
+        // Recourse structured at origination, by consent (dossier §09).
+        conditions.push('Salary transfer & EOSB assignment');
+        conditions.push('Credit shield takaful enrollment');
+        if (ev.features && ev.features.crossBorder) conditions.push('Remittance-linked repayment schedule');
       } else if (productId === 'sme_wc') {
         conditions.push('Each drawdown executes a fresh commodity-Murabaha cycle (AAOIFI SS 30)');
         if (ev.limit.approved > pol.params.guaranteeThreshold) conditions.push('EDB credit guarantee assessment');
+        // Recourse structured at origination (dossier §09).
+        conditions.push('Signed purpose-of-finance undertaking');
+        conditions.push('Personal guarantee of majority owner');
       } else {
         conditions.push('Repayable in full from next salary credit (Qard Hassan)');
       }
@@ -826,7 +881,8 @@
       applicantSnapshot: clone(applicant),
       request: { amount: Math.round(amount), tenorMonths: Math.round(tenorMonths) },
       consents: { aecb: { granted: true, at: consentAt },
-                  openFinance: { granted: consents.openFinance === true, at: consents.openFinance === true ? consentAt : null } },
+                  openFinance: { granted: consents.openFinance === true, at: consents.openFinance === true ? consentAt : null },
+                  creditPassport: { granted: consents.creditPassport === true, at: consents.creditPassport === true ? consentAt : null } },
       dataPulls: pulls,
       features: ev.features,
       rules: ev.rules,
@@ -1052,7 +1108,9 @@
                    { bucket: '4-24h', count: referAging['4-24h'] },
                    { bucket: '>24h', count: referAging['>24h'] }],
       overrideRatePct: pct1(overrides, refers),
-      vintages: clone(S.seeded.vintages)
+      vintages: clone(S.seeded.vintages),
+      // Day-zero early-warning signals (dossier §08) — seeded, deterministic.
+      earlyWarning: clone(D.earlyWarning || [])
     };
   }
 
