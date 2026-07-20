@@ -1,0 +1,2138 @@
+<!-- Mizan prototype UI — contract v1.0. Loads ./src/data.js then ./src/engine.js, then the inline app script. -->
+<title>Mizan — Credit Decisioning Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------- Design tokens (contract §3) ---------- */
+:root {
+  color-scheme: light;
+  --ground:#F6F8F7; --panel:#FFFFFF; --ink:#182420; --muted:#5A6B64;
+  --accent:#0C5D63; --accent-strong:#09454A; --brass:#A87B2F;
+  --ok:#1E7F56; --warn:#A9761B; --bad:#AE3B32;
+  --ok-soft:rgba(30,127,86,.10); --warn-soft:rgba(169,118,27,.11); --bad-soft:rgba(174,59,50,.10);
+  --accent-soft:rgba(12,93,99,.08);
+  --hairline:rgba(24,36,32,.14); --hairline-soft:rgba(24,36,32,.08);
+  --grid:#E4EAE8; --axis:#C9D3D0;
+  /* chart series (validated, dataviz skill): outcome trio + categorical pair + meter track */
+  --c-approve:#177C4E; --c-refer:#BC8319; --c-decline:#A32C2C;
+  --s1:#0083A0; --s2:#A87B2F; --meter-track:#D5E5EA; --corridor:rgba(12,93,99,.07);
+  --font-display:Georgia,'Iowan Old Style','Times New Roman',serif;
+  --font-ui:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --font-ar:'Noto Naskh Arabic','Geeza Pro','Traditional Arabic',serif;
+  --shadow:0 1px 2px rgba(24,36,32,.05), 0 4px 14px rgba(24,36,32,.05);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --ground:#0F1514; --panel:#161D1B; --ink:#E4EBE8; --muted:#93A39D;
+    --accent:#4FB3B9; --accent-strong:#7ACBD0; --brass:#C9A05E;
+    --ok:#4CC08A; --warn:#D9A94E; --bad:#E07B70;
+    --ok-soft:rgba(76,192,138,.13); --warn-soft:rgba(217,169,78,.13); --bad-soft:rgba(224,123,112,.13);
+    --accent-soft:rgba(79,179,185,.12);
+    --hairline:rgba(228,235,232,.16); --hairline-soft:rgba(228,235,232,.09);
+    --grid:#232D2A; --axis:#33403C;
+    --c-approve:#35A873; --c-refer:#BA8A15; --c-decline:#D0473E;
+    --s1:#17A3B4; --s2:#B08034; --meter-track:#173237; --corridor:rgba(79,179,185,.08);
+    --shadow:0 1px 2px rgba(0,0,0,.25), 0 4px 14px rgba(0,0,0,.22);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground:#0F1514; --panel:#161D1B; --ink:#E4EBE8; --muted:#93A39D;
+  --accent:#4FB3B9; --accent-strong:#7ACBD0; --brass:#C9A05E;
+  --ok:#4CC08A; --warn:#D9A94E; --bad:#E07B70;
+  --ok-soft:rgba(76,192,138,.13); --warn-soft:rgba(217,169,78,.13); --bad-soft:rgba(224,123,112,.13);
+  --accent-soft:rgba(79,179,185,.12);
+  --hairline:rgba(228,235,232,.16); --hairline-soft:rgba(228,235,232,.09);
+  --grid:#232D2A; --axis:#33403C;
+  --c-approve:#35A873; --c-refer:#BA8A15; --c-decline:#D0473E;
+  --s1:#17A3B4; --s2:#B08034; --meter-track:#173237; --corridor:rgba(79,179,185,.08);
+  --shadow:0 1px 2px rgba(0,0,0,.25), 0 4px 14px rgba(0,0,0,.22);
+}
+
+/* ---------- Base ---------- */
+* { box-sizing:border-box; }
+html,body { margin:0; padding:0; }
+body { background:var(--ground); color:var(--ink); font:14px/1.5 var(--font-ui); -webkit-font-smoothing:antialiased; }
+h1,h2,h3,h4 { margin:0; font-weight:600; }
+p { margin:.4em 0; }
+a { color:var(--accent); }
+button { font:inherit; color:inherit; }
+code, .mono { font-family:var(--font-mono); font-size:.92em; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+.ar { font-family:var(--font-ar); direction:rtl; unicode-bidi:isolate; }
+.num { font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.muted { color:var(--muted); }
+.small { font-size:12px; }
+hr.rule { border:0; border-top:1px solid var(--hairline-soft); margin:14px 0; }
+
+/* ---------- Fatal banner ---------- */
+#fatal-banner { display:none; position:sticky; top:0; z-index:99; background:var(--bad); color:#fff;
+  padding:10px 16px; font-family:var(--font-mono); font-size:12.5px; white-space:pre-wrap; }
+#fatal-banner.show { display:block; }
+
+/* ---------- Layout ---------- */
+.app { display:flex; min-height:100vh; }
+.sidebar { width:236px; flex:0 0 236px; background:var(--panel); border-right:1px solid var(--hairline-soft);
+  display:flex; flex-direction:column; position:sticky; top:0; height:100vh; }
+.wordmark { padding:20px 20px 14px; border-bottom:1px solid var(--hairline-soft); }
+.wordmark .wm-line { display:flex; align-items:baseline; gap:8px; }
+.wordmark .wm-en { font-family:var(--font-display); font-size:24px; letter-spacing:.01em; }
+.wordmark .wm-ar { font-family:var(--font-ar); font-size:19px; color:var(--brass); }
+.wordmark .wm-sub { font-size:11px; color:var(--muted); margin-top:3px; letter-spacing:.02em; }
+nav.mainnav { padding:10px 8px; display:flex; flex-direction:column; gap:2px; flex:1; overflow:auto; }
+.navbtn { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:none; border:0;
+  border-radius:8px; padding:8px 12px; cursor:pointer; color:var(--ink); font-size:13.5px; }
+.navbtn svg { flex:0 0 16px; opacity:.75; }
+.navbtn:hover { background:var(--accent-soft); }
+.navbtn.active { background:var(--accent); color:#fff; }
+.navbtn.active svg { opacity:1; }
+.navbtn .nsub { display:block; font-size:10.5px; color:var(--muted); font-weight:400; }
+.navbtn.active .nsub { color:rgba(255,255,255,.75); }
+.sidefoot { padding:12px 14px 14px; border-top:1px solid var(--hairline-soft); display:flex; flex-direction:column; gap:8px; }
+.synthetic-badge { font-size:10.5px; line-height:1.45; color:var(--warn); background:var(--warn-soft);
+  border:1px solid var(--warn); border-radius:7px; padding:6px 8px; }
+.versions { font-size:10.5px; color:var(--muted); font-family:var(--font-mono); }
+.theme-btn { display:flex; align-items:center; gap:8px; background:none; border:1px solid var(--hairline);
+  border-radius:8px; padding:6px 10px; cursor:pointer; font-size:12px; color:var(--muted); }
+.theme-btn:hover { color:var(--ink); border-color:var(--muted); }
+
+main.content { flex:1; min-width:0; padding:26px 34px 60px; max-width:1280px; }
+section[data-screen] { display:none; }
+section[data-screen].active { display:block; }
+.screen-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+.screen-head h1 { font-family:var(--font-display); font-size:26px; font-weight:600; }
+.screen-head .sub { color:var(--muted); font-size:13px; margin-top:4px; max-width:760px; }
+.screen-head .eyebrow { font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--brass); margin-bottom:2px; }
+.chip-synth { flex:0 0 auto; font-size:10.5px; color:var(--warn); border:1px solid var(--warn); border-radius:99px;
+  padding:3px 10px; background:var(--warn-soft); white-space:nowrap; margin-top:6px; }
+
+/* ---------- Panels & grids ---------- */
+.panel { background:var(--panel); border:1px solid var(--hairline-soft); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:16px 18px; }
+.panel + .panel { margin-top:14px; }
+.panel h3 { font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; font-weight:600; }
+.panel h3 .h3-note { text-transform:none; letter-spacing:0; font-weight:400; }
+.grid2 { display:grid; grid-template-columns:minmax(340px,5fr) minmax(380px,6fr); gap:14px; align-items:start; }
+.grid-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); gap:10px; }
+@media (max-width:1100px) { .grid2 { grid-template-columns:1fr; } }
+
+/* ---------- Buttons ---------- */
+.btn { background:var(--panel); border:1px solid var(--hairline); border-radius:8px; padding:7px 14px;
+  cursor:pointer; font-size:13px; }
+.btn:hover { border-color:var(--accent); color:var(--accent); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+.btn-primary:hover { background:var(--accent-strong); border-color:var(--accent-strong); color:#fff; }
+.btn-ghost { border-color:transparent; color:var(--muted); }
+.btn-ghost:hover { color:var(--accent); border-color:transparent; }
+.btn[disabled] { opacity:.5; cursor:not-allowed; }
+.btnrow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+/* ---------- Chips / outcome badges ---------- */
+.chip { display:inline-flex; align-items:center; gap:5px; border-radius:99px; padding:2px 9px; font-size:11px;
+  border:1px solid var(--hairline); color:var(--muted); background:transparent; white-space:nowrap; }
+.chip.acc { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+.oc { display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:6px; padding:2px 9px; font-size:11.5px; letter-spacing:.03em; }
+.oc-APPROVE { color:var(--ok); background:var(--ok-soft); border:1px solid var(--ok); }
+.oc-REFER { color:var(--warn); background:var(--warn-soft); border:1px solid var(--warn); }
+.oc-DECLINE { color:var(--bad); background:var(--bad-soft); border:1px solid var(--bad); }
+.res-PASS { color:var(--ok); } .res-FAIL { color:var(--bad); } .res-REFER { color:var(--warn); }
+.grade-chip { display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:26px;
+  border-radius:7px; font-weight:700; font-size:14px; background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent); }
+
+/* ---------- Outcome banner ---------- */
+.outcome-banner { border-radius:var(--radius); padding:14px 16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; border:1px solid; }
+.outcome-banner.APPROVE { background:var(--ok-soft); border-color:var(--ok); }
+.outcome-banner.REFER { background:var(--warn-soft); border-color:var(--warn); }
+.outcome-banner.DECLINE { background:var(--bad-soft); border-color:var(--bad); }
+.outcome-banner .ob-word { font-family:var(--font-display); font-size:22px; font-weight:700; }
+.outcome-banner.APPROVE .ob-word { color:var(--ok); }
+.outcome-banner.REFER .ob-word { color:var(--warn); }
+.outcome-banner.DECLINE .ob-word { color:var(--bad); }
+.outcome-banner .ob-meta { font-size:12px; color:var(--muted); }
+
+/* ---------- Forms ---------- */
+.field { margin-bottom:12px; }
+.field label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+.field input[type=number], .field input[type=text], .field select, .field textarea {
+  width:100%; background:var(--ground); color:var(--ink); border:1px solid var(--hairline);
+  border-radius:7px; padding:7px 9px; font:13px var(--font-ui); }
+.field input[type=range] { width:100%; accent-color:var(--accent); }
+.field .bounds { font-size:10.5px; color:var(--muted); }
+.slider-row { display:grid; grid-template-columns:1fr 110px; gap:10px; align-items:center; }
+.consent-box { border:1px solid var(--hairline); border-radius:8px; padding:10px 12px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start; }
+.consent-box input[type=checkbox] { margin-top:3px; accent-color:var(--accent); width:15px; height:15px; }
+.consent-box .cb-title { font-weight:600; font-size:13px; }
+.consent-box .cb-legal { font-size:11.5px; color:var(--muted); margin-top:2px; }
+.callout { border-radius:8px; padding:10px 12px; font-size:12.5px; border:1px solid; margin-top:10px; }
+.callout-error { border-color:var(--bad); background:var(--bad-soft); color:var(--bad); }
+.callout-warn { border-color:var(--warn); background:var(--warn-soft); }
+.callout-info { border-color:var(--accent); background:var(--accent-soft); }
+.callout-ok { border-color:var(--ok); background:var(--ok-soft); }
+.callout .co-title { font-weight:700; margin-bottom:2px; }
+.callout .co-body { color:var(--ink); }
+
+/* ---------- Persona cards ---------- */
+.pcard { text-align:left; background:var(--panel); border:1px solid var(--hairline); border-radius:10px;
+  padding:11px 12px; cursor:pointer; display:flex; flex-direction:column; gap:5px; }
+.pcard:hover { border-color:var(--accent); }
+.pcard.sel { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; background:var(--accent-soft); }
+.pcard .pname { font-weight:600; font-size:13.5px; display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+.pcard .pname .ar { font-size:12.5px; color:var(--muted); font-weight:400; }
+.pcard .ptag { font-size:11.5px; color:var(--muted); line-height:1.35; }
+.pcard .pchips { display:flex; flex-wrap:wrap; gap:4px; margin-top:2px; }
+
+/* ---------- Orchestration timeline ---------- */
+.timeline { display:flex; flex-direction:column; gap:0; }
+.t-step { display:flex; gap:12px; padding:7px 0; border-bottom:1px solid var(--hairline-soft); align-items:flex-start; opacity:1; }
+.t-step:last-child { border-bottom:0; }
+.t-step.pending { opacity:.25; }
+.t-step .t-dot { flex:0 0 10px; width:10px; height:10px; border-radius:50%; background:var(--accent); margin-top:5px; }
+.t-step.pending .t-dot { background:var(--muted); }
+.t-step .t-main { flex:1; min-width:0; }
+.t-step .t-title { font-size:13px; font-weight:600; }
+.t-step .t-sum { font-size:11.5px; color:var(--muted); font-family:var(--font-mono); overflow-wrap:anywhere; }
+.t-step .t-lat { flex:0 0 auto; font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:11.5px; color:var(--muted); margin-top:3px; }
+
+/* ---------- KV + tables ---------- */
+.kv { display:grid; grid-template-columns:auto 1fr; gap:3px 16px; font-size:12.5px; }
+.kv dt { color:var(--muted); } .kv dd { margin:0; }
+.tbl { width:100%; border-collapse:collapse; font-size:12.5px; }
+.tbl th { text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted);
+  border-bottom:1px solid var(--hairline); padding:5px 8px; font-weight:600; }
+.tbl td { padding:6px 8px; border-bottom:1px solid var(--hairline-soft); vertical-align:top; }
+.tbl tr:last-child td { border-bottom:0; }
+.tbl td.num, .tbl th.num { text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.tbl tbody tr.rowbtn { cursor:pointer; }
+.tbl tbody tr.rowbtn:hover td { background:var(--accent-soft); }
+.tbl tbody tr.sel td { background:var(--accent-soft); }
+.tbl-scroll { overflow-x:auto; }
+
+/* ---------- Murabaha steps ---------- */
+.exec-steps { display:flex; flex-direction:column; gap:6px; }
+.estep { display:flex; align-items:center; gap:10px; border:1px solid var(--hairline); border-radius:8px; padding:8px 10px;
+  background:var(--panel); cursor:pointer; text-align:left; width:100%; }
+.estep:hover { border-color:var(--accent); }
+.estep.done { border-color:var(--ok); background:var(--ok-soft); cursor:default; }
+.estep .es-n { flex:0 0 22px; width:22px; height:22px; border-radius:50%; border:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:center; font-size:11px; font-family:var(--font-mono); }
+.estep.done .es-n { background:var(--ok); border-color:var(--ok); color:#fff; }
+.estep .es-t { font-weight:600; font-size:12.5px; }
+.estep .es-d { font-size:11px; color:var(--muted); }
+.estep .es-at { margin-left:auto; font-family:var(--font-mono); font-size:10.5px; color:var(--ok); }
+
+/* ---------- Limit trace ---------- */
+.trace { display:flex; flex-direction:column; gap:4px; }
+.trace-row { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:4px 8px; border-radius:6px; }
+.trace-row .tval { font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.trace-row.binding { background:var(--accent-soft); border:1px solid var(--accent); font-weight:600; }
+
+/* ---------- Meters, tiles ---------- */
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:14px; }
+.tile { background:var(--panel); border:1px solid var(--hairline-soft); border-radius:var(--radius); box-shadow:var(--shadow); padding:13px 15px; }
+.tile .t-label { font-size:11.5px; color:var(--muted); }
+.tile .t-value { font-size:27px; font-weight:650; font-family:var(--font-mono); font-variant-numeric:tabular-nums; margin:2px 0 1px; }
+.tile .t-delta { font-size:11.5px; display:flex; align-items:center; gap:4px; }
+.tile .t-delta.good { color:var(--ok); } .tile .t-delta.bad { color:var(--bad); }
+.meter { position:relative; height:8px; border-radius:5px; background:var(--meter-track); margin-top:8px; }
+.meter .m-fill { position:absolute; inset:0 auto 0 0; border-radius:5px; background:var(--s1); }
+.meter .m-target { position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink); opacity:.55; }
+.meter-cap { display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-top:3px; }
+
+/* ---------- Charts ---------- */
+.chart-box { position:relative; }
+.chart-box svg { display:block; width:100%; height:auto; }
+.chart-box svg text { font-family:var(--font-ui); font-size:10.5px; fill:var(--muted); }
+.chart-box svg .ticknum { font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.chart-box svg .dlabel { fill:var(--ink); font-weight:600; }
+.viz-tip { position:absolute; pointer-events:none; background:var(--panel); border:1px solid var(--hairline);
+  border-radius:7px; box-shadow:var(--shadow); padding:7px 10px; font-size:11.5px; display:none; z-index:5; min-width:120px; }
+.viz-tip .vt-title { color:var(--muted); font-size:10.5px; margin-bottom:3px; }
+.viz-tip .vt-row { display:flex; align-items:center; gap:6px; }
+.viz-tip .vt-key { width:10px; height:0; border-top:3px solid; border-radius:2px; }
+.viz-tip .vt-val { font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-weight:600; margin-left:auto; padding-left:10px; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin:4px 0 2px; }
+.legend .lg { display:inline-flex; align-items:center; gap:6px; }
+.legend .sw { width:10px; height:10px; border-radius:3px; display:inline-block; }
+.legend .swl { width:12px; height:0; border-top:3px solid; border-radius:2px; display:inline-block; }
+details.tbl-view { margin-top:8px; }
+details.tbl-view summary { cursor:pointer; font-size:11.5px; color:var(--muted); }
+details.tbl-view table { margin-top:6px; }
+.callouts-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+
+/* ---------- Policy console ---------- */
+.lockrow td:first-child { white-space:nowrap; }
+.lock-ico { color:var(--brass); margin-right:6px; }
+.param-changed { color:var(--accent); font-weight:700; }
+.diff-chip { font-family:var(--font-mono); font-size:11px; background:var(--accent-soft); border-radius:5px; padding:1px 6px; }
+
+/* ---------- Overview ---------- */
+.pos-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:10px; }
+.pos { border:1px solid var(--hairline-soft); border-left:3px solid var(--brass); border-radius:8px; padding:10px 12px; background:var(--panel); }
+.pos .p-n { font-family:var(--font-display); color:var(--brass); font-size:15px; }
+.pos .p-t { font-weight:650; font-size:13px; margin:2px 0; }
+.pos .p-d { font-size:12px; color:var(--muted); }
+.demo-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; }
+.demo-step { border:1px solid var(--hairline); border-radius:8px; padding:9px 11px; background:var(--panel); text-align:left; cursor:pointer; }
+.demo-step:hover { border-color:var(--accent); }
+.demo-step .d-n { font-family:var(--font-mono); font-size:10.5px; color:var(--brass); }
+.demo-step .d-t { font-weight:600; font-size:12.5px; }
+.demo-step .d-d { font-size:11px; color:var(--muted); }
+
+/* ---------- Boot error ---------- */
+#boot-error { display:none; margin:40px auto; max-width:640px; }
+#boot-error.show { display:block; }
+
+/* ---------- Responsive: sidebar -> tab bar ---------- */
+@media (max-width:900px) {
+  .app { flex-direction:column; }
+  .sidebar { width:100%; flex:none; height:auto; position:sticky; top:0; z-index:20; flex-direction:column; border-right:0; border-bottom:1px solid var(--hairline-soft); }
+  nav.mainnav { flex-direction:row; overflow-x:auto; padding:6px 8px; }
+  .navbtn { white-space:nowrap; }
+  .navbtn .nsub { display:none; }
+  .wordmark { padding:12px 16px 8px; border-bottom:0; }
+  .sidefoot { flex-direction:row; align-items:center; justify-content:space-between; padding:6px 12px; }
+  .versions { display:none; }
+  main.content { padding:18px 16px 50px; }
+}
+
+/* ---------- Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation:none !important; transition:none !important; }
+}
+</style>
+
+<div id="fatal-banner" role="alert"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="wordmark">
+      <div class="wm-line"><span class="wm-en">Mizan</span><span class="wm-ar" lang="ar" dir="rtl">ميزان</span></div>
+      <div class="wm-sub">Shared credit decisioning — Mal Bank</div>
+    </div>
+    <nav class="mainnav" aria-label="Screens" id="mainnav"></nav>
+    <div class="sidefoot">
+      <button class="theme-btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span id="theme-ico" aria-hidden="true">◐</span><span id="theme-label">Theme</span></button>
+      <div class="versions" id="versions"></div>
+      <div class="synthetic-badge">Prototype — synthetic data only. Not a real credit system.</div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div id="boot-error" class="panel"></div>
+
+    <section data-screen="overview" id="scr-overview"></section>
+    <section data-screen="retail" id="scr-retail"></section>
+    <section data-screen="sme" id="scr-sme"></section>
+    <section data-screen="policy" id="scr-policy"></section>
+    <section data-screen="workbench" id="scr-workbench"></section>
+    <section data-screen="log" id="scr-log"></section>
+    <section data-screen="monitoring" id="scr-monitoring"></section>
+  </main>
+</div>
+
+<script src="./src/data.js"></script>
+<script src="./src/engine.js"></script>
+<script>
+'use strict';
+/* ================= Fatal-error banner (installed before anything can throw) ================= */
+(function () {
+  function fatal(msg) {
+    var b = document.getElementById('fatal-banner');
+    if (!b) return;
+    b.classList.add('show');
+    b.appendChild(document.createTextNode((b.textContent ? '\n' : '') + msg));
+  }
+  window.onerror = function (msg, src, line, col) {
+    fatal('Fatal: ' + msg + (src ? ' (' + src + ':' + (line || '?') + ')' : ''));
+  };
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e && e.reason;
+    fatal('Unhandled rejection: ' + (r && r.message ? r.message : String(r)));
+  });
+})();
+/* ================= Theme (OS default, explicit override via data-theme; toggle must win both ways) ================= */
+(function () {
+  var stored = null;
+  try { stored = localStorage.getItem('mizan-theme'); } catch (e) {}
+  if (stored === 'light' || stored === 'dark') document.documentElement.setAttribute('data-theme', stored);
+})();
+
+/* ================= Tiny DOM + format helpers ================= */
+function $(sel, root) { return (root || document).querySelector(sel); }
+function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+function h(tag, attrs) {
+  var e = document.createElement(tag);
+  if (attrs) for (var k in attrs) {
+    if (k === 'text') e.textContent = attrs[k];
+    else if (k === 'class') e.className = attrs[k];
+    else if (k === 'dataset') { for (var d in attrs[k]) e.dataset[d] = attrs[k][d]; }
+    else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attrs[k]);
+    else if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, attrs[k]);
+  }
+  for (var i = 2; i < arguments.length; i++) {
+    var kid = arguments[i];
+    if (kid === null || kid === undefined || kid === false) continue;
+    if (Array.isArray(kid)) kid.forEach(function (kk) { if (kk) e.appendChild(typeof kk === 'string' ? document.createTextNode(kk) : kk); });
+    else e.appendChild(typeof kid === 'string' ? document.createTextNode(kid) : kid);
+  }
+  return e;
+}
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); return node; }
+function fmtN(n) { return (n === null || n === undefined || isNaN(n)) ? '—' : Math.round(n).toLocaleString('en-US'); }
+function fmtAED(n) { return (n === null || n === undefined || isNaN(n)) ? '—' : 'AED ' + Math.round(n).toLocaleString('en-US'); }
+function fmtRate(r) { return (r === null || r === undefined || isNaN(r)) ? '—' : (r * 100).toFixed(2) + '%'; }
+function fmtPct(p, dp) { return (p === null || p === undefined || isNaN(p)) ? '—' : Number(p).toFixed(dp === undefined ? 1 : dp) + '%'; }
+function fmtDT(iso) { if (!iso) return '—'; return String(iso).slice(0, 16).replace('T', ' '); }
+function fmtD(iso) { return iso ? String(iso).slice(0, 10) : '—'; }
+var REDUCED = false;
+try { REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+/* Bilingual reason-code lookup (defensive: unknown code renders as its literal) */
+function rcEn(code) { var r = (MD.reasonCodes || {})[code]; return r && r.en ? r.en : code; }
+function rcAr(code) { var r = (MD.reasonCodes || {})[code]; return r && r.ar ? r.ar : ''; }
+function reasonLine(code) {
+  return h('div', { class: 'reason-line', style: 'display:flex;justify-content:space-between;gap:14px;padding:5px 8px;border-bottom:1px solid var(--hairline-soft);align-items:baseline;' },
+    h('span', null, h('code', { class: 'small muted', text: code }), ' ', h('span', { text: rcEn(code) })),
+    h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: rcAr(code) }));
+}
+function outcomeChip(oc) { return h('span', { class: 'oc oc-' + oc, text: oc }); }
+
+/* ================= Globals wired at boot ================= */
+var MD = null, ME = null;      // MizanData, MizanEngine
+var EXEC_EVENTS = ['PROMISE_SIGNED', 'WAKALA_SIGNED', 'COMMODITY_PURCHASED', 'MURABAHA_OFFER_SENT', 'MURABAHA_ACCEPTED', 'PROCEEDS_CREDITED'];
+var EXEC_META = {
+  PROMISE_SIGNED:     { t: 'Customer promise (wa’d) signed',            d: 'Unilateral promise to purchase — not yet a sale' },
+  WAKALA_SIGNED:      { t: 'Wakala agency signed',                           d: 'Separate agency contract, distinct from the Murabaha' },
+  COMMODITY_PURCHASED:{ t: 'Bank acquires the commodity',                    d: 'Bank takes ownership and ownership risk before selling' },
+  MURABAHA_OFFER_SENT:{ t: 'Murabaha offer sent',                            d: 'Cost + disclosed profit; price immutable once contracted' },
+  MURABAHA_ACCEPTED:  { t: 'Offer accepted',                                 d: 'The debt legally exists from this point — not from approval' },
+  PROCEEDS_CREDITED:  { t: 'Proceeds credited',                              d: 'Agency sale of the commodity; cash reaches the customer' }
+};
+var PULL_LABEL = {
+  AECB_CONSUMER: 'AECB consumer report + score', AECB_COMMERCIAL: 'AECB commercial report + score',
+  AECB_OWNER: 'AECB owner/guarantor report', OPEN_FINANCE: 'Open finance (Al Tareq via licensed TPP)',
+  INTERNAL_CORE: 'Internal core banking data', DOCUMENTS: 'Statement upload + automated parsing'
+};
+
+/* ================= Navigation ================= */
+var SCREENS = [
+  { id: 'overview',   label: 'Overview',        sub: 'What Mizan is',        icon: 'M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z' },
+  { id: 'retail',     label: 'Retail journey',  sub: 'Personal finance',     icon: 'M8 2a3 3 0 110 6 3 3 0 010-6zM2 14c0-3.3 2.7-5 6-5s6 1.7 6 5z' },
+  { id: 'sme',        label: 'SME journey',     sub: 'Working capital',      icon: 'M5 4V2h6v2h3v10H2V4h3zm2-1v1h2V3H7z' },
+  { id: 'policy',     label: 'Policy console',  sub: 'Packs & primitives',   icon: 'M2 4h12M2 8h12M2 12h12M5 2.5v3M11 6.5v3M7 10.5v3', stroke: true },
+  { id: 'workbench',  label: 'Workbench',       sub: 'Refer queue',          icon: 'M2 3h12v7h-4l-1 2H7l-1-2H2zM2 10v3h12v-3' },
+  { id: 'log',        label: 'Decision log',    sub: 'Replay & audit',       icon: 'M3 2h8l3 3v9H3zM6 7h5M6 10h5' , stroke: true },
+  { id: 'monitoring', label: 'Monitoring',      sub: 'STP, drift, vintages', icon: 'M2 13h12M3 10l3-4 3 2 4-6', stroke: true }
+];
+var currentScreen = 'overview';
+function navIcon(s) {
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '16'); svg.setAttribute('height', '16'); svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  p.setAttribute('d', s.icon);
+  if (s.stroke) { p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'currentColor'); p.setAttribute('stroke-width', '1.6'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('stroke-linejoin', 'round'); }
+  else p.setAttribute('fill', 'currentColor');
+  svg.appendChild(p);
+  return svg;
+}
+function buildNav() {
+  var nav = clear($('#mainnav'));
+  SCREENS.forEach(function (s) {
+    nav.appendChild(h('button', { class: 'navbtn', id: 'nav-' + s.id, onclick: function () { showScreen(s.id); } },
+      navIcon(s), h('span', null, s.label, h('span', { class: 'nsub', text: s.sub }))));
+  });
+}
+function showScreen(id) {
+  currentScreen = id;
+  $all('section[data-screen]').forEach(function (sec) { sec.classList.toggle('active', sec.dataset.screen === id); });
+  $all('.navbtn').forEach(function (b) { b.classList.toggle('active', b.id === 'nav-' + id); });
+  try { if (history.replaceState) history.replaceState(null, '', '#' + id); } catch (e) {}
+  if (id === 'workbench') Workbench.refresh();
+  if (id === 'log') LogScreen.refresh();
+  if (id === 'monitoring') Monitoring.refresh();
+}
+
+/* Screen header helper — synthetic-data disclaimer repeated on every screen */
+function screenHead(eyebrow, title, sub) {
+  return h('div', { class: 'screen-head' },
+    h('div', null,
+      h('div', { class: 'eyebrow', text: eyebrow }),
+      h('h1', { text: title }),
+      h('div', { class: 'sub', text: sub })),
+    h('span', { class: 'chip-synth', text: 'Synthetic data only — prototype' }));
+}
+
+/* ================= Boot ================= */
+document.addEventListener('DOMContentLoaded', function () {
+  buildNav();
+  var themeBtn = $('#theme-toggle');
+  function themeLabel() {
+    var explicit = document.documentElement.getAttribute('data-theme');
+    var osDark = false; try { osDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+    var dark = explicit ? explicit === 'dark' : osDark;
+    $('#theme-label').textContent = dark ? 'Dark' : 'Light';
+  }
+  themeBtn.addEventListener('click', function () {
+    var explicit = document.documentElement.getAttribute('data-theme');
+    var osDark = false; try { osDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+    var dark = explicit ? explicit === 'dark' : osDark;
+    var next = dark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('mizan-theme', next); } catch (e) {}
+    themeLabel();
+    if (currentScreen === 'monitoring') Monitoring.refresh();
+    if (currentScreen === 'sme') Sme.redrawChart();
+  });
+  themeLabel();
+
+  /* Defensive boot: contract §"defensively (if globals are missing, show a clear message)" */
+  var missing = [];
+  if (typeof globalThis.MizanData === 'undefined') missing.push('src/data.js (MizanData)');
+  if (typeof globalThis.MizanEngine === 'undefined') missing.push('src/engine.js (MizanEngine)');
+  if (missing.length) {
+    var be = $('#boot-error'); be.classList.add('show');
+    be.appendChild(h('h3', { text: 'Prototype failed to start' }));
+    be.appendChild(h('p', null, 'Could not find: ', h('code', { text: missing.join(', ') }),
+      '. The UI loads ./src/data.js then ./src/engine.js before its own script — check both files exist and define their globals.'));
+    return;
+  }
+  MD = globalThis.MizanData; ME = globalThis.MizanEngine;
+  try {
+    ME.init(MD);
+  } catch (err) {
+    var be2 = $('#boot-error'); be2.classList.add('show');
+    be2.appendChild(h('h3', { text: 'Engine failed to initialise' }));
+    be2.appendChild(h('p', null, h('code', { text: err && err.message ? err.message : String(err) })));
+    return;
+  }
+  $('#versions').textContent = (MD.VERSION || 'data-?') + ' · ' + (ME.VERSION || 'engine-?') + ' · today ' + (MD.TODAY || '');
+
+  Overview.build();
+  Retail.build();
+  Sme.build();
+  Policy.build();
+  Workbench.build();
+  LogScreen.build();
+  Monitoring.build();
+
+  var initial = (location.hash || '').replace('#', '');
+  showScreen(SCREENS.some(function (s) { return s.id === initial; }) ? initial : 'overview');
+});
+
+/* Cross-screen refresh after any engine mutation */
+function afterEngineMutation() {
+  Workbench.refresh();
+  LogScreen.refresh();
+  Monitoring.refresh();
+}
+/* ================= Overview screen ================= */
+var Overview = {
+  build: function () {
+    var root = clear($('#scr-overview'));
+    root.appendChild(screenHead('Mizan · ميزان — “the scales”', 'Shared credit decisioning layer',
+      'Interactive prototype of the Mizan PRD for Mal Bank — both anchor journeys, the policy console, refer workbench, decision replay and monitoring, running against a real simulated decision engine in the browser.'));
+
+    var what = h('div', { class: 'panel' }, h('h3', { text: 'What Mizan is' }),
+      h('p', null, 'Mizan is one decisioning platform any Mal Bank lending product calls to get ',
+        h('strong', { text: 'approve / refer / decline + facility limit + risk grade + pricing band' }),
+        ' — with consent, AECB and open-finance data acquisition, affordability, policy rules and scoring orchestrated behind a single API.'),
+      h('p', null, 'It shares the plumbing (roughly 70% of build effort) while keeping retail and SME underwriting judgment separate: segment policy packs and scorecards, one engine.'),
+      h('p', null, 'Every decision is fully replayable — inputs, features, rules fired, model version, human overrides and linked Murabaha contract events — for CBUAE model-risk audit ', h('em', { text: 'and' }), ' Shari’ah audit.'));
+    root.appendChild(what);
+
+    var positions = [
+      ['Share the pipes, not the brain', 'One platform and one data layer; segment-specific policy packs and scorecards. No unified scoring model.'],
+      ['Buy the decision engine, own the contract', 'License a configurable engine (deployed in-UAE); build the API, adapters, feature definitions and decision store in-house.'],
+      ['Real-time bureau, cached and reusable', 'Real-time AECB pulls at application with a consent-bound cache; monthly furnishing is separate compliance plumbing.'],
+      ['Shariah-aware, not Shariah-executing', 'Mizan issues a time-boxed approval; Murabaha/Tawarruq execution stays in the product layer, linked back for audit.'],
+      ['Consent is a first-class shared service', 'A central consent registry (AECB + Al Tareq) — the prerequisite for continuous re-scoring and limit management.'],
+      ['Refer is a designed path, not a failure mode', 'SME launches refer-heavy by design; workbench, SLAs and override governance are core scope.']
+    ];
+    var pg = h('div', { class: 'pos-grid' });
+    positions.forEach(function (p, i) {
+      pg.appendChild(h('div', { class: 'pos' }, h('div', { class: 'p-n', text: String(i + 1) }),
+        h('div', { class: 'p-t', text: p[0] }), h('div', { class: 'p-d', text: p[1] })));
+    });
+    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'The six positions this PRD takes (§7)' }), pg));
+
+    var demo = [
+      ['retail', '1 · Retail STP', 'Run Ahmed (r1) → instant APPROVE, then execute the Murabaha steps — try one out of order.'],
+      ['retail', '2 · Thin file', 'Run Priya (r2) → REFER with the Credit Passport path, then resolve her case in the Workbench (4-eyes).'],
+      ['sme', '3 · SME facility', 'Run Al Noor (s1) → APPROVE, then simulate drawdowns and flip the arrears flag.'],
+      ['sme', '4 · Sector screen', 'Run Oasis Beverages (s4) → DECLINE with a bilingual Shari’ah sector-screen reason.'],
+      ['policy', '5 · Policy self-service', 'Raise retail scoreDecline 620 → 660, simulate the book, publish with a distinct approver, check Monitoring.']
+    ];
+    var ds = h('div', { class: 'demo-strip' });
+    demo.forEach(function (d) {
+      ds.appendChild(h('button', { class: 'demo-step', onclick: function () { showScreen(d[0]); } },
+        h('div', { class: 'd-n', text: d[1] }), h('div', { class: 'd-d', text: d[2] })));
+    });
+    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — a five-step click path' }), ds));
+
+    var map = [
+      ['Overview', '§1 Executive summary · §7 Trade-offs', 'The argument, compressed'],
+      ['Retail journey', '§5.3 · §8.1–8.4 · §8.7 · §6.2', 'Consent → orchestration → decision → approval token → Murabaha sequencing; Qard Hassan corollary'],
+      ['SME journey', '§5.4 · §8.3–8.4 · §8.7', 'Owner-blend bureau, cash-flow serviceability, facility vs drawdown split'],
+      ['Policy console', '§8.5 · §6.1–6.2', 'Locked regulatory primitives, editable params, simulate-before-publish, 4-eyes, ISSC sector screen'],
+      ['Workbench', '§8.8', 'Pre-assembled credit file, SLAs, reason-coded 4-eyes overrides'],
+      ['Decision log', '§8.8 · §6.2', 'Full replay — CBUAE model audit + Shari’ah audit framing'],
+      ['Monitoring', '§8.9 · §12', 'STP vs targets, decline reasons, grades, refer aging, vintages']
+    ];
+    var mt = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+      h('th', { text: 'Screen' }), h('th', { text: 'PRD sections' }), h('th', { text: 'What it proves' }))));
+    var mb = h('tbody');
+    map.forEach(function (r) { mb.appendChild(h('tr', null, h('td', null, h('strong', { text: r[0] })), h('td', null, h('code', { text: r[1] })), h('td', { class: 'muted', text: r[2] }))); });
+    mt.appendChild(mb);
+    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Screen → PRD mapping' }), h('div', { class: 'tbl-scroll' }, mt)));
+  }
+};
+
+/* ================= Shared decision rendering ================= */
+function annuityMonthly(P, annualRate, n) {
+  var r = annualRate / 12;
+  if (!n || n <= 0) return P;
+  if (!r) return P / n;
+  return P * r / (1 - Math.pow(1 + r, -n));
+}
+
+function pullsTimeline(rec, opts) {
+  /* Animated orchestration timeline — ~300ms per pull, instant under reduced motion; skippable */
+  opts = opts || {};
+  var wrap = h('div');
+  var steps = [];
+  steps.push({ title: 'Consent registry — consent verified', sum: 'AECB consent evidenced (Federal Law 6/2010)' + (rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted ? ' · Al Tareq open-finance consent active (Circular 3/2025)' : ''), lat: null });
+  (rec.dataPulls || []).forEach(function (p) {
+    var sumParts = [];
+    if (p.status) sumParts.push(p.status);
+    if (p.cached) sumParts.push('cached');
+    if (p.summary) { for (var k in p.summary) sumParts.push(k + ': ' + p.summary[k]); }
+    steps.push({ title: PULL_LABEL[p.source] || p.source, sum: sumParts.join(' · '), lat: p.latencyMs });
+  });
+  steps.push({ title: 'Policy pack + scorecard + limit engine', sum: 'rules evaluated · grade assigned · limit derived', lat: null });
+
+  var tl = h('div', { class: 'timeline' });
+  var rows = steps.map(function (s) {
+    return h('div', { class: 't-step pending' },
+      h('span', { class: 't-dot', 'aria-hidden': 'true' }),
+      h('div', { class: 't-main' }, h('div', { class: 't-title', text: s.title }), s.sum ? h('div', { class: 't-sum', text: s.sum }) : null),
+      s.lat !== null && s.lat !== undefined ? h('span', { class: 't-lat', text: fmtN(s.lat) + ' ms' }) : null);
+  });
+  rows.forEach(function (r) { tl.appendChild(r); });
+  var skip = h('button', { class: 'btn btn-ghost small', text: 'Skip animation', 'aria-label': 'Skip orchestration animation' });
+  var head = h('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;' },
+    h('strong', { class: 'small', text: 'Orchestration — data acquisition' }), skip);
+  wrap.appendChild(head); wrap.appendChild(tl);
+
+  var timer = null, idx = 0, done = false;
+  function reveal(i) { if (rows[i]) rows[i].classList.remove('pending'); }
+  function finish() {
+    if (done) return; done = true;
+    if (timer) clearInterval(timer);
+    rows.forEach(function (r) { r.classList.remove('pending'); });
+    skip.remove();
+    if (opts.onDone) opts.onDone();
+  }
+  if (REDUCED || opts.instant) { finish(); }
+  else {
+    reveal(0); idx = 1;
+    timer = setInterval(function () {
+      if (idx >= rows.length) { finish(); return; }
+      reveal(idx); idx++;
+    }, 300);
+    skip.addEventListener('click', finish);
+  }
+  return wrap;
+}
+
+function scoreBlock(rec) {
+  var s = rec.score || {};
+  var rows = h('div', { class: 'kv' });
+  rows.appendChild(h('dt', { text: 'Model' })); rows.appendChild(h('dd', null, h('code', { text: (s.model || '—') + ' v' + (s.version || '?') })));
+  rows.appendChild(h('dt', { text: 'Base (AECB)' })); rows.appendChild(h('dd', { class: 'num', text: s.base === null || s.base === undefined ? 'no hit — proxy' : String(s.base) }));
+  (s.overlays || []).forEach(function (o) {
+    rows.appendChild(h('dt', { text: o.name }));
+    rows.appendChild(h('dd', { class: 'num', text: (o.delta >= 0 ? '+' : '') + o.delta }));
+  });
+  rows.appendChild(h('dt', null, h('strong', { text: 'Points' }))); rows.appendChild(h('dd', { class: 'num' }, h('strong', { text: String(s.points !== undefined ? s.points : '—') })));
+  return h('div', null,
+    h('div', { style: 'display:flex;align-items:center;gap:10px;margin-bottom:8px;' },
+      h('span', { class: 'grade-chip', text: s.grade || '—', 'aria-label': 'Risk grade ' + (s.grade || 'unknown') }),
+      h('span', { class: 'small muted', text: 'Internal risk grade (scorecard v0 — bureau-anchored, MMS-documented)' })),
+    rows);
+}
+
+function limitBlock(rec) {
+  var lim = rec.limit || {};
+  var wrap = h('div');
+  wrap.appendChild(h('div', { class: 'kv', style: 'margin-bottom:8px;' },
+    h('dt', { text: 'Requested' }), h('dd', { class: 'num', text: fmtAED(lim.requested) }),
+    h('dt', null, h('strong', { text: 'Approved limit' })), h('dd', { class: 'num' }, h('strong', { text: fmtAED(lim.approved) })),
+    h('dt', { text: 'Binding constraint' }), h('dd', null, h('code', { text: lim.bindingConstraint || '—' }))));
+  if (lim.trace && lim.trace.length) {
+    var tr = h('div', { class: 'trace' });
+    var boundMarked = false;
+    lim.trace.forEach(function (t) {
+      var isBinding = !boundMarked && Math.round(t.value) === Math.round(lim.approved);
+      if (isBinding) boundMarked = true;
+      tr.appendChild(h('div', { class: 'trace-row' + (isBinding ? ' binding' : '') },
+        h('span', { text: t.label + (isBinding ? '  — binds' : '') }),
+        h('span', { class: 'tval', text: fmtAED(t.value) })));
+    });
+    wrap.appendChild(h('div', { class: 'small muted', style: 'margin-bottom:4px;', text: 'Candidate caps, in evaluation order — the minimum binds and is recorded in the decision record:' }));
+    wrap.appendChild(tr);
+  }
+  return wrap;
+}
+
+function pricingBlock(rec) {
+  var p = rec.pricing || {};
+  if (p.mode === 'FLAT_FEE') {
+    return h('div', null,
+      h('div', { class: 'kv' },
+        h('dt', { text: 'Pricing mode' }), h('dd', null, h('code', { text: 'FLAT_FEE' })),
+        h('dt', { text: 'Admin fee' }), h('dd', { class: 'num', text: fmtAED(p.fee) })),
+      h('div', { class: 'callout callout-info small', text: p.note || 'AAOIFI SS 19 — fee is actual cost, cannot scale with amount or tenor.' }));
+  }
+  return h('div', { class: 'kv' },
+    h('dt', { text: 'Pricing band' }), h('dd', null, h('strong', { text: p.band || '—' }), ' ', h('span', { class: 'small muted', text: '(banded, not individual — ISSC fairness remit)' })),
+    h('dt', { text: 'Annual profit rate' }), h('dd', { class: 'num', text: fmtRate(p.rateMin) + ' – ' + fmtRate(p.rateMax) }),
+    h('dt', { text: 'Benchmark' }), h('dd', { text: p.benchmark || 'EIBOR 3M + spread' }));
+}
+
+function tokenBlock(rec) {
+  if (!rec.token) return null;
+  var t = rec.token;
+  var conds = h('ul', { class: 'small', style: 'margin:4px 0 0 16px;padding:0;' });
+  (t.conditions || []).forEach(function (c) { conds.appendChild(h('li', { text: c })); });
+  return h('div', null,
+    h('div', { class: 'kv' },
+      h('dt', { text: 'Approval token' }), h('dd', null, h('code', { text: t.id })),
+      h('dt', { text: 'Issued' }), h('dd', { class: 'num', text: fmtDT(t.issuedAt) }),
+      h('dt', { text: 'Expires' }), h('dd', { class: 'num', text: fmtDT(t.expiresAt) })),
+    (t.conditions && t.conditions.length) ? h('div', { class: 'small muted', style: 'margin-top:4px;', text: 'Conditions:' }) : null,
+    (t.conditions && t.conditions.length) ? conds : null,
+    h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'Time-boxed: the approval is a risk decision, not a contract. Expired tokens require re-decision (cached data reused where consent allows).' }));
+}
+
+function kfsBlock(rec) {
+  /* KFS preview + cooling-off are retail consumer-protection artifacts (CPR 8/2020) — retail_pf only */
+  if (rec.productId !== 'retail_pf' || rec.outcome !== 'APPROVE' || !rec.pricing || rec.pricing.mode !== 'BANDED') return null;
+  var P = rec.limit ? rec.limit.approved : 0;
+  var n = rec.request ? rec.request.tenorMonths : 0;
+  var mid = (rec.pricing.rateMin + rec.pricing.rateMax) / 2;
+  var pay = annuityMonthly(P, mid, n);
+  return h('div', null,
+    h('div', { class: 'kv' },
+      h('dt', { text: 'Profit rate band' }), h('dd', { class: 'num', text: fmtRate(rec.pricing.rateMin) + ' – ' + fmtRate(rec.pricing.rateMax) + ' p.a.' }),
+      h('dt', { text: 'Est. monthly installment' }), h('dd', { class: 'num', text: fmtAED(pay) + ' (mid-band)' }),
+      h('dt', { text: 'Total estimated obligation' }), h('dd', { class: 'num', text: fmtAED(pay * n) + ' over ' + n + ' months' })),
+    h('div', { class: 'small muted', style: 'margin-top:6px;' },
+      '5-business-day cooling-off applies, waivable in writing (CPR 8/2020). Mizan supplies these figures; the KFS itself is a product-layer artifact, Arabic + English.'));
+}
+
+function reasonsBlock(rec) {
+  var codes = rec.reasonCodes || [];
+  if (!codes.length) return h('div', { class: 'small muted', text: 'No adverse reason codes.' });
+  var wrap = h('div');
+  codes.forEach(function (c) { wrap.appendChild(reasonLine(c)); });
+  wrap.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'Customer-safe, bilingual by design (2026 AI/ML guidance note); terminology is Shari’ah-reviewed — “profit rate”, never “interest”.' }));
+  return wrap;
+}
+
+function decisionSummaryPanel(rec, opts) {
+  opts = opts || {};
+  var panel = h('div');
+  var seg = rec.segment === 'SME' ? 'SME' : 'Retail';
+  panel.appendChild(h('div', { class: 'outcome-banner ' + rec.outcome },
+    h('span', { class: 'ob-word', text: rec.outcome }),
+    h('div', null,
+      h('div', { class: 'ob-meta' }, h('code', { text: rec.id }), ' · ' + seg + ' · policy ' + (rec.policyVersion !== undefined ? 'v' + rec.policyVersion : '—') + ' · ' + fmtDT(rec.createdAt)),
+      h('div', { class: 'ob-meta', text: opts.metaLine || '' }))));
+  var grid = h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:12px;' });
+  grid.appendChild(h('div', null, h('h3', { text: 'Score & grade' }), scoreBlock(rec)));
+  grid.appendChild(h('div', null, h('h3', { text: opts.limitTitle || 'Limit — binding-constraint trace' }), limitBlock(rec)));
+  grid.appendChild(h('div', null, h('h3', { text: 'Pricing guidance' }), pricingBlock(rec)));
+  var tok = tokenBlock(rec); if (tok) grid.appendChild(h('div', null, h('h3', { text: 'Approval token' }), tok));
+  var kfs = kfsBlock(rec); if (kfs) grid.appendChild(h('div', null, h('h3', { text: 'KFS preview (feeds the Key Facts Statement)' }), kfs));
+  grid.appendChild(h('div', null, h('h3', { text: 'Reason codes — EN / AR' }), reasonsBlock(rec)));
+  panel.appendChild(grid);
+  return panel;
+}
+/* ================= Retail journey ================= */
+var Retail = {
+  sel: null, rec: null,
+  build: function () {
+    var root = clear($('#scr-retail'));
+    root.appendChild(screenHead('Anchor journey 1 — PRD §5.3', 'Retail personal finance (Murabaha / Tawarruq)',
+      'Consent → real-time AECB + salary data → affordability (DBR) → policy pack → scorecard → limit & pricing band → approval token. The Shari’ah leg executes in the product layer, linked back to the decision record.'));
+
+    var grid = h('div', { class: 'grid2' });
+    var left = h('div');
+    var right = h('div');
+    grid.appendChild(left); grid.appendChild(right);
+    root.appendChild(grid);
+
+    /* Personas */
+    var pWrap = h('div', { class: 'grid-cards', id: 'rt-personas' });
+    (MD.personasRetail || []).forEach(function (p) {
+      var score = p.aecb && p.aecb.hit ? 'AECB ' + p.aecb.score : 'No AECB hit — thin file';
+      var card = h('button', { class: 'pcard', id: 'rtp-' + p.id, onclick: function () { Retail.pick(p); } },
+        h('span', { class: 'pname' }, h('span', { text: p.name }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: p.nameAr || '' })),
+        h('span', { class: 'ptag', text: p.tagline || '' }),
+        h('span', { class: 'pchips' },
+          h('span', { class: 'chip', text: 'Salary ' + fmtN(p.employment.salaryMonthly) }),
+          h('span', { class: 'chip', text: score }),
+          p.employment.retiree ? h('span', { class: 'chip', text: 'Retiree' }) : null,
+          p.aecb && p.aecb.creditPassportAvailable ? h('span', { class: 'chip acc', text: 'Credit Passport' }) : null));
+      pWrap.appendChild(card);
+    });
+    left.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Applicant personas (r1–r5)' }), pWrap));
+
+    /* Request + consent */
+    var form = h('div', { class: 'panel', id: 'rt-form' });
+    form.appendChild(h('h3', { text: 'Application — amount, tenor, consent' }));
+    form.appendChild(h('div', { class: 'small muted', id: 'rt-form-hint', text: 'Select a persona to prefill the request.' }));
+
+    var amt = h('input', { type: 'range', min: '10000', max: '2000000', step: '5000', id: 'rt-amount', 'aria-label': 'Finance amount' });
+    var amtN = h('input', { type: 'number', min: '10000', max: '2000000', step: '5000', id: 'rt-amount-n', 'aria-label': 'Finance amount (number)' });
+    var ten = h('input', { type: 'range', min: '6', max: '60', step: '6', id: 'rt-tenor', 'aria-label': 'Tenor in months' });
+    var tenN = h('input', { type: 'number', min: '6', max: '60', step: '6', id: 'rt-tenor-n', 'aria-label': 'Tenor in months (number)' });
+    amt.addEventListener('input', function () { amtN.value = amt.value; });
+    amtN.addEventListener('input', function () { amt.value = amtN.value; });
+    ten.addEventListener('input', function () { tenN.value = ten.value; });
+    tenN.addEventListener('input', function () { ten.value = tenN.value; });
+    form.appendChild(h('div', { class: 'field' }, h('label', { for: 'rt-amount', text: 'Finance amount (AED)' }),
+      h('div', { class: 'slider-row' }, amt, amtN)));
+    form.appendChild(h('div', { class: 'field' }, h('label', { for: 'rt-tenor', text: 'Tenor (months) — regulatory cap 48 (Reg 29/2011); ask for 54–60 to watch the primitive bite' }),
+      h('div', { class: 'slider-row' }, ten, tenN)));
+
+    var cAecb = h('input', { type: 'checkbox', id: 'rt-c-aecb' });
+    var cOf = h('input', { type: 'checkbox', id: 'rt-c-of' });
+    form.appendChild(h('div', { class: 'consent-box' }, cAecb, h('label', { for: 'rt-c-aecb' },
+      h('div', { class: 'cb-title', text: 'AECB credit bureau consent — required' }),
+      h('div', { class: 'cb-legal', text: 'Written consent to request my credit report and score from Al Etihad Credit Bureau (Federal Law 6/2010, as amended). A bureau check is mandatory before credit is granted; no consent record → no pull → no decision.' }))));
+    form.appendChild(h('div', { class: 'consent-box' }, cOf, h('label', { for: 'rt-c-of' },
+      h('div', { class: 'cb-title', text: 'Open-finance consent (Al Tareq) — optional' }),
+      h('div', { class: 'cb-legal', text: 'Share account and transaction data via the Al Tareq consent layer (Nebras, CBUAE Circular 3/2025) for income verification. Fallback: internal salary history or documents.' }))));
+    var consentErr = h('div', { id: 'rt-consent-err' });
+    form.appendChild(consentErr);
+    var submit = h('button', { class: 'btn btn-primary', id: 'rt-submit', text: 'Submit application', onclick: function () { Retail.submit(); } });
+    form.appendChild(h('div', { class: 'btnrow', style: 'margin-top:10px;' }, submit,
+      h('span', { class: 'small muted', text: 'POST /decisions · idempotent · sync < 5 min p90' })));
+    left.appendChild(form);
+
+    /* Salary advance mini-card */
+    var manifests = [];
+    try { manifests = ME.manifests(); } catch (e) {}
+    var manChips = h('div', { class: 'btnrow', style: 'margin-bottom:8px;' });
+    manifests.forEach(function (m) {
+      manChips.appendChild(h('span', { class: 'chip' + (m.productId === 'retail_pf' ? ' acc' : '') },
+        (m.nameEn || m.productId) + ' · ' + (m.pricingMode || '')));
+    });
+    var qardOut = h('div', { id: 'rt-qard-out' });
+    left.appendChild(h('div', { class: 'panel' },
+      h('h3', { text: 'Salary advance (Qard Hassan) — three manifests, one engine' }),
+      manChips,
+      h('p', { class: 'small muted' }, 'Qard Hassan cannot price for risk: AAOIFI SS 19 permits only a flat admin fee equal to actual service cost — never scaling with amount or tenor. Decisioning is pure eligibility + limit control, which makes it Mizan’s cheapest proof of product-agnosticism.'),
+      h('div', { class: 'btnrow' },
+        h('button', { class: 'btn', text: 'Run Ahmed (r1) through salary_advance', onclick: function () { Retail.runQard('r1'); } }),
+        h('button', { class: 'btn', text: 'Run Priya (r2)', onclick: function () { Retail.runQard('r2'); } })),
+      qardOut));
+
+    /* Right: run area */
+    right.appendChild(h('div', { class: 'panel', id: 'rt-orch' },
+      h('h3', { text: 'Orchestration' }),
+      h('div', { class: 'small muted', text: 'Submit an application to watch the pulls run — each step shows source, result and latency, exactly as written to the decision record.' })));
+    right.appendChild(h('div', { id: 'rt-decision' }));
+    right.appendChild(h('div', { id: 'rt-exec' }));
+  },
+
+  pick: function (p) {
+    Retail.sel = p;
+    $all('#rt-personas .pcard').forEach(function (c) { c.classList.toggle('sel', c.id === 'rtp-' + p.id); });
+    $('#rt-form-hint').textContent = p.name + ' — ' + (p.tagline || '') + '  (defaults prefilled; consent is captured per application)';
+    $('#rt-amount').value = $('#rt-amount-n').value = p.defaultRequest.amount;
+    $('#rt-tenor').value = $('#rt-tenor-n').value = p.defaultRequest.tenorMonths;
+    $('#rt-c-aecb').checked = false; $('#rt-c-of').checked = false;
+    clear($('#rt-consent-err'));
+    clear($('#rt-decision')); clear($('#rt-exec'));
+    var orch = clear($('#rt-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(h('div', { class: 'small muted', text: 'Ready — submit ' + p.name + '’s application to run the pulls.' }));
+  },
+
+  submit: function () {
+    var errBox = clear($('#rt-consent-err'));
+    if (!Retail.sel) { errBox.appendChild(h('div', { class: 'callout callout-warn', text: 'Pick a persona first.' })); return; }
+    var aecbOk = $('#rt-c-aecb').checked;
+    if (!aecbOk) {
+      /* Consent gate — block before the engine would throw, and explain why (contract §3.2) */
+      errBox.appendChild(h('div', { class: 'callout callout-error' },
+        h('div', { class: 'co-title', text: 'Submission blocked — AECB consent missing' }),
+        h('div', { class: 'co-body', text: 'Under Federal Law 6/2010 the bank must hold the customer’s written consent before requesting a credit report, and CBUAE rules make the bureau check mandatory before extending credit. Mizan’s consent registry therefore gates orchestration: no consent record → no pull → no decision. Tick the AECB consent to proceed.' })));
+      return;
+    }
+    var amount = Number($('#rt-amount-n').value), tenor = Number($('#rt-tenor-n').value);
+    var rec;
+    try {
+      rec = ME.decide({ productId: 'retail_pf', applicant: Retail.sel, amount: amount, tenorMonths: tenor,
+        consents: { aecb: true, openFinance: $('#rt-c-of').checked } });
+    } catch (err) {
+      errBox.appendChild(h('div', { class: 'callout callout-error' },
+        h('div', { class: 'co-title', text: 'Engine rejected the application' }),
+        h('div', { class: 'co-body' }, h('code', { text: err.message || String(err) }))));
+      return;
+    }
+    Retail.rec = rec;
+    clear($('#rt-decision')); clear($('#rt-exec'));
+    var orch = clear($('#rt-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(pullsTimeline(rec, { onDone: function () { Retail.showDecision(rec); } }));
+    afterEngineMutation();
+  },
+
+  showDecision: function (rec) {
+    var box = clear($('#rt-decision'));
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', { text: 'Decision' }));
+    panel.appendChild(decisionSummaryPanel(rec, { metaLine: Retail.sel ? Retail.sel.name + ' · ' + fmtAED(rec.request.amount) + ' over ' + rec.request.tenorMonths + ' months' : '' }));
+    if (rec.outcome === 'REFER') {
+      panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
+        h('div', { class: 'co-title', text: 'Routed to the refer workbench' }),
+        h('div', { class: 'co-body' }, 'A structured case with the full pre-assembled file is now in the analyst queue (retail SLA: same day). ',
+          Retail.sel && Retail.sel.aecb && Retail.sel.aecb.creditPassportAvailable ? 'Thin file with Credit Passport available: consented home-country bureau history can support a starter limit. ' : '',
+          h('button', { class: 'btn btn-ghost', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
+    }
+    if (rec.outcome === 'APPROVE') Retail.buildExec(rec);
+    box.appendChild(panel);
+  },
+
+  buildExec: function (rec) {
+    var box = clear($('#rt-exec'));
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', { text: 'Execute the Murabaha — product layer, sequence enforced' }));
+    panel.appendChild(h('p', { class: 'small muted' },
+      'AAOIFI SS 8 / SS 30: the sequence is validity-critical — the bank must own the asset before selling it, and the debt exists only after offer/acceptance. Mizan’s approval is a risk decision, not a contract. Click the steps in order — or out of order, to see the engine refuse (that refusal is the audit control, not a bug).'));
+    var errBox = h('div');
+    var steps = h('div', { class: 'exec-steps' });
+    function paint(r) {
+      clear(steps);
+      var doneTypes = {};
+      (r.events || []).forEach(function (ev) { doneTypes[ev.type] = ev.at; });
+      EXEC_EVENTS.forEach(function (t, i) {
+        var meta = EXEC_META[t];
+        var done = !!doneTypes[t];
+        var b = h('button', { class: 'estep' + (done ? ' done' : ''), disabled: done ? '' : null,
+          onclick: function () { Retail.execStep(rec.id, t, paint, errBox); } },
+          h('span', { class: 'es-n', text: done ? '✓' : String(i + 1) }),
+          h('span', null, h('span', { class: 'es-t', text: meta.t }), h('span', { class: 'es-d', style: 'display:block;', text: meta.d + ' (' + t + ')' })),
+          done ? h('span', { class: 'es-at', text: fmtDT(doneTypes[t]) }) : null);
+        steps.appendChild(b);
+      });
+      if (r.status === 'EXECUTED') {
+        clear(errBox);
+        errBox.appendChild(h('div', { class: 'callout callout-ok' },
+          h('div', { class: 'co-title', text: 'EXECUTED — contract events linked to the decision record' }),
+          h('div', { class: 'co-body' }, 'Shari’ah audit can now replay approval → execution ordering end-to-end. ',
+            h('button', { class: 'btn btn-ghost', text: 'View the full record in the Decision log →', onclick: function () { showScreen('log'); LogScreen.select(r.id); } }))));
+        afterEngineMutation();
+      }
+    }
+    paint(rec);
+    panel.appendChild(steps);
+    panel.appendChild(errBox);
+    box.appendChild(panel);
+  },
+
+  execStep: function (id, type, paint, errBox) {
+    clear(errBox);
+    try {
+      var updated = ME.recordEvent(id, type);
+      paint(updated);
+      afterEngineMutation();
+    } catch (err) {
+      /* Expected engine throw — surfaced inline as the Shari’ah-sequencing teaching moment; never the fatal banner */
+      errBox.appendChild(h('div', { class: 'callout callout-error' },
+        h('div', { class: 'co-title', text: 'Sequence enforced by the engine' }),
+        h('div', { class: 'co-body' },
+          h('code', { text: err.message || String(err) }),
+          h('div', { class: 'small', style: 'margin-top:4px;' },
+            'Why it matters: in a Murabaha the bank sells what it owns — selling before ownership (or booking debt before acceptance) voids the structure. Approval ≠ debt.'))));
+    }
+  },
+
+  runQard: function (pid) {
+    var out = clear($('#rt-qard-out'));
+    var persona = (MD.personasRetail || []).filter(function (p) { return p.id === pid; })[0];
+    if (!persona) return;
+    var rec;
+    try {
+      rec = ME.decide({ productId: 'salary_advance', applicant: persona, amount: 20000, tenorMonths: 1,
+        consents: { aecb: true, openFinance: false } });
+    } catch (err) {
+      out.appendChild(h('div', { class: 'callout callout-error' }, h('code', { text: err.message || String(err) })));
+      return;
+    }
+    out.appendChild(h('div', { style: 'margin-top:10px;' },
+      h('div', { class: 'btnrow', style: 'margin-bottom:6px;' }, outcomeChip(rec.outcome),
+        h('code', { class: 'small', text: rec.id }),
+        h('span', { class: 'small muted', text: persona.name + ' · requested AED 20,000 (deliberately above cap)' })),
+      h('div', { class: 'kv' },
+        h('dt', { text: 'Limit' }), h('dd', { class: 'num', text: fmtAED(rec.limit && rec.limit.approved) + '  (min of 80% × salary, AED 13,500 cap)' }),
+        h('dt', { text: 'Fee' }), h('dd', { class: 'num', text: rec.pricing && rec.pricing.mode === 'FLAT_FEE' ? fmtAED(rec.pricing.fee) + ' flat' : '—' })),
+      rec.pricing && rec.pricing.note ? h('div', { class: 'callout callout-info small', text: rec.pricing.note }) : null));
+    afterEngineMutation();
+  }
+};
+/* ================= SVG chart helpers (hand-rolled; dataviz-skill conventions) ================= */
+var SVGNS = 'http://www.w3.org/2000/svg';
+function S(tag, attrs) {
+  var e = document.createElementNS(SVGNS, tag);
+  if (attrs) for (var k in attrs) {
+    if (k === 'text') e.textContent = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  return e;
+}
+function chartSvg(w, hgt) {
+  var svg = S('svg', { viewBox: '0 0 ' + w + ' ' + hgt, role: 'img' });
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  return svg;
+}
+function niceMax(v) {
+  if (!v || v <= 0) return 1;
+  var p = Math.pow(10, Math.floor(Math.log10(v)));
+  var f = v / p;
+  var nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+  return nf * p;
+}
+function roundTopRect(x, y, w, hgt, r) {
+  r = Math.max(0, Math.min(r, w / 2, hgt));
+  return 'M' + x + ',' + (y + hgt) + ' L' + x + ',' + (y + r) + ' Q' + x + ',' + y + ' ' + (x + r) + ',' + y +
+    ' L' + (x + w - r) + ',' + y + ' Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) +
+    ' L' + (x + w) + ',' + (y + hgt) + ' Z';
+}
+function makeTip(box) {
+  var tip = h('div', { class: 'viz-tip' });
+  box.appendChild(tip);
+  return {
+    show: function (title, rows, cx, cy) {
+      clear(tip);
+      if (title) tip.appendChild(h('div', { class: 'vt-title', text: title }));
+      rows.forEach(function (r) {
+        tip.appendChild(h('div', { class: 'vt-row' },
+          r.color ? h('span', { class: 'vt-key', style: 'border-top-color:' + r.color + ';' }) : null,
+          h('span', { class: 'muted', text: r.label }),
+          h('span', { class: 'vt-val', text: r.value })));
+      });
+      tip.style.display = 'block';
+      var bw = box.clientWidth || 600;
+      var tw = tip.offsetWidth || 140, th = tip.offsetHeight || 50;
+      var x = Math.min(Math.max(cx + 14, 4), bw - tw - 4);
+      var y = Math.max(cy - th - 12, 2);
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    },
+    hide: function () { tip.style.display = 'none'; }
+  };
+}
+function tableView(headers, rows) {
+  var t = h('table', { class: 'tbl' });
+  var trh = h('tr');
+  headers.forEach(function (hd, i) { trh.appendChild(h('th', { class: i > 0 ? 'num' : '', text: hd })); });
+  t.appendChild(h('thead', null, trh));
+  var tb = h('tbody');
+  rows.forEach(function (r) {
+    var tr = h('tr');
+    r.forEach(function (c, i) { tr.appendChild(h('td', { class: i > 0 ? 'num' : '', text: String(c) })); });
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  return h('details', { class: 'tbl-view' }, h('summary', { text: 'Data table' }), h('div', { class: 'tbl-scroll' }, t));
+}
+
+/* ================= SME journey ================= */
+var Sme = {
+  sel: null, rec: null,
+  build: function () {
+    var root = clear($('#scr-sme'));
+    root.appendChild(screenHead('Anchor journey 2 — PRD §5.4', 'SME working capital (revolving Tawarruq)',
+      'Entity + owner consents → commercial and personal AECB pulls → cash-flow serviceability from verified inflows → SME policy pack with ISSC sector screen → facility limit; each drawdown is a fresh commodity-Murabaha cycle behind a < 5s check.'));
+
+    var grid = h('div', { class: 'grid2' });
+    var left = h('div'); var right = h('div');
+    grid.appendChild(left); grid.appendChild(right);
+    root.appendChild(grid);
+
+    var pWrap = h('div', { class: 'grid-cards', id: 'sm-personas' });
+    (MD.personasSme || []).forEach(function (p) {
+      var comm = p.aecbCommercial && p.aecbCommercial.hit ? 'Commercial ' + p.aecbCommercial.score : 'Thin commercial file';
+      pWrap.appendChild(h('button', { class: 'pcard', id: 'smp-' + p.id, onclick: function () { Sme.pick(p); } },
+        h('span', { class: 'pname' }, h('span', { text: p.legalName }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: p.legalNameAr || '' })),
+        h('span', { class: 'ptag', text: p.tagline || '' }),
+        h('span', { class: 'pchips' },
+          h('span', { class: 'chip', text: (p.license.authority || '') + ' · ' + p.license.ageMonths + ' mo' }),
+          h('span', { class: 'chip', text: 'Inflow ' + fmtN(p.bank.avgMonthlyInflow) + '/mo' }),
+          h('span', { class: 'chip', text: 'Vol ' + p.bank.inflowVolatilityPct + '%' }),
+          h('span', { class: 'chip', text: comm }))));
+    });
+    left.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'SME personas (s1–s5)' }), pWrap));
+
+    var form = h('div', { class: 'panel', id: 'sm-form' });
+    form.appendChild(h('h3', { text: 'Facility request — amount, tenor, consents' }));
+    form.appendChild(h('div', { class: 'small muted', id: 'sm-form-hint', text: 'Select an SME to prefill the request and list its owners for consent.' }));
+    var amt = h('input', { type: 'range', min: '50000', max: '5000000', step: '10000', id: 'sm-amount', 'aria-label': 'Facility amount' });
+    var amtN = h('input', { type: 'number', min: '50000', max: '5000000', step: '10000', id: 'sm-amount-n', 'aria-label': 'Facility amount (number)' });
+    var ten = h('input', { type: 'range', min: '6', max: '48', step: '6', id: 'sm-tenor', 'aria-label': 'Tenor in months' });
+    var tenN = h('input', { type: 'number', min: '6', max: '48', step: '6', id: 'sm-tenor-n', 'aria-label': 'Tenor in months (number)' });
+    amt.addEventListener('input', function () { amtN.value = amt.value; });
+    amtN.addEventListener('input', function () { amt.value = amtN.value; });
+    ten.addEventListener('input', function () { tenN.value = ten.value; });
+    tenN.addEventListener('input', function () { ten.value = tenN.value; });
+    form.appendChild(h('div', { class: 'field' }, h('label', { for: 'sm-amount', text: 'Facility amount (AED)' }), h('div', { class: 'slider-row' }, amt, amtN)));
+    form.appendChild(h('div', { class: 'field' }, h('label', { for: 'sm-tenor', text: 'Tenor (months)' }), h('div', { class: 'slider-row' }, ten, tenN)));
+    form.appendChild(h('div', { id: 'sm-consents' }));
+    form.appendChild(h('div', { id: 'sm-consent-err' }));
+    form.appendChild(h('div', { class: 'btnrow', style: 'margin-top:10px;' },
+      h('button', { class: 'btn btn-primary', id: 'sm-submit', text: 'Submit facility application', onclick: function () { Sme.submit(); } }),
+      h('span', { class: 'small muted', text: 'Refer-first by design at launch — analyst SLA < 24h' })));
+    left.appendChild(form);
+
+    right.appendChild(h('div', { class: 'panel', id: 'sm-orch' },
+      h('h3', { text: 'Orchestration' }),
+      h('div', { class: 'small muted', text: 'Submit to run AECB commercial + per-owner pulls and bank-data acquisition.' })));
+    right.appendChild(h('div', { id: 'sm-chart' }));
+    right.appendChild(h('div', { id: 'sm-decision' }));
+    right.appendChild(h('div', { id: 'sm-drawdown' }));
+  },
+
+  pick: function (p) {
+    Sme.sel = p;
+    $all('#sm-personas .pcard').forEach(function (c) { c.classList.toggle('sel', c.id === 'smp-' + p.id); });
+    $('#sm-form-hint').textContent = p.legalName + ' — ' + (p.tagline || '');
+    $('#sm-amount').value = $('#sm-amount-n').value = p.defaultRequest.amount;
+    $('#sm-tenor').value = $('#sm-tenor-n').value = p.defaultRequest.tenorMonths;
+    clear($('#sm-consent-err')); clear($('#sm-decision')); clear($('#sm-drawdown'));
+    var cw = clear($('#sm-consents'));
+    function consentBox(id, title, legal) {
+      return h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: id, class: 'sm-consent' }),
+        h('label', { for: id }, h('div', { class: 'cb-title', text: title }), h('div', { class: 'cb-legal', text: legal })));
+    }
+    cw.appendChild(consentBox('sm-c-entity', 'AECB commercial report — entity consent (required)',
+      'Authorised-signatory consent to pull ' + p.legalName + '’s commercial report and score (Federal Law 6/2010).'));
+    (p.owners || []).forEach(function (o, i) {
+      cw.appendChild(consentBox('sm-c-owner-' + i, 'AECB personal report — ' + o.name + ' (' + o.sharePct + '% owner, required)',
+        'Each shareholder/guarantor above the ownership threshold consents individually; obligations blend into serviceability.'));
+    });
+    var bankLabel = p.bank.source === 'DOCUMENTS' ? 'Statement upload + parsing (designed fallback)' : p.bank.source === 'INTERNAL' ? 'Internal Mal Bank account data' : 'Business account data via Al Tareq TPP';
+    cw.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'sm-c-of', checked: '' }),
+      h('label', { for: 'sm-c-of' }, h('div', { class: 'cb-title', text: 'Bank data — ' + bankLabel }),
+        h('div', { class: 'cb-legal', text: 'Cash-flow serviceability needs ' + p.bank.monthsAvailable + ' months of categorized inflows/outflows. Al Tareq consent under Circular 3/2025 where API-fed; documents otherwise — never a hard journey failure.' }))));
+    var orch = clear($('#sm-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(h('div', { class: 'small muted', text: 'Ready — submit ' + p.legalName + '’s application.' }));
+    Sme.drawInflowChart(p);
+  },
+
+  submit: function () {
+    var errBox = clear($('#sm-consent-err'));
+    if (!Sme.sel) { errBox.appendChild(h('div', { class: 'callout callout-warn', text: 'Pick an SME first.' })); return; }
+    var entity = $('#sm-c-entity'); var owners = $all('#sm-consents input[id^="sm-c-owner-"]');
+    var allAecb = entity && entity.checked && owners.every(function (c) { return c.checked; });
+    if (!allAecb) {
+      errBox.appendChild(h('div', { class: 'callout callout-error' },
+        h('div', { class: 'co-title', text: 'Submission blocked — bureau consent incomplete' }),
+        h('div', { class: 'co-body', text: 'The SME flow needs the entity’s commercial-report consent AND a personal consent from every major shareholder/guarantor (each pull is separately consented under Federal Law 6/2010). The owner-blend view is what the s5 persona demonstrates — without all consents, no pull, no decision.' })));
+      return;
+    }
+    var rec;
+    try {
+      rec = ME.decide({ productId: 'sme_wc', applicant: Sme.sel, amount: Number($('#sm-amount-n').value),
+        tenorMonths: Number($('#sm-tenor-n').value), consents: { aecb: true, openFinance: $('#sm-c-of').checked } });
+    } catch (err) {
+      errBox.appendChild(h('div', { class: 'callout callout-error' }, h('code', { text: err.message || String(err) })));
+      return;
+    }
+    Sme.rec = rec;
+    clear($('#sm-decision')); clear($('#sm-drawdown'));
+    var orch = clear($('#sm-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(pullsTimeline(rec, { onDone: function () { Sme.showDecision(rec); } }));
+    afterEngineMutation();
+  },
+
+  drawInflowChart: function (p) {
+    var box = clear($('#sm-chart'));
+    var inflows = (p.bank && p.bank.monthlyInflows) || [];
+    if (!inflows.length) return;
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', { text: '12-month verified inflows — ' + p.legalName }));
+    panel.appendChild(h('div', { class: 'callouts-row' },
+      h('span', { class: 'chip' + (p.bank.inflowVolatilityPct >= 45 ? '' : ' acc'), text: 'Volatility ' + p.bank.inflowVolatilityPct + '% (stdev/mean)' }),
+      h('span', { class: 'chip acc', text: 'Top counterparty ' + p.bank.topCounterpartySharePct + '% of inflows' }),
+      h('span', { class: 'chip', text: 'Avg ' + fmtAED(p.bank.avgMonthlyInflow) + '/mo · ' + p.bank.monthsAvailable + ' months of data' })));
+
+    /* Month labels: 12 months ending the month before TODAY, oldest first */
+    var t = new Date((MD.TODAY || '2026-07-19') + 'T00:00:00Z');
+    var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var labels = [];
+    for (var i = 11; i >= 0; i--) {
+      var d = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() - 1 - i, 1));
+      labels.push(MONTHS[d.getUTCMonth()] + ' ’' + String(d.getUTCFullYear()).slice(2));
+    }
+    var W = 640, H = 240, padL = 52, padR = 10, padT = 14, padB = 30;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxV = niceMax(Math.max.apply(null, inflows) * 1.08);
+    var svg = chartSvg(W, H);
+    var yScale = function (v) { return padT + plotH * (1 - v / maxV); };
+    /* Gridlines + y ticks (clean numbers, hairline, solid) */
+    for (var g = 0; g <= 4; g++) {
+      var gv = maxV * g / 4, gy = yScale(gv);
+      svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: gy, y2: gy, style: 'stroke:var(--grid);stroke-width:1;' }));
+      svg.appendChild(S('text', { x: padL - 6, y: gy + 3.5, 'text-anchor': 'end', class: 'ticknum', text: gv >= 1000 ? Math.round(gv / 1000) + 'k' : String(Math.round(gv)) }));
+    }
+    /* Average hairline with label (left end, surface halo so it stays legible over bars) */
+    var avgY = yScale(p.bank.avgMonthlyInflow);
+    svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: avgY, y2: avgY, style: 'stroke:var(--axis);stroke-width:1;' }));
+    svg.appendChild(S('text', { x: padL + 4, y: avgY - 4, 'text-anchor': 'start',
+      style: 'paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round;',
+      text: 'avg ' + Math.round(p.bank.avgMonthlyInflow / 1000) + 'k' }));
+    var band = plotW / 12, barW = Math.min(24, band - 4);
+    var maxI = inflows.indexOf(Math.max.apply(null, inflows));
+    var minI = inflows.indexOf(Math.min.apply(null, inflows));
+    var tip = makeTip(box);
+    inflows.forEach(function (v, i) {
+      var x = padL + band * i + (band - barW) / 2;
+      var y = yScale(v), bh = padT + plotH - y;
+      svg.appendChild(S('path', { d: roundTopRect(x, y, barW, bh, 4), style: 'fill:var(--s1);' }));
+      /* Selective direct labels: extremes only */
+      if (i === maxI || i === minI) {
+        svg.appendChild(S('text', { x: x + barW / 2, y: y - 4, 'text-anchor': 'middle', class: 'dlabel ticknum',
+          style: 'paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round;', text: Math.round(v / 1000) + 'k' }));
+      }
+      if (i % 2 === 0) svg.appendChild(S('text', { x: padL + band * i + band / 2, y: H - 8, 'text-anchor': 'middle', text: labels[i] }));
+      /* Hover hit target = whole band, larger than the mark */
+      var hit = S('rect', { x: padL + band * i, y: padT, width: band, height: plotH, fill: 'transparent', tabindex: '0', 'aria-label': labels[i] + ': ' + fmtAED(v) });
+      function show(ev) {
+        var r = box.getBoundingClientRect();
+        var cx = ev && ev.clientX !== undefined ? ev.clientX - r.left : (padL + band * i) / W * box.clientWidth;
+        var cy = ev && ev.clientY !== undefined ? ev.clientY - r.top : 40;
+        tip.show(labels[i], [{ label: 'Inflow', value: fmtAED(v), color: getComputedStyle(document.documentElement).getPropertyValue('--s1') }], cx, cy);
+      }
+      hit.addEventListener('pointermove', show);
+      hit.addEventListener('focus', show);
+      hit.addEventListener('pointerleave', tip.hide);
+      hit.addEventListener('blur', tip.hide);
+      svg.appendChild(hit);
+    });
+    svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;' }));
+    var cbox = h('div', { class: 'chart-box' });
+    cbox.appendChild(svg);
+    panel.appendChild(cbox);
+    panel.appendChild(tableView(['Month', 'Inflow (AED)'], inflows.map(function (v, i) { return [labels[i], fmtN(v)]; })));
+    box.appendChild(panel);
+  },
+  redrawChart: function () { if (Sme.sel) Sme.drawInflowChart(Sme.sel); },
+
+  showDecision: function (rec) {
+    var box = clear($('#sm-decision'));
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', { text: 'Facility decision' }));
+    panel.appendChild(decisionSummaryPanel(rec, {
+      limitTitle: 'Facility limit — inflow-multiple trace',
+      metaLine: Sme.sel ? Sme.sel.legalName + ' · ' + fmtAED(rec.request.amount) + ' revolving, ' + rec.request.tenorMonths + ' months' : '' }));
+    if (rec.outcome === 'REFER') {
+      panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
+        h('div', { class: 'co-title', text: 'Referred — by design, not failure' }),
+        h('div', { class: 'co-body' }, 'SME launches refer-heavy: the analyst gets the complete pre-assembled file (SLA < 24h) and the human decision becomes reason-coded training data. ',
+          h('button', { class: 'btn btn-ghost', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
+    }
+    if (rec.outcome === 'APPROVE') Sme.buildDrawdown(rec);
+    box.appendChild(panel);
+  },
+
+  buildDrawdown: function (rec) {
+    var box = clear($('#sm-drawdown'));
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', { text: 'Drawdown simulator — lightweight check, not re-underwriting' }));
+    panel.appendChild(h('p', { class: 'small muted' },
+      'Each revolving drawdown is a fresh commodity-Murabaha cycle in the product layer. Mizan only checks limit availability, arrears and material deterioration (< 5s) so Tawarruq execution stays straight-through.'));
+    var amtIn = h('input', { type: 'number', id: 'dd-amount', min: '10000', step: '10000', value: '100000', 'aria-label': 'Drawdown amount' });
+    var fArr = h('input', { type: 'checkbox', id: 'dd-arrears' });
+    var fDet = h('input', { type: 'checkbox', id: 'dd-deter' });
+    var out = h('div', { id: 'dd-out' });
+    var hist = h('div', { id: 'dd-hist' });
+    panel.appendChild(h('div', { style: 'display:grid;grid-template-columns:minmax(140px,220px) auto auto auto;gap:10px;align-items:end;flex-wrap:wrap;' },
+      h('div', { class: 'field', style: 'margin:0;' }, h('label', { for: 'dd-amount', text: 'Drawdown amount (AED)' }), amtIn),
+      h('label', { class: 'small', style: 'display:flex;align-items:center;gap:6px;' }, fArr, 'Simulate arrears flag'),
+      h('label', { class: 'small', style: 'display:flex;align-items:center;gap:6px;' }, fDet, 'Material deterioration'),
+      h('button', { class: 'btn btn-primary', text: 'Check drawdown', onclick: run })));
+    panel.appendChild(out); panel.appendChild(hist);
+    var histRows = [];
+    function run() {
+      clear(out);
+      var res;
+      try {
+        res = ME.drawdownCheck(rec.id, Number(amtIn.value), { arrears: fArr.checked, deterioration: fDet.checked });
+      } catch (err) {
+        out.appendChild(h('div', { class: 'callout callout-error' }, h('code', { text: err.message || String(err) })));
+        return;
+      }
+      var total = rec.limit && rec.limit.approved ? rec.limit.approved : 0;
+      var remaining = res.remainingAfter !== undefined ? res.remainingAfter : total;
+      var pct = total ? Math.max(0, Math.min(100, remaining / total * 100)) : 0;
+      out.appendChild(h('div', { class: 'callout ' + (res.allowed ? 'callout-ok' : 'callout-error') },
+        h('div', { class: 'co-title', text: res.allowed ? 'Drawdown allowed — ' + fmtAED(res.amount) : 'Drawdown blocked' }),
+        (res.reasonCodes && res.reasonCodes.length) ? h('div', null, res.reasonCodes.map(function (c) { return reasonLine(c); })) : null,
+        h('div', { class: 'small', style: 'margin-top:6px;' }, 'Remaining after: ' + fmtAED(remaining) + ' of ' + fmtAED(total) + ' facility'),
+        h('div', { class: 'meter', role: 'img', 'aria-label': 'Remaining limit ' + Math.round(pct) + ' percent' },
+          h('span', { class: 'm-fill', style: 'width:' + pct + '%;' })),
+        h('div', { class: 'meter-cap' }, h('span', { text: 'AED 0' }), h('span', { text: fmtAED(total) }))));
+      histRows.push([fmtAED(Number(amtIn.value)), (fArr.checked ? 'arrears ' : '') + (fDet.checked ? 'deterioration' : '') || '—', res.allowed ? 'ALLOWED' : 'BLOCKED', fmtAED(remaining)]);
+      clear(hist);
+      if (histRows.length) {
+        var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Amount' }), h('th', { text: 'Flags' }), h('th', { text: 'Result' }), h('th', { class: 'num', text: 'Remaining' }))));
+        var tb = h('tbody');
+        histRows.forEach(function (r) { tb.appendChild(h('tr', null, h('td', { class: 'num', text: r[0] }), h('td', { text: r[1] }), h('td', { text: r[2] }), h('td', { class: 'num', text: r[3] }))); });
+        t.appendChild(tb);
+        hist.appendChild(h('div', { style: 'margin-top:10px;' }, h('h3', { text: 'Session drawdowns' }), h('div', { class: 'tbl-scroll' }, t)));
+      }
+      afterEngineMutation();
+    }
+    box.appendChild(panel);
+  }
+};
+/* ================= Policy console ================= */
+var REG_CITES = {
+  dbrCapPct: 'Reg 29/2011 / CPS — DBR ≤ 50% of gross salary + regular income',
+  dbrCapRetireePct: 'Reg 29/2011 — DBR ≤ 30% for retirees',
+  salaryMultipleCap: 'Reg 29/2011 — personal finance ≤ 20× salary',
+  tenorCapMonths: 'Reg 29/2011 — tenor cap',
+  aecbCheckRequired: 'Federal Law 6/2010 + CBUAE Rulebook — bureau check mandatory before credit',
+  coolingOffDays: 'CPR 8/2020 / CPS — cooling-off, waivable in writing',
+  sectorScreenVersion: 'HSA Res. 18/3/2018 · AAOIFI SS 21 — ISSC-approved exclusion list'
+};
+var PARAM_META = {
+  minSalary: ['Minimum monthly salary (AED)', 4000, 20000, 500],
+  minAge: ['Minimum age', 18, 25, 1],
+  maxAge: ['Maximum age at maturity', 60, 75, 1],
+  scoreDecline: ['AECB score — decline below', 550, 720, 5],
+  scoreRefer: ['AECB score — refer below', 600, 780, 5],
+  maxEsrPct: ['Max expense-to-salary ratio (ESR, %)', 30, 90, 5],
+  thinFileAction: ['Thin-file action', null, null, null],
+  minMonthsInUae: ['Minimum months in UAE', 0, 36, 1],
+  chequeReturnsMax: ['Max cheque returns (12m)', 0, 6, 1],
+  productCap: ['Product cap (AED)', 250000, 10000000, 50000],
+  tokenValidityDays: ['Approval-token validity (days)', 3, 60, 1],
+  minLicenseAgeMonths: ['Minimum trade-license age (months)', 3, 48, 1],
+  minMonthsBankData: ['Minimum months of bank data', 3, 24, 1],
+  ownerScoreFloor: ['Owner AECB score floor', 480, 680, 5],
+  commercialScoreRefer: ['Commercial score — refer below', 560, 720, 5],
+  maxVolatilityPct: ['Max inflow volatility (%)', 20, 90, 5],
+  tenorCapMonths: ['Tenor cap (months) — credit-committee policy', 6, 60, 6],
+  guaranteeThreshold: ['EDB guarantee assessment above (AED)', 100000, 5000000, 50000],
+  pctOfSalary: ['Advance as % of verified salary', 40, 95, 5],
+  capAmount: ['Advance cap (AED)', 3000, 25000, 500],
+  flatFee: ['Flat admin fee (AED) — actual cost only', 25, 500, 25],
+  scoreCut: ['Score cut-off', 500, 750, 5]
+};
+var Policy = {
+  pid: 'retail_pf', policy: null,
+  build: function () {
+    var root = clear($('#scr-policy'));
+    root.appendChild(screenHead('PRD §8.5 — Credit Risk self-service', 'Policy console',
+      'Versioned policy packs per segment: draft → simulate → approve (4-eyes) → publish, without an engineering release. Regulatory primitives are locked components — referenced, never editable; the engine enforces them regardless.'));
+    root.appendChild(h('div', { class: 'btnrow', id: 'pc-picker', style: 'margin-bottom:12px;' }));
+    root.appendChild(h('div', { class: 'grid2' },
+      h('div', null,
+        h('div', { class: 'panel', id: 'pc-reg' }),
+        h('div', { class: 'panel', id: 'pc-params' }),
+        h('div', { class: 'panel', id: 'pc-sector' })),
+      h('div', null,
+        h('div', { class: 'panel', id: 'pc-sim' }),
+        h('div', { class: 'panel', id: 'pc-publish' }),
+        h('div', { class: 'panel', id: 'pc-history' }))));
+    Policy.buildPicker();
+    Policy.load('retail_pf');
+  },
+  buildPicker: function () {
+    var pk = clear($('#pc-picker'));
+    var mans = [];
+    try { mans = ME.manifests(); } catch (e) {}
+    mans.forEach(function (m) {
+      pk.appendChild(h('button', { class: 'btn' + (m.productId === Policy.pid ? ' btn-primary' : ''), id: 'pc-pick-' + m.productId,
+        onclick: function () { Policy.load(m.productId); } },
+        (m.nameEn || m.productId) + ' ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: m.nameAr || '' })));
+    });
+  },
+  load: function (pid) {
+    Policy.pid = pid;
+    try { Policy.policy = ME.getPolicy(pid); } catch (e) { Policy.policy = null; }
+    Policy.buildPicker();
+    Policy.renderReg(); Policy.renderParams(); Policy.renderSector();
+    Policy.renderSim(null); Policy.renderPublish(); Policy.renderHistory();
+  },
+
+  renderReg: function () {
+    var box = clear($('#pc-reg'));
+    box.appendChild(h('h3', null, 'Regulatory primitives — locked ', h('span', { class: 'h3-note muted', text: '(engine double-enforces; packs reference, never edit)' })));
+    if (!Policy.policy) { box.appendChild(h('div', { class: 'callout callout-error', text: 'Policy unavailable from engine.' })); return; }
+    var t = h('table', { class: 'tbl' });
+    var tb = h('tbody');
+    var reg = Policy.policy.regulatory || {};
+    Object.keys(reg).forEach(function (k) {
+      tb.appendChild(h('tr', { class: 'lockrow' },
+        h('td', null, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), h('code', { text: k })),
+        h('td', { class: 'num', text: String(reg[k]) }),
+        h('td', { class: 'muted small', text: REG_CITES[k] || 'Regulatory primitive' })));
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { class: 'tbl-scroll' }, t));
+  },
+
+  renderParams: function () {
+    var box = clear($('#pc-params'));
+    box.appendChild(h('h3', null, 'Editable parameters — draft ', h('span', { class: 'h3-note muted', text: '(bounded; changes go through simulate → 4-eyes publish)' })));
+    if (!Policy.policy) return;
+    var params = Policy.policy.params || {};
+    var wrap = h('div');
+    Object.keys(params).forEach(function (k) {
+      var v = params[k];
+      if (v !== null && typeof v === 'object') {
+        /* band structures shown read-only */
+        var txt = Object.keys(v).map(function (b) {
+          var bv = v[b];
+          return b + ': ' + (Array.isArray(bv) ? bv.map(function (x) { return fmtRate(x); }).join('–') : bv + '×');
+        }).join('   ');
+        wrap.appendChild(h('div', { class: 'field' },
+          h('label', null, h('code', { text: k }), ' — band structure (shown fixed in prototype; band changes are an ISSC-governed release)'),
+          h('div', { class: 'num small', style: 'background:var(--ground);border:1px solid var(--hairline);border-radius:7px;padding:7px 9px;', text: txt })));
+        return;
+      }
+      var meta = PARAM_META[k] || [k, null, null, null];
+      var fld = h('div', { class: 'field' });
+      var lab = h('label', { for: 'pp-' + k }, meta[0] + ' ', h('code', { class: 'small muted', text: k }));
+      fld.appendChild(lab);
+      if (k === 'thinFileAction') {
+        var sel = h('select', { id: 'pp-' + k, dataset: { pkey: k, ptype: 'str' } });
+        ['REFER', 'DECLINE'].forEach(function (o) {
+          var op = h('option', { value: o, text: o }); if (o === v) op.selected = true; sel.appendChild(op);
+        });
+        sel.addEventListener('change', function () { Policy.markChanged(k, sel.value); });
+        fld.appendChild(sel);
+      } else if (typeof v === 'boolean') {
+        var selB = h('select', { id: 'pp-' + k, dataset: { pkey: k, ptype: 'bool' } });
+        ['true', 'false'].forEach(function (o) { var op = h('option', { value: o, text: o }); if (String(v) === o) op.selected = true; selB.appendChild(op); });
+        fld.appendChild(selB);
+      } else {
+        var inp = h('input', { type: 'number', id: 'pp-' + k, value: String(v), dataset: { pkey: k, ptype: 'num' },
+          min: meta[1] !== null ? String(meta[1]) : null, max: meta[2] !== null ? String(meta[2]) : null, step: meta[3] !== null ? String(meta[3]) : null });
+        inp.addEventListener('input', function () { Policy.markChanged(k, Number(inp.value)); });
+        fld.appendChild(inp);
+        if (meta[1] !== null) fld.appendChild(h('div', { class: 'bounds', text: 'bounds ' + fmtN(meta[1]) + ' – ' + fmtN(meta[2]) }));
+      }
+      if (k === 'flatFee') fld.appendChild(h('div', { class: 'bounds', text: 'AAOIFI SS 19: the fee is the actual service cost — it may not scale with amount, tenor or risk.' }));
+      wrap.appendChild(fld);
+    });
+    box.appendChild(wrap);
+  },
+  markChanged: function (k, val) {
+    var base = Policy.policy && Policy.policy.params ? Policy.policy.params[k] : undefined;
+    var inp = $('#pp-' + k);
+    if (!inp) return;
+    var lab = inp.closest('.field') ? inp.closest('.field').querySelector('label') : null;
+    if (lab) lab.classList.toggle('param-changed', String(val) !== String(base));
+  },
+  collectParams: function () {
+    var out = {};
+    var params = (Policy.policy && Policy.policy.params) || {};
+    Object.keys(params).forEach(function (k) {
+      var v = params[k];
+      if (v !== null && typeof v === 'object') { out[k] = JSON.parse(JSON.stringify(v)); return; }
+      var inp = $('#pp-' + k);
+      if (!inp) { out[k] = v; return; }
+      if (inp.dataset.ptype === 'num') out[k] = Number(inp.value);
+      else if (inp.dataset.ptype === 'bool') out[k] = inp.value === 'true';
+      else out[k] = inp.value;
+    });
+    return out;
+  },
+
+  renderSector: function () {
+    var box = clear($('#pc-sector'));
+    if (Policy.pid !== 'sme_wc') { box.style.display = 'none'; return; }
+    box.style.display = '';
+    var ver = Policy.policy && Policy.policy.regulatory ? Policy.policy.regulatory.sectorScreenVersion : '';
+    box.appendChild(h('h3', null, 'Shari’ah sector screen — locked ',
+      h('span', { class: 'chip acc', text: 'ISSC version ' + (ver || '—') })));
+    box.appendChild(h('p', { class: 'small muted' }, 'Machine-readable exclusion list, versioned with an ISSC approval reference per version (AAOIFI SS 21 taxonomy + ISSC rulings). Changes follow the agreed delegation matrix — anything touching exclusions goes to the ISSC.'));
+    var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+      h('th', { text: 'Code' }), h('th', { text: 'Excluded activity' }), h('th', { text: 'بالعربية' }), h('th', { text: 'Basis' }))));
+    var tb = h('tbody');
+    (MD.sectorExclusions || []).forEach(function (sx) {
+      tb.appendChild(h('tr', null,
+        h('td', null, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), h('code', { text: sx.code })),
+        h('td', { text: sx.labelEn }),
+        h('td', null, h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: sx.labelAr || '' })),
+        h('td', null, h('span', { class: 'chip' + (sx.basis === 'ISSC policy' ? ' acc' : ''), text: sx.basis }))));
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { class: 'tbl-scroll' }, t));
+  },
+
+  renderSim: function (result) {
+    var box = clear($('#pc-sim'));
+    box.appendChild(h('h3', { text: 'Simulate before publish — replay the synthetic book' }));
+    box.appendChild(h('p', { class: 'small muted', text: 'Runs the candidate parameters against the seeded application sample (' + (Policy.pid === 'sme_wc' ? '80 SME' : '140 retail') + ' apps) and diffs outcomes against the live policy — the console never publishes blind.' }));
+    box.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', text: 'Run simulation', onclick: function () {
+      var res;
+      try { res = ME.simulateBook(Policy.pid, Policy.collectParams()); }
+      catch (err) { Policy.renderSim({ error: err.message || String(err) }); return; }
+      Policy.renderSim(res);
+    } })));
+    if (!result) return;
+    if (result.error) { box.appendChild(h('div', { class: 'callout callout-error' }, h('code', { text: result.error }))); return; }
+    var OUT = ['APPROVE', 'REFER', 'DECLINE'];
+    var COLORS = { APPROVE: 'var(--c-approve)', REFER: 'var(--c-refer)', DECLINE: 'var(--c-decline)' };
+    function bar(label, counts) {
+      var total = OUT.reduce(function (s, o) { return s + (counts[o] || 0); }, 0) || 1;
+      var row = h('div', { style: 'display:flex;align-items:center;gap:10px;margin:6px 0;' });
+      row.appendChild(h('span', { class: 'small muted', style: 'flex:0 0 44px;', text: label }));
+      var track = h('div', { style: 'flex:1;display:flex;gap:2px;height:22px;border-radius:6px;overflow:hidden;' });
+      OUT.forEach(function (o) {
+        var w = (counts[o] || 0) / total * 100;
+        if (w <= 0) return;
+        var seg = h('span', { style: 'display:flex;align-items:center;justify-content:center;background:' + COLORS[o] + ';width:' + w + '%;color:#fff;font-size:10.5px;font-family:var(--font-mono);', title: o + ' ' + counts[o] });
+        if (w > 9) seg.textContent = String(counts[o]);
+        track.appendChild(seg);
+      });
+      row.appendChild(track);
+      return row;
+    }
+    var legend = h('div', { class: 'legend' });
+    OUT.forEach(function (o) { legend.appendChild(h('span', { class: 'lg' }, h('span', { class: 'sw', style: 'background:' + COLORS[o] + ';' }), o)); });
+    box.appendChild(h('div', { style: 'margin-top:10px;' }, legend, bar('Before', result.before || {}), bar('After', result.after || {})));
+    box.appendChild(h('div', { class: 'callout callout-info small', text: result.summary || '' }));
+    var flips = result.flips || [];
+    if (flips.length) {
+      var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+        h('th', { text: 'App' }), h('th', { text: 'From' }), h('th', { text: 'To' }), h('th', { text: 'Why' }))));
+      var tb = h('tbody');
+      flips.forEach(function (f) {
+        tb.appendChild(h('tr', null, h('td', null, h('code', { text: f.id })), h('td', null, outcomeChip(f.from)), h('td', null, outcomeChip(f.to)), h('td', { class: 'small muted', text: f.why || '' })));
+      });
+      t.appendChild(tb);
+      box.appendChild(h('div', { style: 'margin-top:8px;' }, h('strong', { class: 'small', text: 'Flipped outcomes (max 20 shown)' }), h('div', { class: 'tbl-scroll' }, t)));
+    } else {
+      box.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'No outcome flips at these parameters.' }));
+    }
+    box.appendChild(tableView(['Outcome', 'Before', 'After'], OUT.map(function (o) { return [o, (result.before || {})[o] || 0, (result.after || {})[o] || 0]; })));
+  },
+
+  renderPublish: function () {
+    var box = clear($('#pc-publish'));
+    box.appendChild(h('h3', { text: 'Publish — 4-eyes enforced by the engine' }));
+    var p = Policy.policy;
+    if (p) {
+      var liveDd = h('dd', null, h('strong', { text: 'v' + p.version }), ' ',
+        h('span', { class: 'muted small', text: 'published ' + fmtDT(p.publishedAt) + ' by ' + (p.publishedBy || '—') }));
+      box.appendChild(h('div', { class: 'kv', style: 'margin-bottom:8px;' }, h('dt', { text: 'Live version' }), liveDd));
+    }
+    var author = h('input', { type: 'text', id: 'pb-author', value: 'R. Haddad (Credit Policy)', 'aria-label': 'Author name' });
+    var approver = h('input', { type: 'text', id: 'pb-approver', placeholder: 'Distinct approver — try your own name twice', 'aria-label': 'Approver name' });
+    var out = h('div');
+    box.appendChild(h('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:10px;' },
+      h('div', { class: 'field', style: 'margin:0;' }, h('label', { for: 'pb-author', text: 'Author (drafted the change)' }), author),
+      h('div', { class: 'field', style: 'margin:0;' }, h('label', { for: 'pb-approver', text: 'Approver (must differ — 4-eyes)' }), approver)));
+    box.appendChild(h('div', { class: 'btnrow', style: 'margin-top:8px;' },
+      h('button', { class: 'btn btn-primary', text: 'Publish new version', onclick: function () {
+        clear(out);
+        var res;
+        try {
+          res = ME.publishPolicy(Policy.pid, Policy.collectParams(), { author: author.value.trim(), approver: approver.value.trim() });
+        } catch (err) {
+          out.appendChild(h('div', { class: 'callout callout-error' },
+            h('div', { class: 'co-title', text: 'Publish refused' }),
+            h('div', { class: 'co-body' }, h('code', { text: err.message || String(err) }),
+              h('div', { class: 'small', style: 'margin-top:4px;', text: 'Overrides and policy publishes both require a second pair of eyes — the same governance primitive, enforced in the engine, not the UI.' }))));
+          return;
+        }
+        Policy.load(Policy.pid);
+        var box2 = $('#pc-publish');
+        box2.appendChild(h('div', { class: 'callout callout-ok' },
+          h('div', { class: 'co-title', text: 'Published v' + (res && res.version !== undefined ? res.version : '?') }),
+          h('div', { class: 'co-body', text: 'The pack is live for all new decisions — check Monitoring and re-run a persona to see it bite. Policy change lead time here: seconds, not sprints.' })));
+        afterEngineMutation();
+      } })));
+    box.appendChild(out);
+  },
+
+  renderHistory: function () {
+    var box = clear($('#pc-history'));
+    box.appendChild(h('h3', { text: 'Policy history — versioned, diffed, attributable' }));
+    var hist = [];
+    try { hist = ME.policyHistory(Policy.pid) || []; } catch (e) {}
+    if (!hist.length) { box.appendChild(h('div', { class: 'small muted', text: 'No published versions yet beyond the default pack.' })); return; }
+    hist.slice().reverse().forEach(function (v) {
+      var chips = h('div', { class: 'btnrow', style: 'margin-top:4px;' });
+      (v.changes || []).forEach(function (c) {
+        chips.appendChild(h('span', { class: 'diff-chip', text: c.key + ': ' + c.from + ' → ' + c.to }));
+      });
+      box.appendChild(h('div', { style: 'padding:8px 0;border-bottom:1px solid var(--hairline-soft);' },
+        h('div', null, h('strong', { text: 'v' + v.version }), ' ',
+          h('span', { class: 'small muted', text: fmtDT(v.publishedAt) + ' · author ' + (v.publishedBy || '—') + ' · approver ' + (v.approvedBy || '—') })),
+        (v.changes && v.changes.length) ? chips : h('div', { class: 'small muted', text: 'Baseline pack' })));
+    });
+  }
+};
+/* ================= Shared record renderers (workbench case file + log replay) ================= */
+function nameOf(rec) {
+  var a = rec.applicantSnapshot || rec.applicant || {};
+  return a.name || a.legalName || rec.name || rec.legalName || '—';
+}
+function pullsTable(rec) {
+  var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+    h('th', { text: 'Source' }), h('th', { text: 'Status' }), h('th', { class: 'num', text: 'Latency' }), h('th', { text: 'Summary' }))));
+  var tb = h('tbody');
+  (rec.dataPulls || []).forEach(function (p) {
+    var sum = [];
+    if (p.cached) sum.push('cached');
+    if (p.summary) for (var k in p.summary) sum.push(k + ': ' + p.summary[k]);
+    tb.appendChild(h('tr', null,
+      h('td', { text: PULL_LABEL[p.source] || p.source }),
+      h('td', null, h('span', { class: 'chip' + (p.status === 'NO_HIT' ? '' : ' acc'), text: p.status || '—' })),
+      h('td', { class: 'num', text: p.latencyMs !== undefined ? fmtN(p.latencyMs) + ' ms' : '—' }),
+      h('td', { class: 'small muted mono', text: sum.join(' · ') })));
+  });
+  t.appendChild(tb);
+  return h('div', { class: 'tbl-scroll' }, t);
+}
+function featuresTable(rec) {
+  var f = rec.features || {};
+  var keys = Object.keys(f);
+  if (!keys.length) return h('div', { class: 'small muted', text: 'No feature vector on this record.' });
+  var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Feature' }), h('th', { class: 'num', text: 'Value' }))));
+  var tb = h('tbody');
+  keys.forEach(function (k) {
+    var v = f[k];
+    var txt = (typeof v === 'number') ? (Math.abs(v) >= 1000 ? fmtN(v) : String(Math.round(v * 100) / 100)) : String(v);
+    tb.appendChild(h('tr', null, h('td', null, h('code', { text: k })), h('td', { class: 'num', text: txt })));
+  });
+  t.appendChild(tb);
+  return h('div', { class: 'tbl-scroll' }, t);
+}
+function rulesTable(rec) {
+  var rules = rec.rules || [];
+  if (!rules.length) return h('div', { class: 'small muted', text: 'No rule trace on this record.' });
+  var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+    h('th', { text: 'Rule' }), h('th', { text: 'Category' }), h('th', { class: 'num', text: 'Observed' }), h('th', { class: 'num', text: 'Threshold' }), h('th', { text: 'Result' }))));
+  var tb = h('tbody');
+  rules.forEach(function (r) {
+    tb.appendChild(h('tr', null,
+      h('td', null, h('code', { class: 'small', text: r.id }), h('div', { class: 'small muted', text: r.name || '' })),
+      h('td', null, h('span', { class: 'chip' + (r.category === 'REGULATORY' ? ' acc' : ''), text: r.category || '—' })),
+      h('td', { class: 'num', text: r.observed !== undefined ? String(r.observed) : '—' }),
+      h('td', { class: 'num', text: r.threshold !== undefined ? String(r.threshold) : '—' }),
+      h('td', null, h('strong', { class: 'res-' + r.result, text: r.result }))));
+  });
+  t.appendChild(tb);
+  return h('div', { class: 'tbl-scroll' }, t);
+}
+function caseFile(rec) {
+  /* The pre-assembled credit file: everything on one screen, analyst time goes to judgment */
+  var wrap = h('div');
+  var grid = h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;' });
+  grid.appendChild(h('div', null, h('h3', { text: 'Data pulls' }), pullsTable(rec)));
+  grid.appendChild(h('div', null, h('h3', { text: 'Features — shared definitions, decision-time values' }), featuresTable(rec)));
+  wrap.appendChild(grid);
+  wrap.appendChild(h('div', { style: 'margin-top:12px;' }, h('h3', { text: 'Every rule evaluated — pass and fail alike' }), rulesTable(rec)));
+  var grid2 = h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:12px;' });
+  grid2.appendChild(h('div', null, h('h3', { text: 'Score breakdown' }), scoreBlock(rec)));
+  grid2.appendChild(h('div', null, h('h3', { text: 'Limit trace' }), limitBlock(rec)));
+  grid2.appendChild(h('div', null, h('h3', { text: 'Reason codes' }), reasonsBlock(rec)));
+  wrap.appendChild(grid2);
+  return wrap;
+}
+
+/* ================= Workbench ================= */
+var Workbench = {
+  selId: null,
+  build: function () {
+    var root = clear($('#scr-workbench'));
+    root.appendChild(screenHead('PRD §8.8 — human judgment as part of the system', 'Refer workbench',
+      'Queues with SLAs (retail same-day, SME < 24h). The analyst opens a complete pre-assembled file — data, features, every rule fired, score, limit trace — and overrides are reason-coded with a mandatory second approver.'));
+    root.appendChild(h('div', { class: 'panel', id: 'wb-queue' }));
+    root.appendChild(h('div', { id: 'wb-case' }));
+    Workbench.refresh();
+  },
+  refresh: function () {
+    var box = $('#wb-queue');
+    if (!box) return;
+    clear(box);
+    box.appendChild(h('h3', { text: 'Refer queue — open cases' }));
+    var q = [];
+    try { q = ME.referQueue() || []; } catch (e) { box.appendChild(h('div', { class: 'callout callout-error' }, h('code', { text: e.message || String(e) }))); return; }
+    if (!q.length) { box.appendChild(h('div', { class: 'small muted', text: 'Queue is clear. Run r2 (thin file) or s2/s3 in the journeys to create referred cases.' })); return; }
+    var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+      h('th', { text: 'Decision' }), h('th', { text: 'Applicant' }), h('th', { text: 'Segment' }), h('th', { text: 'Created' }),
+      h('th', { class: 'num', text: 'SLA left' }), h('th', { text: 'Top reason' }))));
+    var tb = h('tbody');
+    q.forEach(function (rec) {
+      var sla = rec.slaHoursLeft;
+      var slaTxt = (sla === undefined || sla === null) ? '—' : (sla < 0 ? 'breached' : sla.toFixed(1) + 'h');
+      var slaCls = (sla !== undefined && sla !== null && sla < 0) ? 'res-FAIL' : (sla !== null && sla !== undefined && sla <= 4 ? 'res-REFER' : 'muted');
+      var top = (rec.reasonCodes && rec.reasonCodes[0]) || rec.reason || 'RC_MANUAL_REVIEW';
+      var tr = h('tr', { class: 'rowbtn' + (rec.id === Workbench.selId ? ' sel' : ''), tabindex: '0',
+        onclick: function () { Workbench.select(rec.id); },
+        onkeydown: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); Workbench.select(rec.id); } } },
+        h('td', null, h('code', { text: rec.id })),
+        h('td', { text: nameOf(rec) }),
+        h('td', { text: rec.segment || '—' }),
+        h('td', { class: 'num small', text: fmtDT(rec.createdAt) }),
+        h('td', { class: 'num' }, h('strong', { class: slaCls, text: slaTxt })),
+        h('td', { class: 'small', text: rcEn(top) }));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { class: 'tbl-scroll' }, t));
+    if (Workbench.selId) Workbench.renderCase(Workbench.selId);
+  },
+  select: function (id) {
+    Workbench.selId = id;
+    Workbench.refresh();
+    var caseEl = $('#wb-case');
+    if (caseEl && caseEl.scrollIntoView && !REDUCED) caseEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+  renderCase: function (id) {
+    var box = clear($('#wb-case'));
+    var rec = null;
+    try { rec = ME.getDecision(id); } catch (e) {}
+    if (!rec) { box.appendChild(h('div', { class: 'panel' }, h('div', { class: 'small muted', text: 'Case ' + id + ' — full record unavailable (seeded queue rows carry summary data only).' }))); return; }
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', null, 'Case file — ', h('code', { text: rec.id }), ' · ' + nameOf(rec) + ' '));
+    panel.appendChild(h('div', { class: 'btnrow', style: 'margin-bottom:10px;' },
+      outcomeChip(rec.override ? rec.override.outcome : rec.outcome),
+      rec.override ? h('span', { class: 'chip acc', text: 'OVERRIDDEN — ' + rec.override.analyst + ' / approved ' + rec.override.approver }) : null,
+      h('span', { class: 'chip', text: (rec.segment || '') + ' · ' + (rec.productId || '') }),
+      h('span', { class: 'chip', text: 'requested ' + fmtAED(rec.request && rec.request.amount) })));
+    panel.appendChild(caseFile(rec));
+
+    if (!rec.override && rec.outcome === 'REFER' && rec.status === 'OPEN') {
+      var of = h('div', { style: 'margin-top:14px;border-top:1px solid var(--hairline);padding-top:12px;' });
+      of.appendChild(h('h3', { text: 'Override — reason-coded, 4-eyes' }));
+      var outcomeSel = h('select', { id: 'ov-outcome', 'aria-label': 'Override outcome' },
+        h('option', { value: 'APPROVE', text: 'APPROVE' }), h('option', { value: 'DECLINE', text: 'DECLINE' }));
+      var rcSel = h('select', { id: 'ov-rc', 'aria-label': 'Override reason code' });
+      Object.keys(MD.reasonCodes || {}).forEach(function (c) {
+        var op = h('option', { value: c, text: c + ' — ' + rcEn(c) });
+        if (c === 'RC_MANUAL_REVIEW') op.selected = true;
+        rcSel.appendChild(op);
+      });
+      var analyst = h('input', { type: 'text', value: 'A. Farsi (Credit Analyst)', 'aria-label': 'Analyst name' });
+      var approver = h('input', { type: 'text', placeholder: 'Second approver — must differ', 'aria-label': 'Approver name' });
+      var note = h('textarea', { rows: '2', placeholder: 'Judgment note — becomes structured training data for the next policy iteration', 'aria-label': 'Override note' });
+      var err = h('div');
+      of.appendChild(h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;' },
+        h('div', { class: 'field', style: 'margin:0;' }, h('label', { text: 'Outcome' }), outcomeSel),
+        h('div', { class: 'field', style: 'margin:0;' }, h('label', { text: 'Reason code' }), rcSel),
+        h('div', { class: 'field', style: 'margin:0;' }, h('label', { text: 'Analyst' }), analyst),
+        h('div', { class: 'field', style: 'margin:0;' }, h('label', { text: 'Approver (4-eyes)' }), approver)));
+      of.appendChild(h('div', { class: 'field', style: 'margin-top:8px;' }, h('label', { text: 'Note' }), note));
+      of.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', text: 'Apply override', onclick: function () {
+        clear(err);
+        try {
+          ME.override(rec.id, { outcome: outcomeSel.value, reasonCode: rcSel.value, analyst: analyst.value.trim(), approver: approver.value.trim(), note: note.value.trim() });
+        } catch (e2) {
+          err.appendChild(h('div', { class: 'callout callout-error' },
+            h('div', { class: 'co-title', text: 'Override refused' }),
+            h('div', { class: 'co-body' }, h('code', { text: e2.message || String(e2) }),
+              h('div', { class: 'small', style: 'margin-top:4px;', text: 'Overrides require a second approver distinct from the analyst; override rates are monitored per analyst and per rule (target: < 10% without pattern).' }))));
+          return;
+        }
+        afterEngineMutation();
+        Workbench.renderCase(rec.id);
+      } })));
+      of.appendChild(err);
+      panel.appendChild(of);
+    } else if (rec.override) {
+      panel.appendChild(h('div', { class: 'callout callout-ok', style: 'margin-top:12px;' },
+        h('div', { class: 'co-title', text: 'Resolved by override — dropped from the queue' }),
+        h('div', { class: 'co-body' }, rec.override.outcome + ' · ' + rec.override.reasonCode + ' · ' + (rec.override.note || 'no note'),
+          h('div', { class: 'small', style: 'margin-top:4px;' }, 'Full trail in the ',
+            h('button', { class: 'btn btn-ghost', text: 'Decision log →', onclick: function () { showScreen('log'); LogScreen.select(rec.id); } })))));
+    }
+    box.appendChild(panel);
+  }
+};
+
+/* ================= Decision log (replay) ================= */
+var LogScreen = {
+  selId: null,
+  build: function () {
+    var root = clear($('#scr-log'));
+    root.appendChild(screenHead('PRD §8.8 — every decision replayable', 'Decision log',
+      '100% of decisions reconstructable: input snapshot, features, policy and model versions, human actions and linked contract events. This is what a CBUAE model-risk inspection or the ISSC’s Shari’ah audit replays.'));
+    root.appendChild(h('div', { class: 'panel', id: 'lg-list' }));
+    root.appendChild(h('div', { id: 'lg-replay' }));
+    LogScreen.refresh();
+  },
+  refresh: function () {
+    var box = $('#lg-list');
+    if (!box) return;
+    clear(box);
+    box.appendChild(h('h3', { text: 'Session decisions — newest first' }));
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-bottom:8px;', text: 'The ~2,300 seeded 90-day decisions feed Monitoring as aggregates only; rows below are this session’s live decisions, each fully replayable.' }));
+    var list = [];
+    try { list = ME.listDecisions() || []; } catch (e) {}
+    if (!list.length) { box.appendChild(h('div', { class: 'small muted', text: 'No decisions yet — run a persona through either journey.' })); return; }
+    var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+      h('th', { text: 'ID' }), h('th', { text: 'Created' }), h('th', { text: 'Product' }), h('th', { text: 'Applicant' }),
+      h('th', { text: 'Outcome' }), h('th', { text: 'Grade' }), h('th', { class: 'num', text: 'Limit' }), h('th', { text: 'Status' }))));
+    var tb = h('tbody');
+    list.forEach(function (rec) {
+      tb.appendChild(h('tr', { class: 'rowbtn' + (rec.id === LogScreen.selId ? ' sel' : ''), tabindex: '0',
+        onclick: function () { LogScreen.select(rec.id); },
+        onkeydown: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); LogScreen.select(rec.id); } } },
+        h('td', null, h('code', { text: rec.id })),
+        h('td', { class: 'num small', text: fmtDT(rec.createdAt) }),
+        h('td', { class: 'small', text: rec.productId || '—' }),
+        h('td', { text: nameOf(rec) }),
+        h('td', null, outcomeChip(rec.outcome)),
+        h('td', { text: rec.score && rec.score.grade ? rec.score.grade : '—' }),
+        h('td', { class: 'num', text: fmtAED(rec.limit && rec.limit.approved) }),
+        h('td', null, h('span', { class: 'chip' + (rec.status === 'EXECUTED' ? ' acc' : ''), text: rec.status || '—' }))));
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { class: 'tbl-scroll' }, t));
+    if (LogScreen.selId) LogScreen.renderReplay(LogScreen.selId);
+  },
+  select: function (id) {
+    LogScreen.selId = id;
+    LogScreen.refresh();
+  },
+  renderReplay: function (id) {
+    var box = clear($('#lg-replay'));
+    var rec = null;
+    try { rec = ME.getDecision(id); } catch (e) {}
+    if (!rec) return;
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', null, 'Full replay — ', h('code', { text: rec.id })));
+    panel.appendChild(h('div', { class: 'callout callout-info small' },
+      h('strong', { text: 'Audit framing: ' }),
+      'everything the auditor sees, on one screen — inputs → features → rules → score → limit → pricing → human actions → contract events. CBUAE Model Management Standards replay on the left half; Shari’ah audit reads the event ordering on the right.'));
+    panel.appendChild(h('div', { class: 'kv', style: 'margin:10px 0;' },
+      h('dt', { text: 'Created' }), h('dd', { class: 'num', text: fmtDT(rec.createdAt) }),
+      h('dt', { text: 'Product / segment' }), h('dd', { text: (rec.productId || '—') + ' · ' + (rec.segment || '—') }),
+      h('dt', { text: 'Policy / engine version' }), h('dd', null, h('code', { text: 'policy v' + rec.policyVersion + ' · ' + (rec.engineVersion || '') })),
+      h('dt', { text: 'Status' }), h('dd', null, h('span', { class: 'chip acc', text: rec.status || '—' })),
+      h('dt', { text: 'Consents' }), h('dd', { class: 'small', text: 'AECB ' + (rec.consents && rec.consents.aecb && rec.consents.aecb.granted ? 'granted ' + fmtDT(rec.consents.aecb.at) : '—') + ' · open finance ' + (rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted ? 'granted' : 'not granted') })));
+    panel.appendChild(decisionSummaryPanel(rec, {}));
+    panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
+
+    /* Events + audit trail */
+    var grid = h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px;' });
+    var evWrap = h('div', null, h('h3', { text: 'Shari’ah execution events — ordering provable' }));
+    if (rec.events && rec.events.length) {
+      var evT = h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: '#' }), h('th', { text: 'Event' }), h('th', { text: 'At' }))));
+      var evB = h('tbody');
+      rec.events.forEach(function (ev, i) {
+        evB.appendChild(h('tr', null, h('td', { class: 'num', text: String(i + 1) }), h('td', null, h('code', { text: ev.type })), h('td', { class: 'num small', text: fmtDT(ev.at) })));
+      });
+      evT.appendChild(evB);
+      evWrap.appendChild(h('div', { class: 'tbl-scroll' }, evT));
+    } else {
+      evWrap.appendChild(h('div', { class: 'small muted', text: 'No contract events yet — approval is a risk decision; the debt exists only after the Murabaha sequence completes in the product layer.' }));
+    }
+    grid.appendChild(evWrap);
+    var auWrap = h('div', null, h('h3', { text: 'Audit trail — every actor, every action' }));
+    if (rec.audit && rec.audit.length) {
+      var auT = h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'At' }), h('th', { text: 'Actor' }), h('th', { text: 'Action' }), h('th', { text: 'Detail' }))));
+      var auB = h('tbody');
+      rec.audit.forEach(function (a) {
+        auB.appendChild(h('tr', null, h('td', { class: 'num small', text: fmtDT(a.at) }), h('td', { class: 'small', text: a.actor || '—' }), h('td', null, h('code', { class: 'small', text: a.action })), h('td', { class: 'small muted', text: a.detail || '' })));
+      });
+      auT.appendChild(auB);
+      auWrap.appendChild(h('div', { class: 'tbl-scroll' }, auT));
+    } else auWrap.appendChild(h('div', { class: 'small muted', text: 'No audit entries.' }));
+    grid.appendChild(auWrap);
+    panel.appendChild(grid);
+
+    panel.appendChild(h('div', { style: 'margin-top:14px;' },
+      h('h3', { text: 'Input snapshot — frozen at decision time' }),
+      h('pre', { class: 'small mono', style: 'background:var(--ground);border:1px solid var(--hairline-soft);border-radius:8px;padding:10px;overflow:auto;max-height:280px;margin:0;', text: JSON.stringify(rec.applicantSnapshot || {}, null, 2) })));
+    box.appendChild(panel);
+  }
+};
+/* ================= Monitoring (PRD §8.9, §12) ================= */
+var Monitoring = {
+  build: function () {
+    var root = clear($('#scr-monitoring'));
+    root.appendChild(screenHead('PRD §8.9 · §12 — the platform proves it is working', 'Monitoring & governance',
+      'Decision health over the seeded 90-day window plus everything decided this session. STP vs segment-honest targets (retail ≥ 80%, SME ≥ 40%), decline reasons, grades, refer aging and vintage FPD against the appetite corridor.'));
+    root.appendChild(h('div', { class: 'tiles', id: 'mn-tiles' }));
+    root.appendChild(h('div', { class: 'panel', id: 'mn-daily' }));
+    root.appendChild(h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:14px;' },
+      h('div', { class: 'panel', id: 'mn-reasons' }),
+      h('div', { class: 'panel', id: 'mn-grades' }),
+      h('div', { class: 'panel', id: 'mn-aging' }),
+      h('div', { class: 'panel', id: 'mn-vintage' })));
+    Monitoring.refresh();
+  },
+  refresh: function () {
+    if (!$('#mn-tiles')) return;
+    var m = null;
+    try { m = ME.metrics(); } catch (e) {}
+    if (!m) { clear($('#mn-tiles')).appendChild(h('div', { class: 'callout callout-error', text: 'metrics() unavailable.' })); return; }
+    Monitoring.tiles(m);
+    Monitoring.daily(m);
+    Monitoring.reasons(m);
+    Monitoring.grades(m);
+    Monitoring.aging(m);
+    Monitoring.vintages(m);
+  },
+
+  tiles: function (m) {
+    var box = clear($('#mn-tiles'));
+    var tot = m.totals || {};
+    box.appendChild(h('div', { class: 'tile' },
+      h('div', { class: 't-label', text: 'Decisions — ' + (m.window || '90d') + ' window' }),
+      h('div', { class: 't-value', text: fmtN(tot.decisions) }),
+      h('div', { class: 't-delta muted', text: fmtN(tot.APPROVE) + ' approve · ' + fmtN(tot.REFER) + ' refer · ' + fmtN(tot.DECLINE) + ' decline' })));
+    function stpTile(label, val, target, deadline) {
+      var ok = val >= target;
+      var t = h('div', { class: 'tile' },
+        h('div', { class: 't-label', text: label }),
+        h('div', { class: 't-value', text: fmtPct(val, 1) }),
+        h('div', { class: 't-delta ' + (ok ? 'good' : 'bad') },
+          h('span', { 'aria-hidden': 'true', text: ok ? '▲' : '▼' }),
+          (ok ? '+' : '') + (val - target).toFixed(1) + ' pts vs ≥' + target + '% target (' + deadline + ')'),
+        h('div', { class: 'meter', role: 'img', 'aria-label': label + ' ' + fmtPct(val, 1) + ' against target ' + target + '%' },
+          h('span', { class: 'm-fill', style: 'width:' + Math.max(0, Math.min(100, val)) + '%;' }),
+          h('span', { class: 'm-target', style: 'left:' + target + '%;' })),
+        h('div', { class: 'meter-cap' }, h('span', { text: '0%' }), h('span', { text: 'target ' + target + '%' })));
+      return t;
+    }
+    var rStp = m.bySegment && m.bySegment.RETAIL ? m.bySegment.RETAIL.stpPct : m.stpPct;
+    var sStp = m.bySegment && m.bySegment.SME ? m.bySegment.SME.stpPct : m.stpPct;
+    box.appendChild(stpTile('Retail STP — straight-through', Number(rStp) || 0, 80, 'M9'));
+    box.appendChild(stpTile('SME STP — refer-first by design', Number(sStp) || 0, 40, 'M12'));
+    box.appendChild(h('div', { class: 'tile' },
+      h('div', { class: 't-label', text: 'Override rate — refers overridden' }),
+      h('div', { class: 't-value', text: fmtPct(m.overrideRatePct, 1) }),
+      h('div', { class: 't-delta muted', text: 'appetite < 10% without pattern; overrides feed ≥ 1 policy change / quarter' })));
+  },
+
+  daily: function (m) {
+    var box = clear($('#mn-daily'));
+    box.appendChild(h('h3', { text: 'Daily decision outcomes — seeded history + session decisions merged' }));
+    var days = m.daily || [];
+    if (!days.length) { box.appendChild(h('div', { class: 'small muted', text: 'No daily series.' })); return; }
+    var OUT = ['APPROVE', 'REFER', 'DECLINE'];
+    var COLORS = { APPROVE: 'var(--c-approve)', REFER: 'var(--c-refer)', DECLINE: 'var(--c-decline)' };
+    var legend = h('div', { class: 'legend' });
+    OUT.forEach(function (o) { legend.appendChild(h('span', { class: 'lg' }, h('span', { class: 'sw', style: 'background:' + COLORS[o] + ';' }), o)); });
+    box.appendChild(legend);
+    var W = 920, H = 240, padL = 42, padR = 12, padT = 8, padB = 28;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxTot = niceMax(Math.max.apply(null, days.map(function (d) { return (d.APPROVE || 0) + (d.REFER || 0) + (d.DECLINE || 0); })));
+    var y = function (v) { return padT + plotH * (1 - v / maxTot); };
+    var svg = chartSvg(W, H);
+    /* clean tick steps: 5 divisions when the nice max leads with 5, else 4 */
+    var nDiv = (maxTot / Math.pow(10, Math.floor(Math.log10(maxTot))) === 5) ? 5 : 4;
+    for (var g = 0; g <= nDiv; g++) {
+      var gv = maxTot * g / nDiv, gy = y(gv);
+      svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: gy, y2: gy, style: 'stroke:var(--grid);stroke-width:1;' }));
+      svg.appendChild(S('text', { x: padL - 6, y: gy + 3.5, 'text-anchor': 'end', class: 'ticknum', text: String(Math.round(gv)) }));
+    }
+    var band = plotW / days.length;
+    var barW = Math.max(2, Math.min(24, band - 2));
+    days.forEach(function (d, i) {
+      var x = padL + band * i + (band - barW) / 2;
+      var stack = [['APPROVE', d.APPROVE || 0], ['REFER', d.REFER || 0], ['DECLINE', d.DECLINE || 0]];
+      var acc = 0, topDrawn = null;
+      /* find topmost non-zero for the rounded data-end */
+      for (var s2 = stack.length - 1; s2 >= 0; s2--) { if (stack[s2][1] > 0) { topDrawn = s2; break; } }
+      stack.forEach(function (seg, si) {
+        if (seg[1] <= 0) return;
+        var y0 = y(acc), y1 = y(acc + seg[1]);
+        var hgt = Math.max(0.8, y0 - y1 - (si < topDrawn ? 1.5 : 0)); /* surface gap between segments */
+        if (si === topDrawn) svg.appendChild(S('path', { d: roundTopRect(x, y1, barW, hgt, 2), style: 'fill:' + COLORS[seg[0]] + ';' }));
+        else svg.appendChild(S('rect', { x: x, y: y1 + 1.5, width: barW, height: hgt, style: 'fill:' + COLORS[seg[0]] + ';' }));
+        acc += seg[1];
+      });
+      if (i % 14 === 0 || i === days.length - 1) {
+        svg.appendChild(S('text', { x: padL + band * i + band / 2, y: H - 8, 'text-anchor': 'middle', text: String(d.date || '').slice(5) }));
+      }
+    });
+    svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;' }));
+    /* crosshair + one tooltip listing every series at that X */
+    var cross = S('line', { y1: padT, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;', 'visibility': 'hidden' });
+    svg.appendChild(cross);
+    var overlay = S('rect', { x: padL, y: padT, width: plotW, height: plotH, fill: 'transparent' });
+    var cbox = h('div', { class: 'chart-box' });
+    var tip = makeTip(cbox);
+    overlay.addEventListener('pointermove', function (ev) {
+      var r = cbox.getBoundingClientRect();
+      var scale = W / r.width;
+      var px = (ev.clientX - r.left) * scale;
+      var i = Math.max(0, Math.min(days.length - 1, Math.floor((px - padL) / band)));
+      var cx = padL + band * i + band / 2;
+      cross.setAttribute('x1', cx); cross.setAttribute('x2', cx);
+      cross.setAttribute('visibility', 'visible');
+      var d = days[i];
+      tip.show(d.date, OUT.map(function (o) { return { label: o, value: fmtN(d[o] || 0), color: COLORS[o] }; }),
+        ev.clientX - r.left, ev.clientY - r.top);
+    });
+    overlay.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); tip.hide(); });
+    svg.appendChild(overlay);
+    cbox.appendChild(svg);
+    box.appendChild(cbox);
+    box.appendChild(tableView(['Date', 'Approve', 'Refer', 'Decline'],
+      days.map(function (d) { return [d.date, d.APPROVE || 0, d.REFER || 0, d.DECLINE || 0]; })));
+  },
+
+  reasons: function (m) {
+    var box = clear($('#mn-reasons'));
+    box.appendChild(h('h3', { text: 'Decline reasons — 90d, customer-safe codes' }));
+    var rows = (m.declineReasons || []).slice(0, 8);
+    if (!rows.length) { box.appendChild(h('div', { class: 'small muted', text: 'No declines in window.' })); return; }
+    var maxC = Math.max.apply(null, rows.map(function (r) { return r.count; }));
+    var W = 440, rowH = 28, padL = 160, padR = 46, H = rows.length * rowH + 8;
+    var svg = chartSvg(W, H);
+    rows.forEach(function (r, i) {
+      var yy = 6 + i * rowH;
+      var bw = Math.max(2, (W - padL - padR) * r.count / maxC);
+      var label = (r.labelEn || rcEn(r.code));
+      if (label.length > 26) label = label.slice(0, 25) + '…';
+      svg.appendChild(S('text', { x: padL - 8, y: yy + 14, 'text-anchor': 'end', text: label }));
+      svg.appendChild(S('path', { d: 'M' + padL + ',' + yy + ' L' + (padL + bw - 4) + ',' + yy + ' Q' + (padL + bw) + ',' + yy + ' ' + (padL + bw) + ',' + (yy + 4) + ' L' + (padL + bw) + ',' + (yy + 16) + ' Q' + (padL + bw) + ',' + (yy + 20) + ' ' + (padL + bw - 4) + ',' + (yy + 20) + ' L' + padL + ',' + (yy + 20) + ' Z', style: 'fill:var(--s1);' }));
+      svg.appendChild(S('text', { x: padL + bw + 6, y: yy + 14, class: 'dlabel ticknum', text: String(r.count) }));
+    });
+    box.appendChild(h('div', { class: 'chart-box' }, svg));
+    box.appendChild(tableView(['Reason', 'Count'], rows.map(function (r) { return [(r.labelEn || rcEn(r.code)) + ' (' + r.code + ')', r.count]; })));
+  },
+
+  grades: function (m) {
+    var box = clear($('#mn-grades'));
+    box.appendChild(h('h3', { text: 'Risk-grade distribution — approvals, 90d' }));
+    var rows = m.gradeDist || [];
+    if (!rows.length) { box.appendChild(h('div', { class: 'small muted', text: 'No grade data.' })); return; }
+    var W = 440, H = 190, padL = 40, padR = 10, padT = 16, padB = 24;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxC = niceMax(Math.max.apply(null, rows.map(function (r) { return r.count; })));
+    var svg = chartSvg(W, H);
+    for (var g = 0; g <= 2; g++) {
+      var gy = padT + plotH * (1 - g / 2);
+      svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: gy, y2: gy, style: 'stroke:var(--grid);stroke-width:1;' }));
+      svg.appendChild(S('text', { x: padL - 6, y: gy + 3.5, 'text-anchor': 'end', class: 'ticknum', text: String(Math.round(maxC * g / 2)) }));
+    }
+    var band = plotW / rows.length, barW = Math.min(24, band - 10);
+    rows.forEach(function (r, i) {
+      var x = padL + band * i + (band - barW) / 2;
+      var hh = plotH * r.count / maxC;
+      svg.appendChild(S('path', { d: roundTopRect(x, padT + plotH - hh, barW, hh, 4), style: 'fill:var(--s1);' }));
+      svg.appendChild(S('text', { x: x + barW / 2, y: padT + plotH - hh - 5, 'text-anchor': 'middle', class: 'dlabel ticknum', text: String(r.count) }));
+      svg.appendChild(S('text', { x: padL + band * i + band / 2, y: H - 7, 'text-anchor': 'middle', text: r.grade }));
+    });
+    svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;' }));
+    box.appendChild(h('div', { class: 'chart-box' }, svg));
+    box.appendChild(h('div', { class: 'small muted', text: 'D is reachable only via override; E auto-fails — the tail you see is the override loop working.' }));
+    box.appendChild(tableView(['Grade', 'Count'], rows.map(function (r) { return [r.grade, r.count]; })));
+  },
+
+  aging: function (m) {
+    var box = clear($('#mn-aging'));
+    box.appendChild(h('h3', { text: 'Refer aging — open cases vs SLA' }));
+    var rows = m.referAging || [];
+    if (!rows.length) { box.appendChild(h('div', { class: 'small muted', text: 'No open refers.' })); return; }
+    var W = 440, H = 190, padL = 40, padR = 10, padT = 16, padB = 24;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxC = niceMax(Math.max.apply(null, rows.map(function (r) { return r.count; })));
+    var svg = chartSvg(W, H);
+    for (var g = 0; g <= 2; g++) {
+      var gy = padT + plotH * (1 - g / 2);
+      svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: gy, y2: gy, style: 'stroke:var(--grid);stroke-width:1;' }));
+      svg.appendChild(S('text', { x: padL - 6, y: gy + 3.5, 'text-anchor': 'end', class: 'ticknum', text: String(Math.round(maxC * g / 2)) }));
+    }
+    var band = plotW / rows.length, barW = Math.min(24, band - 30);
+    rows.forEach(function (r, i) {
+      var x = padL + band * i + (band - barW) / 2;
+      var hh = plotH * r.count / maxC;
+      svg.appendChild(S('path', { d: roundTopRect(x, padT + plotH - hh, barW, hh, 4), style: 'fill:var(--s1);' }));
+      svg.appendChild(S('text', { x: x + barW / 2, y: padT + plotH - hh - 5, 'text-anchor': 'middle', class: 'dlabel ticknum', text: String(r.count) }));
+      svg.appendChild(S('text', { x: padL + band * i + band / 2, y: H - 7, 'text-anchor': 'middle', text: r.bucket + (r.bucket === '>24h' ? ' — SLA breach' : '') }));
+    });
+    svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;' }));
+    box.appendChild(h('div', { class: 'chart-box' }, svg));
+    box.appendChild(h('div', { class: 'small muted', text: 'SME target: refer resolution < 24h at launch, < 1h by M14.' }));
+    box.appendChild(tableView(['Bucket', 'Count'], rows.map(function (r) { return [r.bucket, r.count]; })));
+  },
+
+  vintages: function (m) {
+    var box = clear($('#mn-vintage'));
+    box.appendChild(h('h3', { text: 'Vintage FPD by months on book — vs appetite corridor' }));
+    var rows = m.vintages || [];
+    if (!rows.length) { box.appendChild(h('div', { class: 'small muted', text: 'No vintage data.' })); return; }
+    var series = [
+      { key: 'retailFpdPct', label: 'Retail', color: 'var(--s1)' },
+      { key: 'smeFpdPct', label: 'SME', color: 'var(--s2)' }
+    ];
+    var W = 440, H = 210, padL = 40, padR = 56, padT = 12, padB = 24;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxV = niceMax(Math.max.apply(null, rows.map(function (r) { return Math.max(r.retailFpdPct || 0, r.smeFpdPct || 0); })) * 1.25);
+    var xs = function (i) { return padL + plotW * (rows.length === 1 ? 0.5 : i / (rows.length - 1)); };
+    var ys = function (v) { return padT + plotH * (1 - v / maxV); };
+    var svg = chartSvg(W, H);
+    /* appetite corridor band (illustrative CRO corridor) */
+    var corTop = maxV * 0.62, corBot = maxV * 0.18;
+    svg.appendChild(S('rect', { x: padL, y: ys(corTop), width: plotW, height: ys(corBot) - ys(corTop), style: 'fill:var(--corridor);' }));
+    svg.appendChild(S('text', { x: padL + 4, y: ys(corTop) + 11, text: 'appetite corridor (illustrative)' }));
+    for (var g = 0; g <= 2; g++) {
+      var gv = maxV * g / 2, gy = ys(gv);
+      svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: gy, y2: gy, style: 'stroke:var(--grid);stroke-width:1;' }));
+      svg.appendChild(S('text', { x: padL - 6, y: gy + 3.5, 'text-anchor': 'end', class: 'ticknum', text: fmtPct(gv, 1) }));
+    }
+    var legend = h('div', { class: 'legend' });
+    series.forEach(function (sr) {
+      legend.appendChild(h('span', { class: 'lg' }, h('span', { class: 'swl', style: 'border-top-color:' + sr.color + ';' }), sr.label + ' FPD'));
+      var dPath = rows.map(function (r, i) { return (i ? 'L' : 'M') + xs(i) + ',' + ys(r[sr.key] || 0); }).join(' ');
+      svg.appendChild(S('path', { d: dPath, style: 'fill:none;stroke:' + sr.color + ';stroke-width:2;stroke-linejoin:round;stroke-linecap:round;' }));
+      rows.forEach(function (r, i) {
+        svg.appendChild(S('circle', { cx: xs(i), cy: ys(r[sr.key] || 0), r: 4, style: 'fill:' + sr.color + ';stroke:var(--panel);stroke-width:2;' }));
+      });
+      var last = rows[rows.length - 1];
+      svg.appendChild(S('text', { x: xs(rows.length - 1) + 8, y: ys(last[sr.key] || 0) + 3.5, class: 'dlabel', text: sr.label }));
+    });
+    rows.forEach(function (r, i) {
+      svg.appendChild(S('text', { x: xs(i), y: H - 7, 'text-anchor': 'middle', class: 'ticknum', text: 'M' + (r.mob !== undefined ? r.mob : i + 1) }));
+    });
+    svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;' }));
+    var cbox = h('div', { class: 'chart-box' });
+    var tip = makeTip(cbox);
+    var cross = S('line', { y1: padT, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;', visibility: 'hidden' });
+    svg.appendChild(cross);
+    var overlay = S('rect', { x: padL, y: padT, width: plotW, height: plotH, fill: 'transparent' });
+    overlay.addEventListener('pointermove', function (ev) {
+      var r = cbox.getBoundingClientRect();
+      var scale = W / r.width;
+      var px = (ev.clientX - r.left) * scale;
+      var i = Math.max(0, Math.min(rows.length - 1, Math.round((px - padL) / (plotW / (rows.length - 1)))));
+      cross.setAttribute('x1', xs(i)); cross.setAttribute('x2', xs(i));
+      cross.setAttribute('visibility', 'visible');
+      tip.show('Month on book ' + (rows[i].mob !== undefined ? rows[i].mob : i + 1),
+        series.map(function (sr) { return { label: sr.label + ' FPD', value: fmtPct(rows[i][sr.key], 2), color: sr.color }; }),
+        ev.clientX - r.left, ev.clientY - r.top);
+    });
+    overlay.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); tip.hide(); });
+    svg.appendChild(overlay);
+    cbox.appendChild(svg);
+    box.appendChild(legend);
+    box.appendChild(cbox);
+    box.appendChild(h('div', { class: 'small muted', text: 'First-payment-default by vintage, monitored against the CRO appetite corridor — proves automation is not buying growth with risk. Retail sits comfortably inside; SME rides the upper edge, which is the refer-first launch posture holding.' }));
+    box.appendChild(tableView(['MOB', 'Retail FPD %', 'SME FPD %'],
+      rows.map(function (r) { return ['M' + r.mob, (r.retailFpdPct !== undefined ? r.retailFpdPct.toFixed(2) : '—'), (r.smeFpdPct !== undefined ? r.smeFpdPct.toFixed(2) : '—')]; })));
+  }
+};
+</script>
