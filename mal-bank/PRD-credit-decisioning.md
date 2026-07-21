@@ -412,7 +412,46 @@ Requirement sections are numbered; each has a goal statement and representative 
 | **P3 — Learning loop** | M10–M14 | Champion/challenger in production; first custom scorecards from own outcomes; re-scoring, day-zero early warning & limit management (§8.10); goal-pursuit + cross-border feature streams (§8.11); pre-approved offers; own OFP/TPP authorization business case; risk-based pricing proposal to ISSC | Model Oversight Committee promotion of custom models (intent features as bounded overlays); consent coverage audit for back-book re-scoring; PDPL purpose-consent review of goal telemetry |
 | **P4 — Platform proof** | M14+ | Product onboarding follows the portfolio strategy's **learning-speed sequencing** (fast-seasoning first): salary-advance (Qard Hassan) pack and covered-card Tawarruq early, SME receivables/invoice finance next, **auto finance Murabaha** as the < 6-week manifest-only proof; Ijara home refinance deliberately last — a retention product for known customers, never an acquisition anchor; policy simulation at scale | Post-onboarding review: zero core changes required — the platform claim, tested |
 
-**Sequencing rationale:** retail first because data is API-ready today (AECB + salary transfers) and volume builds the outcome dataset every later capability feeds on; SME second because its data layer (TPP coverage, statement parsing, registries) genuinely needs the extra quarters; the learning loop only pays once decisions are flowing.
+### 9.1 Which portfolio first — and keeping the second a first-class citizen
+
+**Build the shared layer against retail first — but design its contract against both journeys from day zero.** Retail personal finance is the platform's first *consumer*; it is not the *mould* the platform is shaped in.
+
+Why retail leads:
+
+- **Data is API-ready today.** Retail underwrites on the real-time AECB consumer pull plus salary-transfer/WPS signals — both live. SME needs the commercial bureau, owner-blend pulls, bank-statement parsing, and trade-license registries, several still document-based; that integration surface genuinely needs the extra quarters.
+- **Volume seasons the platform.** Retail decides at far higher frequency, so the outcome dataset every later capability feeds on — custom scorecards, champion/challenger, re-scoring — accumulates in months, not years. Starting on low-volume, heterogeneous SME would starve the learning loop.
+- **The affordability computation is bounded.** Salary-anchored DBR against codified Reg 29/2011 primitives is a tractable first build; SME cash-flow serviceability is judgment-heavy and refer-first, better tackled once the workbench, decision store and monitoring are proven on the easier segment.
+
+**The honest counter-argument — and why it doesn't flip the order:** SME is where the cross-border thesis and margins are richest, and I inherit the SME Lending owner (§9.2), so there is real org gravity toward SME-first. But a *platform* is sequenced by learning speed, not strategic value: build where the data flows, prove the abstraction, then bring the high-value segment onto rails that are already load-bearing.
+
+**How SME avoids becoming a bolt-on — five mechanisms, not good intentions:**
+
+1. **The contract is validated against both anchor journeys before any retail-specific code.** The decision API, canonical application model, and `product manifest` abstraction are specified in P0 against retail *and* SME; retail is simply manifest #1. (The prototype already runs both journeys on one engine — proof the core isn't retail-shaped.)
+2. **A "second-product test" is an explicit P1 exit gate.** Retail is not "done" until SME decisions run through the same API in a sandbox — even though SME launches in P2. If the abstraction only fits retail, it fails the gate.
+3. **Segment differences are first-class in the model, not retrofits.** The decision record represents *facility + drawdown* (SME) and *single disbursement* (retail) as equals; the limit engine carries both DBR-headroom and inflow-multiple logic from the start; "applicant" is an interface (person *or* entity + owners), never assumed to be a person.
+4. **The platform is owned separately from either portfolio** (§9.2), by someone whose KPI is "products live on the platform," not retail approvals — so platform-agnosticism is explicitly somebody's job.
+5. **The SME owner co-authors the shared contract during P0–P1.** The person with the harder, later-shipping segment guards the abstraction while retail is built — the single most effective anti-bolt-on move, and the bridge to the team design below.
+
+### 9.2 Team & operating model
+
+**The target product-owner structure mirrors the architecture: a shared core with two portfolio brains.** Steady state (by P3) is three product owners under the Head of Product:
+
+| Owner | Owns | Success metric |
+|---|---|---|
+| **Shared Credit Platform PO** | Decision API, orchestration, consent, data adapters, feature store, decision store, policy console, monitoring — the shared column of §5.2 | Products live on the platform; policy-change lead time; platform reliability; onboarding time for product N |
+| **Retail Lending PO** | Personal finance, salary advance, auto (future); retail packs, scorecards, affordability, journeys | Retail STP; approval/risk within appetite; time-to-decision |
+| **SME Lending PO** | Working capital, trade finance; SME packs, cash-flow serviceability, owner-blend, SME workbench | SME STP trajectory; refer-resolution SLA; portfolio quality |
+
+The Platform PO is first-among-equals on shared-roadmap arbitration: when retail and SME both want the core changed, the platform owner adjudicates against "does this stay product-agnostic?" — the structural defence against the bolt-on failure mode *and* its opposite, over-fitting the core to whichever portfolio shouts loudest.
+
+**Hiring order — reconciling "retail first" with an inherited SME owner:**
+
+- **P0 (now): me + the inherited SME Lending PO.** We build retail first, but I deliberately place the SME owner at the centre of the *shared contract* definition — co-designing the decision API and feature model so the core is shaped against the harder segment, not just retail. I personally carry retail requirements as player-coach to get P1 moving. This resolves two problems at once: what the SME owner does while retail is built, and how SME stays first-class.
+- **Hire 1 (early P1) — Retail Lending PO.** Retail ships first and deserves a dedicated owner; hiring here frees me to lead and keeps the SME owner on platform + SME design rather than being pulled onto retail.
+- **Hire 2 (P2, as SME construction starts) — Shared Credit Platform PO.** With two live consumers imminent and a third product on the horizon, the platform needs a permanent, neutral steward. The inherited SME owner now **transitions to own SME Lending end-to-end** — their domain, finally shipping — and the new hire takes the platform. (If the individual's strength and preference lean platform over portfolio, invert it: they keep the platform and hire 2 is the SME PO. Let the person's motivation weigh the call.)
+- **Hire 3 (P4, demand-driven, not automatic) — next-wave PO** (auto/trade finance) or a retail split as volume grows. The point of the platform is that product #4 is a *manifest*, not a new team — so this hire is triggered by real load, never by the roadmap by default.
+
+**Bringing the inherited report into the new model.** Frame it as scope expansion, not disruption: they move from owning one bespoke SME stack to — first — shaping the platform the whole bank will lend on, then (from P2) owning SME as a first-class portfolio on rails they helped design. The risk to manage actively is the perception that retail-first means SME is deprioritised; I counter that concretely with (a) making them the platform-contract co-owner so their segment shapes the core, (b) the P1 second-product test keeping SME visible, and (c) a committed SME launch date (P2), not a vague "later." I'd also give them a genuine voice in the sequencing decision itself — a sequence they helped set is one they defend rather than resent. Career path: position them as the future SME portfolio lead by default, or the Platform PO if that is where their strengths and interest sit.
 
 ---
 
