@@ -1,0 +1,90 @@
+/* ============================================================
+   Mal — Color tokens
+   Ink-on-light system with a signature iridescent pastel range.
+   Sampled from the real mal.ai gradient meshes.
+   ============================================================ */
+:root {
+  /* --- Ink (near-black foreground; brand's primary "color") --- */
+  --ink-900: #0e0e10;   /* headings, icons, primary text */
+  --ink-800: #1a1a1e;
+  --ink-700: #2a2a30;
+  --ink-600: #45454d;   /* secondary text */
+  --ink-500: #6a6a73;   /* muted text */
+  --ink-400: #9a9aa2;   /* placeholder */
+  --ink-300: #c4c4cb;   /* disabled text, hairlines on light */
+
+  /* --- Neutrals (cool-warm balanced grays for surfaces) --- */
+  --neutral-0:   #ffffff;
+  --neutral-50:  #f7f7f9;
+  --neutral-100: #f0f0f3;
+  --neutral-150: #e8e8ed;
+  --neutral-200: #dfdfe6;
+  --neutral-300: #cbcbd4;
+  --neutral-900: #0e0e10;  /* dark surface (mirrors ink-900) */
+
+  /* --- Iridescent brand range (from the real mesh gradients) --- */
+  --iris-periwinkle: #a6a8fd;
+  --iris-blue:       #9ca6fd;
+  --iris-lavender:   #c7b8fa;
+  --iris-lilac:      #d3c9fb;
+  --iris-violet:     #d7ccfd;
+  --iris-rose:       #f2a9ac;
+  --iris-mauve:      #ddabdf;
+  --iris-peach:      #fba477;
+  --iris-coral:      #f9a583;
+
+  /* --- Tints (soft solid fills derived from the iris range) --- */
+  --tint-iris:   #eeecff;  /* periwinkle tint — primary accent surface */
+  --tint-rose:   #fdeef0;
+  --tint-peach:  #fdf0e8;
+  --tint-mint:   #e9f6ef;
+
+  /* --- Semantic status --- */
+  --success-500: #1f8a5b;
+  --success-100: #e4f4ec;
+  --warning-500: #c8841f;
+  --warning-100: #faf0dc;
+  --danger-500:  #d1483f;
+  --danger-100:  #fbe9e7;
+  --info-500:    #4a63d8;
+  --info-100:    #e9ecfb;
+
+  /* ============================================================
+     Semantic aliases — reference these in components
+     ============================================================ */
+  /* Text */
+  --text-primary:   var(--ink-900);
+  --text-secondary: var(--ink-600);
+  --text-muted:     var(--ink-500);
+  --text-placeholder: var(--ink-400);
+  --text-disabled:  var(--ink-300);
+  --text-inverse:   var(--neutral-0);
+  --text-accent:    var(--info-500);
+
+  /* Surfaces */
+  --surface-page:    var(--neutral-50);
+  --surface-card:    var(--neutral-0);
+  --surface-sunken:  var(--neutral-100);
+  --surface-hover:   var(--neutral-100);
+  --surface-active:  var(--neutral-150);
+  --surface-inverse: var(--ink-900);
+  --surface-accent:  var(--tint-iris);
+
+  /* Borders */
+  --border-subtle:  var(--neutral-150);
+  --border-default: var(--neutral-200);
+  --border-strong:  var(--neutral-300);
+  --border-focus:   var(--ink-900);
+
+  /* Interactive (primary = ink; the brand leans monochrome for actions) */
+  --action-primary:        var(--ink-900);
+  --action-primary-hover:  #26262c;
+  --action-primary-active: var(--ink-800);
+  --action-primary-text:   var(--neutral-0);
+
+  --action-accent:         var(--info-500);
+  --action-accent-hover:   #3d55c9;
+
+  /* Focus ring */
+  --focus-ring: rgba(74, 99, 216, 0.35);
+}
