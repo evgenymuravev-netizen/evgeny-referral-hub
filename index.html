@@ -3,15 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="0; url=./mizan.html">
-<title>Redirecting…</title>
+<title>Projects</title>
 <style>
-  body{font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:#0e0e10;background:#f7f7f9;
-    display:grid;place-items:center;min-height:100vh;margin:0}
-  a{color:#4a63d8}
+  :root{color-scheme:light dark}
+  body{font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:#12151c;background:#f4f6fa;
+    margin:0;display:grid;place-items:center;min-height:100vh;padding:1.5rem}
+  .wrap{max-width:640px;width:100%}
+  h1{font-size:1.4rem;letter-spacing:-.01em;margin:0 0 1.25rem}
+  a.card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #e2e6ee;
+    border-radius:12px;padding:1rem 1.2rem;margin-bottom:.75rem;
+    box-shadow:0 1px 2px rgba(16,24,40,.06)}
+  a.card:hover{border-color:#1f4fd8}
+  a.card strong{display:block;color:#1f4fd8;font-size:1.05rem;margin-bottom:.15rem}
+  a.card span{color:#3d4657;font-size:.92rem}
+  @media (prefers-color-scheme:dark){
+    body{color:#e8ecf5;background:#0e1218}
+    a.card{background:#151b24;border-color:#28303f;box-shadow:none}
+    a.card strong{color:#7ea2ff}
+    a.card span{color:#b7c0d1}
+  }
 </style>
 </head>
 <body>
-<p>Redirecting to <a href="./mizan.html">the Mizan prototype</a>…</p>
+<div class="wrap">
+  <h1>Projects</h1>
+  <a class="card" href="./ielts/">
+    <strong>IELTS for UKVI — practice suite</strong>
+    <span>Three full practice tests: Listening, Reading (Academic &amp; General Training),
+          Writing and Speaking, with band scoring, transcripts and model answers.</span>
+  </a>
+  <a class="card" href="./mizan.html">
+    <strong>Mizan — credit decisioning prototype</strong>
+    <span>Interactive prototype.</span>
+  </a>
+</div>
 </body>
 </html>

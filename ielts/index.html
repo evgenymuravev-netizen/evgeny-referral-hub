@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IELTS for UKVI — Practice Suite (Academic &amp; General Training)</title>
+<meta name="description" content="Three full IELTS for UKVI practice tests — Listening, Reading (Academic &amp; General Training), Writing and Speaking — with timers, automatic band scoring, transcripts and model answers.">
+<link rel="stylesheet" href="./assets/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#/">
+      <span class="brand-mark">UKVI</span>
+      <span class="brand-text">IELTS Practice Suite</span>
+    </a>
+    <div class="topbar-mid" id="topbar-mid"></div>
+    <div class="topbar-right">
+      <span class="mod-badge" id="mod-badge" hidden></span>
+      <button class="btn btn-ghost btn-sm" id="btn-help" type="button">Guide</button>
+    </div>
+  </div>
+  <div class="exam-bar" id="exam-bar" hidden>
+    <div class="exam-bar-in">
+      <div class="exam-where" id="exam-where"></div>
+      <div class="exam-clock" id="exam-clock"><span id="clock-time">--:--</span></div>
+      <div class="exam-actions">
+        <button class="btn btn-sm btn-ghost" id="btn-pause" type="button">Pause</button>
+        <button class="btn btn-sm" id="btn-finish" type="button">Finish section</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="view" class="view"></main>
+
+<nav class="palette" id="palette" hidden>
+  <div class="palette-in">
+    <div class="palette-parts" id="palette-parts"></div>
+    <div class="palette-legend">
+      <span><i class="sw sw-done"></i>answered</span>
+      <span><i class="sw sw-flag"></i>flagged</span>
+    </div>
+  </div>
+</nav>
+
+<div class="modal-back" id="modal-back" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head"><h2 id="modal-title"></h2>
+      <button class="icon-btn" id="modal-close" type="button" aria-label="Close">&times;</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<footer class="foot">
+  <p>Original practice material written for this app. It follows the official IELTS for UKVI format
+     (Listening 40 questions / Reading 40 questions / Writing 2 tasks / Speaking 3 parts) but is not
+     produced by, endorsed by or affiliated with the IELTS partners
+     (British Council, IDP: IELTS Australia, Cambridge University Press &amp; Assessment).</p>
+</footer>
+
+<script src="./data/registry.js"></script>
+<script src="./data/test1/listening.js"></script>
+<script src="./data/test1/reading.js"></script>
+<script src="./data/test1/productive.js"></script>
+<script src="./data/test2/listening.js"></script>
+<script src="./data/test2/reading.js"></script>
+<script src="./data/test2/productive.js"></script>
+<script src="./data/test3/listening.js"></script>
+<script src="./data/test3/reading.js"></script>
+<script src="./data/test3/productive.js"></script>
+<script src="./assets/core.js"></script>
+<script src="./assets/render.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>

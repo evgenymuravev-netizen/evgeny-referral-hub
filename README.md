@@ -1,3 +1,11 @@
+> **Now hosted here: [`/ielts/`](./ielts/) — IELTS for UKVI practice suite.**
+> Three full practice tests (Listening, Reading in both Academic and General Training, Writing and
+> Speaking) with real timings, automatic band scoring, transcripts and model answers.
+> See [`ielts/README.md`](./ielts/README.md). The rest of this file documents the original
+> referral dashboard, which is no longer live.
+
+---
+
 # Evgeny Referral Hub
 
 A self-contained outreach dashboard for **Andrey Kazarinov** (CPO, Tabby) to send
