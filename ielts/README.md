@@ -20,6 +20,16 @@ No build step and no dependencies. Open `index.html` in a browser, or visit the 
 Everything is plain HTML/CSS/ES5 JavaScript loaded with `<script>` tags, so it also works from
 `file://`.
 
+### Offline single file
+
+`ielts-ukvi-practice-suite.html` is the whole app — styles, code and all three tests — in one
+476 KB file with no external requests. Save it anywhere and open it; there is a download button on
+the app's home page. Regenerate it after changing anything:
+
+```bash
+python3 ielts/build-single-file.py
+```
+
 ## What it does
 
 - **Exam-accurate question types** — TRUE/FALSE/NOT GIVEN, YES/NO/NOT GIVEN, matching headings,
