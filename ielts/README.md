@@ -20,15 +20,31 @@ No build step and no dependencies. Open `index.html` in a browser, or visit the 
 Everything is plain HTML/CSS/ES5 JavaScript loaded with `<script>` tags, so it also works from
 `file://`.
 
-### Offline single file
+### Offline single files
 
-`ielts-ukvi-practice-suite.html` is the whole app — styles, code and all three tests — in one
-476 KB file with no external requests. Save it anywhere and open it; there is a download button on
-the app's home page. Regenerate it after changing anything:
+Two self-contained builds, no external requests:
+
+| File | Contents | Size |
+|---|---|---|
+| `ielts-ukvi-practice-suite.html` | full edition, all three tests | 516 KB |
+| `ielts-ukvi-sample-test.html` | free edition, Test 1 only | 289 KB |
+
+Regenerate after changing anything:
 
 ```bash
-python3 ielts/build-single-file.py
+python3 ielts/build-single-file.py                       # both
+python3 ielts/build-single-file.py --edition free
+python3 ielts/build-single-file.py --buy-url https://…   # where locked cards point
 ```
+
+The free build sets `window.IELTS_EDITION='free'`, which makes the app show Tests 2 and 3 as
+locked cards linking to `buy.html`. Test 1 stays completely unrestricted.
+
+### Selling it
+
+`buy.html` is the sales page; set the `CHECKOUT` constant at the bottom to a Gumroad or Lemon
+Squeezy product URL and the buttons go live. `GO-TO-MARKET.md` covers pricing, the trademark
+constraint on the word "IELTS", channels and an eight-week content plan.
 
 ## What it does
 
@@ -48,6 +64,14 @@ python3 ielts/build-single-file.py
   while case, hyphenation, `&`/`and` and optional leading articles are accepted.
 - **Answer review** — every question shows the line of the passage or transcript the answer came
   from, plus the full audio script and the passages re-rendered with your answers marked.
+- **Automatic writing checker** (`assets/writing-check.js`) — deterministic and offline, no model
+  involved. Finds the mechanical faults that cost marks before an examiner considers your ideas:
+  effective word count after discounting wording copied from the prompt, a missing Task 1 overview,
+  no stated position, no example markers, no counter-argument, register slips, over-used linking
+  words, comma splices, `then`/`than`, ~70 common misspellings and repetition — each with the
+  offending phrase quoted. It deliberately does **not** predict a band.
+- **Target band by visa route** — pick Skilled Worker, Student, spouse or settlement and every score
+  is measured against the minimum that route requires, skill by skill.
 - **Writing and Speaking** — model answers, marker's checklists, planning hints, and self-assessment
   against the four official criteria (Task 2 weighted double, as in the real test). Speaking records
   you through the microphone, if you allow it, so you can listen back.
