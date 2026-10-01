@@ -41,7 +41,7 @@ in-UAE unless CBUAE + customer consent) — vendor due diligence item.
 - Synthetic footprints (same shape, minimised) on personas, used by decisions:
   - c4 Arjun Mehta: vendorScore 742, emailAgeYearsMin 6, nameMatchSources 2, phoneOnMessenger true,
     velocity emailSeenByLenders 1, breaches {count 1, includesCredentialStuffingCompilation false}.
-  - u1 Ana Reyes: vendorScore 768, emailAgeYearsMin 8, nameMatchSources 3, phoneOnMessenger true,
+  - u1 Anita Thomas (renamed in v2.4): vendorScore 768, emailAgeYearsMin 8, nameMatchSources 3, phoneOnMessenger true,
     velocity 1, breaches {count 2, includesCredentialStuffingCompilation true} (this is what made her
     original starter loan possible — show that on her prior-loan card: "Approved on connected accounts +
     digital footprint, no AECB file").
