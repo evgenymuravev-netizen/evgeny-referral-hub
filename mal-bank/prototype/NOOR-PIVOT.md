@@ -188,3 +188,276 @@ re-schedule offer; remittance spike → check-in; new home-country credit line �
 10. Determinism; every emitted reason code exists with non-empty Arabic; **no string anywhere in
     data.js or engine.js matches /shari|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b/i**
     (add this grep-style assertion by reading both source files).
+
+## Engine API after Noor pivot (v2.0)
+
+The authoritative shapes the UI must consume (`src/data.js` = `data-2.0`, `src/engine.js` =
+`engine-2.0`; `node src/engine.selftest.js` → 324 checks green). Globals, load order
+(data.js → engine.js → UI), determinism, `TODAY = '2026-07-19'` and the `Mizan: <message>` error
+convention are unchanged from CONTRACT.md. Everything below that differs from v1 is called out.
+
+### Renames at a glance (v1 → v2)
+
+| v1 | v2 |
+|---|---|
+| productId `retail_pf` | `personal_loan` |
+| productId `sme_wc` | `split` (consumer; SME is gone) |
+| `MizanData.personasRetail` | `MizanData.personasLoan` (r1–r5) |
+| `MizanData.personasSme` | `MizanData.personasSplit` (c1–c5) — different shape, see below |
+| `MizanData.sectorExclusions` | **removed** |
+| `sampleBook.retail` / `.sme` | `sampleBook.personal_loan` (140) / `.split` (120) |
+| `segment: 'RETAIL' \| 'SME'` | always `'CONSUMER'` — group/branch on **`productId`** |
+| `pricing.mode 'BANDED'` | `'BANDED_APR'` (personal_loan) · new `'MONTHLY_FEE'` (split) · `'FLAT_FEE'` |
+| `employment.salaryBank: 'MAL_BANK'` | removed → `bankData.source: 'ALTAREQ_TPP' \| 'DOCUMENTS'` |
+| 6 Murabaha `EXEC_EVENTS` (UI hard-codes them at index.html:458) | 5 conventional events — read `MizanEngine.EXEC_EVENTS` / `MizanEngine.execSteps(productId)`; do not hard-code |
+| `metrics().bySegment.{RETAIL,SME}` | `metrics().byProduct.{split,personal_loan,salary_advance}` |
+| `vintages[].retailFpdPct / smeFpdPct` | `vintages[].loanFpdPct / splitFpdPct` |
+| `drawdownCheck` on `sme_wc` | `drawdownCheck` on `split` ("Split another purchase"); returns `plan` |
+
+### MizanData
+
+```js
+MizanData = {
+  VERSION: 'data-2.0', TODAY: '2026-07-19',
+  monthLabels: ['2025-07', …, '2026-06'],     // 12 labels for the split personas' monthly series, oldest first
+  personasSplit: [c1, c2, c3, c4, c5],
+  personasLoan:  [r1, r2, r3, r4, r5],
+  reasonCodes: { RC_…: { en, ar } },
+  earlyWarning: [5 × { id, detectedAt, customer, segment:'CONSUMER', productId:'split'|'personal_loan',
+                       signal, signalAr, recommendedAction, status:'ACTIONED'|'OPEN' }],
+  sampleBook: { split: [120 rows], personal_loan: [140 rows] },
+  history: { days: 90, seed: 20260719 }
+}
+```
+
+**Split persona (c1–c5)** — exactly:
+
+```js
+{ id:'c1', name, nameAr, tagline, age, residency:'UAE_NATIONAL'|'RESIDENT'|'NEW_RESIDENT', monthsInUae,
+  employment: { employer, type:'PRIVATE'|'GOVERNMENT'|'SELF_EMPLOYED', retiree:false },   // no salaryMonthly
+  aecb: { hit, score /*null when hit=false*/, obligationsMonthly, chequeReturns12m,
+          worstDelinquency:'NONE'|'DPD30'|'DPD90'|'WRITEOFF', creditPassportAvailable:false },
+  connected: { source:'ALTAREQ_TPP', banks:['FAB','ENBD'] /* text labels only */, monthsAvailable,
+               avgMonthlyIncome, avgMonthlySpend, incomeVolatilityPct,
+               monthlyIncome:[12 numbers|null, oldest first — aligned to MizanData.monthLabels],
+               monthlySpend:[12 numbers|null] },          // null = month outside the connected window (c4 has 7 nulls)
+  purchase: { merchant, category, amount, date:'YYYY-MM-DD', detectedVia:'Connected account (…)' },
+  defaultRequest: { amount /* = purchase.amount */, tenorMonths: 6 } }
+```
+
+| id | name | income / spend / obligations | AECB | purchase |
+|---|---|---|---|---|
+| c1 | Mariam Al Zarooni | 32,000 / 19,000 / 2,400 · vol 8% · 12 mo | 761 | School fees 12,000 · 2026-07-08 |
+| c2 | Daniel Okafor | 21,000 / 13,000 / 1,500 · vol 58% · 12 mo | 702 | Laptop 8,500 · 2026-07-02 |
+| c3 | Sana Qureshi | 16,000 / 16,200 / 2,100 · vol 10% · 12 mo | 688 | Sofa 6,000 · 2026-06-28 |
+| c4 | Arjun Mehta | 18,000 / 11,000 / 0 · vol 2% · 5 mo | no hit | Flights 4,800 · 2026-07-12 |
+| c5 | Khalid Rashed | 27,000 / 15,000 / 3,500 · vol 12% · 12 mo | 548, DPD90, 2 cheques | Car service 3,200 · 2026-07-15 |
+
+**Personal-loan persona (r1–r5)** — v1 shape with these changes: `employment` = `{ employer, type:
+'GOVERNMENT'|'PRIVATE'|'PENSION', salaryMonthly, tenureMonths, retiree }` (**no `salaryBank`**);
+`bankData` = `{ source:'ALTAREQ_TPP'|'DOCUMENTS', banks:[…], monthsAvailable, salaryDetected,
+avgSalaryCredit }` (r4 is `'DOCUMENTS'`, the rest `'ALTAREQ_TPP'`); `aecb` unchanged
+(`{hit, score, esrPct, obligationsMonthly, tradelines, chequeReturns12m, worstDelinquency,
+creditPassportAvailable}`); r2 keeps `homeBureau {country, bureau, score, scoreRange, historyYears,
+obligationsMonthlyAed}`. r1 tagline: "Government employee, salary verified via connected accounts".
+
+**sampleBook rows** — split: `{id:'SP-001', income, spend, volatility, aecbScore|null,
+connectedMonths, obligations, chequeReturns, worstDelinquency, purchaseAmount, purchaseAgeDays,
+tenorMonths:3|6|12}`; personal_loan: v1 retail row + `bankSource`, ids `'PL-001'…`.
+
+### MizanEngine
+
+```js
+MizanEngine = { VERSION:'engine-2.0', EXEC_EVENTS:[…5], init, manifests, execSteps /*new*/, getPolicy,
+  publishPolicy, policyHistory, decide, decideRaw, simulateBook, drawdownCheck, recordEvent, override,
+  listDecisions, getDecision, referQueue, metrics }
+```
+
+**`manifests()`** → exactly, in order:
+
+| productId | nameEn | nameAr | structure | pricingMode |
+|---|---|---|---|---|
+| split | Split a purchase | تقسيط مشترياتك | Instalment plan (revolving split capacity) | MONTHLY_FEE |
+| personal_loan | Personal loan | قرض شخصي | Amortising loan (reducing balance) | BANDED_APR |
+| salary_advance | Salary advance | سلفة على الراتب | Single-repayment advance | FLAT_FEE |
+
+All with `segment: 'CONSUMER'`.
+
+**`EXEC_EVENTS`** = `['OFFER_ACCEPTED','KFS_ACKNOWLEDGED','AGREEMENT_SIGNED','COOLING_OFF_CLEARED','DISBURSED']`
+(same for all three products). **`execSteps(productId)`** → `[{type, label, description}]` ×5:
+
+| type | label | description |
+|---|---|---|
+| OFFER_ACCEPTED | Offer accepted | Customer accepts the time-boxed offer |
+| KFS_ACKNOWLEDGED | KFS acknowledged | Key Facts Statement (Arabic + English) read and acknowledged |
+| AGREEMENT_SIGNED | Agreement signed | Loan agreement e-signed via UAE PASS |
+| COOLING_OFF_CLEARED | Cooling-off cleared | 5 business days elapsed, or written waiver signed (CPR 8/2020) |
+| DISBURSED | Disbursed | personal_loan: "Funds credited to the customer's account" · split: "Purchase amount credited back — freed cash routed to the customer's goal" · salary_advance: "Advance credited to the customer's account" |
+
+**`recordEvent(decisionId, type)`** — out of order throws
+`Mizan: out of sequence — expected <NEXT> next (<reason>)`, reason keyed on the expected step, e.g.
+`(KFS must be acknowledged before the agreement is signed — CBUAE Consumer Protection Standards)`,
+`(no disbursement before the cooling-off period clears or is waived — CBUAE Consumer Protection Regulation 8/2020)`.
+Also throws on unknown event names (incl. the v1 names), non-APPROVE decisions, and re-execution.
+5th event → `status: 'EXECUTED'`, `events.length === 5`.
+
+**`getPolicy(productId)`** → `{productId, version, publishedAt, publishedBy, approvedBy, regulatory, params}`.
+Regulatory (locked; render read-only; note non-numeric values):
+
+| key | split | personal_loan | salary_advance |
+|---|---|---|---|
+| dbrCapPct | 50 | 50 | 50 |
+| dbrCapRetireePct | 30 | 30 | — (engine still applies 30 for retirees) |
+| salaryMultipleCap | — | 20 | — |
+| tenorCapMonths | — | 48 | 1 |
+| allowedPlansMonths | `[3, 6, 12]` (array) | — | — |
+| aecbCheckRequired | true | true | true |
+| coolingOffDays | 5 | 5 | — |
+| feeDisclosure | 'Monthly fee + APR equivalent shown in KFS' | — | — |
+| earlySettlementFeeCap | — | '1% of outstanding or AED 10,000' | — |
+
+Editable params (default · [min, max]):
+
+- **split**: `minMonthlyIncome` 5000 [3000, 20000] · `minConnectedMonths` 3 [1, 12] ·
+  `purchaseLookbackDays` 60 [14, 120] · `minFreeCashFlow` 1000 [0, 10000] · `instalmentToFcfMaxPct`
+  50 [10, 80] · `maxIncomeVolatilityPct` 40 [15, 80] · `scoreDecline` 600 [500, 700] · `scoreRefer` 650
+  [550, 760] · `chequeReturnsMax` 1 [0, 5] · `productCap` 50000 [5000, 200000] · `tokenValidityDays` 7
+  [1, 30] · `splitCapacityMultiple` `{A:3, B:2, C:1}` (each (0, 6]) · `monthlyFeeRate`
+  `{A:0.0125, B:0.0175, C:0.0225}` (each (0, 0.05], must stay A ≤ B ≤ C).
+- **personal_loan**: `minSalary` 8000 [4000, 25000] · `minAge` 21 [18, 25] · `maxAge` 65 [60, 70] ·
+  `scoreDecline` 620 [550, 720] · `scoreRefer` 680 [600, 780] · `maxEsrPct` 60 [30, 90] ·
+  `thinFileAction` 'REFER'|'DECLINE' · `minMonthsInUae` 6 [0, 24] · `chequeReturnsMax` 1 [0, 5] ·
+  `productCap` 500000 [100000, 2000000] · `pricingBands` `{A:[0.0599,0.0699], B:[0.0799,0.0999],
+  C:[0.1199,0.1499]}` (annual interest, each `[min,max]`, 0 < min < max ≤ 0.30) · `tokenValidityDays` 14 [3, 30].
+- **salary_advance**: `pctOfSalary` 80 [50, 90] · `capAmount` 13500 [5000, 25000] · `flatFee` 50
+  [25, 300] · `minSalary` 5000 [3000, 15000] · `scoreDecline` 600 [550, 700] · `tokenValidityDays` 7 [3, 14].
+
+`publishPolicy` / `simulateBook` validation adds: `scoreRefer ≥ scoreDecline` (merged with current
+params) and the fee-rate ordering; regulatory keys (incl. `allowedPlansMonths`) still throw.
+
+**`decide(application)`** — `{productId, applicant, amount, tenorMonths, consents}`.
+`consents.aecb === true` required for every product; **split also requires
+`consents.openFinance === true`** (throws `Mizan: Open Finance consent … is required for split …`).
+For split, `applicant` is a c-persona, `amount` is the amount to split (capped at
+`purchase.amount`), `tenorMonths` should be 3/6/12 (others are snapped up to the next permitted term,
+max 12, with `RC_TENOR_CAP`). For personal_loan, `consents.openFinance` drives salary verification
+(OPEN_FINANCE pull + the +15 overlay; without it → DOCUMENTS pull, no overlay) and
+`consents.creditPassport` keeps the r2 cross-border path.
+
+**DecisionRecord** — same top-level keys as v1 (`id, createdAt, productId, segment, applicantSnapshot,
+request, consents, dataPulls, features, rules, score, limit, pricing, outcome, reasonCodes, token,
+policyVersion, engineVersion, events, audit, override, status`). Changes:
+
+- `segment` is always `'CONSUMER'`.
+- `dataPulls[].source` ∈ `'AECB_CONSUMER' | 'CREDIT_PASSPORT' | 'OPEN_FINANCE' | 'DOCUMENTS'`
+  (`AECB_COMMERCIAL`, `AECB_OWNER`, `INTERNAL_CORE` gone). Split: `AECB_CONSUMER` + `OPEN_FINANCE`
+  whose `summary = {provider:'Al Tareq (UAE Open Finance)', banks, monthsAvailable, avgMonthlyIncome,
+  avgMonthlySpend, incomeVolatilityPct, purchaseMatched}`.
+- `rules[].category` ∈ `'REGULATORY' | 'POLICY'` (no `SHARIAH`). Split rule ids, in order:
+  `REG_AECB_CHECK, REG_PLAN_TERMS, POL_MIN_INCOME, POL_CONNECTED_HISTORY, POL_PURCHASE_VERIFIED,
+  POL_THIN_FILE, POL_DELINQUENCY, POL_SCORE, POL_CHEQUE_RETURNS, POL_INCOME_VOLATILITY,
+  POL_FREE_CASH_FLOW, POL_INSTALMENT_TO_FCF, REG_DBR_CAP`.
+- `score` = `{model, version, base, overlays:[{name, delta}], points, grade}`; split adds
+  `basis: 'AECB' | 'CASH_FLOW_PROXY' | 'NONE'` and uses `model 'cashflow_scorecard_v0' v0.1`
+  (personal loan / salary advance: `'scorecard_v0' v0.4`). On the cash-flow path `base = 640` and the
+  first overlay is an informational `{name:'Cash-flow proxy base (AECB no-hit) — grade capped at B', delta:0}`.
+- **split `features`**: `verifiedIncome, avgMonthlySpend, existingObligations, freeCashFlowMonthly,
+  incomeVolatilityPct, connectedMonths, connectedBanks, purchaseMerchant, purchaseCategory,
+  purchaseAmount, purchaseDate, purchaseAgeDays, purchaseSeenInConnectedData, cashFlowUnderwritten,
+  thinFile, dbrCapApplied, instalmentBudgetFcf, instalmentBudgetDbr, newInstalment,
+  instalmentToFcfPct, dbrPct, requestedMonths, effectiveTenor (= chosen plan months), planAdjusted,
+  scoreBase, overlayNet`.
+  personal_loan `features` = v1 retail set minus `salaryBank`, plus `incomeSource
+  ('ALTAREQ_TPP'|'DOCUMENTS'|'UNVERIFIED')` and `salaryVerifiedViaConnectedAccount`.
+- `limit` = `{requested, approved, bindingConstraint, trace:[{label, value}]}`; **split adds
+  `capacity`** (revolving split capacity; 0 on DECLINE) **and `planMonths`** (chosen plan).
+  `bindingConstraint` domain: personal_loan `REQUESTED | DBR_HEADROOM | RETIREE_CAP | SALARY_MULTIPLE |
+  PRODUCT_CAP | CROSS_BORDER_HAIRCUT`; split `REQUESTED | SPLIT_CAPACITY | PRODUCT_CAP | FREE_CASH_FLOW |
+  DBR_HEADROOM`; salary_advance `REQUESTED | SALARY_MULTIPLE | PRODUCT_CAP`. Split trace (all AED
+  principal amounts, `approved === min(values)`): Requested amount · [Verified purchase amount, only if
+  lower] · Split capacity (multiple × FCF, floor 500) · Product cap · max principal on the chosen plan
+  within the FCF budget · max principal within the DBR headroom.
+- `pricing` (null on DECLINE):
+  - personal_loan `{mode:'BANDED_APR', band, rateMin, rateMax, benchmark:'EIBOR 3M + margin',
+    kfs:{principal, tenorMonths, rateMid, monthlyInstalment, totalRepayable, totalInterest,
+    earlySettlementFeeCap, coolingOffDays}}` (KFS at mid-band, reducing balance; money to 2 dp).
+  - split `{mode:'MONTHLY_FEE', band, monthlyFeeRate, principal, plans:[{months, monthlyPayment,
+    monthlyFee, planTotal, totalFees, aprEquivalent, fits}] for 3/6/12, selectedMonths, disclosure}` —
+    `monthlyFee = principal × rate` (constant), `monthlyPayment = principal/n + fee`, `planTotal =
+    principal + fee × n`, `aprEquivalent` = 12 × monthly IRR (decimal, 4 dp); `fits` = that plan's
+    instalment fits both affordability budgets (grey out plans with `fits:false`).
+  - salary_advance `{mode:'FLAT_FEE', fee, note:'Flat fee, no interest — within the CBUAE retail fee schedule'}`.
+- `token.conditions`: personal_loan `['Key Facts Statement acknowledged (AR + EN)', 'Salary transfer
+  assignment or direct debit mandate', 'Credit life & job-loss cover offered (optional)']` (+ `'Remittance-linked
+  repayment schedule'` on the Credit Passport path); split `['Key Facts Statement acknowledged (AR + EN)',
+  'Direct debit mandate on connected account']`; salary_advance `['Key Facts Statement acknowledged (AR + EN)',
+  'Repayable in full from the next salary credit']`. Override approvals append `'Approved by override — <analyst> / <approver>'`.
+  Validity: split 7 days, personal_loan 14, salary_advance 7.
+
+**`decideRaw(productId, row)`** → `{outcome, reasonCodes, grade, approved, bindingConstraint, dbrPct}`
+(last four new). **`simulateBook(productId, params)`**: split → `sampleBook.split` (120);
+personal_loan and salary_advance → `sampleBook.personal_loan` (140). Return shape unchanged.
+
+**`drawdownCheck(decisionId, amount, flags)`** — split decisions only (other products throw), outcome
+APPROVE. `flags = {arrears?, deterioration?, months?: 3|6|12 (default 6)}`. Returns
+`{allowed, amount, remainingAfter, reasonCodes, plan:{months, requestedMonths, adjusted, monthlyPayment,
+monthlyFee, planTotal, aprEquivalent}}`. Remaining = `limit.capacity − limit.approved − earlier allowed
+splits`. Blocking codes: `RC_DRAWDOWN_ARREARS`, `RC_MANUAL_REVIEW` (deterioration), `RC_DRAWDOWN_LIMIT`
+(over remaining capacity), `RC_FREE_CASH_FLOW` (no plan keeps total running instalments within the
+decision's budgets). If the requested term is unaffordable but a longer one fits, it is allowed with
+`plan.adjusted: true`. c1: capacity 31,500, first plan 12,000 → 19,500 available.
+
+**`override`** — unchanged contract (REFER only, 4-eyes). A DECLINE override also nulls `pricing` and
+zeroes `limit.capacity`.
+
+**`referQueue()`** → `[{id, name, segment:'CONSUMER', productId, reason, reasonCodes? (live only),
+createdAt? (live only), waitingHours, slaHoursLeft, seeded}]`; SLA hours: split 4, personal_loan 8,
+salary_advance 4 (seeded queue includes one breached split SLA, `slaHoursLeft < 0`).
+
+**`metrics()`**:
+
+```js
+{ window:'90d',
+  totals:{decisions, APPROVE, REFER, DECLINE}, stpPct,
+  byProduct:{ split:{decisions, APPROVE, REFER, DECLINE, stpPct},          // seeded ≈2,620 · 70/12/18 · STP 86.1
+              personal_loan:{…same},                                      // seeded ≈1,090 · 60/18/22 · STP 77.4
+              salary_advance:{…same} },                                   // session decisions only (seeded 0)
+  stpTargets:{ split:85, personal_loan:80 },                              // UI target lines
+  declineReasons:[{code, labelEn, count}],                                // sorted desc
+  gradeDist:[{grade, count}] /* A..E */, daily:[{date, APPROVE, REFER, DECLINE}] /* 90, all products */,
+  referAging:[{bucket:'<4h'|'4-24h'|'>24h', count}], overrideRatePct,
+  vintages:[{mob:1..6, splitFpdPct, loanFpdPct}],
+  earlyWarning:[5 × MizanData.earlyWarning entries] }
+```
+
+**Reason codes** (all `{en, ar}`): RC_SCORE_LOW, RC_DELINQUENCY, RC_DBR_EXCEEDED, RC_THIN_FILE,
+RC_INCOME_UNVERIFIED, RC_SALARY_FLOOR, RC_AGE, RC_TENOR_CAP, RC_CHEQUE_RETURNS, RC_LIMIT_REDUCED,
+RC_RETIREE_CAP, RC_MANUAL_REVIEW, RC_DRAWDOWN_ARREARS, RC_DRAWDOWN_LIMIT, RC_TOKEN_EXPIRED,
+RC_CROSS_BORDER, RC_FREE_CASH_FLOW, RC_INCOME_VOLATILITY, RC_CASH_FLOW_UNDERWRITTEN,
+RC_PURCHASE_UNVERIFIED, RC_CONNECTED_HISTORY, **RC_PLAN_ADJUSTED** (added: split plan lengthened to
+stay affordable). Removed: RC_SECTOR_EXCLUDED, RC_LICENSE_AGE, RC_OWNER_SCORE, RC_VOLATILITY.
+
+**Outcomes at default policy** (what the UI journeys will show):
+
+| persona | product | outcome | grade | approved | binding | reason codes |
+|---|---|---|---|---|---|---|
+| r1 | personal_loan | APPROVE | A (807) | 150,000 | REQUESTED | — |
+| r2 | personal_loan | REFER | — | (60,000 provisional) | REQUESTED | RC_THIN_FILE |
+| r2 + creditPassport | personal_loan | APPROVE | B (751, capped) | 30,000 | CROSS_BORDER_HAIRCUT | RC_CROSS_BORDER, RC_LIMIT_REDUCED |
+| r3 | personal_loan | APPROVE | B (680) | 56,000 | DBR_HEADROOM | RC_LIMIT_REDUCED |
+| r4 | personal_loan | DECLINE | E (538) | 0 | (DBR_HEADROOM) | RC_DELINQUENCY, RC_SCORE_LOW |
+| r5 | personal_loan | APPROVE | A (756) | 143,000 | RETIREE_CAP | RC_RETIREE_CAP, RC_LIMIT_REDUCED |
+| c1 | split | APPROVE | A (806) | 12,000 · Pay in 6 · capacity 31,500 | REQUESTED | — |
+| c2 | split | REFER | B (707) | (8,500 provisional · capacity 13,000) | REQUESTED | RC_INCOME_VOLATILITY |
+| c3 | split | DECLINE | B (683) | 0 (FCF −2,300) | (SPLIT_CAPACITY) | RC_FREE_CASH_FLOW |
+| c4 | split | APPROVE | C (675, proxy 640) | 4,800 · Pay in 6 · capacity 7,000 | REQUESTED | RC_CASH_FLOW_UNDERWRITTEN |
+| c5 | split | DECLINE | D (563) | 0 | (REQUESTED) | RC_DELINQUENCY, RC_SCORE_LOW, RC_CHEQUE_RETURNS |
+
+Bindings in parentheses are what the record carries on DECLINE/REFER — informational only (the
+engine still computes the trace); show them only for APPROVE.
+
+c1 plans (principal 12,000, 1.25%/mo): Pay in 3 — 4,150/mo, fee 150, total 12,450, APR 22.36% ·
+Pay in 6 — 2,150/mo, fee 150, total 12,900, APR 25.28% · Pay in 12 — 1,150/mo, fee 150, total 13,800,
+APR 26.62%. Note: with a flat fee on the original principal the APR equivalent **rises** as the plan
+lengthens for the same monthly fee rate (selftest group 6 asserts this direction; for the same *total*
+fee the shorter plan has the higher APR).
