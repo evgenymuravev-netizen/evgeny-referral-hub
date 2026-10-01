@@ -611,3 +611,51 @@ tenor while partner income rises (enforced at publish)". Policy console: add sta
 (tiers editable) and surface the publish invariants inline; simulate shows the pricingImpact numbers
 (avg APR before→after, partner income before→after). Workbench/log/monitoring: product label "Starter
 loan" appears naturally; log replay shows priorLoan, tier, selection.
+
+### v2.1 as built
+
+Built as specified (selftest 461 checks green, acceptance 225 green). Deviations and additions:
+
+- **Instalment rounding.** Instalments are rounded *up* to the fils, so equal payments always repay
+  the principal. This reproduces the addendum's figures (6 months @ AED 3,000 = AED 552.27/mo, total
+  interest 313.62, ×7.5); exact is 552.2639. Totals follow from the rounded instalment
+  (total = P × n). The partner-income guarantee is checked on exact, unrounded math.
+- **Version strings unchanged** (`data-2.0` / `engine-2.0`), so the existing selftest assertions stay as
+  written; everything in v2.1 is additive.
+- **Extra API: `policyInvariants(productId, draft)`** (read-only). It returns the three invariant checks
+  and each tier's curve (APR + interest per AED 1,000), and powers the console's live checklist.
+  The same checks run inside `simulateBook` and `publishPolicy` validation, so a draft that breaks
+  them can be neither simulated nor published. Partial nested drafts
+  (`{tiers:{enhanced:{aprAtMaxTenor:0.33}}}`) are merged over the live pack. starter_loan history
+  records leaf-level diffs (`tiers.enhanced.aprAtMaxTenor: 0.35 → 0.33`).
+- **`decide()` for starter_loan:** `amount`/`tenorMonths` are optional. They default to the enhanced
+  ceiling and are recorded only as the request, because the customer shapes the offer afterwards.
+- **Offer ceiling** = min(tier maxAmount, largest amount whose max-tenor instalment fits the cash-flow
+  budget, ditto for DBR), floored to `amountStep`. `bindingConstraint` is `TIER_CAP` unless
+  affordability binds. If even `minAmount` doesn't fit, the result is DECLINE `RC_FREE_CASH_FLOW`.
+  On DECLINE, `tier`, `upgrade`, `pricing` and `token` are null.
+- **Rules.** `POL_INCOME_HISTORY` and `POL_INTERNATIONAL_STATEMENTS` record `INFO` (not PASS) when
+  they only place the customer on the base tier. `POL_CONNECTED_ACCOUNTS` needs ≥ 3 connected
+  months (else REFER `RC_CONNECTED_HISTORY`); this is a constant, since the addendum lists no param
+  for it. `REG_DBR_CAP` is recorded at decision time for the default option. Each selection is
+  re-checked and carries its own `dbrPct`; the decision-time rules are never mutated.
+- **Options** carry `detail` (plain sentence) next to `reason`. An option that breaks DBR rather than
+  the cash-flow budget uses `RC_DBR_EXCEEDED`. `selection` also stores `totalRepayable`, `dbrPct`
+  and `selectedAt`. `upgrade` also exposes `defaultSelection`, `minAmount`, `amountStep`,
+  `maxInstalment`, `dbr` and `aprFloor`. Quotes and selections read these frozen terms, so a later
+  publish never changes an existing offer.
+- **No scorecard grade on upgrades** (`starter_upgrade_v0`, basis `REPAYMENT_RECORD`). A one-tradeline
+  file has no score yet; the tier carries the decision.
+- **Token** is issued at decision time, like the other products. Selection replaces its "choose an
+  option" condition with the chosen option. The UI shows it once the customer accepts an option and
+  allows switching until `OFFER_ACCEPTED`.
+- **Bounds chosen** (the addendum gave none): starter amount 500–5,000, tenor 1–6, APR 5–60%; tier
+  maxAmount 500–20,000, maxTenor 2–12 (whole months), APRs 5–60%; minAmount 100–2,000; amountStep
+  50–500; instalmentToFcfMaxPct 10–80; minIncomeHistoryMonthsEnhanced 3–36;
+  minOnTimeStarterRepayments 1–6; tokenValidityDays 1–30; tier maxAmount ≥ minAmount.
+- **Data.** `sampleBook.starter_loan` is 80 rows from a seeded stream: 58 approve / 5 refer /
+  17 decline at the default pack. The seeded `metrics().byProduct.starter_loan` (~370 decisions,
+  STP 96%) comes from its own seeded stream, so the split / personal-loan history is unchanged.
+- **Chart.** The addendum asks for APR on a right-hand axis. Both axes start at zero, and the bars
+  use the lower ~58% of the plot so the APR line runs above them rather than through the labels.
+  A data table backs the chart.
