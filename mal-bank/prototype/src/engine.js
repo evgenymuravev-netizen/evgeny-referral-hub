@@ -745,8 +745,49 @@
     return f;
   }
   function findApplicant(id) {
-    for (const list of [D.personasLoan, D.personasUpgrade, D.personasSplit]) for (const p of list || []) if (p.id === id) return p;
+    for (const list of [D.personasLoan, D.personasUpgrade, D.personasSplit, D.personasJourney]) for (const p of list || []) if (p.id === id) return p;
     return null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // NoorScore (Addendum v2.5) — the name the score carries outside the engine.
+  // NoorScore = the scorecard points Mizan already computes: the bureau score
+  // (AECB, or a proxy base for a thin file) plus factor adjustments. Its bands
+  // mirror the A–E grade cut-offs below; the grade letter stays internal.
+  // ---------------------------------------------------------------------------
+  const NOORSCORE_BANDS = [[740, 'Excellent'], [680, 'Very good'], [620, 'Good'], [560, 'Fair']];
+  function noorScoreBand(points) {
+    if (!Number.isFinite(points)) return null;
+    for (const [floor, band] of NOORSCORE_BANDS) if (points >= floor) return band;
+    return 'Poor';
+  }
+  // Each scorecard factor the lender may see, in plain words — an allowlist keyed
+  // by the factor name, so a factor that is not listed here never leaves Noor, and
+  // no factor carries a value. Informational zero-point rows (proxy bases) are skipped.
+  const FACTOR_WORDS = {
+    'Free cash flow ≥ AED 5,000/mo': 'Strong free cash flow',
+    'Free cash flow < AED 1,500/mo': 'Low free cash flow',
+    'Income volatility ≤ 20%': 'Stable income',
+    'Income volatility ≥ 40%': 'Income varies a lot month to month',
+    'Connected history ≥ 12 months': 'Long connected history',
+    'Returned cheques (12m)': 'Returned cheques in the past year',
+    'Salary verified via connected account': 'Salary verified through connected accounts',
+    'Employment tenure ≥ 24m': 'Long employment tenure',
+    'ESR > 40%': 'High existing repayments on the bureau file',
+    'Cross-border conservatism': 'Home-country credit file, conservative adjustment',
+    'Home statements — account open ≥ 5 years': 'Long-standing home-country bank account',
+    'Home statements — clean conduct (0 returned items, 0 overdraft days)': 'Clean home-country account conduct',
+    'Home statements — buffer ≥ half a month of income': 'Savings buffer',
+    'Home statements — remittances match the UAE salary (≥ 85%)': 'Remittances consistent with salary'
+  };
+  // Up to `max` factor directions, largest effect first (ties keep scorecard order).
+  function noorScoreFactors(score, max) {
+    const ov = (score && score.overlays) || [];
+    return ov.map((o, i) => ({ o, i }))
+      .filter(x => x.o.delta !== 0 && FACTOR_WORDS[x.o.name])
+      .sort((a, b) => Math.abs(b.o.delta) - Math.abs(a.o.delta) || a.i - b.i)
+      .slice(0, max || 3)
+      .map(x => FACTOR_WORDS[x.o.name]);
   }
 
   const GRADE_BANDS = [[740, 'A'], [680, 'B'], [620, 'C'], [560, 'D']];
@@ -815,6 +856,9 @@
       worstDelinquency: aecb ? (aecb.worstDelinquency || 'NONE') : (a.worstDelinquency || 'NONE'),
       creditPassportAvailable: aecb ? !!aecb.creditPassportAvailable : false,
       homeBureau: a.homeBureau || null,
+      // Average monthly spending seen in connected accounts (v2.5) — informational,
+      // feeds free cash flow on the record; null when the applicant has no connected block.
+      spendMonthly: cn && Number.isFinite(cn.avgMonthlySpend) ? cn.avgMonthlySpend : null,
       salaryDetected: a.bankData ? a.bankData.salaryDetected === true
                                  : (cn ? true : (a.salaryDetected !== undefined ? !!a.salaryDetected : true)),
       bankSource: a.bankData ? a.bankData.source : (cn ? cn.source : (a.bankSource || 'ALTAREQ_TPP')),
@@ -1135,11 +1179,17 @@
       if (approved < amount) rs.reason('RC_LIMIT_REDUCED');
     }
 
+    // Free cash flow (v2.5, informational — no rule reads it): only when connected
+    // accounts show spending and the customer consented to Open Finance.
+    const fcfSeen = connectedSalary && Number.isFinite(p.spendMonthly);
+    const freeCashFlowMonthly = fcfSeen ? Math.round(p.salaryMonthly - p.spendMonthly - obligations) : null;
     const features = {
       verifiedIncome: p.salaryDetected ? p.salaryMonthly : null,
       incomeSource: connectedSalary ? 'ALTAREQ_TPP' : (p.salaryDetected ? 'DOCUMENTS' : 'UNVERIFIED'),
       salaryVerifiedViaConnectedAccount: connectedSalary,
       existingObligations: obligations, esrPct: p.esrPct,
+      freeCashFlowMonthly,
+      instalmentToFcfPct: fcfSeen && freeCashFlowMonthly > 0 ? Math.round((newInstallment / freeCashFlowMonthly) * 1000) / 10 : null,
       dbrCapApplied: dbrCap, headroomMonthly, newInstallment, dbrPct,
       effectiveTenor: effTenor, scoreBase: score.base, overlayNet,
       retiree: p.retiree, thinFile: !p.aecbHit,
@@ -2234,11 +2284,17 @@
                   openFinance: { granted: consents.openFinance === true, at: consents.openFinance === true ? consentAt : null },
                   creditPassport: { granted: consents.creditPassport === true, at: consents.creditPassport === true ? consentAt : null },
                   homeStatements: { granted: !!statements, at: statements ? consentAt : null,
-                                    source: statements ? (trigger || 'CUSTOMER_UPLOAD') : null } },
+                                    source: statements ? (trigger || 'CUSTOMER_UPLOAD') : null },
+                  // v2.5 — part of every application: Noor shares the RESULT (the credit
+                  // memo), never bank data, with the lender of record.
+                  shareWithLender: { granted: true, at: consentAt, lenderId: lenderFor(application.lenderId).id,
+                                     scope: 'application result only — credit memo, never bank data', wording: SHARE_WITH_LENDER_WORDING } },
       dataPulls: pulls,
       features: ev.features,
       rules: ev.rules,
       score: ev.score,
+      // v2.5 — the score as the customer and the lender see it (the breakdown stays in `score`).
+      noorScore: { value: Number.isFinite(ev.score.points) ? ev.score.points : null, band: noorScoreBand(ev.score.points) },
       limit: ev.limit,
       pricing: ev.pricing,
       outcome: ev.outcome,
@@ -2315,6 +2371,258 @@
     }
     out.push(row('HOME_STATEMENTS', 'Home-country statements', ev));
     return out;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Credit memo for the lender of record (Addendum v2.5)
+  //
+  // A Tier-3 bank (Partner Bank) books and funds the loan; Noor decides and sends
+  // it a credit memo. The Decision log is Noor's INTERNAL record; the memo is the
+  // only thing a lender receives, over the UI, the API (JSON) or SFTP (CSV).
+  //
+  // It is built from an ALLOWLIST: every field below is constructed explicitly from
+  // the decision record — nothing is copied over and then deleted. Open Finance data
+  // never leaves Noor: income, spending, free cash flow, DBR and the bureau score
+  // reach the lender as BANDS; identity, statements and the purchase as FLAGS;
+  // consents as REFERENCES. creditMemo() is pure: no clock tick, no audit entry.
+  // ---------------------------------------------------------------------------
+  const DEFAULT_LENDERS = [{ id: 'partner-bank', name: 'Partner Bank', role: 'Lender of record' }];
+  const SHARE_WITH_LENDER_WORDING = 'By applying you agree Noor shares your application result (not your bank data) with the lender of record';
+  const OPEN_FINANCE_REASON = 'Open Finance data is shared with Noor for this purpose only and cannot be passed on (customer consent scope, CBUAE Open Finance framework, PDPL)';
+  const MEMO_SHARED = [
+    'Decision, status and reason codes (English + Arabic)',
+    'Loan terms and repayment method',
+    'NoorScore, its band and up to three factor directions',
+    'Affordability as bands — income, debt burden, free cash flow, instalment share',
+    'Bureau flags — AECB checked, score band, delinquency, returned cheques',
+    'Verification flags — identity, home-country statements, purchase category',
+    'Consent references (type, time, reference — never the content)',
+    'Borrower name (with Arabic transliteration) and masked Emirates ID'
+  ];
+  const MEMO_WITHHELD = [
+    { group: 'Line-by-line account history and merchant names (only the purchase category is shared)', reason: OPEN_FINANCE_REASON },
+    { group: 'Account names, banks and account identifiers', reason: OPEN_FINANCE_REASON },
+    { group: 'Exact income, spending, balances and free cash flow', reason: OPEN_FINANCE_REASON },
+    { group: 'Salary dates', reason: OPEN_FINANCE_REASON },
+    { group: 'Home-country statement figures, banks and file names',
+      reason: 'Uploaded for Noor\'s assessment only — the lender receives verification flags (PDPL purpose limitation)' },
+    { group: 'Digital-footprint and vendor raw data', reason: 'Never used for credit; dropped at ingestion (PDPL data minimisation)' },
+    { group: 'Raw contact details', reason: 'Not needed to book the loan — Noor stays the customer\'s point of contact (PDPL data minimisation)' }
+  ];
+  const MEMO_SFTP_HEADER = ['memo_id', 'noor_ref', 'product', 'outcome', 'amount', 'tenor', 'apr_or_fee', 'monthly_payment',
+                            'repayment_method', 'noorscore', 'noorscore_band', 'income_band', 'dbr_band', 'aecb_band',
+                            'reason_codes', 'created_at'];
+  function lendersList() { return (D && Array.isArray(D.lenders) && D.lenders.length) ? D.lenders : DEFAULT_LENDERS; }
+  function lenderFor(lenderId) {
+    const list = lendersList();
+    if (lenderId === undefined || lenderId === null) return list[0];
+    const l = list.find(x => x.id === lenderId);
+    if (!l) throw err('unknown lender "' + lenderId + '" — lenders: ' + list.map(x => x.id).join(', '));
+    return l;
+  }
+  const thousands = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  // Income: AED 5,000 steps up to 20,000, AED 10,000 steps above.
+  function incomeBand(x) {
+    if (!Number.isFinite(x)) return null;
+    if (x < 5000) return 'Below AED 5,000 / month';
+    const step = x < 20000 ? 5000 : 10000;
+    const lo = Math.floor(x / step) * step;
+    return 'AED ' + thousands(lo) + '–' + thousands(lo + step) + ' / month';
+  }
+  function dbrBand(p) {
+    if (!Number.isFinite(p)) return null;
+    return p < 20 ? '< 20%' : (p < 35 ? '20–35%' : (p <= 50 ? '35–50%' : '> 50%'));
+  }
+  function fcfBand(x) {
+    if (!Number.isFinite(x)) return null;
+    return x < 1000 ? 'Below AED 1,000 / month' : (x < 3000 ? 'AED 1,000–2,999 / month'
+         : (x < 5000 ? 'AED 3,000–4,999 / month' : 'AED 5,000+ / month'));
+  }
+  function shareBand(p) {
+    if (!Number.isFinite(p)) return null;
+    return p < 25 ? '< 25%' : (p <= 50 ? '25–50%' : '> 50%');
+  }
+  function aecbScoreBand(aecb) {
+    if (!aecb || !aecb.hit) return 'No file';
+    if (!Number.isFinite(aecb.score)) return 'File, no score yet';
+    const lo = Math.floor(aecb.score / 50) * 50;
+    return lo + '–' + (lo + 49);
+  }
+  const DELINQUENCY_FLAG = { NONE: 'None', DPD30: 'DPD30 in history', DPD90: 'DPD90 in history', WRITEOFF: 'Write-off in history' };
+  // The bureau view of the applicant: the snapshot's AECB block, else the AECB pull summary.
+  function aecbOf(rec) {
+    const a = rec.applicantSnapshot && rec.applicantSnapshot.aecb;
+    if (a) return { hit: a.hit === true, score: a.score === undefined ? null : a.score, worstDelinquency: a.worstDelinquency || 'NONE',
+                    chequeReturns12m: a.chequeReturns12m || 0 };
+    const pull = (rec.dataPulls || []).find(x => x.source === 'AECB_CONSUMER') || { status: 'NO_HIT', summary: {} };
+    const s = pull.summary || {};
+    return { hit: pull.status === 'HIT', score: Number.isFinite(s.score) ? s.score : null, worstDelinquency: s.worstDelinquency || 'NONE',
+             chequeReturns12m: s.chequeReturns12m || 0 };
+  }
+  // Deterministic masked Emirates ID — only the 784 prefix and a check digit show.
+  function maskedEmiratesId(applicantId) {
+    const s = String(applicantId || 'applicant');
+    let sum = 0; for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i);
+    return '784-••••-•••••••-' + (sum % 10);
+  }
+  function memoTerms(rec) {
+    if (rec.outcome !== 'APPROVE') return null;
+    const p = rec.pricing || {}, lim = rec.limit || {};
+    const reg = (S.policies[rec.productId] || {}).regulatory || {};
+    const rep = rec.repayment || null;
+    const base = { repaymentMethod: rep ? rep.method : null, repaymentMethodLabel: rep ? rep.label : null, coolingOffDays: reg.coolingOffDays || 5 };
+    if (p.mode === 'BANDED_APR' && p.kfs) {
+      const k = p.kfs;
+      return Object.assign({ amount: k.principal, tenorMonths: k.tenorMonths, apr: k.rateMid, aprBand: [p.rateMin, p.rateMax],
+                             monthlyPayment: k.monthlyInstalment, totalRepayable: k.totalRepayable, totalInterest: k.totalInterest,
+                             fees: 0, earlySettlementFeeCap: k.earlySettlementFeeCap || null }, base);
+    }
+    if (p.mode === 'MONTHLY_FEE') {
+      const plan = (p.plans || []).find(x => x.months === p.selectedMonths) || {};
+      return Object.assign({ amount: p.principal, planMonths: p.selectedMonths, monthlyFeeRate: p.monthlyFeeRate,
+                             aprEquivalent: plan.aprEquivalent, monthlyPayment: plan.monthlyPayment, totalRepayable: plan.planTotal,
+                             totalFees: plan.totalFees }, base);
+    }
+    if (p.mode === 'FLAT_FEE') {
+      return Object.assign({ amount: lim.approved, tenorMonths: 1, flatFee: p.fee, apr: null,
+                             monthlyPayment: round2(lim.approved + p.fee), totalRepayable: round2(lim.approved + p.fee) }, base);
+    }
+    if (p.mode === 'TENOR_CURVE_APR') {
+      const s = rec.selection;
+      if (s) return Object.assign({ amount: s.amount, tenorMonths: s.months, apr: s.apr, monthlyPayment: s.monthlyPayment,
+                                    totalRepayable: s.totalRepayable, totalInterest: s.totalInterest, fees: 0 }, base);
+      const up = rec.upgrade || {};
+      return Object.assign({ amount: null, offerUpTo: up.maxAmount, tenorMonths: null, maxTenorMonths: up.maxTenorMonths, apr: null,
+                             aprFrom: up.aprFloor, monthlyPayment: null, totalRepayable: null, customerChoicePending: true }, base);
+    }
+    return null;
+  }
+  function memoInstalmentShare(rec) {
+    const f = rec.features || {};
+    if (Number.isFinite(f.instalmentToFcfPct)) return f.instalmentToFcfPct;
+    if (rec.kind === 'UPGRADE' && rec.selection && f.freeCashFlowMonthly > 0) {
+      return Math.round((rec.selection.monthlyPayment / f.freeCashFlowMonthly) * 1000) / 10;
+    }
+    return null;
+  }
+  function memoIncomeVia(rec) {
+    const f = rec.features || {}, a = rec.applicantSnapshot || {};
+    const of = rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted;
+    const months = (a.connected && a.connected.monthsAvailable) || (a.bankData && a.bankData.monthsAvailable) || f.connectedMonths || null;
+    const viaOf = 'Open Finance (Al Tareq)' + (months ? ', ' + months + ' months' : '');
+    let via;
+    if (f.verifiedIncome === null || f.verifiedIncome === undefined) via = 'Not verified';
+    else if (rec.productId === 'personal_loan') via = f.incomeSource === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
+    else if (rec.productId === 'salary_advance') via = of && a.bankData && a.bankData.source === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
+    else via = viaOf;
+    const st = rec.homeStatements;
+    if (st && st.usable) via += ' + home-country statements (6 months)';
+    return via;
+  }
+  function memoStatementsFlag(st) {
+    if (!st) return null;
+    if (st.integrity !== 'PASS' || st.nameMatch !== true) return 'Not verified — referred to fraud review';
+    if (!st.complete) return st.monthsPresent + ' of 6 months — incomplete, not used';
+    const clean = st.evidence && st.evidence.conductClean;
+    return '6 of 6 months verified · conduct ' + (clean ? 'clean' : 'issues noted') + (st.obligationsMonthlyAed ? ' · home-country loan counted in DBR' : '');
+  }
+  function memoUpgradeFactors(rec) {
+    const out = [];
+    const pr = rec.priorLoan || {};
+    out.push(pr.dpd === 0 ? 'Starter loan repaid on time' : 'Starter loan repaid late');
+    if (rec.homeStatements && rec.homeStatements.usable) out.push('Home-country statements verified');
+    return out;
+  }
+  const CONSENT_CODES = [['aecb', 'AECB'], ['openFinance', 'ALTAREQ'], ['creditPassport', 'CPASS'], ['homeStatements', 'STMT'], ['shareWithLender', 'LENDER']];
+  function creditMemo(decisionId, opts) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    const lender = lenderFor(opts && opts.lenderId);
+    const a = rec.applicantSnapshot || {};
+    const f = rec.features || {};
+    const man = MANIFESTS.find(m => m.productId === rec.productId) || {};
+    const aecb = aecbOf(rec);
+    const sc = rec.score || {};
+    const value = Number.isFinite(sc.points) ? sc.points : null;
+    const seq = rec.id.replace(/^MZN-/, '');
+    const crossBorder = !!f.crossBorder;
+    return {
+      memoId: 'CM-' + rec.id,
+      noorRef: rec.id,
+      lenderId: lender.id,
+      lenderName: lender.name + ' (' + String(lender.role || 'lender of record').toLowerCase() + ')',
+      createdAt: rec.createdAt,
+      product: { productId: rec.productId, nameEn: man.nameEn || rec.productId },
+      policyVersion: rec.policyVersion,
+      engineVersion: rec.engineVersion,
+      borrower: { name: a.name || null, nameAr: a.nameAr || null, emiratesIdMasked: maskedEmiratesId(a.id), kycSource: 'UAE PASS (onboarding)' },
+      decision: {
+        outcome: rec.outcome,
+        status: rec.status,
+        route: rec.override ? 'ANALYST_REVIEW' : 'STRAIGHT_THROUGH',
+        reasonCodes: (rec.reasonCodes || []).map(code => {
+          const rc = D.reasonCodes[code] || {};
+          return { code, en: rc.en || code, ar: rc.ar || '' };
+        }),
+        validUntil: rec.token ? rec.token.expiresAt : null
+      },
+      terms: memoTerms(rec),
+      noorScore: {
+        value,
+        band: noorScoreBand(value),
+        factors: rec.kind === 'UPGRADE' ? memoUpgradeFactors(rec) : noorScoreFactors(sc, 3)
+      },
+      affordability: {
+        incomeBand: incomeBand(f.verifiedIncome),
+        dbrBand: dbrBand(f.dbrPct),
+        freeCashFlowBand: fcfBand(f.freeCashFlowMonthly),
+        instalmentToCashFlowBand: shareBand(memoInstalmentShare(rec)),
+        incomeVerifiedVia: memoIncomeVia(rec)
+      },
+      bureau: {
+        aecbChecked: (rec.rules || []).some(r => r.id === 'REG_AECB_CHECK'),
+        aecbScoreBand: aecbScoreBand(aecb),
+        delinquencyFlag: DELINQUENCY_FLAG[aecb.worstDelinquency] || aecb.worstDelinquency,
+        chequeReturnsFlag: aecb.chequeReturns12m > 0
+          ? aecb.chequeReturns12m + ' returned cheque' + (aecb.chequeReturns12m === 1 ? '' : 's') + ' in 12 months' : 'None',
+        homeCountryFile: crossBorder ? 'Home-country credit file used (Credit Passport, consented)' : null
+      },
+      verification: {
+        identity: 'Verified (UAE PASS)',
+        homeStatements: memoStatementsFlag(rec.homeStatements),
+        purchaseVerified: rec.productId === 'split'
+          ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
+          : null
+      },
+      consents: CONSENT_CODES
+        .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
+        .map(([k, code]) => ({ type: k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + code })),
+      sharing: { shared: MEMO_SHARED.slice(), withheld: MEMO_WITHHELD.map(w => ({ group: w.group, reason: w.reason })) }
+    };
+  }
+  function assertMemo(memo, fn) {
+    if (!memo || typeof memo !== 'object' || typeof memo.memoId !== 'string' || !/^CM-/.test(memo.memoId)) {
+      throw err(fn + ' needs a creditMemo() result');
+    }
+  }
+  // API delivery: the memo itself, as a detached JSON object.
+  function memoApiPayload(memo) { assertMemo(memo, 'memoApiPayload'); return clone(memo); }
+  // SFTP delivery: one flat CSV row per memo (header + row, all strings).
+  function memoSftpRow(memo) {
+    assertMemo(memo, 'memoSftpRow');
+    const t = memo.terms || {};
+    const s = (v) => (v === null || v === undefined ? '' : String(v));
+    let aprOrFee = '';
+    if (Number.isFinite(t.monthlyFeeRate)) aprOrFee = 'Fee ' + pctStr(t.monthlyFeeRate) + '/mo (APR equivalent ' + pctStr(t.aprEquivalent) + ')';
+    else if (Number.isFinite(t.flatFee)) aprOrFee = 'Flat fee ' + aed(t.flatFee);
+    else if (Number.isFinite(t.apr)) aprOrFee = 'APR ' + pctStr(t.apr);
+    else if (Number.isFinite(t.aprFrom)) aprOrFee = 'APR from ' + pctStr(t.aprFrom);
+    const row = [memo.memoId, memo.noorRef, memo.product.productId, memo.decision.outcome,
+                 s(Number.isFinite(t.amount) ? t.amount : t.offerUpTo), s(t.tenorMonths || t.planMonths || t.maxTenorMonths), aprOrFee,
+                 s(t.monthlyPayment), s(t.repaymentMethod), s(memo.noorScore.value), s(memo.noorScore.band),
+                 s(memo.affordability.incomeBand), s(memo.affordability.dbrBand), s(memo.bureau.aecbScoreBand),
+                 memo.decision.reasonCodes.map(r => r.code).join('|'), memo.createdAt];
+    return { header: MEMO_SFTP_HEADER.slice(), row };
   }
 
   // ---------------------------------------------------------------------------
@@ -2404,6 +2712,106 @@
                     consents: { aecb: true, openFinance: !!(c.openFinance && c.openFinance.granted),
                                 creditPassport: !!(c.creditPassport && c.creditPassport.granted) },
                     statements: orig.documents.parsed, supersedes: orig.id }, { trigger: 'UNDERWRITER_REQUEST' });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pre-qualification (Addendum v2.6) — "how much could I borrow?", before any
+  // application. Pure and indicative: NO DecisionRecord, NO AECB pull, no clock
+  // tick. It reads only what the customer's connected accounts show (Open
+  // Finance via Al Tareq): verified income, spending and the repayments already
+  // leaving the accounts (observed obligations).
+  //   per term n:  min( PV of the DBR headroom (50%, 30% retirees, × income −
+  //                     observed obligations),
+  //                     PV of the cash-flow budget (50% of free cash flow =
+  //                     income − spending − observed obligations; the same 50%
+  //                     the split and starter packs use),
+  //                     20× salary, product cap ), at the TOP of band B, floor 1,000
+  //   max = the 24-month figure; min = 25% of max, floored to AED 1,000
+  // The DBR cap alone is the regulatory ceiling, not what a household can carry:
+  // a customer whose spending leaves AED 3,700/month must not be told he could
+  // borrow against AED 5,100/month. maxByTermMonths caps each term the customer
+  // can pick (shorter term → smaller amount). The NoorScore estimate is the
+  // cash-flow proxy base (640) plus the connected-account factors only.
+  // ---------------------------------------------------------------------------
+  const PREQUAL = { productId: 'personal_loan', tenorMonths: 24, band: 'B', minShareOfMax: 0.25,
+                    instalmentToFcfMaxPct: 50, termsMonths: [6, 12, 24], validForDays: 7 };
+  function prequalify(applicant, consents) {
+    ensureInit();
+    if (!applicant || typeof applicant !== 'object') throw err('prequalify(applicant, consents) needs an applicant');
+    if (!consents || consents.openFinance !== true) {
+      throw err('pre-qualification reads connected accounts only — Open Finance consent (connected accounts via Al Tareq) is required');
+    }
+    const cn = applicant.connected || null, bd = applicant.bankData || null;
+    const income = cn && Number.isFinite(cn.avgMonthlyIncome) ? cn.avgMonthlyIncome
+                 : (bd && bd.source === 'ALTAREQ_TPP' && Number.isFinite(bd.avgSalaryCredit) ? bd.avgSalaryCredit : null);
+    if (!Number.isFinite(income) || income <= 0) throw err('pre-qualification needs income seen in connected accounts — connect the salary account first');
+    const months = (cn && cn.monthsAvailable) || (bd && bd.monthsAvailable) || 0;
+    const observed = cn && Number.isFinite(cn.observedObligationsMonthly) ? cn.observedObligationsMonthly : 0;
+    const spend = cn && Number.isFinite(cn.avgMonthlySpend) ? cn.avgMonthlySpend : null;
+    const vol = cn && Number.isFinite(cn.incomeVolatilityPct) ? cn.incomeVolatilityPct : null;
+    const pol = getPolicyRef(PREQUAL.productId);
+    const reg = pol.regulatory, prm = pol.params;
+    const dbrCap = dbrCapFor(reg, !!(applicant.employment && applicant.employment.retiree));
+    const topRate = prm.pricingBands[PREQUAL.band][1];
+    const tenor = Math.min(PREQUAL.tenorMonths, reg.tenorCapMonths, HARD.tenorCapMonths);
+    const headroom = Math.round((dbrCap / 100) * income - observed);
+    const fcf = Number.isFinite(spend) ? Math.round(income - spend - observed) : null;
+    const fcfBudget = fcf === null ? null : Math.max(0, Math.floor((PREQUAL.instalmentToFcfMaxPct / 100) * fcf));
+    const bySalary = Math.min(reg.salaryMultipleCap, HARD.salaryMultipleCap) * income;
+    const maxFor = (n) => {
+      const byDbr = headroom > 0 ? pvAnnuity(headroom, topRate / 12, n) : 0;
+      const byFcf = fcfBudget === null ? Infinity : (fcfBudget > 0 ? pvAnnuity(fcfBudget, topRate / 12, n) : 0);
+      return floor1000(Math.min(byDbr, byFcf, bySalary, prm.productCap));
+    };
+    const max = maxFor(tenor);
+    const min = floor1000(PREQUAL.minShareOfMax * max);
+    const maxByTermMonths = {};
+    for (const n of PREQUAL.termsMonths) maxByTermMonths[n] = Math.min(maxFor(Math.min(n, reg.tenorCapMonths, HARD.tenorCapMonths)), max);
+    // NoorScore estimate — no bureau yet: proxy base + what the accounts show.
+    let est = CASH_FLOW_PROXY_BASE + 15;                 // salary seen in connected accounts
+    if (months >= 12) est += 10;
+    if (vol !== null && vol <= 20) est += 15;
+    if (vol !== null && vol >= 40) est -= 25;
+    if (fcf !== null && fcf >= 5000) est += 20;
+    if (fcf !== null && fcf < 1500) est -= 30;
+    const estBand = gradeToBand(pointsToGrade(est)) || 'C';
+    const bandRange = prm.pricingBands[estBand];
+    return {
+      productId: PREQUAL.productId,
+      indicativeMin: min,
+      indicativeMax: max,
+      maxByTermMonths,
+      eligible: max > 0,
+      noorScoreEstimateBand: noorScoreBand(est),
+      basis: [
+        'Income ' + aed(income) + '/month verified from ' + months + ' months of connected accounts',
+        'Repayments already leaving your accounts: ' + aed(observed) + '/month',
+        'Up to ' + dbrCap + '% of income may go to loan repayments (CBUAE)'
+      ].concat(fcf === null ? [] : [
+        'Left after spending and repayments: ' + aed(fcf) + '/month — a new loan is kept within ' + PREQUAL.instalmentToFcfMaxPct +
+        '% of it (' + aed(fcfBudget) + '/month)'
+      ]).concat([
+        'Worked out over ' + tenor + ' months at up to ' + pctStr(topRate) + ' APR'
+      ]),
+      note: 'No credit bureau check yet — this does not affect your credit score',
+      validForDays: PREQUAL.validForDays,
+      validUntil: addDaysIso(D.TODAY, PREQUAL.validForDays),
+      sources: ['OPEN_FINANCE'],
+      assumptions: { tenorMonths: tenor, apr: topRate, dbrCapPct: dbrCap,
+                     instalmentToFcfMaxPct: fcf === null ? null : PREQUAL.instalmentToFcfMaxPct,
+                     instalmentBudgetMonthly: fcf === null ? Math.max(0, headroom) : Math.min(Math.max(0, headroom), fcfBudget) },
+      // Indicative pricing for the estimated band (the loan screen's "from X% APR").
+      indicativePricing: { band: estBand, aprMin: bandRange[0], aprMax: bandRange[1], aprMid: round4((bandRange[0] + bandRange[1]) / 2),
+                           termsMonths: [6, 12, 24] }
+    };
+  }
+  // Pure: the reducing-balance instalment Mizan uses for personal-loan KFS figures
+  // (annual rate, 2-dp money) — for indicative quotes before a decision exists.
+  function loanInstalment(principal, months, annualRate) {
+    if (!Number.isFinite(principal) || principal <= 0 || !Number.isInteger(months) || months <= 0 || !Number.isFinite(annualRate) || annualRate < 0) {
+      throw err('loanInstalment needs a positive principal, whole months and an annual rate');
+    }
+    return round2(annuityPayment(principal, annualRate / 12, months));
   }
 
   // Convenience for simulation — same logic, no side effects, no record stored.
@@ -2796,6 +3204,12 @@
     STATEMENT_CORRIDORS: STATEMENT_CORRIDORS.slice(),
     STATEMENT_FX,
     parseStatements, requestDocuments, submitStatements, redecide,
+    // v2.5 — NoorScore + the lender's credit memo (UI · API · SFTP)
+    NOORSCORE_BANDS: NOORSCORE_BANDS.map(b => ({ min: b[0], band: b[1] })).concat([{ min: null, band: 'Poor' }]),
+    noorScoreBand, creditMemo, memoApiPayload, memoSftpRow,
+    // v2.6 — the customer journey: pre-qualification on connected accounts only
+    prequalify, loanInstalment,
+    lenders: function () { ensureInit(); return clone(lendersList()); },
     init, manifests, execSteps, getPolicy, publishPolicy, policyHistory, policyInvariants,
     decide, decideRaw, simulateBook, drawdownCheck, recordEvent, override,
     quoteUpgrade, selectUpgradeOption,

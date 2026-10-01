@@ -11,6 +11,8 @@
  *  - 5 personal-loan personas (r1..r5), unchanged intended outcomes.
  *  - 2 starter-loan upgrade personas (u1..u2, Addendum v2.1): thin-file
  *    newcomers re-decided after their AED 1,000 starter loan.
+ *  - 1 customer-journey persona (j1, Addendum v2.6): a Botim user who applies
+ *    for a personal loan through Noor's web-view; plus the lender of record.
  *  - Seeded home-country bank statements (Addendum v2.4) for r2, u1 and u2:
  *    6 monthly rows each, in local currency, read by Mizan's simulated parser;
  *    plus one seeded Workbench case awaiting Egyptian statements.
@@ -339,6 +341,45 @@
   ];
 
   // ---------------------------------------------------------------------------
+  // Customer-journey persona (Addendum v2.6). A Botim user who reaches Noor as a
+  // web-view inside the host app, connects his accounts through Al Tareq and
+  // applies for a personal loan. Personal-loan shape (employment / aecb /
+  // bankData), so decide({productId:'personal_loan'}) works unchanged, plus a
+  // `connected` block (split-persona convention: 12 monthly slots aligned to
+  // monthLabels, mean === the stated average) that prequalify() reads — income,
+  // spending and the repayments already going out (observedObligationsMonthly).
+  // Accounts carry masked numbers and balances for the host-app tiles.
+  // ---------------------------------------------------------------------------
+  const personasJourney = [
+    { // j1 — pre-qualifies on connected accounts only, then APPROVE (grade B) at AED 15,000 · 12 months
+      id: 'j1', name: 'Ravi Kumar', nameAr: 'رافي كومار',
+      tagline: 'Warehouse supervisor, 3 years in the UAE, Botim user — a family wedding at home',
+      age: 31, residency: 'RESIDENT', monthsInUae: 36,
+      employment: { employer: 'Logistics company, Jebel Ali', type: 'PRIVATE',
+                    salaryMonthly: 12000, tenureMonths: 30, retiree: false },
+      aecb: { hit: true, score: 712, esrPct: 8, obligationsMonthly: 900,
+              tradelines: 2, chequeReturns12m: 0, worstDelinquency: 'NONE',
+              creditPassportAvailable: false },
+      bankData: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
+                  salaryDetected: true, avgSalaryCredit: 12000, salaryCreditDay: 27 },
+      connected: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
+                   accounts: [
+                     { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true },
+                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false }
+                   ],
+                   avgMonthlyIncome: 12000, avgMonthlySpend: 7400, incomeVolatilityPct: 1, salaryCreditDay: 27,
+                   // The credit-card repayment the accounts show leaving every month (= the AECB obligation)
+                   observedObligationsMonthly: 900, observedObligationsLabel: 'Credit-card repayment',
+                   // Salary 12,000 with small overtime swings; mean 12,000, vol 1.4%
+                   monthlyIncome: [11800, 12000, 12200, 11900, 12000, 12400, 11700, 12000, 12100, 11900, 12000, 12000],
+                   // mean 7,400 (December higher: travel home)
+                   monthlySpend: [7100, 7650, 7300, 7900, 7250, 8200, 7000, 7350, 7450, 7200, 7600, 6800] },
+      purpose: 'Family wedding',
+      defaultRequest: { amount: 15000, tenorMonths: 12 }
+    }
+  ];
+
+  // ---------------------------------------------------------------------------
   // Seeded Workbench case (v2.4) — an analyst has already asked this customer for
   // 6 months of Egyptian bank statements; the refer SLA is paused while Noor waits.
   // Summary data only (like the other seeded queue rows).
@@ -588,6 +629,15 @@
     return rows;
   }
 
+  // ---------------------------------------------------------------------------
+  // Lenders of record (Addendum v2.5 / v2.6). Noor arranges and decides; a
+  // partner bank books, funds and collects the loan, and receives a credit memo
+  // built from an allowlist (never Open Finance data).
+  // ---------------------------------------------------------------------------
+  const lenders = [
+    { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record' }
+  ];
+
   const MizanData = {
     VERSION: 'data-2.0',
     TODAY: TODAY,
@@ -595,7 +645,9 @@
     personasSplit: personasSplit,
     personasLoan: personasLoan,
     personasUpgrade: personasUpgrade,
+    personasJourney: personasJourney,
     seededDocumentCases: seededDocumentCases,
+    lenders: lenders,
     reasonCodes: reasonCodes,
     earlyWarning: earlyWarning,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook() },

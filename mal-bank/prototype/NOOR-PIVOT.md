@@ -745,3 +745,104 @@ Built as STATEMENTS-SPEC.md specifies. Deviations and the choices the spec left 
   engine's refusal inline, as the execution steps do. The overview demo strip has 7 steps (4 + 3). The queue
   scrolls sideways at phone width. The v2.1 section above still names Ana Reyes; it is historic spec text,
   while code and UI use Anita Thomas.
+
+### v2.5 as built
+
+Built as LENDER-VIEW-SPEC.md specifies (selftest 948 checks green at v2.5, acceptance 365 green). Deviations and
+choices the spec left open:
+
+- **Vocabulary check.** The spec's own memo key `sharing` matched the banned pattern `shari`. The selftest and
+  acceptance now use `shari(?!ng)`, and the selftest asserts that the narrowed pattern still catches Shari'ah, Sharia
+  and shariah.
+- **Memo shape (additive).** `borrower.nameAr`; `decision.status` and `decision.route` (`STRAIGHT_THROUGH` /
+  `ANALYST_REVIEW` after a 4-eyes override); `bureau.homeCountryFile` (a Credit Passport flag); and extra term
+  fields (`repaymentMethodLabel`, `aprBand`, `totalInterest`, `fees`, `earlySettlementFeeCap`, `totalFees`,
+  `flatFee`). An upgrade without a chosen option carries `offerUpTo` / `aprFrom` / `customerChoicePending`.
+  `terms` is null on REFER and DECLINE. `createdAt` is the decision time. The memo is pure (no clock tick, no audit
+  entry) and follows the record's status.
+- **NoorScore.** `noorScoreBand()` and the record field `noorScore {value, band}` are new. Factor directions come
+  from an allowlist keyed by factor name: a factor not on the list never leaves Noor, proxy-base rows are skipped,
+  and no direction contains a number ("Returned cheques in the past year"). Upgrades have no scorecard, so the
+  value is null and the factors describe the repayment record.
+- **Placeholders.** The masked Emirates ID is a deterministic placeholder, because personas carry no Emirates ID.
+  Consent references read `CNS-<seq>-<TYPE>`. The API endpoint and SFTP path shown in the UI are illustrative.
+- **Withheld wording.** The group is worded "Line-by-line account history and merchant names", so the memo never
+  contains the word "transactions", which the spec's own privacy scan forbids.
+- **Free cash flow on personal loans.** Personal-loan records add `freeCashFlowMonthly` and `instalmentToFcfPct`,
+  informational only, when connected accounts show spending and Open Finance is consented. No rule reads them.
+  Without them the memo says "Not assessed for this product".
+- **Bands.** DBR 50% falls in "35–50%". Instalment share bands: < 25%, 25–50%, > 50%.
+- **Privacy scan.** Every leaf of the memo and every SFTP cell is scanned. Band fields are instead asserted equal
+  to an independently computed band, because a band boundary can equal a raw monthly value (c3's 15,000 element
+  vs "AED 15,000–20,000"). Numbers under 100 are ignored (dates, percentages). The scan was mutation-tested: an
+  injected income, bank label, merchant and spend each fail it.
+- **`shareWithLender`.** Recorded on every `decide()`; `decide()` accepts an optional `lenderId`, and an unknown
+  lender throws.
+- **`MizanData.lenders`** was added here (v2.6 defines it), because the memo names the lender.
+- **UI.**
+  - Delivery tabs sit in a "Delivery" panel below "Shared vs withheld", in the spec's order. The UI tab describes
+    the portal channel; the SFTP tab also shows the row column by column.
+  - Copy falls back to select-and-copy when clipboard access is denied.
+  - Lender view auto-selects the newest memo.
+  - The log list's Grade column became NoorScore ("806 · A").
+  - The overview demo strip has 8 steps.
+
+### v2.6 as built
+
+Built as JOURNEY-SPEC.md specifies, revised by the orchestrator's update from the team's Figma frames (selftest
+990 green, acceptance 457 green, 10 screens). Deviations:
+
+- **Host app.**
+  - A dark "botim money" concept replaces the generic chat list: header with avatar and card icon; Pay / Credit /
+    Invest / Insights pills; a Connected accounts strip with "Add another +"; blue Send / Request / Add funds /
+    Withdraw buttons; an "Insights for you" card; To do, transactions, the ask bar and the bottom nav. Insights is
+    a light version (total, "Fin health" chip, "Enough ~3 months", spending mix).
+  - The wordmark is plain text; there is no Botim artwork or asset, and Botim's blue is used inside the phone frame
+    only. The tag reads "Concept — illustrative host app".
+- **Flow (two entries).**
+  - Steps keep the spec's numbers 0–16, so 7–16 match it exactly. Entry 1 (0–6) starts at Connected accounts →
+    Add another + and runs hand-off → account → code → Al Tareq consent → bank approval outside the web-view →
+    **6, back in botim with the new ENBD/FAB tiles**.
+  - Entry 2 starts at step 7: Credit → "How much can you borrow?" → Noor reads the accounts → budget summary →
+    pre-qualified, as sub-screens of step 7. The spec's "Back in Noor" budget screen moved there.
+  - Applying before connecting opens the web-view with "First, connect your bank accounts".
+  - Finishing returns to the Credit tab with "Loan funded · managed in Noor", with no amount.
+- **What botim receives.** Journey status, plus display tiles: bank, masked number and balance, and the Insights
+  mix. The Al Tareq consent states this ("Where you'll see it: in Noor — and as account tiles and insights in botim
+  money"). Credit data, the decision and the memo never reach botim.
+- **Pre-qualification range — capped by free cash flow (supersedes the spec's DBR-only formula).**
+  - The spec's formula (DBR headroom only) gave j1 AED 44,000–110,000: a AED 5,100/month instalment for a customer
+    whose spending leaves AED 3,700/month. Within the CBUAE cap, but not what his budget can carry, and the wrong
+    thing to show a customer.
+  - `prequalify()` now takes the stricter of two budgets: the DBR headroom and 50% of free cash flow (income −
+    spending − repayments already going out; the same 50% the split and starter packs use). For j1 that is
+    AED 1,850/month, so the range is **AED 10,000–40,000** (24 months at 9.99%); min = 25% of max so his
+    AED 15,000 sits inside it. Without spending data it falls back to the DBR headroom.
+  - `maxByTermMonths` caps each term: 6 → AED 10,000 · 12 → AED 21,000 · 24 → AED 40,000. The journey's slider
+    follows the selected term, and each term row shows its cap.
+  - Tests assert the 12-month cap is ≤ the engine's DBR maximum (pre-qualification never promises more than
+    decide() allows), and that the approved AED 15,000 is inside the range.
+  - The reduced-offer screen (RC_LIMIT_REDUCED) is no longer reachable through the slider; acceptance drives it by
+    bypassing the UI, which tests the engine as the safety net.
+  - Still open: `decide()` for the personal loan keeps free cash flow informational (the DBR cap is the only
+    affordability rule). Promoting it to a policy rule is a policy-pack change, not made here.
+  - The slider runs from AED 1,000. The personal loan has no product minimum, so AED 1,000 decides and routes to
+    Al Tareq without clamping.
+- **Engine additions.** `prequalify()` also returns `indicativePricing` (the estimated band B) and `assumptions`.
+  `loanInstalment()` is a pure helper. j1 has both `bankData` and a `connected` block (accounts with masks and
+  balances, `observedObligationsMonthly` 900); with 30 months' tenure he scores NoorScore 737 (grade B).
+- **Sequencing.**
+  - "Accept offer" leads to Partner Bank's confirmation; OFFER_ACCEPTED and KFS_ACKNOWLEDGED are recorded at the
+    KFS, as specified.
+  - DISBURSED is recorded on arriving at step 16.
+  - The instalment date is the day after the salary credit (the 28th).
+  - Re-applying from step 8 creates a new decision; the earlier one stays in the log.
+- **Bank approval.** One simulated screen lists both banks; the panel notes that in production each bank approves
+  its own accounts.
+- **Copy and tests.**
+  - "No salary transfer needed." is allowed alongside "no salary transfer required" in the acceptance scrub.
+  - The phone scales to the viewport height on desktop (floor 0.74) and fills the width at ≤ 900px.
+  - The overview gains a topic-map row; its demo strip stays at 8 steps.
+- **Optional teaser built.** A read-only botim AI chat ("You made 3 large purchases on your Botim Card recently…"),
+  opened from the ask bar and labelled "Next: split in chat (needs a 1-month 'repay next month' plan — not in the
+  engine yet)". It calls no engine function and shows no prices; split plans stay 3 / 6 / 12.

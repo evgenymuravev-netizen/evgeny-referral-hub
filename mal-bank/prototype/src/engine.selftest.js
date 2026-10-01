@@ -1,7 +1,9 @@
 /*
  * Mizan — engine self-test (NOOR-PIVOT.md §Selftest, groups 1–10; group 11 =
  * Addendum v2.1, starter loan → upgrade; group 12 = v2.3 repayment collection
- * (REPAYMENT-SPEC.md); group 13 = v2.4 home-country statements (STATEMENTS-SPEC.md))
+ * (REPAYMENT-SPEC.md); group 13 = v2.4 home-country statements (STATEMENTS-SPEC.md);
+ * group 14 = v2.5 NoorScore + the lender's credit memo (LENDER-VIEW-SPEC.md); group 15 =
+ * v2.6 customer journey: prequalify() and persona j1 (JOURNEY-SPEC.md))
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -555,7 +557,7 @@ group('10. Determinism, reason-code completeness (EN + AR), no legacy vocabulary
 
   // No legacy vocabulary anywhere in the engine or data source. v2.3 also bans
   // salary-transfer recourse wording ("no salary transfer required" is allowed).
-  const banned = /shari|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
   for (const f of ['data.js', 'engine.js']) {
     const src = fs.readFileSync(path.join(__dirname, f), 'utf8');
     const lines = src.split('\n');
@@ -1183,6 +1185,341 @@ group('13. Home-country statements (v2.4): parser, underwriter request, re-decis
     return JSON.stringify({ a: E.getDecision(a.id), b, q: E.referQueue() });
   }
   ok(snap() === snap(), 'two fresh init() runs produce identical request → upload → re-decision records');
+});
+
+// ---------------------------------------------------------------------------
+// v2.5 helpers — an independent implementation of the memo bands, and the raw
+// values a memo must never contain (per record: its persona + what Mizan derived).
+const MEMO_KEYS = ['memoId', 'noorRef', 'lenderId', 'lenderName', 'createdAt', 'product', 'policyVersion', 'engineVersion',
+                   'borrower', 'decision', 'terms', 'noorScore', 'affordability', 'bureau', 'verification', 'consents', 'sharing'];
+const SFTP_HEADER = ['memo_id', 'noor_ref', 'product', 'outcome', 'amount', 'tenor', 'apr_or_fee', 'monthly_payment',
+                     'repayment_method', 'noorscore', 'noorscore_band', 'income_band', 'dbr_band', 'aecb_band', 'reason_codes', 'created_at'];
+const grp3 = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const T = {
+  income: (x) => x === null || x === undefined ? null : (x < 5000 ? 'Below AED 5,000 / month'
+    : (() => { const st = x < 20000 ? 5000 : 10000, lo = Math.floor(x / st) * st; return 'AED ' + grp3(lo) + '–' + grp3(lo + st) + ' / month'; })()),
+  dbr: (p) => p === null || p === undefined ? null : (p < 20 ? '< 20%' : p < 35 ? '20–35%' : p <= 50 ? '35–50%' : '> 50%'),
+  fcf: (x) => x === null || x === undefined ? null : (x < 1000 ? 'Below AED 1,000 / month' : x < 3000 ? 'AED 1,000–2,999 / month' : x < 5000 ? 'AED 3,000–4,999 / month' : 'AED 5,000+ / month'),
+  share: (p) => p === null || p === undefined ? null : (p < 25 ? '< 25%' : p <= 50 ? '25–50%' : '> 50%'),
+  aecb: (a) => !a || !a.hit ? 'No file' : (a.score === null || a.score === undefined ? 'File, no score yet' : (Math.floor(a.score / 50) * 50) + '–' + (Math.floor(a.score / 50) * 50 + 49)),
+  noor: (v) => v === null || v === undefined ? null : (v >= 740 ? 'Excellent' : v >= 680 ? 'Very good' : v >= 620 ? 'Good' : v >= 560 ? 'Fair' : 'Poor')
+};
+const BAND_KEYS = { incomeBand: 1, dbrBand: 1, freeCashFlowBand: 1, instalmentToCashFlowBand: 1, aecbScoreBand: 1 };
+const SFTP_BAND_COLS = { income_band: 1, dbr_band: 1, aecb_band: 1 };
+const BANK_LABELS = (() => {
+  const s = new Set(['ENBD', 'FAB', 'HDFC', 'SBI', 'HBL', 'CIB', 'State Bank', 'ADCB', 'Mashreq', 'RAKBANK', 'Wio', 'Emirates NBD', 'First Abu Dhabi']);
+  for (const list of [D.personasSplit, D.personasLoan, D.personasUpgrade, D.personasJourney || []]) {
+    for (const p of list) {
+      for (const b of ((p.connected || {}).banks || []).concat((p.bankData || {}).banks || [])) s.add(b);
+      if (p.homeStatements) s.add(p.homeStatements.bank);
+      for (const acc of ((p.connected || {}).accounts || [])) s.add(acc.bank);
+    }
+  }
+  return [...s];
+})();
+const MERCHANTS = D.personasSplit.map(p => p.purchase.merchant);
+const STATEMENT_FILES = [].concat(D.personasLoan, D.personasUpgrade).filter(p => p.homeStatements)
+  .map(p => p.homeStatements.file).reduce((a, f) => a.concat([f, f.replace(/\.pdf$/, '_edited.pdf')]), []);
+function rawValuesOf(rec) {
+  const out = new Set();
+  const add = (v) => { if (typeof v === 'number' && Number.isFinite(v) && Math.abs(v) >= 100) { out.add(Math.round(Math.abs(v) * 100) / 100); } };
+  const a = rec.applicantSnapshot || {}, cn = a.connected || {}, bd = a.bankData || {}, f = rec.features || {};
+  [cn.avgMonthlyIncome, cn.avgMonthlySpend, cn.observedObligationsMonthly, bd.avgSalaryCredit, (a.employment || {}).salaryMonthly,
+   (a.aecb || {}).obligationsMonthly, (a.homeBureau || {}).obligationsMonthlyAed].forEach(add);
+  (cn.monthlyIncome || []).forEach(add); (cn.monthlySpend || []).forEach(add);
+  (cn.accounts || []).forEach(x => add(x.balance));
+  if (a.homeStatements) a.homeStatements.months.forEach(m => { add(m.avgBalance); add(m.emi); if (m.remittance) add(m.remittance.amount); });
+  const st = rec.homeStatements;
+  if (st) [st.obligationsMonthlyAed, st.avgBalanceAed, st.avgBalanceLocal, st.remittanceMedianAed].forEach(add);
+  [f.verifiedIncome, f.avgMonthlySpend, f.existingObligations, f.freeCashFlowMonthly, f.homeCountryObligations, f.homeObligationsMonthly,
+   f.instalmentBudgetFcf, f.instalmentBudgetDbr, f.maxInstalment, f.headroomMonthly].forEach(add);
+  return out;
+}
+// Recursive privacy scan: every leaf of the memo (and every SFTP cell). Strings are
+// checked for bank labels, merchant names, statement files and "transactions", and
+// every number inside them — like every numeric leaf — must not be a raw value.
+// Band fields are instead checked to equal the independently computed band.
+function privacyScan(rec, memo, sftp, expect) {
+  const raw = rawValuesOf(rec);
+  const hits = [];
+  const wordRe = (w) => new RegExp('(^|[^A-Za-z])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^A-Za-z])', 'i');
+  const words = BANK_LABELS.concat(MERCHANTS, STATEMENT_FILES).map(w => [w, wordRe(w)]);
+  const numHit = (n, where) => { const v = Math.round(Math.abs(n) * 100) / 100; if (raw.has(v)) hits.push(where + ' = ' + n); };
+  function str(s, where) {
+    if (/transactions/i.test(s)) hits.push(where + ' says "transactions"');
+    for (const [w, re] of words) if (re.test(s)) hits.push(where + ' names "' + w + '"');
+    for (const tok of s.match(/\d[\d,]*(?:\.\d+)?/g) || []) numHit(parseFloat(tok.replace(/,/g, '')), where + ' ("' + tok + '")');
+  }
+  (function walk(x, path, key) {
+    if (x === null || x === undefined) return;
+    if (BAND_KEYS[key]) { if (x !== expect[key]) hits.push(path + ' band "' + x + '" ≠ expected "' + expect[key] + '"'); return; }
+    if (Array.isArray(x)) { x.forEach((v, i) => walk(v, path + '[' + i + ']', key)); return; }
+    if (typeof x === 'object') { for (const k of Object.keys(x)) walk(x[k], path + '.' + k, k); return; }
+    if (typeof x === 'number') { numHit(x, path); return; }
+    if (typeof x === 'string') str(x, path);
+  })(memo, 'memo', '');
+  sftp.header.forEach((col, i) => {
+    const cell = sftp.row[i];
+    if (SFTP_BAND_COLS[col]) {
+      const want = { income_band: expect.incomeBand, dbr_band: expect.dbrBand, aecb_band: expect.aecbScoreBand }[col] || '';
+      if (cell !== want) hits.push('sftp.' + col + ' "' + cell + '" ≠ "' + want + '"');
+    } else str(cell, 'sftp.' + col);
+  });
+  return hits;
+}
+function forbiddenKeys(memo) {
+  const bad = ['applicantSnapshot', 'features', 'dataPulls', 'rules', 'connected', 'bankData', 'monthlyIncome', 'monthlySpend', 'banks',
+               'avgMonthlyIncome', 'avgMonthlySpend', 'freeCashFlowMonthly', 'homeBureau', 'audit', 'purchase', 'accounts'];
+  const found = [];
+  (function walk(x, path) {
+    if (!x || typeof x !== 'object') return;
+    for (const k of Object.keys(x)) { if (bad.includes(k)) found.push(path + '.' + k); walk(x[k], path + '.' + k); }
+  })(memo, 'memo');
+  return found;
+}
+
+group('14. Lender view (v2.5): NoorScore, credit memo from an allowlist, API + SFTP delivery, privacy', () => {
+  E.init(D);
+  const U = {}; for (const p of D.personasUpgrade) U[p.id] = p;
+  // The narrowed vocabulary check still catches every Shari'ah form, and lets "sharing" (the spec's memo key) through.
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b/i;
+  ok(banned.test('Shari\'ah') && banned.test('Sharia') && banned.test('shariah') && banned.test('Shari') && !banned.test('sharing') && !banned.test('shared'),
+     'vocabulary regex: shari(?!ng) still catches Shari\'ah / Sharia / shariah and allows "sharing"');
+
+  // NoorScore bands mirror the A–E grade cut-offs.
+  const nb = [[806, 'Excellent'], [740, 'Excellent'], [739, 'Very good'], [680, 'Very good'], [679, 'Good'], [620, 'Good'], [619, 'Fair'], [560, 'Fair'], [559, 'Poor'], [400, 'Poor']];
+  ok(nb.every(([v, b]) => E.noorScoreBand(v) === b), 'noorScoreBand: ≥740 Excellent · 680–739 Very good · 620–679 Good · 560–619 Fair · <560 Poor');
+  eq(E.noorScoreBand(null), null, 'noorScoreBand(null) → null (no score yet)');
+  ok(Array.isArray(E.NOORSCORE_BANDS) && E.NOORSCORE_BANDS.length === 5, 'NOORSCORE_BANDS lists five bands');
+
+  // Every decided persona record: APPROVE, REFER, DECLINE, Credit Passport, statements, upgrades, salary advance, override, executed.
+  const all = [];
+  const push = (label, rec) => { collect(rec.reasonCodes); all.push({ label, rec }); return rec; };
+  for (const p of D.personasLoan) push(p.id, decidePersona('personal_loan', p));
+  push('r2+creditPassport', decidePersona('personal_loan', P.r2, { consents: { aecb: true, openFinance: true, creditPassport: true } }));
+  for (const p of D.personasSplit) push(p.id, decidePersona('split', p));
+  const r2ref = all.find(x => x.label === 'r2').rec;
+  E.requestDocuments(r2ref.id, { type: 'HOME_STATEMENTS', months: 6, country: 'IN', analyst: 'A. Farsi (Credit Analyst)' });
+  E.submitStatements(r2ref.id, { country: 'IN', bank: 'HDFC Bank', file: P.r2.homeStatements.file });
+  push('r2+statements', E.redecide(r2ref.id));
+  const ubase = push('u1 base', E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true } }));
+  const sbi = E.parseStatements({ country: 'IN', file: U.u1.homeStatements.file, applicantId: 'u1', productId: 'starter_loan' });
+  const uenh = push('u1 enhanced', E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true }, statements: sbi, supersedes: ubase.id }));
+  push('u2', E.decide({ productId: 'starter_loan', applicant: U.u2, consents: { aecb: true, openFinance: true, homeStatements: true } }));
+  push('salary advance r1', E.decide({ productId: 'salary_advance', applicant: P.r1, amount: 20000, tenorMonths: 1, consents: { aecb: true, openFinance: false } }));
+  E.selectUpgradeOption(uenh.id, { amount: 2000, months: 5 });
+  const c1 = all.find(x => x.label === 'c1').rec;
+  for (const t of E.EXEC_EVENTS) E.recordEvent(c1.id, t);
+  const c2 = all.find(x => x.label === 'c2').rec;
+  E.override(c2.id, { outcome: 'APPROVE', reasonCode: 'RC_MANUAL_REVIEW', analyst: 'A. Farsi', approver: 'S. Nair' });
+  ok(['APPROVE', 'REFER', 'DECLINE'].every(o => all.some(x => x.rec.outcome === o || (x.label === 'c2' && o === 'REFER'))), 'memo set spans APPROVE, REFER and DECLINE');
+
+  // shareWithLender is recorded on every decide(), automatically.
+  ok(all.every(x => x.rec.consents.shareWithLender && x.rec.consents.shareWithLender.granted === true && x.rec.consents.shareWithLender.lenderId === 'partner-bank' &&
+                    /application result \(not your bank data\)/.test(x.rec.consents.shareWithLender.wording)),
+     'every decision records consent shareWithLender (granted, partner-bank, "application result (not your bank data)")');
+  ok(all.every(x => x.rec.noorScore && x.rec.noorScore.value === (Number.isFinite(x.rec.score.points) ? x.rec.score.points : null) &&
+                    x.rec.noorScore.band === T.noor(x.rec.noorScore.value)), 'every record carries noorScore = scorecard points, with its band');
+
+  let leaks = 0, checked = 0;
+  for (const { label, rec } of all) {
+    const r = E.getDecision(rec.id);
+    const memo = E.creditMemo(r.id, { lenderId: 'partner-bank' });
+    const api = E.memoApiPayload(memo);
+    const sftp = E.memoSftpRow(memo);
+    checked++;
+    eq(Object.keys(memo).join(','), MEMO_KEYS.join(','), label + ': memo has exactly the allowlisted top-level keys');
+    ok(forbiddenKeys(memo).length === 0, label + ': memo carries no record internals (' + forbiddenKeys(memo).join(', ') + ')');
+    eq(JSON.stringify(api), JSON.stringify(memo), label + ': API payload = the memo (JSON)');
+    ok(api !== memo && api.decision !== memo.decision, label + ': API payload is a detached copy');
+    eq(sftp.header.join(','), SFTP_HEADER.join(','), label + ': SFTP header columns');
+    ok(sftp.row.length === 16 && sftp.row.every(c => typeof c === 'string') && !sftp.row.some(c => /[\r\n]/.test(c)), label + ': SFTP row is 16 flat string cells');
+    ok(sftp.row[0] === memo.memoId && sftp.row[1] === r.id && sftp.row[3] === r.outcome && sftp.row[9] === (memo.noorScore.value === null ? '' : String(memo.noorScore.value)) &&
+       sftp.row[14] === r.reasonCodes.join('|'), label + ': SFTP row matches the memo');
+    // presence
+    ok(memo.memoId === 'CM-' + r.id && memo.noorRef === r.id && memo.lenderName === 'Partner Bank (lender of record)', label + ': memo id, Noor reference, lender of record');
+    ok(memo.decision.outcome === r.outcome && memo.decision.reasonCodes.length === r.reasonCodes.length &&
+       memo.decision.reasonCodes.every(c => c.en && ARABIC.test(c.ar)), label + ': outcome + every reason code in English and Arabic');
+    ok(memo.noorScore.value === (Number.isFinite(r.score.points) ? r.score.points : null) && memo.noorScore.band === T.noor(memo.noorScore.value) &&
+       Array.isArray(memo.noorScore.factors) && memo.noorScore.factors.length <= 3 && memo.noorScore.factors.every(w => !/\d/.test(w)),
+       label + ': NoorScore + band, ≤ 3 factor directions with no numbers');
+    const types = memo.consents.map(c => c.type);
+    ok(types.includes('aecb') && types.includes('shareWithLender') && memo.consents.every(c => /^CNS-\d{6}-[A-Z]+$/.test(c.reference) && c.grantedAt && Object.keys(c).join() === 'type,grantedAt,reference'),
+       label + ': consent references only (type, grantedAt, reference) incl. aecb + shareWithLender');
+    ok(memo.bureau.aecbChecked === true && memo.verification.identity === 'Verified (UAE PASS)' && /^784-••••-•••••••-\d$/.test(memo.borrower.emiratesIdMasked),
+       label + ': AECB checked, identity flag, masked Emirates ID');
+    ok(memo.sharing.withheld.length >= 6 && memo.sharing.withheld.every(w => w.group && w.reason) &&
+       memo.sharing.withheld.some(w => /Open Finance data is shared with Noor for this purpose only and cannot be passed on/.test(w.reason)),
+       label + ': withheld groups each carry a reason');
+    ok(r.outcome === 'APPROVE' ? !!memo.terms && Number.isFinite(memo.terms.coolingOffDays) : memo.terms === null, label + ': terms only on an approval');
+    // bands, computed independently
+    const f = r.features, aSnap = r.applicantSnapshot;
+    const share = Number.isFinite(f.instalmentToFcfPct) ? f.instalmentToFcfPct
+      : (r.kind === 'UPGRADE' && r.selection && f.freeCashFlowMonthly > 0 ? Math.round(r.selection.monthlyPayment / f.freeCashFlowMonthly * 1000) / 10 : null);
+    const expect = { incomeBand: T.income(f.verifiedIncome), dbrBand: T.dbr(f.dbrPct), freeCashFlowBand: T.fcf(f.freeCashFlowMonthly),
+                     instalmentToCashFlowBand: T.share(share), aecbScoreBand: T.aecb(aSnap.aecb) };
+    const hits = privacyScan(r, memo, sftp, expect);
+    if (hits.length) leaks++;
+    ok(hits.length === 0, label + ': recursive privacy scan — no raw Open Finance values, bank labels, merchants, files or "transactions"' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
+  }
+  ok(checked >= 16 && leaks === 0, 'privacy scan ran over ' + checked + ' memos with zero leaks');
+
+  // Spec anchors
+  const m1 = E.creditMemo(c1.id);
+  ok(m1.affordability.incomeBand.startsWith('AED 30,000–40,000') && !JSON.stringify(m1).includes('32,000') && !JSON.stringify(m1).includes('32000'),
+     'c1 income band is AED 30,000–40,000 (covers 32,000; the exact figure never appears)');
+  ok(m1.noorScore.value === 806 && m1.noorScore.band === 'Excellent' && m1.noorScore.factors.join('|') === 'Strong free cash flow|Stable income|Long connected history',
+     'c1 NoorScore 806 Excellent — Strong free cash flow · Stable income · Long connected history');
+  ok(m1.verification.purchaseVerified === 'Education — verified purchase' && !/School fees/i.test(JSON.stringify(m1)), 'c1 purchase shared as its category only (Education)');
+  ok(m1.terms.amount === 12000 && m1.terms.planMonths === 6 && m1.terms.monthlyPayment === 2150 && m1.terms.repaymentMethod === 'DIRECT_DEBIT' && m1.decision.status === 'EXECUTED',
+     'c1 terms: AED 12,000 · Pay in 6 · AED 2,150/mo · direct debit; status EXECUTED');
+  const r3 = E.getDecision(all.find(x => x.label === 'r3').rec.id);
+  eq(E.creditMemo(r3.id).affordability.dbrBand, T.dbr(r3.features.dbrPct), 'r3 DBR band matches its dbrPct (' + r3.features.dbrPct + '%)');
+  ok(r3.features.dbrPct > 35 && E.creditMemo(r3.id).affordability.dbrBand === '35–50%', 'r3 sits in the 35–50% DBR band');
+  const c2m = E.creditMemo(c2.id);
+  ok(c2m.decision.route === 'ANALYST_REVIEW' && c2m.decision.outcome === 'APPROVE' && c2m.terms, 'override approval: route ANALYST_REVIEW, terms present');
+  const r2s = E.creditMemo(all.find(x => x.label === 'r2+statements').rec.id);
+  ok(/^6 of 6 months verified · conduct clean/.test(r2s.verification.homeStatements) && !/HDFC|Statement_/i.test(JSON.stringify(r2s)), 'r2 statements: a verification flag, never the bank or the file');
+  const r2c = E.creditMemo(all.find(x => x.label === 'r2+creditPassport').rec.id);
+  ok(/Credit Passport/.test(r2c.bureau.homeCountryFile) && !/CIBIL|Nova/.test(JSON.stringify(r2c)), 'Credit Passport: a bureau flag, never the home bureau or its score');
+  const um = E.creditMemo(uenh.id);
+  ok(um.terms.amount === 2000 && um.terms.tenorMonths === 5 && um.noorScore.value === null && um.noorScore.factors.includes('Starter loan repaid on time'),
+     'upgrade memo: the chosen option, no NoorScore yet, repayment-record factor');
+  ok(E.creditMemo(all.find(x => x.label === 'c3').rec.id).affordability.freeCashFlowBand === 'Below AED 1,000 / month', 'c3 negative free cash flow shows only as "Below AED 1,000 / month"');
+  ok(E.creditMemo(all.find(x => x.label === 'r4').rec.id).noorScore.band === 'Poor' && E.creditMemo(all.find(x => x.label === 'r4').rec.id).terms === null,
+     'r4 DECLINE memo: NoorScore band Poor, no terms');
+
+  // Pure: no clock tick, no audit entry, identical output.
+  const auditLen = E.getDecision(c1.id).audit.length;
+  const a1 = E.decide({ productId: 'split', applicant: P.c4, amount: 4800, tenorMonths: 6, consents: CONSENT_ALL });
+  const s1 = JSON.stringify(E.creditMemo(c1.id)); for (let i = 0; i < 5; i++) E.creditMemo(a1.id);
+  const a2 = E.decide({ productId: 'split', applicant: P.c4, amount: 4800, tenorMonths: 6, consents: CONSENT_ALL });
+  eq(new Date(a2.createdAt) - new Date(a1.createdAt), 37000, 'creditMemo() never advances the engine clock (one tick per decide)');
+  ok(s1 === JSON.stringify(E.creditMemo(c1.id)) && E.getDecision(c1.id).audit.length === auditLen, 'creditMemo() is pure: identical output, no audit entry');
+  const mutated = E.memoApiPayload(E.creditMemo(c1.id)); mutated.decision.outcome = 'X';
+  eq(E.creditMemo(c1.id).decision.outcome, 'APPROVE', 'mutating an API payload never touches the record');
+
+  throwsWith(() => E.creditMemo(c1.id, { lenderId: 'other-bank' }), 'unknown lender', 'unknown lender → throws');
+  throwsWith(() => E.creditMemo('MZN-999999'), 'unknown decision id', 'unknown decision → throws');
+  throwsWith(() => E.memoSftpRow({ foo: 1 }), 'creditMemo() result', 'memoSftpRow refuses a non-memo');
+  throwsWith(() => E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: CONSENT_ALL, lenderId: 'nope' }), 'unknown lender', 'decide() with an unknown lender → throws');
+  eq(JSON.stringify(E.lenders()), JSON.stringify(D.lenders), 'lenders() = MizanData.lenders');
+  ok(D.lenders.length === 1 && D.lenders[0].id === 'partner-bank' && D.lenders[0].name === 'Partner Bank' && D.lenders[0].role === 'Lender of record',
+     'MizanData.lenders = [Partner Bank, lender of record]');
+
+  // Determinism of memos across fresh inits.
+  function snap() {
+    E.init(D);
+    const rr = [decidePersona('split', P.c1), decidePersona('personal_loan', P.r3), decidePersona('personal_loan', P.r4)];
+    return JSON.stringify(rr.map(x => [E.creditMemo(x.id), E.memoSftpRow(E.creditMemo(x.id))]));
+  }
+  ok(snap() === snap(), 'two fresh init() runs produce identical memos and SFTP rows');
+});
+
+// ---------------------------------------------------------------------------
+group('15. Customer journey (v2.6): persona j1, prequalify() on Open Finance only, decide() → memo → execution', () => {
+  E.init(D);
+  const J = D.personasJourney;
+  ok(Array.isArray(J) && J.length === 1 && J[0].id === 'j1', 'MizanData.personasJourney = [j1]');
+  const j = J[0], cn = j.connected;
+  ok(j.name === 'Ravi Kumar' && ARABIC.test(j.nameAr) && j.age === 31 && j.monthsInUae === 36 && j.employment.salaryMonthly === 12000 &&
+     j.aecb.score === 712 && j.aecb.obligationsMonthly === 900 && j.aecb.chequeReturns12m === 0 && j.aecb.worstDelinquency === 'NONE',
+     'j1 Ravi Kumar (رافي كومار): 31, 3 years in the UAE, salary 12,000, AECB 712, obligations 900, no returns, no delinquency');
+  ok(j.bankData.source === 'ALTAREQ_TPP' && j.bankData.salaryDetected && cn.monthsAvailable === 12 && cn.banks.join(',') === 'ENBD,FAB' &&
+     cn.accounts.map(a => a.bank + ' ' + a.mask).join(',') === 'ENBD 4821,FAB 0193', 'j1: salary verified via connected accounts; 12 months, ENBD current ••••4821 + FAB savings ••••0193');
+  const meanOf = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  ok(cn.monthlyIncome.length === 12 && meanOf(cn.monthlyIncome) === cn.avgMonthlyIncome && meanOf(cn.monthlySpend) === cn.avgMonthlySpend && cn.avgMonthlySpend === 7400,
+     'j1 monthly series consistent: mean income 12,000, mean spend 7,400');
+  ok(j.defaultRequest.amount === 15000 && j.defaultRequest.tenorMonths === 12 && j.purpose === 'Family wedding', 'j1 default request 15,000 / 12 months, purpose "Family wedding"');
+
+  // prequalify(): pure — no record, no AECB pull, no clock tick.
+  const before = E.listDecisions().length;
+  const t0 = E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: CONSENT_ALL });
+  const pq = E.prequalify(j, { openFinance: true });
+  E.prequalify(j, { openFinance: true });
+  const t1 = E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: CONSENT_ALL });
+  eq(E.listDecisions().length, before + 2, 'prequalify() creates no DecisionRecord');
+  eq(new Date(t1.createdAt) - new Date(t0.createdAt), 37000, 'prequalify() never advances the engine clock');
+  eq(t1.id, 'MZN-' + String(Number(t0.id.slice(4)) + 1).padStart(6, '0'), 'decision ids continue without a gap after prequalify()');
+  // independent arithmetic at 9.99%: DBR headroom 50% × 12,000 − 900 = 5,100/mo; free cash flow
+  // 12,000 − 7,400 − 900 = 3,700/mo → cash-flow budget 50% = 1,850/mo (binds), floored to 1,000
+  const i = 0.0999 / 12, pvOf = (pmt, n) => pmt * (1 - Math.pow(1 + i, -n)) / i;
+  const capAt = (n) => Math.floor(Math.min(pvOf(5100, n), pvOf(1850, n), 240000, 500000) / 1000) * 1000;
+  eq(pq.indicativeMax, capAt(24), 'indicativeMax = min(DBR-headroom PV, 50%-of-free-cash-flow PV, 20× salary, product cap) at 24 months @ 9.99%, floor 1,000');
+  eq(pq.indicativeMax, 40000, 'j1 indicativeMax AED 40,000 — bound by free cash flow, not the AED 110,000 the DBR cap alone would allow');
+  ok(Math.floor(pvOf(5100, 24) / 1000) * 1000 === 110000 && pq.indicativeMax < 110000, 'the DBR cap alone (AED 110,000) would over-promise: an instalment of 5,100/mo against 3,700/mo left after spending');
+  eq(pq.indicativeMin, Math.floor(0.25 * pq.indicativeMax / 1000) * 1000, 'indicativeMin = 25% of max, floor 1,000 (AED 10,000)');
+  ok(pq.maxByTermMonths[6] === capAt(6) && pq.maxByTermMonths[12] === capAt(12) && pq.maxByTermMonths[24] === pq.indicativeMax &&
+     pq.maxByTermMonths[6] === 10000 && pq.maxByTermMonths[12] === 21000, 'maxByTermMonths: 6 → AED 10,000 · 12 → AED 21,000 · 24 → AED 40,000 (shorter term, smaller amount)');
+  ok(pq.assumptions.instalmentBudgetMonthly === 1850 && pq.basis.some(b => /Left after spending and repayments: AED 3,700\/month .* within 50% of it \(AED 1,850\/month\)/.test(b)),
+     'prequal basis explains the cash-flow budget (AED 1,850 of AED 3,700/month)');
+  [6, 12, 24].forEach(n => ok(E.loanInstalment(pq.maxByTermMonths[n], n, 0.0999) <= 1850, 'at the ' + n + '-month cap the instalment fits the cash-flow budget'));
+  const noSpend = clone(j); delete noSpend.connected.avgMonthlySpend;
+  eq(E.prequalify(noSpend, { openFinance: true }).indicativeMax, 110000, 'without spending data the cap falls back to DBR headroom (AED 110,000)');
+  eq(pq.note, 'No credit bureau check yet — this does not affect your credit score', 'prequal note');
+  ok(pq.validForDays === 7 && pq.sources.join() === 'OPEN_FINANCE' && pq.basis.length >= 3 && /Income AED 12,000\/month verified from 12 months of connected accounts/.test(pq.basis[0]),
+     'prequal: valid 7 days, Open Finance only, basis lines (income from 12 months of connected accounts)');
+  ok(!pq.basis.some(b => /AECB|bureau score|712/i.test(b)), 'prequal basis never cites the bureau');
+  eq(pq.noorScoreEstimateBand, 'Very good', 'NoorScore estimate band (proxy 640 + salary seen +15 + 12 months +10 + stable income +15 = 680)');
+  // a prequal that cannot see the bureau ignores it: same result without the AECB block
+  const noBureau = clone(j); delete noBureau.aecb;
+  eq(JSON.stringify(E.prequalify(noBureau, { openFinance: true })), JSON.stringify(pq), 'prequalify() reads no bureau data (identical without the AECB block)');
+  throwsWith(() => E.prequalify(j, { openFinance: false }), 'Open Finance consent', 'prequalify() without Open Finance consent throws');
+  throwsWith(() => E.prequalify(j), 'Open Finance consent', 'prequalify() without consents throws');
+  throwsWith(() => E.prequalify({ name: 'x', employment: { salaryMonthly: 9000 } }, { openFinance: true }), 'connect the salary account', 'prequalify() with no connected income throws');
+  ok(JSON.stringify(E.prequalify(j, { openFinance: true })) === JSON.stringify(pq), 'prequalify() is deterministic');
+
+  // decide(): the real engine, unchanged
+  const rec = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: { aecb: true, openFinance: true } });
+  collect(rec.reasonCodes);
+  ok(rec.outcome === 'APPROVE' && rec.score.grade === 'B' && rec.score.points === 737 && rec.limit.approved === 15000 && rec.limit.bindingConstraint === 'REQUESTED',
+     'decide(j1, 15,000 / 12) → APPROVE, grade B, NoorScore 737, AED 15,000 (REQUESTED binds)');
+  eq(rec.noorScore.band, pq.noorScoreEstimateBand, 'the final NoorScore band equals the pre-qualification estimate (Very good)');
+  const k = rec.pricing.kfs;
+  ok(k.tenorMonths === 12 && k.rateMid === 0.0899 && k.monthlyInstalment === E.loanInstalment(15000, 12, 0.0899) && k.monthlyInstalment === 1311.7,
+     'j1 KFS: 12 months, 8.99% APR (mid band B), AED 1,311.70/mo — loanInstalment() matches the record');
+  const dbrMax = rec.limit.trace.find(t => /DBR headroom/.test(t.label)).value;
+  ok(pq.maxByTermMonths[12] <= dbrMax, 'pre-qualification never promises more than the engine allows: 12-month cap AED ' + pq.maxByTermMonths[12] + ' ≤ the engine’s DBR maximum AED ' + dbrMax);
+  ok(pq.indicativeMin <= rec.limit.approved && rec.limit.approved <= pq.maxByTermMonths[12], 'the approved AED 15,000 is inside the pre-qualified range and within the 12-month cap');
+  eq(rec.repayment && rec.repayment.method, 'DIRECT_DEBIT', 'j1 at AED 15,000 → repayment DIRECT_DEBIT');
+  ok(rec.features.freeCashFlowMonthly === 3700 && rec.features.instalmentToFcfPct > 25 && rec.features.dbrPct < 20, 'j1 features: free cash flow 3,700 (informational), DBR < 20%');
+  const small = E.decide({ productId: 'personal_loan', applicant: j, amount: 1000, tenorMonths: 12, consents: { aecb: true, openFinance: true } });
+  ok(small.outcome === 'APPROVE' && small.limit.approved === 1000 && small.repayment.method === 'ALTAREQ', 'j1 at AED 1,000 → APPROVE, repayment ALTAREQ (no product minimum, no clamp needed)');
+  const big = E.decide({ productId: 'personal_loan', applicant: j, amount: 110000, tenorMonths: 6, consents: { aecb: true, openFinance: true } });
+  collect(big.reasonCodes);
+  ok(big.outcome === 'APPROVE' && big.limit.approved < 110000 && big.reasonCodes.includes('RC_LIMIT_REDUCED'), 'an unaffordable choice (110,000 / 6) is reduced with RC_LIMIT_REDUCED, never above the DBR cap');
+  throwsWith(() => E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: { openFinance: true } }), 'AECB consent', 'apply without AECB consent → throws');
+
+  // the lender memo for the journey decision is private
+  const memo = E.creditMemo(rec.id);
+  const hits = privacyScan(rec, memo, E.memoSftpRow(memo), { incomeBand: T.income(12000), dbrBand: T.dbr(rec.features.dbrPct), freeCashFlowBand: T.fcf(3700),
+    instalmentToCashFlowBand: T.share(rec.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) });
+  ok(hits.length === 0, 'j1 memo: recursive privacy scan clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
+  ok(!/ENBD|FAB|4821|0193|12,000|12000|7,400|7400|wedding/i.test(JSON.stringify(memo)), 'j1 memo: no bank, account mask, exact income/spend or purpose');
+  ok(memo.affordability.incomeBand === 'AED 10,000–15,000 / month' && memo.affordability.freeCashFlowBand === 'AED 3,000–4,999 / month' &&
+     memo.noorScore.value === 737 && memo.noorScore.band === 'Very good' && memo.terms.amount === 15000 && memo.terms.repaymentMethod === 'DIRECT_DEBIT' &&
+     memo.lenderName === 'Partner Bank (lender of record)', 'j1 memo: income band 10–15k, FCF band 3–5k, NoorScore 737 Very good, AED 15,000, direct debit, Partner Bank');
+
+  // the six conventional steps, in order
+  throwsWith(() => E.recordEvent(rec.id, 'DISBURSED'), 'out of sequence', 'j1: disbursing first throws');
+  for (const t of E.EXEC_EVENTS.slice(0, 3)) E.recordEvent(rec.id, t);
+  throwsWith(() => E.recordEvent(rec.id, 'COOLING_OFF_CLEARED'), 'repayment collection is set up', 'j1: cooling-off before repayment set-up throws');
+  for (const t of E.EXEC_EVENTS.slice(3)) E.recordEvent(rec.id, t);
+  ok(E.getDecision(rec.id).status === 'EXECUTED' && E.getDecision(rec.id).events.length === 6, 'j1: six steps → EXECUTED');
+  eq(E.execSteps('personal_loan', rec.id)[3].label, 'Direct debit mandate active', 'j1 repayment step label from execSteps (direct debit)');
+  eq(E.execSteps('personal_loan', small.id)[3].label, 'Al Tareq payment consent authorised', 'AED 1,000 repayment step label from execSteps (Al Tareq)');
+  eq(E.creditMemo(rec.id).decision.status, 'EXECUTED', 'the memo follows the record: status EXECUTED');
+  throwsWith(() => E.loanInstalment(0, 12, 0.08), 'positive principal', 'loanInstalment refuses a zero principal');
+
+  function snap() {
+    E.init(D);
+    const p1 = E.prequalify(j, { openFinance: true });
+    const r = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: { aecb: true, openFinance: true } });
+    return JSON.stringify([p1, r, E.creditMemo(r.id)]);
+  }
+  ok(snap() === snap(), 'two fresh init() runs: identical prequal, decision and memo');
+  for (const r of E.listDecisions()) collect(r.reasonCodes);
+  ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted so far exists with Arabic');
 });
 
 // ---------------------------------------------------------------------------
