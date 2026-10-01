@@ -560,6 +560,99 @@ details.tbl-view table { margin-top:6px; }
   .up-opts .plan-row .pr-right { flex:1 1 100%; padding-left:28px; text-align:left; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 10px; }
   .demo-strip.demo-6 { grid-template-columns:1fr; }
 }
+/* Repayment collection (v2.3) — method chip + one-line setup; KFS row spans the grid */
+.repay-line { display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; margin-top:12px; padding:10px 12px;
+  border-radius:var(--radius-md); background:var(--panel-2); border:1px solid var(--hairline-soft); font-size:13px; }
+.repay-line .rl-k { font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.chip.repay-chip { color:var(--sky-ink); background:var(--sky-soft); border-color:transparent; font-weight:500; }
+.repay-line .rl-t { color:var(--ink-2); flex:1 1 100%; min-width:0; }
+.repay-line .rl-rule { flex:1 1 100%; font-family:var(--font-label); font-size:11.5px; color:var(--muted); }
+.kfs .kf.kf-wide { grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 12px; }
+.kfs .kf.kf-wide .kf-v { font-size:15px; }
+.chip.chip-platform { color:var(--sky-ink); background:var(--sky-soft); border-color:transparent; }
+.platform-row td { background:var(--panel-2); }
+.platform-row .platform-rule { display:block; color:var(--ink-2); margin-top:4px; }
+/* Home-country statements (v2.4) — parse panel (reads like the orchestration timeline) */
+.parse-panel { display:flex; flex-direction:column; gap:8px; }
+.parse-panel .pp-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.parse-panel .pp-title { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.parse-panel .pp-file { font-size:11.5px; color:var(--muted); overflow-wrap:anywhere; }
+.parse-panel .pp-meta { display:flex; flex-wrap:wrap; gap:6px; }
+.parse-panel .pp-meta .chip { white-space:normal; }
+.pp-row .pp-ico { flex:0 0 20px; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-size:11px; font-weight:700; margin-top:1px; color:var(--panel); background:var(--faint); }
+.pp-row .pp-ico.pp-PASS { background:var(--ok); }
+.pp-row .pp-ico.pp-FAIL { background:var(--bad); }
+.pp-row .pp-ico.pp-WARN { background:var(--warn); }
+.pp-row .pp-ico.pp-INFO { background:var(--sky); }
+.pp-row .pp-ico.pp-SKIP { background:var(--hairline); color:var(--muted); }
+.pp-row .pp-val { font-size:12.5px; color:var(--ink-2); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.pp-row .pp-eff { font-size:12px; color:var(--muted); }
+.pp-row[data-status="FAIL"] .pp-eff { color:var(--bad); }
+.parse-panel .pp-foot .callout { margin-top:4px; }
+.parse-panel .skip-anim[disabled] { opacity:.45; }
+/* "Approve more" evidence strip — the new path carries the approve tint */
+.ev-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr)); gap:10px; }
+.ev-strip .ev { border:1px solid var(--hairline-soft); border-radius:var(--radius-md); padding:12px 14px; background:var(--panel); min-width:0; }
+.ev-strip .ev.ev-new { background:var(--ok-soft); border-color:transparent; }
+.ev-strip .ev-l { font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.ev-strip .ev-v { font-family:var(--font-ui); font-size:20px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.3; overflow-wrap:anywhere; }
+.ev-strip .ev-v.ev-REFER { color:var(--warn); }
+.ev-strip .ev-v.ev-DECLINE { color:var(--bad); }
+.ev-strip .ev-s { font-size:12px; color:var(--muted); }
+.ev-wrap { margin-top:12px; }
+/* Workbench — request → upload → re-decide, as numbered steps */
+.wb-stmt { margin:2px 0 14px; padding-top:12px; border-top:1px solid var(--hairline); }
+.wb-steps { display:flex; flex-direction:column; gap:8px; }
+.wb-step { display:flex; gap:11px; align-items:flex-start; border:1px solid var(--hairline-soft); border-radius:var(--radius-md); padding:12px 14px; background:var(--panel); }
+.wb-step.done { background:var(--panel-2); }
+.wb-step .es-n { flex:0 0 26px; width:26px; height:26px; border-radius:50%; border:1px solid var(--hairline); display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--ink); }
+.wb-step.done .es-n { background:var(--ok); border-color:var(--ok); color:var(--panel); }
+.wb-step-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.wb-step-main .es-t { font-weight:600; font-size:13.5px; color:var(--ink); }
+.wb-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr)); gap:8px 12px; align-items:end; }
+.wb-form .field { margin:0; min-width:0; }
+.wb-form .wb-note { grid-column:1 / -1; }
+.wb-msg { border-left:3px solid var(--sky); padding:6px 10px; background:var(--sky-soft); border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  display:flex; flex-direction:column; gap:3px; }
+.chip.chip-docs { color:var(--sky-ink); background:var(--sky-soft); border-color:transparent; }
+.sla-paused { color:var(--sky-ink); }
+.sla-left { white-space:nowrap; }
+/* Original vs re-decision, side by side */
+.wb-redecided { margin:0 0 14px; padding:14px 16px; border-radius:var(--radius); background:var(--panel-2); border:1px solid var(--hairline-soft); }
+.sbs { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:12px; }
+.sbs-card { border:1px solid var(--hairline); border-radius:var(--radius-md); padding:12px 14px; background:var(--panel); min-width:0; display:flex; flex-direction:column; gap:8px; }
+.sbs-card.old { border-style:dashed; }
+.sbs-card.new { border-color:var(--ok); box-shadow:0 0 0 1px var(--ok) inset; }
+.sbs-h { display:flex; align-items:center; gap:6px 8px; flex-wrap:wrap; }
+.sbs-t { font-family:var(--font-display); font-weight:600; font-size:14px; color:var(--ink); }
+.sbs-v { font-family:var(--font-ui); font-size:22px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.25; }
+.sbs-v .sbs-vs { font-size:12.5px; font-weight:400; color:var(--muted); }
+.sbs-link { color:var(--muted); }
+.sbs-card .repay-line { margin-top:0; }
+/* Credit upgrade — the upload step inside the consent panel */
+.consent-box.up-stmt { align-items:flex-start; }
+.up-stmt .up-stmt-ico { flex:0 0 20px; width:20px; height:20px; border-radius:50%; background:var(--sky-soft); color:var(--sky-ink);
+  display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; margin-top:1px; }
+.up-stmt .up-stmt-main { flex:1; min-width:0; }
+.up-stmt-row { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"file file" "country btn"; gap:8px 10px; align-items:end; margin-top:10px; }
+.up-stmt-row .field { margin:0; min-width:0; grid-area:country; }
+.up-stmt-row .up-stmt-file { grid-area:file; }
+.up-stmt-row .up-stmt-btn { grid-area:btn; }
+.pcard .chip.chip-wrap { white-space:normal; border-radius:var(--radius-md); text-align:left; }
+.up-cta .btnrow .small { flex:1 1 200px; }
+.supersedes-line code { font-size:12px; }
+.btn.linkbtn { padding:0; border:0; background:none; color:var(--accent); font-family:var(--font-mono); font-size:12.5px; font-weight:500; }
+.btn.linkbtn:hover { text-decoration:underline; text-underline-offset:2px; }
+.demo-strip.demo-7 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media (max-width:1100px) { .demo-strip.demo-7 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:600px) {
+  .demo-strip.demo-7 { grid-template-columns:1fr; }
+  .parse-panel .pp-head { flex-wrap:wrap; }
+  /* the refer queue scrolls sideways inside its own box instead of squeezing seven columns */
+  #wb-queue .tbl { min-width:760px; }
+}
 
 </style>
 
@@ -690,12 +783,144 @@ var PULL_LABEL = {
   DOCUMENTS: 'Salary certificate / statement upload + parsing',
   CREDIT_PASSPORT: 'Credit Passport — home-country bureau (AECB × Nova Credit)',
   PRIOR_DECISION: 'Prior decision — the starter loan and how it was repaid',
-  INTERNATIONAL_STATEMENTS: 'International bank statements — home-country history, parsed'
+  HOME_STATEMENTS: 'Home-country bank statements — parsed: integrity, name match, conduct, EMIs, buffer, remittances'
 };
-var EXEC_WHY = 'Why it matters: the customer accepts the offer, reads the Key Facts Statement in Arabic and English, e-signs via UAE PASS and gets the cooling-off period before any money moves (CBUAE Consumer Protection Regulation 8/2020 and Standards). An approval is not a loan.';
-function execStepsFor(pid) {
-  try { var s = ME.execSteps(pid); if (s && s.length) return s; } catch (e) {}
+var EXEC_WHY = 'Why it matters: the customer accepts the offer, reads the Key Facts Statement in Arabic and English, e-signs via UAE PASS, sets up repayment collection from their own account (Al Tareq or direct debit — no salary transfer required) and gets the cooling-off period before any money moves (CBUAE Consumer Protection Regulation 8/2020 and Standards). An approval is not a loan.';
+/* Execution steps always come from the engine; with a decision id the repayment step carries that decision's method */
+function execStepsFor(pid, recId) {
+  try { var s = ME.execSteps(pid, recId); if (s && s.length) return s; } catch (e) {}
+  try { var g = ME.execSteps(pid); if (g && g.length) return g; } catch (e2) {}
   return (ME.EXEC_EVENTS || []).map(function (t) { return { type: t, label: t, description: '' }; });
+}
+var NUM_WORD = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+function execCount() { return (ME && ME.EXEC_EVENTS ? ME.EXEC_EVENTS.length : 0); }
+function execCountWord() { var n = execCount(); return NUM_WORD[n] || String(n); }
+/* ---- Repayment collection (v2.3): one platform rule — Al Tareq up to AED 1,000, direct debit above ---- */
+var REPAY_COPY = {
+  ALTAREQ: 'You authorise it once in your banking app — revocable any time in the Al Tareq consent dashboard.',
+  DIRECT_DEBIT: 'A mandate on your own bank account — active before the first collection.'
+};
+var REPAY_KFS_SUB = {
+  ALTAREQ: 'authorised once in your banking app · AED 1,000 or less',
+  DIRECT_DEBIT: 'mandate on your own bank account · above AED 1,000'
+};
+function repayFor(amount) { try { return isNum(amount) && amount > 0 ? ME.repaymentFor(Number(amount)) : null; } catch (e) { return null; } }
+function repayThreshold() { return (ME && ME.REPAYMENT_ROUTING && ME.REPAYMENT_ROUTING.altareqMaxAmount) || 1000; }
+function repaymentLine(rep, opts) {
+  opts = opts || {};
+  if (!rep) return null;
+  return h('div', { class: 'repay-line', id: opts.id || null, dataset: { method: rep.method, amount: String(rep.amount) } },
+    h('span', { class: 'rl-k', text: opts.label || 'Repayment' }),
+    h('span', { class: 'chip repay-chip', text: rep.label }),
+    h('span', { class: 'rl-t', text: REPAY_COPY[rep.method] || rep.setup }),
+    h('span', { class: 'rl-rule', text: 'Set by the ' + (opts.basis || 'approved amount') + ' (' + fmtAED(rep.amount) + '): up to ' + fmtAED(repayThreshold()) + ' → Al Tareq recurring payment, above → direct debit mandate · no salary transfer required' }));
+}
+function repaymentKfsTile(rep) {
+  if (!rep) return null;
+  return h('div', { class: 'kf kf-wide', dataset: { kfs: 'repayment', method: rep.method } },
+    h('span', { class: 'kf-l', text: 'Repayment method' }), h('span', { class: 'kf-v', text: rep.label }),
+    h('span', { class: 'kf-s', text: REPAY_KFS_SUB[rep.method] || rep.setup }));
+}
+/* ---- Home-country statements (v2.4): corridors, file picker, the animated parse panel ---- */
+var CORRIDOR_UI = [
+  { code: 'IN', name: 'India', adj: 'Indian' }, { code: 'PK', name: 'Pakistan', adj: 'Pakistani' }, { code: 'EG', name: 'Egypt', adj: 'Egyptian' }
+];
+var UNSUPPORTED_UI = { code: 'PH', name: 'Philippines — not supported yet' };
+function corridorUi(code) { return CORRIDOR_UI.filter(function (c) { return c.code === code; })[0] || null; }
+function fmtYm(ym) { if (!ym) return '—'; var p = String(ym).split('-'); return MONTHS[Number(p[1]) - 1] + ' ' + p[0]; }
+function countrySelect(id, selected) {
+  var sel = h('select', { id: id, 'aria-label': 'Home country of the bank statements' });
+  CORRIDOR_UI.forEach(function (c) { var o = h('option', { value: c.code, text: c.name }); if (c.code === selected) o.selected = true; sel.appendChild(o); });
+  sel.appendChild(h('option', { value: UNSUPPORTED_UI.code, text: UNSUPPORTED_UI.name }));
+  return sel;
+}
+/* The customer's statement files in this demo: the bank-issued e-statement, and an edited copy (the tamper path) */
+function statementFiles(hs) {
+  if (!hs) return [];
+  return [{ file: hs.file, label: hs.file + ' — e-statement from ' + hs.bank + ', 6 months' },
+          { file: hs.file.replace(/\.pdf$/, '_edited.pdf'), label: hs.file.replace(/\.pdf$/, '_edited.pdf') + ' — an edited copy (tamper test)' }];
+}
+function fileSelect(id, hs) {
+  var sel = h('select', { id: id, 'aria-label': 'Statement file to upload' });
+  statementFiles(hs).forEach(function (f) { sel.appendChild(h('option', { value: f.file, text: f.label })); });
+  return sel;
+}
+var PF_ICON = { PASS: '✓', FAIL: '✕', WARN: '!', INFO: 'i', SKIP: '–' };
+/* Parse panel — the parser's checklist, revealed like the orchestration timeline (~280ms a row).
+   Reduced motion: instant. The Skip control always stays in place (disabled once there is nothing left to skip). */
+function statementsParsePanel(x, opts) {
+  opts = opts || {};
+  var usable = !!x.usable, fraud = x.integrity !== 'PASS' || x.nameMatch === false;
+  var wrap = h('div', { class: 'parse-panel', id: opts.id || null, dataset: { integrity: x.integrity, usable: String(usable), nameMatch: String(!!x.nameMatch), months: String(x.monthsPresent) } });
+  var skip = h('button', { class: 'btn btn-ghost small skip-anim', type: 'button', text: 'Skip animation', 'aria-label': 'Skip the parser animation' });
+  wrap.appendChild(h('div', { class: 'pp-head' },
+    h('div', { class: 'pp-title' }, h('strong', { class: 'small', text: (opts.title || 'Mizan statement parser') + ' — ' + x.bank + ' (' + x.countryName + ')' }),
+      h('span', { class: 'pp-file mono', text: x.file })),
+    opts.noSkip ? null : skip));
+  wrap.appendChild(h('div', { class: 'pp-meta' },
+    h('span', { class: 'chip', text: x.currency + ' → AED at ' + x.fxToAed + ' (fixed demo rate)' }),
+    x.period ? h('span', { class: 'chip', text: x.period.label }) : null,
+    h('span', { class: 'chip', text: (x.integrity === 'PASS' ? x.monthsPresent : 0) + ' of ' + (x.monthsExpected || 6) + ' months read' })));
+  var tl = h('div', { class: 'timeline pp-list' });
+  var rows = (x.findings || []).map(function (f) {
+    return h('div', { class: 't-step pp-row pending', dataset: { check: f.key, status: f.status } },
+      h('span', { class: 'pp-ico pp-' + f.status, 'aria-hidden': 'true', text: PF_ICON[f.status] || '·' }),
+      h('div', { class: 't-main' },
+        h('div', { class: 't-title' }, f.label, h('span', { class: 'sr-only', text: ' — ' + f.status })),
+        h('div', { class: 'pp-val', text: f.value }),
+        h('div', { class: 'pp-eff', text: '→ ' + f.effect })));
+  });
+  rows.forEach(function (r) { tl.appendChild(r); });
+  wrap.appendChild(tl);
+  var foot = h('div', { class: 'pp-foot' });
+  wrap.appendChild(foot);
+  function summary() {
+    var c;
+    if (usable) c = h('div', { class: 'callout callout-ok', dataset: { parse: 'verified' } }, h('div', { class: 'co-title', text: 'Verified — ready for Mizan to re-decide' }),
+      h('div', { class: 'co-body', text: x.monthsPresent + ' of 6 months · name matches the Emirates ID · ' + (x.obligationsMonthlyAed ? 'EMIs AED ' + fmtN(x.obligationsMonthlyAed) + '/mo counted' : 'no home-country EMIs') + ' · remittances ' + x.remittanceConsistencyPct + '% consistent with the UAE salary.' }));
+    else if (fraud) c = h('div', { class: 'callout callout-error', dataset: { parse: 'integrity' } }, h('div', { class: 'co-title', text: 'Could not be verified — fraud review, never an automatic decline' }),
+      h('div', { class: 'co-body', text: rcEn('RC_STATEMENTS_INTEGRITY') }));
+    else c = h('div', { class: 'callout callout-warn', dataset: { parse: 'incomplete' } }, h('div', { class: 'co-title', text: 'Incomplete — the customer is asked for the missing months' }),
+      h('div', { class: 'co-body', text: rcEn('RC_STATEMENTS_INCOMPLETE') }));
+    foot.appendChild(c);
+    if (opts.after) { var a = opts.after(); if (a) foot.appendChild(a); }
+  }
+  var timer = null, idx = 0, done = false;
+  function finish() {
+    if (done) return; done = true;
+    if (timer) clearInterval(timer);
+    rows.forEach(function (r) { r.classList.remove('pending'); });
+    skip.disabled = true; skip.setAttribute('aria-disabled', 'true'); skip.title = 'Nothing left to skip';
+    summary();
+    if (opts.onDone) opts.onDone();
+  }
+  if (REDUCED || opts.instant) finish();
+  else {
+    rows[0] && rows[0].classList.remove('pending'); idx = 1;
+    timer = setInterval(function () { if (idx >= rows.length) { finish(); return; } rows[idx].classList.remove('pending'); idx++; }, 280);
+    skip.addEventListener('click', finish);
+  }
+  return wrap;
+}
+/* "Approve more" — what each evidence path decided (engine-computed, pure evaluations) */
+function evidenceStrip(rec, opts) {
+  opts = opts || {};
+  var cmp = rec.evidenceComparison || [];
+  if (!cmp.length) return null;
+  var strip = h('div', { class: 'ev-strip', id: opts.id || null, 'aria-label': 'What each evidence path decided' });
+  cmp.forEach(function (c) {
+    var main = c.outcome === 'APPROVE'
+      ? (c.tier ? fmtAED(c.approved) + ' · ' + monthsTxt(c.maxTenorMonths) + ' · ' + fmtApr(c.aprFloor) : fmtAED(c.approved))
+      : c.outcome;
+    var sub = c.outcome === 'APPROVE'
+      ? (c.tier ? 'tier ' + c.tier : 'grade ' + (c.grade || '—') + ' · ' + (c.bindingConstraint || '').replace(/_/g, ' ').toLowerCase())
+      : (c.reasonCodes && c.reasonCodes[0] ? rcEn(c.reasonCodes[0]).replace(/\.$/, '') : '');
+    strip.appendChild(h('div', { class: 'ev' + (c.path === 'HOME_STATEMENTS' ? ' ev-new' : ''), dataset: { path: c.path, outcome: c.outcome, approved: String(c.approved) } },
+      h('div', { class: 'ev-l', text: c.label }),
+      h('div', { class: 'ev-v' + (c.outcome === 'APPROVE' ? '' : ' ev-' + c.outcome), text: main }),
+      h('div', { class: 'ev-s', text: sub })));
+  });
+  return strip;
 }
 function currentParams(pid) { try { return ME.getPolicy(pid).params || {}; } catch (e) { return {}; } }
 function currentReg(pid) { try { return ME.getPolicy(pid).regulatory || {}; } catch (e) { return {}; } }
@@ -837,9 +1062,9 @@ var Overview = {
       ['Share the pipes, not the brain', 'One platform, one data layer, one decision store — with product-specific policy packs. Split underwrites on connected-account cash flow; the personal loan on salary + bureau. No unified scoring model.'],
       ['Buy the decision engine, own the contract', 'License a configurable engine deployed in the UAE; build the API, adapters, feature definitions and decision store in-house, so the contract with every Noor product is ours.'],
       ['Cash flow first, bureau as a check', 'Connected accounts are the primary signal — income, spending, free cash flow, volatility. Real-time AECB pulls, consent-bound and cached, check what cash flow can’t see. Thin files become approvable.'],
-      ['An approval is not a loan', 'Mizan issues a time-boxed approval. Offer → KFS → e-sign → cooling-off → disbursement is enforced in order and auditable; the engine refuses any step out of sequence.'],
+      ['An approval is not a loan', 'Mizan issues a time-boxed approval. Offer → KFS → e-sign → repayment set-up → cooling-off → disbursement is enforced in order and auditable; the engine refuses any step out of sequence. Repayment is collected from the customer’s own account — Al Tareq up to AED 1,000, direct debit above — no salary transfer required.'],
       ['Consent is a first-class shared service', 'One consent registry for AECB and Al Tareq, shared by every product — the prerequisite for split capacity, re-scoring and day-zero early warning.'],
-      ['Refer is a designed path, not a failure mode', 'Lumpy incomes and thin files land in a workbench with the full pre-assembled file, SLAs and 4-eyes overrides — and every human decision becomes training data.']
+      ['Refer is a designed path, not a failure mode', 'Lumpy incomes and thin files land in a workbench with the full pre-assembled file, SLAs and 4-eyes overrides. The analyst can ask for evidence — 6 months of home-country statements — and Mizan re-decides on it; every human decision becomes training data.']
     ];
     var pg = h('div', { class: 'pos-grid' });
     positions.forEach(function (p, i) {
@@ -849,19 +1074,20 @@ var Overview = {
     root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Six positions' }), pg));
 
     var demo = [
-      ['Step 1', 'Split — Mariam (c1)', 'School fees approved: pick a plan, then run the 5 steps (try one out of order).', function () { showScreen('split'); Split.pickById('c1'); }],
+      ['Step 1', 'Split — Mariam (c1)', 'School fees approved: pick a plan, then run the ' + execCount() + ' steps (try one out of order).', function () { showScreen('split'); Split.pickById('c1'); }],
       ['Step 2', 'Thin file — Arjun (c4)', 'No AECB file — approved on connected-account cash flow.', function () { showScreen('split'); Split.pickById('c4'); }],
       ['Step 3', 'Personal loan — Omar (r3)', 'DBR headroom binds the limit — see the trace and the KFS.', function () { showScreen('loan'); Loan.pickById('r3'); }],
       ['Step 4', 'Policy self-service', 'Tighten a cut-off, simulate the book, publish with a second approver.', function () { showScreen('policy'); }],
       ['Step 5', 'Monitoring', 'STP vs targets per product and day-zero early warning.', function () { showScreen('monitoring'); }],
-      ['Step 6', 'Upgrade — Ana (u1)', 'Starter AED 1,000 → choose up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }]
+      ['Step 6', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
+      ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }]
     ];
-    var ds = h('div', { class: 'demo-strip demo-6' });
+    var ds = h('div', { class: 'demo-strip demo-7' });
     demo.forEach(function (d) {
       ds.appendChild(h('button', { class: 'demo-step ds-top', onclick: d[3] },
         h('div', { class: 'd-n', text: d[0] }), h('div', { class: 'd-t', text: d[1] }), h('div', { class: 'd-d', text: d[2] })));
     });
-    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — a six-step click path' }), ds));
+    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — a seven-step click path' }), ds));
 
     var map = [
       ['Overview', 'Positioning · six positions', 'The argument, compressed'],
@@ -871,7 +1097,9 @@ var Overview = {
       ['Personal loan', 'Salary via connected accounts · AECB · DBR · banded APR · KFS', 'Conventional amortising loan on the same engine; DBR headroom and retiree caps bind visibly'],
       ['Personal loan — Credit Passport path (r2)', 'Consented home-country bureau', 'Newcomers decided on two-country visibility — conservative overlay, grade cap, 50% haircut'],
       ['Salary advance', 'Flat fee · eligibility + limit', 'Another product, same engine — the cheapest proof of product-agnosticism'],
-      ['Credit upgrade', 'Re-decision on Open Finance + international statements · customer-chosen amount × tenor', 'APR falls with tenor while partner income rises — enforced at publish'],
+      ['Credit upgrade', 'Re-decision on Open Finance + home-country statements (upload → parse → re-decide) · customer-chosen amount × tenor', 'APR falls with tenor while partner income rises — enforced at publish'],
+      ['Home-country statements', 'India · Pakistan · Egypt, 6 months · underwriter request · parser: integrity, name match, conduct, EMIs, buffer, remittances · re-decision that supersedes', 'Evidence, not an override — Priya approved for AED 45,000 vs AED 30,000 on Credit Passport, audit-linked to the original refer'],
+      ['Repayment collection', 'Al Tareq recurring payment up to AED 1,000 · direct debit mandate above · repayment set-up before cooling-off', 'One platform rule on every product — no salary transfer required'],
       ['Policy console', 'Reg 29/2011 · CPR 8/2020 · Federal Law 6/2010 · bounded params', 'Locked primitives, simulate-before-publish, 4-eyes'],
       ['Workbench', 'Refer queue · SLAs · overrides', 'Pre-assembled file, reason-coded 4-eyes overrides'],
       ['Decision log', 'Replay · events · audit trail', 'CBUAE model-risk audit + consumer-protection audit, on one screen'],
@@ -884,6 +1112,19 @@ var Overview = {
     map.forEach(function (r) { mb.appendChild(h('tr', null, h('td', null, h('strong', { text: r[0] })), h('td', { class: 'small', text: r[1] }), h('td', { class: 'muted', text: r[2] }))); });
     mt.appendChild(mb);
     root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Screen → topic map' }), h('div', { class: 'tbl-scroll' }, mt)));
+  },
+  /* Step 7: Priya's thin-file refer, ready for the underwriter (reuses an open one if the session already has it) */
+  openPriyaCase: function () {
+    var open = null;
+    try { open = (ME.referQueue() || []).filter(function (q) { return !q.seeded && q.productId === 'personal_loan' && q.name === 'Priya Nair' && q.status === 'OPEN'; })[0]; } catch (e) {}
+    var id = open ? open.id : null;
+    if (!id) {
+      var p = (MD.personasLoan || []).filter(function (x) { return x.id === 'r2'; })[0];
+      try { id = ME.decide({ productId: 'personal_loan', applicant: p, amount: p.defaultRequest.amount, tenorMonths: p.defaultRequest.tenorMonths, consents: { aecb: true, openFinance: true } }).id; }
+      catch (err) { showScreen('loan'); Loan.pickById('r2'); return; }
+      afterEngineMutation();
+    }
+    showScreen('workbench'); Workbench.select(id);
   }
 };
 
@@ -911,8 +1152,8 @@ function pullsTimeline(rec, opts) {
   steps.push({ title: 'Consent registry — consent verified', sum: 'AECB consent evidenced (Federal Law 6/2010)' +
     (c.openFinance && c.openFinance.granted ? ' · Open Finance consent active (Al Tareq)' : '') +
     (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport consent active (home-country bureau)' : '') +
-    (c.internationalStatements && c.internationalStatements.granted ? ' · International statements shared (home-country bank)' : '') +
-    (c.internationalStatements && !c.internationalStatements.granted ? ' · International statements not shared (optional)' : ''), lat: null });
+    (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'requested by the underwriter' : 'uploaded by the customer') + ')' : '') +
+    (rec.kind === 'UPGRADE' && !(c.homeStatements && c.homeStatements.granted) ? ' · Home-country statements not shared (optional)' : ''), lat: null });
   (rec.dataPulls || []).forEach(function (p) {
     steps.push({ title: PULL_LABEL[p.source] || p.source, sum: pullSummary(p), lat: p.latencyMs });
   });
@@ -967,14 +1208,17 @@ function scoreBlock(rec) {
   var s = rec.score || {};
   var rows = h('div', { class: 'kv' });
   rows.appendChild(h('dt', { text: 'Model' })); rows.appendChild(h('dd', null, h('code', { text: (s.model || '—') + ' v' + (s.version || '?') })));
-  var baseLabel = s.basis === 'CASH_FLOW_PROXY' ? 'Base (cash-flow proxy)' : 'Base (AECB)';
+  var baseLabel = s.basis === 'CASH_FLOW_PROXY' ? 'Base (cash-flow proxy)' : (s.basis === 'HOME_STATEMENTS' ? 'Base (statements proxy)'
+    : ((s.basis === 'CREDIT_PASSPORT' || (rec.features && rec.features.crossBorder)) ? 'Base (home bureau)' : 'Base (AECB)'));
   rows.appendChild(h('dt', { text: baseLabel })); rows.appendChild(h('dd', { class: 'num', text: isNum(s.base) ? String(s.base) : 'no AECB file' }));
   (s.overlays || []).forEach(function (o) {
     rows.appendChild(h('dt', { text: o.name }));
     rows.appendChild(h('dd', { class: 'num', text: (o.delta >= 0 ? '+' : '') + o.delta }));
   });
   rows.appendChild(h('dt', null, h('strong', { text: 'Points' }))); rows.appendChild(h('dd', { class: 'num' }, h('strong', { text: isNum(s.points) ? String(s.points) : '—' })));
-  var note = rec.productId === 'split' ? 'Internal risk grade — cash-flow scorecard (connected accounts first, AECB as a check)' : 'Internal risk grade — bureau-anchored scorecard, documented under CBUAE Model Management Standards';
+  var note = rec.productId === 'split' ? 'Internal risk grade — cash-flow scorecard (connected accounts first, AECB as a check)'
+    : (s.basis === 'HOME_STATEMENTS' ? 'Internal risk grade — no AECB file: proxy base 640 plus evidence from verified home-country statements, capped at B'
+      : 'Internal risk grade — bureau-anchored scorecard, documented under CBUAE Model Management Standards');
   return h('div', null,
     h('div', { style: 'display:flex;align-items:center;gap:10px;margin-bottom:8px;' },
       h('span', { class: 'grade-chip', text: s.grade || '—', 'aria-label': 'Risk grade ' + (s.grade || 'unknown') }),
@@ -1064,7 +1308,7 @@ function kfsBlock(rec, months) {
     var s = rec.selection;
     if (!s) return h('div', { class: 'small muted', text: 'No option chosen yet — the KFS figures follow the customer’s amount × term choice.' });
     return h('div', { class: 'kfs-wrap', dataset: { months: String(s.months) } },
-      upgradeKfsTiles(s, s.amount, reg.coolingOffDays),
+      upgradeKfsTiles(s, s.amount, reg.coolingOffDays, null, rec.repayment || repayFor(s.amount)),
       h('div', { class: 'kfs-foot', text: 'Chosen option: ' + fmtAED(s.amount) + ' over ' + monthsTxt(s.months) + '. ' + UPGRADE_KFS_NOTE }));
   }
   if (p.mode === 'MONTHLY_FEE') {
@@ -1077,7 +1321,8 @@ function kfsBlock(rec, months) {
         kfTile('monthlyFee', 'Monthly fee', fmtMoney(plan.monthlyFee), fmtRate(p.monthlyFeeRate) + ' of principal'),
         kfTile('planTotal', 'Plan total', fmtMoney(plan.planTotal), 'fees ' + fmtMoney(plan.totalFees)),
         kfTile('aprEquivalent', 'APR equivalent', fmtRate(plan.aprEquivalent), 'IRR of the schedule × 12'),
-        kfTile('coolingOff', 'Cooling-off', cool + ' days', 'business days, waivable in writing')),
+        kfTile('coolingOff', 'Cooling-off', cool + ' days', 'business days, waivable in writing'),
+        repaymentKfsTile(rec.repayment || repayFor(p.principal))),
       h('div', { class: 'kfs-foot', text: 'Principal ' + fmtMoney(p.principal) + ' · flat monthly fee on the original principal, so the APR equivalent is well above 12 × the fee rate. Arabic + English KFS acknowledged before signing (CPR 8/2020).' }));
   }
   if (p.mode === 'BANDED_APR' && p.kfs) {
@@ -1089,7 +1334,8 @@ function kfsBlock(rec, months) {
         kfTile('totalRepayable', 'Total repayable', fmtMoney(k.totalRepayable), 'principal ' + fmtMoney(k.principal)),
         kfTile('totalInterest', 'Total interest', fmtMoney(k.totalInterest), 'at mid-band'),
         kfTile('earlySettlement', 'Early-settlement fee cap', k.earlySettlementFeeCap || '—', 'Reg 29/2011'),
-        kfTile('coolingOff', 'Cooling-off', (k.coolingOffDays || reg.coolingOffDays || 5) + ' days', 'business days, waivable in writing')),
+        kfTile('coolingOff', 'Cooling-off', (k.coolingOffDays || reg.coolingOffDays || 5) + ' days', 'business days, waivable in writing'),
+        repaymentKfsTile(rec.repayment || repayFor(k.principal))),
       h('div', { class: 'kfs-foot', text: 'Benchmark ' + (p.benchmark || 'EIBOR 3M + margin') + '. The KFS itself is a product-layer artifact in Arabic + English; Mizan supplies these figures and the engine records the acknowledgement.' }));
   }
   return null;
@@ -1136,13 +1382,15 @@ function decisionSummaryPanel(rec, opts) {
   opts = opts || {};
   var panel = h('div');
   panel.appendChild(outcomeBanner(rec, opts.metaLine));
+  if (rec.outcome === 'APPROVE' && rec.repayment) panel.appendChild(repaymentLine(rec.repayment, { id: opts.repayId || null, basis: rec.kind === 'UPGRADE' && rec.selection ? 'chosen amount' : 'approved amount' }));
   var kfs = kfsBlock(rec, opts.kfsMonths);
   if (kfs) panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'KFS preview — feeds the Key Facts Statement (AR + EN)' }), h('div', { id: opts.kfsId || null }, kfs)));
   panel.appendChild(decisionGrid(rec, opts));
   return panel;
 }
 
-/* Execution panel — the five conventional consumer-protection steps, sequence enforced by the engine */
+/* Execution panel — the conventional consumer-protection steps (from ME.execSteps), sequence enforced by the engine.
+   Returns { repaint(rec) } so a journey can refresh labels (e.g. the repayment step follows the chosen amount). */
 function buildExecPanel(rec, boxId, opts) {
   opts = opts || {};
   var box = clear($('#' + boxId));
@@ -1150,10 +1398,10 @@ function buildExecPanel(rec, boxId, opts) {
   panel.appendChild(h('h3', null, 'An approval is not a loan — execute in order ', h('span', { class: 'h3-note', text: '(product layer, sequence enforced by the engine)' })));
   panel.appendChild(h('p', { class: 'small muted' },
     'Mizan’s approval is a time-boxed risk decision, not a contract. The product layer records each consumer-protection step against the decision record. Click the steps in order — or try one out of order to see the engine refuse it (that refusal is the audit control, not a bug).'));
-  var steps = execStepsFor(rec.productId);
   var list = h('div', { class: 'exec-steps', id: boxId + '-steps' });
   var errBox = h('div', { id: boxId + '-err', 'aria-live': 'polite' });
   function paint(r) {
+    var steps = execStepsFor(r.productId, r.id);
     clear(list);
     var doneAt = {};
     (r.events || []).forEach(function (ev) { doneAt[ev.type] = ev.at; });
@@ -1170,7 +1418,7 @@ function buildExecPanel(rec, boxId, opts) {
       clear(errBox);
       errBox.appendChild(h('div', { class: 'callout callout-ok', dataset: { status: 'EXECUTED' } },
         h('div', { class: 'co-title', text: 'EXECUTED — the agreement exists now; every step is linked to the decision record' }),
-        h('div', { class: 'co-body' }, opts.executedNote || 'The consumer-protection audit can replay approval → offer → KFS → e-sign → cooling-off → disbursement end-to-end. ',
+        h('div', { class: 'co-body' }, opts.executedNote || 'The consumer-protection audit can replay approval → offer → KFS → e-sign → repayment set-up → cooling-off → disbursement end-to-end. ',
           h('button', { class: 'btn btn-ghost', text: 'View the full record in the Decision log →', onclick: function () { showScreen('log'); LogScreen.select(r.id); } }))));
     }
   }
@@ -1196,6 +1444,7 @@ function buildExecPanel(rec, boxId, opts) {
   panel.appendChild(list);
   panel.appendChild(errBox);
   box.appendChild(panel);
+  return { repaint: function (r) { paint(r); } };
 }
 /* ================= SVG chart helpers (hand-rolled; dataviz-skill conventions) ================= */
 var SVGNS = 'http://www.w3.org/2000/svg';
@@ -1627,6 +1876,8 @@ var Split = {
           h('div', { class: 'os-s', text: plan ? fmtMoney(plan.monthlyPayment) + '/mo incl. fee' : '' })),
         h('div', { class: 'os', dataset: { offer: 'capacity' } }, h('div', { class: 'os-l', text: prov + (prov ? 'split capacity' : 'Split capacity') }), h('div', { class: 'os-v', text: fmtAED(lim.capacity) }),
           h('div', { class: 'os-s', text: remaining !== null ? fmtAED(remaining) + ' left to split another purchase' : '' }))));
+      /* Repayment follows the approved purchase-plan amount (the principal — the same on every plan) */
+      if (rec.outcome === 'APPROVE') off.appendChild(repaymentLine(rec.repayment || repayFor(pr && pr.principal), { id: 'sp-repay', basis: 'approved plan amount' }));
     }
     var kb = $('#sp-kfs');
     if (kb) { clear(kb); var k = kfsBlock(rec, Split.selMonths); if (k) kb.appendChild(k); }
@@ -1680,6 +1931,7 @@ var Split = {
         h('div', { class: 'co-title', text: res.allowed ? 'Allowed — ' + fmtMoney(res.amount) + ' on Pay in ' + pl.months : 'Blocked — ' + fmtMoney(res.amount) }),
         res.allowed ? h('div', { class: 'co-body small', text: 'Pay in ' + pl.months + ' · ' + fmtMoney(pl.monthlyPayment) + '/mo incl. fee ' + fmtMoney(pl.monthlyFee) + ' · total ' + fmtMoney(pl.planTotal) + ' · APR equivalent ' + fmtRate(pl.aprEquivalent) +
           (pl.adjusted ? ' — lengthened from Pay in ' + pl.requestedMonths + ' to stay affordable' : '') }) : null,
+        res.allowed && res.repayment ? repaymentLine(res.repayment, { id: 'sa-repay', basis: 'new plan amount' }) : null,
         (res.reasonCodes && res.reasonCodes.length) ? h('div', { style: 'margin-top:6px;' }, res.reasonCodes.map(function (c) { return reasonLine(c); })) : null));
       paintCap(res.remainingAfter);
       rows.push([fmtMoney(res.amount), 'Pay in ' + (pl.requestedMonths || Split.saMonths) + (pl.adjusted ? ' → ' + pl.months : ''), arr.checked ? 'arrears' : '—', res.allowed ? 'ALLOWED' : 'BLOCKED', fmtAED(res.remainingAfter)]);
@@ -1700,7 +1952,7 @@ var Loan = {
   build: function () {
     var root = clear($('#scr-loan'));
     root.appendChild(screenHead('Personal loan · قرض شخصي', 'Personal loan',
-      'Consent → real-time AECB + salary verified via connected accounts → affordability (DBR ≤ 50%) → policy pack → scorecard → limit, APR band and KFS → approval token. Then the five consumer-protection steps, in order.'));
+      'Consent → real-time AECB + salary verified via connected accounts → affordability (DBR ≤ 50%) → policy pack → scorecard → limit, APR band and KFS → approval token. Then the ' + execCountWord() + ' consumer-protection steps, in order — repayment collected from the customer’s own account, no salary transfer required.'));
     var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
     root.appendChild(h('div', { class: 'grid2' }, left, right));
 
@@ -1715,7 +1967,8 @@ var Loan = {
           h('span', { class: 'chip', text: a.hit ? 'AECB ' + a.score : 'No AECB file — thin file' }),
           h('span', { class: 'chip', text: bd.source === 'ALTAREQ_TPP' ? 'Salary via connected account' : 'Salary via documents' }),
           emp.retiree ? h('span', { class: 'chip', text: 'Retiree' }) : null,
-          a.creditPassportAvailable ? h('span', { class: 'chip acc', text: 'Credit Passport' }) : null)));
+          a.creditPassportAvailable ? h('span', { class: 'chip acc', text: 'Credit Passport' }) : null,
+          p.homeStatements ? h('span', { class: 'chip', text: p.homeStatements.bank + ' statements on request' }) : null)));
     });
     left.appendChild(h('div', { class: 'panel' }, h('h3', null, 'Applicants ', h('span', { class: 'h3-note', text: '(r1–r5, synthetic)' })), pWrap));
 
@@ -1818,14 +2071,14 @@ var Loan = {
     var box = clear($('#ln-decision'));
     var panel = h('div', { class: 'panel' });
     panel.appendChild(h('h3', { text: 'Decision' }));
-    panel.appendChild(decisionSummaryPanel(rec, { kfsId: 'ln-kfs',
+    panel.appendChild(decisionSummaryPanel(rec, { kfsId: 'ln-kfs', repayId: 'ln-repay',
       metaLine: (Loan.sel ? Loan.sel.name + ' · ' : '') + fmtAED(rec.request.amount) + ' over ' + rec.request.tenorMonths + ' months' }));
     if (rec.outcome === 'REFER') {
       var cp = Loan.sel && Loan.sel.aecb && Loan.sel.aecb.creditPassportAvailable;
       panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
         h('div', { class: 'co-title', text: 'Routed to the refer workbench' }),
         h('div', { class: 'co-body' }, 'A structured case with the full pre-assembled file is now in the analyst queue (personal-loan SLA: 8 hours). ',
-          cp ? 'Thin file with Credit Passport available: re-submit with the Credit Passport consent ticked for an automated cross-border decision, or let the analyst decide on the consented home-country history. ' : '',
+          cp ? 'Thin file with Credit Passport available: re-submit with the Credit Passport consent ticked for an automated cross-border decision, or let the analyst ask for 6 months of home-country bank statements — Mizan re-decides on them. ' : '',
           h('button', { class: 'btn btn-ghost', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
     }
     box.appendChild(panel);
@@ -1851,6 +2104,7 @@ var Loan = {
         h('dt', { text: rec.outcome === 'REFER' ? 'Provisional limit' : 'Limit' }), h('dd', { class: 'num', text: fmtAED(rec.limit && rec.limit.approved) + '  (min of ' + (sa.pctOfSalary || 80) + '% × salary, ' + fmtAED(sa.capAmount || 13500) + ' cap)' }),
         h('dt', { text: 'Fee' }), h('dd', { class: 'num', text: rec.pricing && rec.pricing.mode === 'FLAT_FEE' ? fmtMoney(rec.pricing.fee) + ' flat' : '—' })),
       h('div', { class: 'callout callout-info small' }, h('strong', { text: 'Flat fee, no interest. ' }), (rec.pricing && rec.pricing.note) || ''),
+      rec.outcome === 'APPROVE' && rec.repayment ? repaymentLine(rec.repayment, { id: 'ln-sa-repay' }) : null,
       rec.reasonCodes && rec.reasonCodes.length ? h('div', { style: 'margin-top:6px;' }, rec.reasonCodes.map(function (c) { return reasonLine(c); })) : null));
     afterEngineMutation();
   }
@@ -1860,7 +2114,7 @@ var Loan = {
 function fmtApr(r) { return !isNum(r) ? '—' : String(Number((r * 100).toFixed(2))) + '%'; }
 function fmtX(x) { return !isNum(x) ? '—' : '×' + Number(x).toFixed(1); }
 function monthsTxt(n) { return n + ' month' + (n === 1 ? '' : 's'); }
-var TIER_LABEL = { ENHANCED: 'Enhanced — UAE accounts + international statements', BASE: 'Base — UAE accounts only' };
+var TIER_LABEL = { ENHANCED: 'Enhanced — UAE accounts + home-country statements', BASE: 'Base — UAE accounts only' };
 /* Nice axis step: the smallest of {1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8} × 10^k that is ≥ v */
 function niceStepUp(v) {
   if (!(v > 0)) return 1;
@@ -1879,23 +2133,24 @@ function upgradeTierBlock(rec) {
   kv.appendChild(h('dt', { text: 'Tier' }));
   kv.appendChild(h('dd', null, rec.tier ? h('span', { class: 'chip acc', text: rec.tier }) : h('span', { class: 'small muted', text: 'none — no upgrade' })));
   row('Starter loan', (pl.ref || '—') + ' · ' + (pl.dpd === 0 ? 'repaid on time' : 'repaid ' + pl.dpd + ' days late'));
-  row('Income history', (f.incomeHistoryMonths || 0) + ' months (' + (f.connectedMonths || 0) + ' UAE' + (isNum(f.internationalMonths) ? ' + ' + f.internationalMonths + ' international' : '') + ')');
+  row('Income history', (f.incomeHistoryMonths || 0) + ' months (' + (f.connectedMonths || 0) + ' UAE' + (isNum(f.homeHistoryMonths) ? ' + ' + f.homeHistoryMonths + ' home-country account history' : '') + ')');
   row('Free cash flow', fmtAED(f.freeCashFlowMonthly) + '/mo');
   row('Instalment budget', fmtAED(f.maxInstalment) + '/mo');
-  row('Home-country loans', isNum(f.homeCountryObligations) ? fmtAED(f.homeCountryObligations) + '/mo (from the statements)' : 'not visible — no statements');
+  row('Home-country EMIs', isNum(f.homeCountryObligations) ? fmtAED(f.homeCountryObligations) + '/mo (from the statements)' : 'not visible — no statements');
   row('DBR at the default option', fmtPct(f.dbrPct, 1));
   return h('div', null, kv,
     h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'No scorecard grade: the AECB file is one tradeline old and has no score yet. The starter loan’s repayment record and the tier rules carry this decision.' }));
 }
 /* KFS tiles for one upgrade option (selection or live choice) */
-function upgradeKfsTiles(o, amount, coolingOffDays, id) {
+function upgradeKfsTiles(o, amount, coolingOffDays, id, rep) {
   return h('div', { class: 'kfs k6', id: id || null, dataset: { months: String(o.months), amount: String(amount) } },
     kfTile('apr', 'APR', fmtApr(o.apr), 'fixed, reducing balance'),
     kfTile('monthlyPayment', 'Monthly payment', fmtMoney(o.monthlyPayment), 'equal instalments'),
     kfTile('payments', 'Number of payments', String(o.months), 'one a month'),
     kfTile('totalRepayable', 'Total repayable', fmtMoney(o.totalRepayable), 'principal ' + fmtAED(amount)),
     kfTile('totalInterest', 'Total interest', fmtMoney(o.totalInterest), '= total cost of credit = partner income'),
-    kfTile('coolingOff', 'Cooling-off', (coolingOffDays || 5) + ' days', 'business days, waivable in writing'));
+    kfTile('coolingOff', 'Cooling-off', (coolingOffDays || 5) + ' days', 'business days, waivable in writing'),
+    repaymentKfsTile(rep || repayFor(amount)));
 }
 var UPGRADE_KFS_NOTE = 'A longer term lowers the APR and the monthly payment but raises the total interest — the KFS shows both.';
 
@@ -2020,17 +2275,17 @@ function upgradeChart(quote, opts) {
 }
 
 var Upgrade = {
-  sel: null, rec: null, pendingId: null, amount: null, months: null, quote: null, execBuilt: false,
+  sel: null, rec: null, pendingId: null, amount: null, months: null, quote: null, execBuilt: false, exec: null, parsed: null,
   build: function () {
     var root = clear($('#scr-upgrade'));
     root.appendChild(screenHead('Credit lifecycle — re-decision on new data', 'From starter loan to upgrade',
-      'A thin-file customer repaid Noor’s AED 1,000 starter loan on time. Mizan re-decides on connected UAE accounts — plus international bank statements, if the customer adds them — and offers more for less. The customer picks the amount and the term: the longer the term, the lower the APR, and the lending partner still earns more.'));
+      'A thin-file customer repaid Noor’s AED 1,000 starter loan on time. Mizan re-decides on connected UAE accounts — plus 6 months of home-country bank statements (India, Pakistan or Egypt), if the customer uploads them — and offers more for less. The customer picks the amount and the term: the longer the term, the lower the APR, and the lending partner still earns more.'));
     var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
     root.appendChild(h('div', { class: 'grid2' }, left, right));
 
     var pWrap = h('div', { class: 'grid-cards', id: 'up-personas' });
     (MD.personasUpgrade || []).forEach(function (p) {
-      var pl = p.priorLoan || {}, cn = p.connected || {}, x = p.international || {};
+      var pl = p.priorLoan || {}, cn = p.connected || {}, x = p.homeStatements || {};
       var onTime = pl.dpd === 0;
       pWrap.appendChild(h('button', { class: 'pcard', id: 'upp-' + p.id, 'aria-pressed': 'false', onclick: function () { Upgrade.pick(p); } },
         h('span', { class: 'pname' }, h('span', { text: p.name }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: p.nameAr || '' })),
@@ -2039,30 +2294,39 @@ var Upgrade = {
           h('span', { class: 'chip ' + (onTime ? 'chip-ok' : 'chip-warn'), text: onTime ? 'Starter repaid on time' : 'Starter repaid ' + pl.dpd + ' days late' }),
           h('span', { class: 'chip', text: 'Income ' + fmtAED(cn.avgMonthlyIncome) + '/mo' }),
           h('span', { class: 'chip', text: (cn.monthsAvailable || 0) + ' mo connected' }),
-          x.bank ? h('span', { class: 'chip acc', text: x.bank + ' · ' + x.monthsAvailable + ' mo statements' }) : null)));
+          x.bank ? h('span', { class: 'chip acc chip-wrap', text: x.bank + ' · ' + ((corridorUi(x.country) || {}).name || x.country) + ' · 6 mo statements' }) : null)));
     });
     left.appendChild(h('div', { class: 'panel' }, h('h3', null, 'Customers ', h('span', { class: 'h3-note', text: '(u1–u2, synthetic)' })), pWrap));
     left.appendChild(h('div', { id: 'up-prior', class: 'purchase-card' }, h('div', { class: 'pc-empty', text: 'Pick a customer — Noor shows the starter loan and how it was repaid.' })));
 
     var form = h('div', { class: 'panel', id: 'up-form' });
-    form.appendChild(h('h3', { text: 'Consent — two required, one optional' }));
+    form.appendChild(h('h3', { text: 'Consent and evidence — two required, one optional' }));
     form.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'up-c-aecb' }), h('label', { for: 'up-c-aecb' },
       h('div', { class: 'cb-title', text: 'AECB credit bureau check — required' }),
       h('div', { class: 'cb-legal', text: 'I consent to Noor requesting my credit report from Al Etihad Credit Bureau (Federal Law 6/2010). The starter loan created the file; a bureau check is mandatory before more credit is granted.' }))));
     form.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'up-c-of' }), h('label', { for: 'up-c-of' },
       h('div', { class: 'cb-title', text: 'Connect UAE bank accounts (Open Finance via Al Tareq) — required' }),
       h('div', { class: 'cb-legal', text: 'I consent to Noor reading my connected-account income and spending through the Al Tareq consent layer (CBUAE Open Finance) to re-decide my limit and rate.' }))));
-    form.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'up-c-intl' }), h('label', { for: 'up-c-intl' },
-      h('div', { class: 'cb-title', text: 'International bank statements — optional' }),
-      h('div', { class: 'cb-legal' }, 'Add your home-country bank statements to unlock a bigger limit and a lower rate. ',
-        h('span', { id: 'up-intl-detail', text: 'Parsed for income history and existing loans; used only for this decision.' })))));
+    /* v2.4 — the optional consent became an upload step: the customer brings the statements, Mizan parses them */
+    form.appendChild(h('div', { class: 'consent-box up-stmt', id: 'up-stmt' },
+      h('span', { class: 'up-stmt-ico', 'aria-hidden': 'true', text: '↑' }),
+      h('div', { class: 'up-stmt-main' },
+        h('div', { class: 'cb-title', text: 'Upload 6 months of bank statements — India · Pakistan · Egypt' }),
+        h('div', { class: 'cb-legal' }, 'Optional. Add your home-country statements to unlock a bigger limit and a lower rate. ',
+          h('span', { id: 'up-stmt-detail', text: 'Mizan checks the document and the account holder’s name, then reads EMIs, buffer and remittances; used only for this decision.' })),
+        h('div', { class: 'up-stmt-row' },
+          h('div', { class: 'field' }, h('label', { for: 'up-st-country', text: 'Country' }), countrySelect('up-st-country', 'IN')),
+          h('div', { class: 'field up-stmt-file' }, h('label', { for: 'up-st-file', text: 'Statement file' }), h('select', { id: 'up-st-file', 'aria-label': 'Statement file to upload' })),
+          h('div', { class: 'field up-stmt-btn' }, h('button', { class: 'btn', id: 'up-st-upload', type: 'button', text: 'Upload & parse', onclick: function () { Upgrade.upload(); } }))),
+        h('div', { id: 'up-st-err', 'aria-live': 'polite' }))));
     form.appendChild(h('div', { id: 'up-consent-err', 'aria-live': 'polite' }));
     form.appendChild(h('div', { class: 'btnrow', style: 'margin-top:10px;' },
       h('button', { class: 'btn btn-primary', id: 'up-submit', text: 'Re-decide', onclick: function () { Upgrade.submit(); } }),
-      h('span', { class: 'small muted', text: 'POST /decisions · product starter_loan · re-decision' })));
+      h('span', { class: 'small muted', id: 'up-submit-hint', text: 'POST /decisions · product starter_loan · re-decision' })));
     left.appendChild(form);
+    left.appendChild(h('div', { id: 'up-parse' }));
     left.appendChild(h('div', { class: 'panel', id: 'up-orch' }, h('h3', { text: 'Orchestration' }),
-      h('div', { class: 'small muted', text: 'Re-decide to watch Mizan read the prior decision, the AECB file the starter loan created, the connected UAE accounts and — with consent — the international statements.' })));
+      h('div', { class: 'small muted', text: 'Re-decide to watch Mizan read the prior decision, the AECB file the starter loan created, the connected UAE accounts and — when uploaded — the home-country statements.' })));
 
     right.appendChild(h('div', { id: 'up-decision' }, h('div', { class: 'panel' }, h('h3', { text: 'Decision' }),
       h('div', { class: 'small muted', text: 'The upgrade offer appears here: what changes from the starter loan, the options to choose from, and the Key Facts Statement figures for your choice.' }))));
@@ -2079,16 +2343,21 @@ var Upgrade = {
     if (p) Upgrade.pick(p);
   },
   pick: function (p) {
-    Upgrade.sel = p; Upgrade.rec = null; Upgrade.pendingId = null; Upgrade.quote = null; Upgrade.execBuilt = false;
+    Upgrade.sel = p; Upgrade.rec = null; Upgrade.pendingId = null; Upgrade.quote = null; Upgrade.execBuilt = false; Upgrade.exec = null; Upgrade.parsed = null;
     $all('#up-personas .pcard').forEach(function (c) { var on = c.id === 'upp-' + p.id; c.classList.toggle('sel', on); c.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-    ['#up-c-aecb', '#up-c-of', '#up-c-intl'].forEach(function (s) { $(s).checked = false; });
-    var x = p.international;
-    $('#up-intl-detail').textContent = x ? x.bank + ' (' + x.country + ') — ' + x.monthsAvailable + ' months of statements, parsed for income history and existing loans; used only for this decision.' : 'Parsed for income history and existing loans; used only for this decision.';
-    clear($('#up-consent-err'));
+    ['#up-c-aecb', '#up-c-of'].forEach(function (s) { $(s).checked = false; });
+    var x = p.homeStatements;
+    $('#up-st-country').value = x && corridorUi(x.country) ? x.country : 'IN';
+    var fsel = clear($('#up-st-file'));
+    statementFiles(x).forEach(function (f) { fsel.appendChild(h('option', { value: f.file, text: f.label })); });
+    $('#up-stmt-detail').textContent = x ? firstName(p.name) + '’s ' + x.bank + ' statements (' + ((corridorUi(x.country) || {}).name || x.country) + '). Mizan checks the document and the account holder’s name, then reads EMIs, buffer and remittances; used only for this decision.'
+      : 'Mizan checks the document and the account holder’s name, then reads EMIs, buffer and remittances; used only for this decision.';
+    clear($('#up-consent-err')); clear($('#up-st-err')); clear($('#up-parse'));
+    Upgrade.updateSubmitLabel();
     Upgrade.slots.forEach(function (s) { clear($(s)); });
     var dec = clear($('#up-decision'));
     dec.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Decision' }),
-      h('div', { class: 'small muted', text: 'Ready — tick the consents and re-decide ' + firstName(p.name) + '’s credit. Try it with and without the international statements.' })));
+      h('div', { class: 'small muted', text: 'Ready — tick the consents and re-decide ' + firstName(p.name) + '’s credit. Try it first without statements, then upload them.' })));
     var orch = clear($('#up-orch'));
     orch.appendChild(h('h3', { text: 'Orchestration' }));
     orch.appendChild(h('div', { class: 'small muted', text: 'Ready — the re-decision reads four sources, in order.' }));
@@ -2102,21 +2371,70 @@ var Upgrade = {
     box.appendChild(h('div', { class: 'pc-copy' }, firstName(p.name) + '’s ' + fmtAED(pl.amount) + ' starter loan was repaid ',
       onTime ? h('em', { text: 'on time.' }) : h('em', { class: 'pc-late', text: pl.dpd + ' days late.' })));
     box.appendChild(h('div', { class: 'pc-via', text: onTime ? 'Its job was to create a repayment record and an AECB file. It did both — now Noor can offer more, for less.' : 'It created a repayment record and an AECB file — with one late payment on it.' }));
+    var prRep = repayFor(pl.amount);
     box.appendChild(h('div', { class: 'pc-grid', id: 'up-prior-grid' },
       h('div', null, h('span', { class: 'pc-k', text: 'Amount' }), h('span', { class: 'pc-v', text: fmtAED(pl.amount) })),
       h('div', null, h('span', { class: 'pc-k', text: 'Tenor' }), h('span', { class: 'pc-v', text: monthsTxt(pl.tenorMonths) })),
       h('div', null, h('span', { class: 'pc-k', text: 'APR' }), h('span', { class: 'pc-v', text: fmtApr(pl.apr) })),
       h('div', null, h('span', { class: 'pc-k', text: 'Partner income' }), h('span', { class: 'pc-v', text: fmtMoney(pl.partnerIncome) })),
       h('div', null, h('span', { class: 'pc-k', text: 'Due' }), h('span', { class: 'pc-v', text: fmtLongDate(pl.dueAt) })),
-      h('div', { dataset: { k: 'repaid' } }, h('span', { class: 'pc-k', text: 'Repaid' }), h('span', { class: 'pc-v', text: fmtLongDate(pl.repaidAt) + ' · ' + (onTime ? 'on time' : pl.dpd + ' days late') }))));
+      h('div', { dataset: { k: 'repaid' } }, h('span', { class: 'pc-k', text: 'Repaid' }), h('span', { class: 'pc-v', text: fmtLongDate(pl.repaidAt) + ' · ' + (onTime ? 'on time' : pl.dpd + ' days late') })),
+      prRep ? h('div', { dataset: { k: 'collected' } }, h('span', { class: 'pc-k', text: 'Collected via' }), h('span', { class: 'pc-v', text: prRep.label })) : null));
+  },
+  updateSubmitLabel: function () {
+    var b = $('#up-submit'), hint = $('#up-submit-hint'); if (!b) return;
+    b.textContent = Upgrade.parsed ? 'Re-decide with statements' : 'Re-decide';
+    if (hint) hint.textContent = Upgrade.parsed ? 'POST /decisions · starter_loan · with ' + Upgrade.parsed.bank + ' statements' + (Upgrade.supersedable() ? ' · supersedes ' + Upgrade.rec.id : '')
+      : 'POST /decisions · product starter_loan · re-decision';
+  },
+  /* The offer on screen can be superseded by a re-decision on new evidence (until the customer accepts it) */
+  supersedable: function () {
+    var r = Upgrade.rec, p = Upgrade.sel;
+    return !!(r && p && r.applicantSnapshot && r.applicantSnapshot.id === p.id && !r.supersededBy);
+  },
+  /* Customer upload → the engine's parser (pure); the parse panel animates like the orchestration timeline */
+  upload: function () {
+    var errBox = clear($('#up-st-err'));
+    var p = Upgrade.sel;
+    if (!p) { errBox.appendChild(h('div', { class: 'callout callout-warn', text: 'Pick a customer first.' })); return; }
+    var hs = p.homeStatements || {};
+    var parsed;
+    try {
+      parsed = ME.parseStatements({ country: $('#up-st-country').value, bank: hs.bank, file: $('#up-st-file').value, applicantId: p.id, productId: 'starter_loan' });
+    } catch (err) {
+      /* Expected engine refusal (unsupported corridor, no statements on file) — inline, never fatal */
+      errBox.appendChild(h('div', { class: 'callout callout-error', dataset: { refused: 'statements' } },
+        h('div', { class: 'co-title', text: 'Upload refused by the engine' }),
+        h('div', { class: 'co-body' }, h('code', { text: err && err.message ? err.message : String(err) }),
+          h('div', { class: 'small', style: 'margin-top:4px;', text: 'Mizan reads statements from India, Pakistan and Egypt today; nothing was stored.' }))));
+      Upgrade.parsed = null; clear($('#up-parse')); Upgrade.updateSubmitLabel();
+      return;
+    }
+    Upgrade.parsed = parsed;
+    var box = clear($('#up-parse'));
+    box.appendChild(h('div', { class: 'panel' }, h('h3', null, 'Statements parser ', h('span', { class: 'h3-note', text: '— read before any decision uses them' })),
+      statementsParsePanel(parsed, { id: 'up-parse-panel', after: function () {
+        return h('div', { class: 'btnrow', style: 'margin-top:10px;' },
+          h('button', { class: 'btn btn-primary', id: 'up-st-redecide', text: 'Re-decide with statements', onclick: function () { Upgrade.submit(); } }),
+          h('span', { class: 'small muted', text: Upgrade.supersedable() ? 'A new decision that supersedes ' + Upgrade.rec.id : 'Ticks the same consents; statements ride along' }));
+      } })));
+    Upgrade.updateSubmitLabel();
+    var pp = $('#up-parse'); if (pp && pp.scrollIntoView && !REDUCED) pp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  },
+  focusUpload: function () {
+    var b = $('#up-st-upload'); if (!b) return;
+    try { b.scrollIntoView({ block: 'center', behavior: REDUCED ? 'auto' : 'smooth' }); } catch (e) {}
+    b.focus();
   },
   submit: function () {
     var errBox = clear($('#up-consent-err'));
     if (!Upgrade.sel) { errBox.appendChild(h('div', { class: 'callout callout-warn', text: 'Pick a customer first.' })); return; }
-    var cA = $('#up-c-aecb').checked, cO = $('#up-c-of').checked, cI = $('#up-c-intl').checked;
+    var cA = $('#up-c-aecb').checked, cO = $('#up-c-of').checked;
     var p = Upgrade.sel, rec;
+    var st = Upgrade.parsed;
+    var sup = st && Upgrade.supersedable() ? Upgrade.rec.id : undefined;
     try {
-      rec = ME.decide({ productId: 'starter_loan', applicant: p, consents: { aecb: cA, openFinance: cO, internationalStatements: cI } });
+      rec = ME.decide({ productId: 'starter_loan', applicant: p, consents: { aecb: cA, openFinance: cO }, statements: st || undefined, supersedes: sup });
     } catch (err) {
       /* Consent gate lives in the engine — shown inline, never as a fatal error */
       var why = [];
@@ -2126,10 +2444,11 @@ var Upgrade = {
         h('div', { class: 'co-title', text: (!cA || !cO) ? 'Re-decision blocked — consent missing' : 'Engine rejected the re-decision' }),
         h('div', { class: 'co-body' }, h('code', { text: err && err.message ? err.message : String(err) }),
           why.length ? h('ul', { class: 'small', style: 'margin:6px 0 0 16px;padding:0;' }, why) : null,
-          h('div', { class: 'small muted', style: 'margin-top:4px;', text: 'International statements stay optional — they only decide the tier.' }))));
+          h('div', { class: 'small muted', style: 'margin-top:4px;', text: 'Home-country statements stay optional — they only decide the tier.' }))));
       return;
     }
-    Upgrade.rec = null; Upgrade.pendingId = rec.id; Upgrade.execBuilt = false;
+    Upgrade.rec = null; Upgrade.pendingId = rec.id; Upgrade.execBuilt = false; Upgrade.exec = null;
+    Upgrade.updateSubmitLabel();
     Upgrade.slots.forEach(function (s) { clear($(s)); });
     clear($('#up-decision'));
     var orch = clear($('#up-orch'));
@@ -2163,7 +2482,9 @@ var Upgrade = {
       h('span', { class: 'ob-word', text: word }),
       h('div', null,
         h('div', { class: 'ob-meta' }, h('code', { text: rec.id }), ' · Starter loan → upgrade · policy v' + rec.policyVersion + ' · ' + fmtDT(rec.createdAt)),
-        h('div', { class: 'ob-meta', text: (p.name || '') + (rec.tier ? ' · tier ' + TIER_LABEL[rec.tier] : ' · starter terms continue') }))));
+        h('div', { class: 'ob-meta', text: (p.name || '') + (rec.tier ? ' · tier ' + TIER_LABEL[rec.tier] : ' · starter terms continue') }),
+        rec.supersedes ? h('div', { class: 'ob-meta supersedes-line', dataset: { supersedes: rec.supersedes } }, 'supersedes ', h('code', { text: rec.supersedes }),
+          ' — re-decided on the uploaded statements; that offer can no longer be accepted') : null)));
     if (rec.outcome === 'APPROVE' && up) {
       function cmp(key, label, from, to, sub) {
         return h('div', { class: 'cmp', dataset: { cmp: key } }, h('div', { class: 'cmp-l', text: label }),
@@ -2175,31 +2496,44 @@ var Upgrade = {
         cmp('tenor', 'Term', monthsTxt(pl.tenorMonths), monthsTxt(up.maxTenorMonths), 'up to — you choose'),
         cmp('apr', 'APR', fmtApr(pl.apr), fmtApr(up.aprFloor), 'from — on the longest term')));
       var cf = up.counterfactual || {};
+      var hst = rec.homeStatements, hsP = (Upgrade.sel || {}).homeStatements || {};
+      var adj = (corridorUi(hsP.country) || {}).adj || 'home-country';
       if (rec.tier === 'ENHANCED') {
         var surfaced = isNum(f.homeCountryObligations) && f.homeCountryObligations > 0
-          ? ' and surfaced a ' + fmtAED(f.homeCountryObligations) + '/mo home-country loan.'
+          ? ' and surfaced an ' + fmtAED(f.homeCountryObligations) + '/mo home-country EMI, now counted in free cash flow.'
           : ' and showed no home-country loans.';
         panel.appendChild(h('div', { class: 'callout callout-info', id: 'up-counterfactual', dataset: { tier: 'ENHANCED' } },
-          h('div', { class: 'co-title', text: 'What the international statements were worth' }),
-          h('div', { class: 'co-body', text: 'Without the international statements: up to ' + fmtAED(cf.maxAmount) + ' · ' + monthsTxt(cf.maxTenorMonths) + ' · from ' + fmtApr(cf.aprAtMaxTenor) + ' APR. The statements added ' + (f.internationalMonths || 0) + ' months of income history' + surfaced })));
+          h('div', { class: 'co-title', text: 'What the statements were worth' }),
+          h('div', { class: 'co-body', text: 'Without the statements: up to ' + fmtAED(cf.maxAmount) + ' · ' + monthsTxt(cf.maxTenorMonths) + ' · from ' + fmtApr(cf.aprAtMaxTenor) + ' APR. The ' +
+            (hst ? hst.bank + ' statements verified an account open since ' + fmtYm(hst.accountOpenSince) : 'statements verified the home-country account') +
+            ' — ' + (f.homeHistoryMonths || 0) + ' months of history credited —' + surfaced })));
       } else {
-        var shared = rec.consents && rec.consents.internationalStatements && rec.consents.internationalStatements.granted;
-        panel.appendChild(h('div', { class: 'callout callout-info', id: 'up-counterfactual', dataset: { tier: 'BASE' } },
-          h('div', { class: 'co-title', text: shared ? 'Not enough history for the enhanced tier yet' : 'Add international statements for more' }),
-          h('div', { class: 'co-body', text: (shared ? 'The statements shared give ' + (f.incomeHistoryMonths || 0) + ' months of income history in total; the enhanced tier needs ' + (currentParams('starter_loan').minIncomeHistoryMonthsEnhanced || 12) + '. '
-              : 'This offer uses the connected UAE accounts only (' + (f.connectedMonths || 0) + ' months of income history). ') +
-            'With enough verified history the offer can reach up to ' + fmtAED(cf.maxAmount) + ' · ' + monthsTxt(cf.maxTenorMonths) + ' · from ' + fmtApr(cf.aprAtMaxTenor) + ' APR' + (shared ? '.' : ' — re-decide with the optional consent ticked.') })));
+        var stState = f.homeStatements;
+        var cta = 'Upload 6 months of your ' + adj + ' bank statements to unlock up to ' + fmtAED(cf.maxAmount) + ' at ' + fmtApr(cf.aprAtMaxTenor) + '.';
+        var title = stState === 'INCOMPLETE' ? 'Statements incomplete — upload all 6 months' : (stState === 'USED' ? 'Not enough history for the enhanced tier yet' : 'Unlock more with your ' + adj + ' bank statements');
+        var body = stState === 'USED'
+          ? 'The statements give ' + (f.incomeHistoryMonths || 0) + ' months of history in total; the enhanced tier needs ' + (currentParams('starter_loan').minIncomeHistoryMonthsEnhanced || 12) + '.'
+          : 'This offer uses the connected UAE accounts only (' + (f.connectedMonths || 0) + ' months of income history). ' + cta;
+        var locked = !!(rec.events && rec.events.length);
+        panel.appendChild(h('div', { class: 'callout callout-info up-cta', id: 'up-counterfactual', dataset: { tier: 'BASE' } },
+          h('div', { class: 'co-title', text: title }),
+          h('div', { class: 'co-body', id: 'up-unlock-cta', text: body }),
+          stState === 'USED' || locked ? null : h('div', { class: 'btnrow', style: 'margin-top:8px;' },
+            h('button', { class: 'btn btn-primary', id: 'up-cta-upload', type: 'button', text: 'Upload statements', onclick: function () { Upgrade.focusUpload(); } }),
+            h('span', { class: 'small muted', text: 'India · Pakistan · Egypt · the last 6 months — the re-decision supersedes this offer' }))));
       }
     }
     if (rec.outcome === 'DECLINE') {
       panel.appendChild(h('div', { class: 'callout callout-info', id: 'up-starter-continues', style: 'margin-top:12px;' },
         h('div', { class: 'co-title', text: 'Starter terms continue' }),
-        h('div', { class: 'co-body', text: firstName(p.name) + ' keeps the starter loan: ' + fmtAED(pl.amount) + ' · ' + monthsTxt(pl.tenorMonths) + ' · ' + fmtApr(pl.apr) + ' APR. After 3 on-time months Noor reviews the upgrade again — budgets and goals carry on as before.' })));
+        h('div', { class: 'co-body', text: firstName(p.name) + ' keeps the starter loan: ' + fmtAED(pl.amount) + ' · ' + monthsTxt(pl.tenorMonths) + ' · ' + fmtApr(pl.apr) + ' APR. After 3 on-time months Noor reviews the upgrade again — budgets and goals carry on as before.' +
+          (rec.homeStatements && rec.homeStatements.usable ? ' The ' + rec.homeStatements.bank + ' statements were verified — but statements don’t override a late repayment.' : '') })));
     }
     if (rec.outcome === 'REFER') {
-      panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
-        h('div', { class: 'co-title', text: 'Referred — a designed path, not a failure' }),
-        h('div', { class: 'co-body' }, 'An analyst reviews the case with the full pre-assembled file (SLA 4 hours) before any offer is made. ',
+      var fraudRef = (rec.reasonCodes || []).indexOf('RC_STATEMENTS_INTEGRITY') >= 0;
+      panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;', id: 'up-refer' },
+        h('div', { class: 'co-title', text: fraudRef ? 'Referred to fraud review — the statements could not be verified' : 'Referred — a designed path, not a failure' }),
+        h('div', { class: 'co-body' }, (fraudRef ? 'Never an automatic decline: an analyst checks the document with the customer. ' : '') + 'An analyst reviews the case with the full pre-assembled file (SLA 4 hours) before any offer is made. ',
           h('button', { class: 'btn btn-ghost', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
     }
     panel.appendChild(h('div', { style: 'margin-top:14px;', id: 'up-reasons' }, h('h3', { text: 'Reason codes — EN / AR' }), reasonsBlock(rec)));
@@ -2221,7 +2555,8 @@ var Upgrade = {
         h('label', { for: 'up-amount', style: 'margin:0;', text: 'Amount' }),
         h('span', { class: 'ua-v', id: 'up-amount-val', text: fmtAED(Upgrade.amount) })),
       h('div', { class: 'slider-row' }, rng, num),
-      h('div', { class: 'bounds', text: fmtAED(up.minAmount) + ' to ' + fmtAED(up.maxAmount) + ', in steps of ' + fmtAED(up.amountStep) })));
+      h('div', { class: 'bounds', text: fmtAED(up.minAmount) + ' to ' + fmtAED(up.maxAmount) + ', in steps of ' + fmtAED(up.amountStep) }),
+      h('div', { id: 'up-repay-wrap' }, repaymentLine(repayFor(Upgrade.amount), { id: 'up-repay', basis: 'chosen amount' }))));
     panel.appendChild(h('div', { class: 'plan-list up-opts', id: 'up-opts', role: 'radiogroup', 'aria-label': 'Term' }));
     panel.appendChild(h('div', { class: 'plan-note', id: 'up-opts-note' }));
     box.appendChild(panel);
@@ -2264,6 +2599,8 @@ var Upgrade = {
     if (rng && Number(rng.value) !== q.amount) rng.value = String(q.amount);
     if (num && Number(num.value) !== q.amount) num.value = String(q.amount);
     if (val) val.textContent = fmtAED(q.amount);
+    /* the repayment rail switches live when the amount crosses AED 1,000 (Al Tareq ↔ direct debit) */
+    var rw = $('#up-repay-wrap'); if (rw) { clear(rw); var rl = repaymentLine(repayFor(q.amount), { id: 'up-repay', basis: 'chosen amount' }); if (rl) rw.appendChild(rl); }
     /* keep the chosen term if it still fits; otherwise the nearest longer term that does (shorter as a last resort) */
     var cur = q.options[Upgrade.months - 1];
     if (!cur || !cur.fits) {
@@ -2296,12 +2633,12 @@ var Upgrade = {
     var same = !!(sel && sel.amount === Upgrade.amount && sel.months === Upgrade.months);
     var panel = h('div', { class: 'panel' });
     panel.appendChild(h('h3', null, 'KFS preview — the option you picked ', h('span', { class: 'h3-note', text: '(feeds the Key Facts Statement, AR + EN)' })));
-    panel.appendChild(upgradeKfsTiles(o, Upgrade.amount, currentReg('starter_loan').coolingOffDays, 'up-kfs-tiles'));
+    panel.appendChild(upgradeKfsTiles(o, Upgrade.amount, currentReg('starter_loan').coolingOffDays, 'up-kfs-tiles', repayFor(Upgrade.amount)));
     panel.appendChild(h('div', { class: 'callout callout-info small kfs-note', id: 'up-kfs-note', text: UPGRADE_KFS_NOTE }));
     var label = locked ? 'Option accepted' : (same ? 'Option chosen' : (sel ? 'Switch to this option' : 'Accept this option'));
     var btn = h('button', { class: 'btn btn-primary', id: 'up-accept', text: label, disabled: (locked || same) ? 'disabled' : null, onclick: function () { Upgrade.accept(); } });
     var hint = locked ? 'Fixed at offer acceptance — the agreement steps below use exactly these figures.'
-      : (same ? 'Chosen. Run the five steps below — or move the slider and switch before you accept the offer.'
+      : (same ? 'Chosen. Run the ' + execCountWord() + ' steps below — or move the slider and switch before you accept the offer.'
         : fmtAED(Upgrade.amount) + ' · ' + monthsTxt(Upgrade.months) + ' · ' + fmtApr(o.apr) + ' APR · ' + fmtMoney(o.monthlyPayment) + '/mo');
     panel.appendChild(h('div', { class: 'accept-row' }, btn, h('span', { class: 'small muted', id: 'up-accept-hint', text: hint })));
     if (sel && !same && !locked) {
@@ -2327,9 +2664,10 @@ var Upgrade = {
     }
     Upgrade.rec = updated;
     Upgrade.renderOptions(); Upgrade.renderKfs(); Upgrade.renderToken();
+    if (Upgrade.execBuilt && Upgrade.exec) Upgrade.exec.repaint(updated);   /* repayment step follows a switched option */
     if (!Upgrade.execBuilt) {
       Upgrade.execBuilt = true;
-      buildExecPanel(updated, 'up-exec', {
+      Upgrade.exec = buildExecPanel(updated, 'up-exec', {
         onEvent: function (r) {
           Upgrade.rec = r;
           if (r.events.length === 1) { var a = $('#up-amount'), n = $('#up-amount-n'); if (a) a.disabled = true; if (n) n.disabled = true; }
@@ -2411,7 +2749,7 @@ var PARAM_META = {
     minAmount: ['Minimum upgrade amount (AED)', 100, 2000, 100],
     amountStep: ['Amount step on the slider (AED)', 50, 500, 50],
     instalmentToFcfMaxPct: ['Max instalment as % of free cash flow', 10, 80, 5],
-    minIncomeHistoryMonthsEnhanced: ['Income history for the enhanced tier (months, UAE + international)', 3, 36, 1],
+    minIncomeHistoryMonthsEnhanced: ['Income history for the enhanced tier (months, UAE + home-country account history)', 3, 36, 1],
     minOnTimeStarterRepayments: ['On-time starter repayments required', 1, 6, 1],
     tokenValidityDays: ['Offer validity (days)', 1, 30, 1]
   },
@@ -2436,7 +2774,7 @@ var NESTED_META = {
   maxAmount: ['Max amount (AED)', 1, 100], maxTenorMonths: ['Max tenor (months)', 1, 1],
   aprAtOneMonth: ['APR at 1 month (%)', 100, 0.5], aprAtMaxTenor: ['APR at max tenor (%)', 100, 0.5]
 };
-var TIER_TITLE = { enhanced: 'Enhanced tier — UAE accounts + international statements', base: 'Base tier — UAE accounts only' };
+var TIER_TITLE = { enhanced: 'Enhanced tier — UAE accounts + home-country statements', base: 'Base tier — UAE accounts only' };
 function toUnit(v, scale) { return Number((v * scale).toFixed(4)); }
 function fromUnit(v, scale) { return Number((Number(v) / scale).toFixed(6)); }
 function fmtParamVal(v) {
@@ -2494,6 +2832,15 @@ var Policy = {
         h('td', { class: 'num', text: fmtRegVal(reg[k]) }),
         h('td', { class: 'muted small', text: byP[k] || REG_CITES[k] || 'Regulatory primitive' })));
     });
+    /* Platform rule (v2.3) — the same locked row on every product pack */
+    var plat = (Policy.policy.platform || {}).repaymentCollection;
+    if (plat) {
+      tb.appendChild(h('tr', { class: 'lockrow platform-row', id: 'pc-platform-repay', dataset: { platform: 'repaymentCollection' } },
+        h('td', null, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), h('code', { text: 'repaymentCollection' })),
+        h('td', { class: 'num nowrap', text: fmtAED(plat.altareqMaxAmount) }),
+        h('td', { class: 'small' }, h('span', { class: 'chip chip-platform', text: 'Platform rule' }),
+          h('span', { class: 'platform-rule', text: plat.rule + ' — the same on every Noor product (v2.3)' }))));
+    }
     t.appendChild(tb);
     box.appendChild(h('div', { class: 'tbl-scroll' }, t));
   },
@@ -2867,6 +3214,10 @@ function caseFile(rec) {
   if (rec.productId === 'split' && rec.applicantSnapshot && rec.applicantSnapshot.connected) {
     wrap.appendChild(h('div', { style: 'margin-bottom:12px;' }, h('h3', { text: 'Income vs spending — connected accounts' }), cashFlowCallouts(rec), cashFlowChart(rec.applicantSnapshot, { name: nameOf(rec) })));
   }
+  if (rec.homeStatements) {
+    wrap.appendChild(h('div', { style: 'margin-bottom:12px;' }, h('h3', { text: 'Home-country statements — parsed findings (as read for this decision)' }),
+      statementsParsePanel(rec.homeStatements, { instant: true, noSkip: true, title: 'Parsed' })));
+  }
   var grid = h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;' });
   grid.appendChild(h('div', null, h('h3', { text: 'Data pulls' }), pullsTable(rec)));
   grid.appendChild(h('div', null, h('h3', { text: 'Features — shared definitions, decision-time values' }), featuresTable(rec)));
@@ -2882,11 +3233,11 @@ function caseFile(rec) {
 
 /* ================= Workbench ================= */
 var Workbench = {
-  selId: null,
+  selId: null, queue: [], animateParseFor: null,
   build: function () {
     var root = clear($('#scr-workbench'));
     root.appendChild(screenHead('Human judgment, designed in', 'Refer workbench',
-      'Queues with SLAs (split 4h, personal loan 8h, salary advance 4h). The analyst opens a complete pre-assembled file — connected-account data, features, every rule fired, score, limit trace — and overrides are reason-coded with a mandatory second approver.'));
+      'Queues with SLAs (split 4h, personal loan 8h, salary advance 4h). The analyst opens a complete pre-assembled file — connected-account data, features, every rule fired, score, limit trace — and can ask for evidence (6 months of home-country statements) that Mizan re-decides on, or override with a reason code and a mandatory second approver.'));
     root.appendChild(h('div', { class: 'panel', id: 'wb-queue' }));
     root.appendChild(h('div', { id: 'wb-case', style: 'margin-top:14px;' }));
     Workbench.refresh();
@@ -2898,26 +3249,30 @@ var Workbench = {
     box.appendChild(h('h3', { text: 'Refer queue — open cases' }));
     var q = [];
     try { q = ME.referQueue() || []; } catch (e) { box.appendChild(h('div', { class: 'callout callout-error' }, h('code', { text: e.message || String(e) }))); return; }
+    Workbench.queue = q;
     if (!q.length) { box.appendChild(h('div', { class: 'small muted', text: 'Queue is clear. Run Daniel (c2) or Priya (r2) to create referred cases.' })); }
     else {
       var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
-        h('th', { text: 'Decision' }), h('th', { text: 'Customer' }), h('th', { text: 'Product' }), h('th', { text: 'Created / waiting' }),
+        h('th', { text: 'Decision' }), h('th', { text: 'Customer' }), h('th', { text: 'Product' }), h('th', { text: 'Status' }), h('th', { text: 'Created / waiting' }),
         h('th', { class: 'num', text: 'SLA left' }), h('th', { text: 'Top reason' }))));
       var tb = h('tbody');
       q.forEach(function (rec) {
         var sla = rec.slaHoursLeft;
-        var slaTxt = !isNum(sla) ? '—' : (sla < 0 ? 'breached' : Number(sla).toFixed(1) + 'h');
-        var slaCls = isNum(sla) && sla < 0 ? 'res-FAIL' : (isNum(sla) && sla <= 4 ? 'res-REFER' : 'muted');
+        var paused = !!rec.slaPaused;
+        var slaTxt = paused ? 'paused' : (!isNum(sla) ? '—' : (sla < 0 ? 'breached' : Number(sla).toFixed(1) + 'h'));
+        var slaCls = paused ? 'sla-paused' : (isNum(sla) && sla < 0 ? 'res-FAIL' : (isNum(sla) && sla <= 4 ? 'res-REFER' : 'muted'));
         var top = (rec.reasonCodes && rec.reasonCodes[0]) || rec.reason || 'RC_MANUAL_REVIEW';
         var when = rec.createdAt ? fmtDT(rec.createdAt) : (isNum(rec.waitingHours) ? 'waiting ' + Number(rec.waitingHours).toFixed(1) + 'h' : '—');
         tb.appendChild(h('tr', { class: 'rowbtn' + (rec.id === Workbench.selId ? ' sel' : ''), tabindex: '0', dataset: { id: rec.id, product: rec.productId || '' },
           onclick: function () { Workbench.select(rec.id); },
           onkeydown: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); Workbench.select(rec.id); } } },
-          h('td', { class: 'nowrap' }, h('code', { text: rec.id })),
+          h('td', { class: 'nowrap' }, h('code', { text: rec.id }), rec.supersedes ? h('div', { class: 'small muted', text: 're-decision of ' + rec.supersedes }) : null),
           h('td', { text: nameOf(rec) }),
           h('td', null, h('span', { class: 'chip prod-chip', text: productLabel(rec.productId, true) })),
+          h('td', null, caseStatusChip(rec.status)),
           h('td', { class: 'num small', text: when }),
-          h('td', { class: 'num' }, h('strong', { class: slaCls, text: slaTxt })),
+          h('td', { class: 'num' }, h('strong', { class: slaCls, text: slaTxt, title: paused ? 'Refer SLA paused while Noor waits for the customer’s documents' : null }),
+            paused && isNum(sla) ? h('span', { class: 'small muted sla-left', text: ' ' + Number(sla).toFixed(1) + 'h left' }) : null),
           h('td', { class: 'small', text: rcEn(top) })));
       });
       t.appendChild(tb);
@@ -2935,17 +3290,33 @@ var Workbench = {
     var box = clear($('#wb-case'));
     var rec = null;
     try { rec = ME.getDecision(id); } catch (e) {}
-    if (!rec) { box.appendChild(h('div', { class: 'panel' }, h('div', { class: 'small muted', text: 'Case ' + id + ' — full record unavailable (seeded queue rows carry summary data only).' }))); return; }
+    if (!rec) {
+      var row = (Workbench.queue || []).filter(function (q) { return q.id === id; })[0];
+      if (row && row.documentRequest) { box.appendChild(Workbench.seededCase(row)); return; }
+      box.appendChild(h('div', { class: 'panel' }, h('div', { class: 'small muted', text: 'Case ' + id + ' — full record unavailable (seeded queue rows carry summary data only).' }))); return;
+    }
     var panel = h('div', { class: 'panel' });
     panel.appendChild(h('h3', null, 'Case file — ', h('code', { text: rec.id }), ' · ' + nameOf(rec) + ' '));
     panel.appendChild(h('div', { class: 'btnrow', style: 'margin-bottom:10px;' },
       outcomeChip(rec.override ? rec.override.outcome : rec.outcome),
+      caseStatusChip(rec.status),
       rec.override ? h('span', { class: 'chip acc', text: 'OVERRIDDEN — ' + rec.override.analyst + ' / approved ' + rec.override.approver }) : null,
       h('span', { class: 'chip', text: productLabel(rec.productId) }),
       h('span', { class: 'chip', text: 'requested ' + fmtAED(rec.request && rec.request.amount) })));
+    if (rec.supersedes) {
+      panel.appendChild(h('div', { class: 'callout callout-info', id: 'wb-redecision-of', style: 'margin:0 0 12px;' },
+        h('div', { class: 'co-title', text: 'Re-decision — supersedes ' + rec.supersedes }),
+        h('div', { class: 'co-body' }, (rec.redecision && rec.redecision.trigger === 'UNDERWRITER_REQUEST' ? 'Mizan re-decided on the statements the analyst asked for. ' : 'Re-decided on statements the customer uploaded. ') + 'The original stays in the log, linked both ways. ',
+          h('button', { class: 'btn btn-ghost', text: 'Open the original →', onclick: function () { showScreen('log'); LogScreen.select(rec.supersedes); } }))));
+    }
+    var nrec = null;
+    if (rec.supersededBy) { try { nrec = ME.getDecision(rec.supersededBy); } catch (e) {} }
+    if (nrec) panel.appendChild(Workbench.redecidedBlock(rec, nrec));
+    if (Workbench.stmtApplies(rec)) panel.appendChild(Workbench.statementsPanel(rec));
+    panel.appendChild(h('h3', { style: 'margin-top:14px;', text: 'Pre-assembled file' }));
     panel.appendChild(caseFile(rec));
 
-    if (!rec.override && rec.outcome === 'REFER' && rec.status === 'OPEN') {
+    if (!rec.override && rec.outcome === 'REFER' && rec.status === 'OPEN' && !rec.supersededBy) {
       var of = h('div', { style: 'margin-top:14px;border-top:1px solid var(--hairline);padding-top:12px;' });
       of.appendChild(h('h3', { text: 'Override — reason-coded, 4-eyes' }));
       var outcomeSel = h('select', { id: 'ov-outcome', 'aria-label': 'Override outcome' },
@@ -2990,8 +3361,159 @@ var Workbench = {
             h('button', { class: 'btn btn-ghost', text: 'Decision log →', onclick: function () { showScreen('log'); LogScreen.select(rec.id); } })))));
     }
     box.appendChild(panel);
+  },
+  /* ---- v2.4: ask for evidence → customer uploads → parse → Mizan re-decides (supersedes this decision) ---- */
+  stmtApplies: function (rec) {
+    if (['personal_loan', 'starter_loan'].indexOf(rec.productId) < 0) return false;
+    if (rec.documentRequest || rec.supersededBy) return true;
+    return rec.outcome === 'REFER' && !rec.override;
+  },
+  stmtEligible: function (rec) {
+    return (rec.reasonCodes || []).some(function (c) { return c === 'RC_THIN_FILE' || c === 'RC_INCOME_UNVERIFIED' || c === 'RC_STATEMENTS_INTEGRITY'; });
+  },
+  stmtError: function (title, err) {
+    var box = $('#wb-stmt-err'); if (!box) return;
+    clear(box);
+    box.appendChild(h('div', { class: 'callout callout-error', dataset: { refused: 'statements' } },
+      h('div', { class: 'co-title', text: title }),
+      h('div', { class: 'co-body' }, h('code', { text: err && err.message ? err.message : String(err) }),
+        h('div', { class: 'small', style: 'margin-top:4px;', text: 'Refused by the engine, not the screen — evidence is requested, uploaded and re-decided in order, and only from India, Pakistan or Egypt.' }))));
+  },
+  request: function (id) {
+    var c = $('#wb-st-country'), a = $('#wb-st-analyst'), n = $('#wb-st-note');
+    try {
+      ME.requestDocuments(id, { type: 'HOME_STATEMENTS', months: 6, country: c ? c.value : 'IN', analyst: a ? a.value.trim() : 'A. Farsi (Credit Analyst)', note: n ? n.value.trim() : '' });
+    } catch (err) { Workbench.stmtError('Request refused', err); return; }
+    afterEngineMutation();
+  },
+  upload: function (id) {
+    var rec = null; try { rec = ME.getDecision(id); } catch (e) {}
+    var hs = rec && rec.applicantSnapshot ? rec.applicantSnapshot.homeStatements : null;
+    var f = $('#wb-st-file');
+    try {
+      ME.submitStatements(id, { country: rec && rec.documentRequest ? rec.documentRequest.country : (hs ? hs.country : 'IN'), bank: hs ? hs.bank : '', file: f ? f.value : (hs ? hs.file : '') });
+    } catch (err) { Workbench.stmtError('Upload refused', err); return; }
+    Workbench.animateParseFor = id;
+    afterEngineMutation();
+  },
+  redecide: function (id) {
+    try { ME.redecide(id); } catch (err) { Workbench.stmtError('Re-decision refused', err); return; }
+    afterEngineMutation();
+    var r = $('#wb-redecided'); if (r && r.scrollIntoView && !REDUCED) r.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+  statementsPanel: function (rec) {
+    var dr = rec.documentRequest, docs = rec.documents, done3 = !!rec.supersededBy;
+    var hs = (rec.applicantSnapshot || {}).homeStatements;
+    var homeCode = hs && corridorUi(hs.country) ? hs.country : 'IN';
+    var adj = (corridorUi(homeCode) || {}).adj || 'home-country';
+    var wrap = h('div', { class: 'wb-stmt', id: 'wb-stmt', dataset: { status: rec.status } });
+    wrap.appendChild(h('h3', null, 'Ask for evidence — home-country bank statements ', h('span', { class: 'h3-note', text: '(not an override: Mizan re-decides on it)' })));
+    wrap.appendChild(h('p', { class: 'small muted', style: 'margin:0 0 10px;', text: 'The analyst asks; the customer uploads the last 6 months from India, Pakistan or Egypt; Mizan parses them and re-decides. The new decision supersedes this one, stays explainable and is audit-linked to it. Try a step out of order — the engine refuses it.' }));
+    var steps = h('div', { class: 'wb-steps' });
+    function step(n, key, title, done, body) {
+      return h('div', { class: 'wb-step' + (done ? ' done' : ''), dataset: { step: key, done: String(done) } },
+        h('span', { class: 'es-n', 'aria-hidden': 'true', text: done ? '✓' : String(n) }),
+        h('div', { class: 'wb-step-main' }, h('div', { class: 'es-t', text: title }), body));
+    }
+    /* 1 · request */
+    var b1;
+    if (dr) {
+      b1 = h('div', { id: 'wb-st-requested' },
+        h('div', { class: 'small', text: 'Requested by ' + dr.analyst + ' · ' + fmtDT(dr.requestedAt) + ' · ' + dr.countryName + ' · last 6 months' + (dr.note ? ' · “' + dr.note + '”' : '') }),
+        h('div', { class: 'wb-msg' }, h('span', { class: 'small muted', text: 'Customer message (' + dr.reasonCode + '):' }),
+          h('div', { class: 'small', text: (dr.customerMessage && dr.customerMessage.en) || rcEn(dr.reasonCode) }),
+          h('div', { class: 'ar small', lang: 'ar', dir: 'rtl', text: (dr.customerMessage && dr.customerMessage.ar) || rcAr(dr.reasonCode) })));
+    } else {
+      var elig = Workbench.stmtEligible(rec);
+      b1 = h('div', null,
+        h('div', { class: 'wb-form' },
+          h('div', { class: 'field' }, h('label', { for: 'wb-st-country', text: 'Home country' }), countrySelect('wb-st-country', homeCode)),
+          h('div', { class: 'field' }, h('label', { for: 'wb-st-analyst', text: 'Analyst' }), h('input', { type: 'text', id: 'wb-st-analyst', value: 'A. Farsi (Credit Analyst)' })),
+          h('div', { class: 'field wb-note' }, h('label', { for: 'wb-st-note', text: 'Note to the customer’s file' }),
+            h('textarea', { id: 'wb-st-note', rows: '2', text: 'Thin file — 6 months of ' + adj + ' statements so we can approve more' }))),
+        h('div', { class: 'btnrow' },
+          h('button', { class: 'btn btn-primary', id: 'wb-st-request', type: 'button', disabled: elig ? null : 'disabled', text: 'Request bank statements (6 months, home country)', onclick: function () { Workbench.request(rec.id); } }),
+          elig ? h('span', { class: 'small muted', text: 'Pauses the refer SLA · the customer gets the message in Arabic and English' })
+               : h('span', { class: 'small muted', text: 'Enabled on thin-file and income-unverified refers' })));
+    }
+    steps.appendChild(step(1, 'request', 'Request bank statements (6 months, home country)', !!dr, b1));
+    /* 2 · the customer uploads (simulated) → parse panel */
+    var b2 = h('div');
+    var uploaded = !!(docs && (rec.status === 'DOCUMENTS_RECEIVED' || done3));
+    if (docs) {
+      b2.appendChild(h('div', { class: 'small', id: 'wb-st-uploaded', text: 'Uploaded by the customer · ' + fmtDT(docs.submittedAt) + (uploaded ? ' · parsed by Mizan below' : ' — incomplete, the customer was asked again') }));
+      var animate = Workbench.animateParseFor === rec.id;
+      Workbench.animateParseFor = null;
+      b2.appendChild(statementsParsePanel(docs.parsed, { id: 'wb-parse', instant: !animate }));
+    }
+    if (!uploaded) {
+      b2.appendChild(h('div', { class: 'wb-form' },
+        h('div', { class: 'field wb-file' }, h('label', { for: 'wb-st-file', text: 'Customer’s file (simulated upload)' }), fileSelect('wb-st-file', hs)),
+        h('div', { class: 'field' }, h('button', { class: 'btn', id: 'wb-st-upload', type: 'button', text: 'Simulate customer upload', onclick: function () { Workbench.upload(rec.id); } }))));
+    }
+    steps.appendChild(step(2, 'upload', 'Customer uploads → Mizan parses', uploaded, b2));
+    /* 3 · re-decide */
+    var b3 = done3
+      ? h('div', { class: 'small', text: 'Re-decided → ' + rec.supersededBy + ' (this decision is superseded)' })
+      : h('div', { class: 'btnrow' },
+          h('button', { class: 'btn btn-primary', id: 'wb-st-redecide', type: 'button', text: 'Re-decide with statements', onclick: function () { Workbench.redecide(rec.id); } }),
+          h('span', { class: 'small muted', text: 'A NEW decision that supersedes ' + rec.id }));
+    steps.appendChild(step(3, 'redecide', 'Mizan re-decides', done3, b3));
+    wrap.appendChild(steps);
+    wrap.appendChild(h('div', { id: 'wb-stmt-err', 'aria-live': 'polite' }));
+    return wrap;
+  },
+  /* Original vs re-decision, side by side, plus the "approve more" evidence strip */
+  redecidedBlock: function (orig, nrec) {
+    function card(r, title, link) {
+      var appr = r.outcome === 'APPROVE';
+      var kv = h('div', { class: 'kv' },
+        h('dt', { text: 'Grade' }), h('dd', { class: 'num', text: r.score && r.score.grade ? r.score.grade + (isNum(r.score.points) ? ' (' + r.score.points + ')' : '') : (r.tier ? 'tier ' + r.tier : '—') }),
+        h('dt', { text: 'Binding' }), h('dd', null, appr ? h('code', { text: r.limit.bindingConstraint || '—' }) : h('span', { class: 'small muted', text: '— approvals only' })),
+        h('dt', { text: 'Evidence' }), h('dd', { class: 'small', text: (r.dataPulls || []).map(function (d) { return d.source.replace(/_/g, ' ').toLowerCase(); }).join(' · ') }),
+        h('dt', { text: 'Reasons' }), h('dd', { class: 'small', text: (r.reasonCodes || []).join(', ') || '—' }));
+      return h('div', { class: 'sbs-card' + (r.supersededBy ? ' old' : ' new'), dataset: { id: r.id, outcome: r.outcome } },
+        h('div', { class: 'sbs-h' }, h('span', { class: 'sbs-t', text: title }), h('code', { text: r.id }), outcomeChip(r.outcome)),
+        h('div', { class: 'sbs-v' }, appr ? fmtAED(r.limit.approved) : (r.outcome === 'REFER' ? fmtAED(r.limit.approved) : '—'),
+          h('span', { class: 'sbs-vs', text: appr ? ' approved' : (r.outcome === 'REFER' ? ' provisional — referred' : ' declined') })),
+        kv,
+        appr && r.repayment ? repaymentLine(r.repayment) : null,
+        h('div', { class: 'sbs-link small', text: link }));
+    }
+    var box = h('div', { class: 'wb-redecided', id: 'wb-redecided', dataset: { newId: nrec.id, outcome: nrec.outcome } });
+    box.appendChild(h('h3', null, 'Re-decided on the statements ', h('span', { class: 'h3-note', text: '— the new decision side by side with the original' })));
+    box.appendChild(h('div', { class: 'sbs' }, card(orig, 'Original', 'superseded by ' + nrec.id), card(nrec, 'Re-decision', 'supersedes ' + orig.id)));
+    var strip = evidenceStrip(nrec, { id: 'wb-evidence' });
+    if (strip) box.appendChild(h('div', { class: 'ev-wrap' }, h('div', { class: 'small muted', style: 'margin-bottom:6px;', text: 'Approve more — the same application on each evidence path, computed by the engine:' }), strip));
+    box.appendChild(h('div', { class: 'btnrow', style: 'margin-top:10px;' },
+      h('button', { class: 'btn', id: 'wb-open-new', text: 'Open the re-decision in the Decision log →', onclick: function () { showScreen('log'); LogScreen.select(nrec.id); } }),
+      nrec.outcome === 'REFER' ? h('button', { class: 'btn btn-ghost', text: 'Open the fraud-review case →', onclick: function () { Workbench.select(nrec.id); } }) : null));
+    return box;
+  },
+  /* Seeded queue rows are summaries; a seeded documents case still shows what was asked and why the SLA is paused */
+  seededCase: function (row) {
+    var dr = row.documentRequest;
+    var adj = (corridorUi(dr.country) || {}).adj || dr.countryName;
+    return h('div', { class: 'panel', id: 'wb-seeded-docs' },
+      h('h3', null, 'Case file — ', h('code', { text: row.id }), ' · ' + row.name + ' '),
+      h('div', { class: 'btnrow', style: 'margin-bottom:10px;' }, outcomeChip('REFER'), caseStatusChip(row.status),
+        h('span', { class: 'chip', text: productLabel(row.productId) }), h('span', { class: 'chip', text: 'refer SLA paused · ' + Number(row.slaHoursLeft).toFixed(1) + 'h left' })),
+      h('div', { class: 'callout callout-info' },
+        h('div', { class: 'co-title', text: 'Awaiting documents — 6 months of ' + adj + ' bank statements' }),
+        h('div', { class: 'co-body', text: 'Requested by ' + dr.analyst + ' at ' + fmtDT(dr.requestedAt) + ' from ' + dr.bank + '. ' + (dr.note ? dr.note + ' ' : '') +
+          'The refer SLA is paused while Noor waits; it resumes when the statements arrive and Mizan re-decides.' })),
+      h('div', { class: 'wb-msg', style: 'margin-top:10px;' }, h('span', { class: 'small muted', text: 'Customer message (' + dr.reasonCode + '):' }),
+        h('div', { class: 'small', text: rcEn(dr.reasonCode) }), h('div', { class: 'ar small', lang: 'ar', dir: 'rtl', text: rcAr(dr.reasonCode) })),
+      h('div', { class: 'small muted', style: 'margin-top:8px;', text: 'Seeded queue rows carry summary data only — run Priya (r2) for the full request → upload → re-decide flow.' }));
   }
 };
+/* Case status chip — the v2.4 states read at a glance (never the brand colour) */
+var CASE_STATUS = { AWAITING_DOCUMENTS: ['Awaiting documents', 'chip-docs'], DOCUMENTS_RECEIVED: ['Documents received', 'chip-ok'],
+  SUPERSEDED: ['Superseded', 'chip-warn'], OVERRIDDEN: ['Overridden', ''], EXECUTED: ['Executed', 'chip-ok'], OPEN: ['Open', ''] };
+function caseStatusChip(status) {
+  var m = CASE_STATUS[status || 'OPEN'] || [status, ''];
+  return h('span', { class: 'chip status-chip ' + m[1], dataset: { status: status || 'OPEN' }, text: m[0] });
+}
 
 /* ================= Decision log (replay) ================= */
 var LogScreen = {
@@ -3021,7 +3543,9 @@ var LogScreen = {
       tb.appendChild(h('tr', { class: 'rowbtn' + (rec.id === LogScreen.selId ? ' sel' : ''), tabindex: '0', dataset: { id: rec.id },
         onclick: function () { LogScreen.select(rec.id); },
         onkeydown: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); LogScreen.select(rec.id); } } },
-        h('td', { class: 'nowrap' }, h('code', { text: rec.id })),
+        h('td', { class: 'nowrap' }, h('code', { text: rec.id }),
+          rec.supersedes ? h('div', { class: 'small muted', text: 'supersedes ' + rec.supersedes }) : null,
+          rec.supersededBy ? h('div', { class: 'small muted', text: 'superseded by ' + rec.supersededBy }) : null),
         h('td', { class: 'num small nowrap', text: fmtDT(rec.createdAt) }),
         h('td', { class: 'small', text: productLabel(rec.productId, true) }),
         h('td', { text: nameOf(rec) }),
@@ -3061,14 +3585,27 @@ var LogScreen = {
     panel.appendChild(h('h3', null, 'Full replay — ', h('code', { text: rec.id })));
     panel.appendChild(h('div', { class: 'callout callout-info small' },
       h('strong', { text: 'Replay for CBUAE model-risk audit + consumer-protection audit. ' }),
-      'Model-risk (Model Management Standards) replays inputs → features → rules → score → limit → pricing with the policy and model versions in force. Consumer protection reads the consents, the KFS figures and the execution-event ordering: offer → KFS → e-sign → cooling-off → disbursement.'));
+      'Model-risk (Model Management Standards) replays inputs → features → rules → score → limit → pricing with the policy and model versions in force. Consumer protection reads the consents, the KFS figures and the execution-event ordering: offer → KFS → e-sign → repayment set-up → cooling-off → disbursement.'));
     panel.appendChild(h('div', { class: 'kv', style: 'margin:10px 0;' },
       h('dt', { text: 'Created' }), h('dd', { class: 'num', text: fmtDT(rec.createdAt) }),
       h('dt', { text: 'Product' }), h('dd', { text: productLabel(rec.productId) + ' · ' + (rec.segment || 'CONSUMER') }),
       h('dt', { text: 'Policy / engine version' }), h('dd', null, h('code', { text: 'policy v' + rec.policyVersion + ' · ' + (rec.engineVersion || '') })),
       h('dt', { text: 'Status' }), h('dd', null, h('span', { class: 'chip acc', text: rec.status || '—' })),
       h('dt', { text: 'Consents' }), h('dd', { class: 'small', text: 'AECB ' + (c.aecb && c.aecb.granted ? 'granted ' + fmtDT(c.aecb.at) : '—') + ' · Open Finance ' + (c.openFinance && c.openFinance.granted ? 'granted' : 'not granted') + (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport granted' : '') +
-        (c.internationalStatements ? ' · International statements ' + (c.internationalStatements.granted ? 'granted' : 'not granted') : '') })));
+        (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'underwriter request' : 'customer upload') + ')' : '') }),
+      rec.supersedes ? h('dt', { text: 'Supersedes' }) : null,
+      rec.supersedes ? h('dd', { id: 'lg-supersedes' }, h('button', { class: 'btn btn-ghost linkbtn', text: 'supersedes ' + rec.supersedes, onclick: function () { LogScreen.select(rec.supersedes); } }),
+        h('span', { class: 'small muted', text: ' — ' + (rec.redecision && rec.redecision.trigger === 'UNDERWRITER_REQUEST' ? 'statements requested by ' + ((rec.redecision.documentRequest || {}).analyst || 'the underwriter') : 'statements uploaded by the customer') +
+          (rec.redecision ? ' · was ' + rec.redecision.original.outcome : '') })) : null,
+      rec.supersededBy ? h('dt', { text: 'Superseded by' }) : null,
+      rec.supersededBy ? h('dd', { id: 'lg-superseded-by' }, h('button', { class: 'btn btn-ghost linkbtn', text: rec.supersededBy, onclick: function () { LogScreen.select(rec.supersededBy); } }),
+        h('span', { class: 'small muted', text: ' — re-decided on home-country statements' })) : null,
+      rec.documentRequest ? h('dt', { text: 'Documents' }) : null,
+      rec.documentRequest ? h('dd', { class: 'small', text: '6 months of ' + rec.documentRequest.countryName + ' statements requested by ' + rec.documentRequest.analyst + ' ' + fmtDT(rec.documentRequest.requestedAt) +
+        (rec.documents ? ' · uploaded ' + rec.documents.file + ' ' + fmtDT(rec.documents.submittedAt) : ' · not uploaded yet') }) : null));
+    if (rec.redecision && rec.evidenceComparison) {
+      panel.appendChild(h('div', { style: 'margin:0 0 12px;' }, h('h3', { text: 'What the evidence was worth — same application, each path' }), evidenceStrip(rec, { id: 'lg-evidence' })));
+    }
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
@@ -3079,7 +3616,7 @@ var LogScreen = {
       var doneAt = {};
       (rec.events || []).forEach(function (ev) { doneAt[ev.type] = ev.at; });
       var tl = h('div', { class: 'timeline' });
-      execStepsFor(rec.productId).forEach(function (s, i) {
+      execStepsFor(rec.productId, rec.id).forEach(function (s, i) {
         var done = !!doneAt[s.type];
         tl.appendChild(h('div', { class: 't-step' + (done ? '' : ' pending'), dataset: { type: s.type } },
           h('span', { class: 't-dot', 'aria-hidden': 'true' }),
@@ -3087,9 +3624,9 @@ var LogScreen = {
           h('span', { class: 't-lat', text: done ? fmtDT(doneAt[s.type]) : 'pending' })));
       });
       evWrap.appendChild(tl);
-      evWrap.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: rec.status === 'EXECUTED' ? 'All five steps recorded in order — the agreement exists.' : 'Approval is a risk decision; the agreement exists only once all five steps are recorded in order.' }));
+      evWrap.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: rec.status === 'EXECUTED' ? 'All ' + execCountWord() + ' steps recorded in order — the agreement exists.' : 'Approval is a risk decision; the agreement exists only once all ' + execCountWord() + ' steps are recorded in order.' }));
     } else {
-      evWrap.appendChild(h('div', { class: 'small muted', text: 'No execution events — only approved decisions proceed to offer, KFS, e-sign, cooling-off and disbursement.' }));
+      evWrap.appendChild(h('div', { class: 'small muted', text: 'No execution events — only approved decisions proceed to offer, KFS, e-sign, repayment set-up, cooling-off and disbursement.' }));
     }
     grid.appendChild(evWrap);
     var auWrap = h('div', null, h('h3', { text: 'Audit trail — every actor, every action' }));

@@ -1,6 +1,7 @@
 /*
  * Mizan — engine self-test (NOOR-PIVOT.md §Selftest, groups 1–10; group 11 =
- * Addendum v2.1, starter loan → upgrade)
+ * Addendum v2.1, starter loan → upgrade; group 12 = v2.3 repayment collection
+ * (REPAYMENT-SPEC.md); group 13 = v2.4 home-country statements (STATEMENTS-SPEC.md))
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -62,6 +63,12 @@ function decidePersona(productId, persona, overrides) {
 }
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const ARABIC = /[؀-ۿ]/;
+// v2.3 repayment conditions (method-specific; replace every salary-transfer mention)
+const DD_COND = 'Direct debit mandate active on the customer\'s bank account';
+const AT_COND = 'Repayment set up via Al Tareq recurring payment consent';
+const KFS_COND = 'Key Facts Statement acknowledged (AR + EN)';
+// Any mention of moving a salary, except the allowed phrase "no salary transfer required".
+const mentionsSalaryTransfer = (t) => /salary[\s-]transfer/i.test(String(t).replace(/no salary transfer required/gi, ''));
 
 // Independent IRR (Newton's method on the annuity equation) to cross-check the
 // engine's bisection-based aprEquivalent.
@@ -107,10 +114,11 @@ group('1. Persona intended outcomes at default policy (r1–r5 personal loan, c1
      'r1 scorecard carries "Salary verified via connected account +15"');
   ok(recs.r1.dataPulls.some(d => d.source === 'OPEN_FINANCE'), 'r1 salary pulled via OPEN_FINANCE');
   ok(recs.r1.token && recs.r1.token.expiresAt, 'r1 approval token issued with expiry');
-  ok(recs.r1.token.conditions.includes('Key Facts Statement acknowledged (AR + EN)') &&
-     recs.r1.token.conditions.includes('Salary transfer assignment or direct debit mandate') &&
+  ok(recs.r1.token.conditions.includes(KFS_COND) &&
+     recs.r1.token.conditions.includes(DD_COND) &&
      recs.r1.token.conditions.includes('Credit life & job-loss cover offered (optional)'),
-     'r1 token carries the conventional personal-loan conditions');
+     'r1 token carries the conventional personal-loan conditions (KFS, direct debit for AED 150,000, cover offered)');
+  ok(!recs.r1.token.conditions.some(mentionsSalaryTransfer), 'r1 token never mentions a salary transfer');
   ok(!recs.r1.token.conditions.includes('Remittance-linked repayment schedule'), 'remittance-linked condition is cross-border only');
 
   recs.r2 = decidePersona('personal_loan', P.r2);
@@ -166,8 +174,8 @@ group('1. Persona intended outcomes at default policy (r1–r5 personal loan, c1
   ok(recs.c1.dataPulls.some(d => d.source === 'AECB_CONSUMER') && recs.c1.dataPulls.some(d => d.source === 'OPEN_FINANCE'),
      'c1 pulls AECB_CONSUMER + OPEN_FINANCE');
   ok(recs.c1.token && recs.c1.token.conditions.length === 2 &&
-     recs.c1.token.conditions.includes('Key Facts Statement acknowledged (AR + EN)') &&
-     recs.c1.token.conditions.includes('Direct debit mandate on connected account'), 'c1 token carries the split conditions');
+     recs.c1.token.conditions.includes(KFS_COND) &&
+     recs.c1.token.conditions.includes(DD_COND), 'c1 token carries the split conditions (KFS + direct debit for AED 12,000)');
   eq(recs.c1.features.freeCashFlowMonthly, 32000 - 19000 - 2400, 'c1 free cash flow = income − spend − obligations');
   eq(recs.c1.features.purchaseAgeDays, 11, 'c1 purchaseAgeDays (2026-07-08 → TODAY)');
 
@@ -341,10 +349,13 @@ group('4. 4-eyes on publishPolicy and override', () => {
   collect(od.reasonCodes);
   eq(od.status, 'OVERRIDDEN', 'valid 4-eyes override lands (c2 split refer)');
   eq(od.outcome, 'APPROVE', 'override outcome applied');
-  ok(od.token && od.token.conditions.includes('Direct debit mandate on connected account') &&
+  ok(od.token && od.token.conditions.includes(DD_COND) &&
      od.token.conditions.some(c => /override/i.test(c)), 'override token carries split conditions + override note');
+  ok(od.repayment && od.repayment.method === 'DIRECT_DEBIT' && od.repayment.amount === od.limit.approved,
+     'approving override sets repayment from the approved amount (' + (od.repayment && od.repayment.method) + ')');
   const od2 = E.override(recs.r2.id, { outcome: 'DECLINE', reasonCode: 'RC_THIN_FILE', analyst: 'x.one', approver: 'y.two' });
   eq(od2.limit.approved, 0, 'declining override zeroes the limit');
+  eq(od2.repayment, null, 'declining override carries no repayment');
   throwsWith(() => E.override(recs.r1.id, { outcome: 'DECLINE', reasonCode: 'RC_MANUAL_REVIEW', analyst: 'x', approver: 'y' }),
              'REFER', 'override on a non-REFER decision throws');
 });
@@ -352,11 +363,12 @@ group('4. 4-eyes on publishPolicy and override', () => {
 // ---------------------------------------------------------------------------
 group('5. Conventional execution sequencing (an approval is not a loan)', () => {
   const ev = E.EXEC_EVENTS;
-  eq(ev.join(','), 'OFFER_ACCEPTED,KFS_ACKNOWLEDGED,AGREEMENT_SIGNED,COOLING_OFF_CLEARED,DISBURSED', 'EXEC_EVENTS order');
+  eq(ev.join(','), 'OFFER_ACCEPTED,KFS_ACKNOWLEDGED,AGREEMENT_SIGNED,REPAYMENT_SET_UP,COOLING_OFF_CLEARED,DISBURSED', 'EXEC_EVENTS order (v2.3: repayment set-up before cooling-off)');
   const steps = E.execSteps('split');
-  ok(steps.length === 5 && steps.every(s => s.type && s.label && s.description), 'execSteps returns 5 labelled steps');
-  ok(/goal/.test(steps[4].description), 'split DISBURSED description routes freed cash to the goal');
-  ok(/customer's account/.test(E.execSteps('personal_loan')[4].description), 'personal loan DISBURSED description');
+  const stepOf = (list, t) => list.find(s => s.type === t) || {};
+  ok(steps.length === 6 && steps.every(s => s.type && s.label && s.description), 'execSteps returns 6 labelled steps');
+  ok(/goal/.test(stepOf(steps, 'DISBURSED').description), 'split DISBURSED description routes freed cash to the goal');
+  ok(/customer's account/.test(stepOf(E.execSteps('personal_loan'), 'DISBURSED').description), 'personal loan DISBURSED description');
 
   // Every wrong step at every position throws, naming the expected next step.
   for (const recId of [recs.r1.id, recs.c1.id]) {
@@ -370,7 +382,7 @@ group('5. Conventional execution sequencing (an approval is not a loan)', () => 
     }
     const done = E.getDecision(recId);
     eq(done.status, 'EXECUTED', recId + ' full ordered sequence ends EXECUTED');
-    eq(done.events.length, 5, recId + ' five execution events recorded');
+    eq(done.events.length, 6, recId + ' six execution events recorded');
   }
   // Message format and consumer-protection reasons.
   const fresh = decidePersona('personal_loan', P.r1);
@@ -383,6 +395,11 @@ group('5. Conventional execution sequencing (an approval is not a loan)', () => 
              'signing before KFS cites consumer protection');
   E.recordEvent(fresh.id, 'KFS_ACKNOWLEDGED');
   E.recordEvent(fresh.id, 'AGREEMENT_SIGNED');
+  throwsWith(() => E.recordEvent(fresh.id, 'DISBURSED'), ['expected REPAYMENT_SET_UP next', 'no disbursement until repayment collection is set up'],
+             'disbursing before repayment set-up cites the repayment rule (v2.3)');
+  throwsWith(() => E.recordEvent(fresh.id, 'COOLING_OFF_CLEARED'), 'expected REPAYMENT_SET_UP next',
+             'cooling-off cannot clear before repayment collection is set up');
+  E.recordEvent(fresh.id, 'REPAYMENT_SET_UP');
   throwsWith(() => E.recordEvent(fresh.id, 'DISBURSED'), 'no disbursement before the cooling-off period clears or is waived',
              'disbursing before cooling-off cites the cooling-off rule');
   throwsWith(() => E.recordEvent(recs.r1.id, 'OFFER_ACCEPTED'), 'already', 're-executing a completed agreement throws');
@@ -536,14 +553,18 @@ group('10. Determinism, reason-code completeness (EN + AR), no legacy vocabulary
   ok(!('personasSme' in D) && !('sectorExclusions' in D) && !('retail' in D.sampleBook) && !('sme' in D.sampleBook),
      'no SME personas, sector screen or legacy sample-book keys');
 
-  // No legacy vocabulary anywhere in the engine or data source.
-  const banned = /shari|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b/i;
+  // No legacy vocabulary anywhere in the engine or data source. v2.3 also bans
+  // salary-transfer recourse wording ("no salary transfer required" is allowed).
+  const banned = /shari|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
   for (const f of ['data.js', 'engine.js']) {
     const src = fs.readFileSync(path.join(__dirname, f), 'utf8');
     const lines = src.split('\n');
     const hits = [];
     lines.forEach((line, i) => { const m = line.match(banned); if (m) hits.push((i + 1) + ':"' + m[0] + '"'); });
     ok(hits.length === 0, f + ' contains no banned legacy terms (hits: ' + hits.slice(0, 5).join(', ') + ')');
+    const st = [];
+    lines.forEach((line, i) => { if (mentionsSalaryTransfer(line)) st.push(i + 1); });
+    ok(st.length === 0, f + ' never mentions a salary transfer except "no salary transfer required" (lines: ' + st.join(', ') + ')');
   }
 
   // Metrics shape (seeded history + session decisions).
@@ -617,8 +638,8 @@ group('11. Starter loan → upgrade (Addendum v2.1): tiers, curve, partner-incom
   eq(JSON.stringify(pol.params.tiers.base), JSON.stringify({ maxAmount: 1500, maxTenorMonths: 3, aprAtOneMonth: 0.48, aprAtMaxTenor: 0.42 }),
      'base tier defaults');
   const st = E.execSteps('starter_loan');
-  ok(st.length === 5 && st.map(x => x.type).join(',') === E.EXEC_EVENTS.join(',') && /credited/.test(st[4].description),
-     'execSteps(starter_loan) → the same 5 conventional steps');
+  ok(st.length === 6 && st.map(x => x.type).join(',') === E.EXEC_EVENTS.join(',') && /credited/.test(st[5].description),
+     'execSteps(starter_loan) → the same 6 conventional steps');
 
   // Persona data consistency (same conventions as the split personas)
   for (const p of D.personasUpgrade) {
@@ -654,16 +675,16 @@ group('11. Starter loan → upgrade (Addendum v2.1): tiers, curve, partner-incom
   eq(u1.limit.capacity, 3000, 'limit.capacity = maxAmount');
   eq(u1.limit.bindingConstraint, 'TIER_CAP', 'binding constraint TIER_CAP');
   eq(Math.min.apply(null, u1.limit.trace.map(t => t.value)), u1.limit.approved, 'approved = min(trace)');
-  eq(u1.features.incomeHistoryMonths, 29, 'income history 29 months (5 UAE + 24 international)');
+  eq(u1.features.incomeHistoryMonths, 29, 'income history 29 months (5 UAE + 24 home-country account history, v2.4 statements)');
   eq(u1.features.homeCountryObligations, 350, 'home-country obligations visible with statements (350)');
   eq(u1.features.freeCashFlowMonthly, 9500 - 5600 - 350, 'free cash flow 3,550 = income − spend − home-country obligations');
   eq(u1.features.maxInstalment, 1775, 'max instalment 1,775 = 50% × free cash flow');
-  eq(u1.dataPulls.map(d => d.source).join(','), 'PRIOR_DECISION,AECB_CONSUMER,OPEN_FINANCE,INTERNATIONAL_STATEMENTS',
-     'data pulls: prior decision, AECB, Open Finance, international statements');
-  eq(u1.rules.map(r => r.id).join(','), 'REG_AECB_CHECK,REG_DBR_CAP,POL_STARTER_REPAID_ON_TIME,POL_CONNECTED_ACCOUNTS,POL_INCOME_HISTORY,POL_FREE_CASH_FLOW,POL_INTERNATIONAL_STATEMENTS',
+  eq(u1.dataPulls.map(d => d.source).join(','), 'PRIOR_DECISION,AECB_CONSUMER,OPEN_FINANCE,HOME_STATEMENTS',
+     'data pulls: prior decision, AECB, Open Finance, home-country statements (v2.4 name)');
+  eq(u1.rules.map(r => r.id).join(','), 'REG_AECB_CHECK,REG_DBR_CAP,POL_STARTER_REPAID_ON_TIME,POL_CONNECTED_ACCOUNTS,POL_INCOME_HISTORY,POL_FREE_CASH_FLOW,POL_HOME_STATEMENTS',
      'all seven upgrade rules recorded in order');
   ok(u1.rules.every(r => r.result === 'PASS'), 'u1 every rule PASS');
-  ok(u1.consents.internationalStatements && u1.consents.internationalStatements.granted === true, 'international-statements consent recorded');
+  ok(u1.consents.homeStatements && u1.consents.homeStatements.granted === true, 'home-country statements consent recorded');
   ok(u1.token && u1.token.conditions.some(c => /chooses the amount and term/.test(c)), 'token issued; conditions ask the customer to choose');
   eq(JSON.stringify(u1.upgrade.counterfactual), JSON.stringify({ tier: 'BASE', maxAmount: 1500, maxTenorMonths: 3, aprAtMaxTenor: 0.42 }),
      'counterfactual = the base tier');
@@ -716,8 +737,8 @@ group('11. Starter loan → upgrade (Addendum v2.1): tiers, curve, partner-incom
   eq(u1b.features.homeCountryObligations, null, 'home-country obligations not visible without statements');
   eq(u1b.features.incomeHistoryMonths, 5, 'income history = UAE months only');
   eq(u1b.features.freeCashFlowMonthly, 3900, 'free cash flow 3,900 without the (invisible) home-country loan');
-  ok(!u1b.dataPulls.some(d => d.source === 'INTERNATIONAL_STATEMENTS'), 'no international-statements pull without consent');
-  eq(u1b.rules.find(r => r.id === 'POL_INTERNATIONAL_STATEMENTS').result, 'INFO', 'POL_INTERNATIONAL_STATEMENTS informational without statements');
+  ok(!u1b.dataPulls.some(d => d.source === 'HOME_STATEMENTS'), 'no statements pull without statements');
+  eq(u1b.rules.find(r => r.id === 'POL_HOME_STATEMENTS').result, 'INFO', 'POL_HOME_STATEMENTS informational without statements');
   eq(JSON.stringify(u1b.upgrade.counterfactual), JSON.stringify({ tier: 'ENHANCED', maxAmount: 3000, maxTenorMonths: 6, aprAtMaxTenor: 0.35 }),
      'base counterfactual = the enhanced tier');
   eq(u1b.upgrade.defaultSelection.months, 3, 'base default selection 3 months at 1,500');
@@ -761,7 +782,7 @@ group('11. Starter loan → upgrade (Addendum v2.1): tiers, curve, partner-incom
   eq(s6.selection.months, 6, 'customer can change the selection before accepting');
   eq(s6.token.conditions.filter(c => /^Selected option/.test(c)).length, 1, 'only the current selection appears in the token');
   for (const ev of E.EXEC_EVENTS) E.recordEvent(u1.id, ev);
-  eq(E.getDecision(u1.id).status, 'EXECUTED', 'upgrade: 5 steps in order → EXECUTED');
+  eq(E.getDecision(u1.id).status, 'EXECUTED', 'upgrade: 6 steps in order → EXECUTED');
   throwsWith(() => E.selectUpgradeOption(u1.id, { amount: 2000, months: 6 }), 'already accepted', 'selection after OFFER_ACCEPTED throws');
   throwsWith(() => E.selectUpgradeOption(u2.id, { amount: 1000, months: 1 }), 'no upgrade offer', 'selecting on a declined upgrade throws');
 
@@ -835,6 +856,333 @@ group('11. Starter loan → upgrade (Addendum v2.1): tiers, curve, partner-incom
                             m: E.metrics().byProduct.starter_loan, book: D.sampleBook.starter_loan.map(r => E.decideRaw('starter_loan', r)) });
   }
   ok(snap() === snap(), 'two fresh init() runs produce identical upgrade records, quotes, simulation and metrics');
+});
+
+// ---------------------------------------------------------------------------
+group('12. Repayment collection (v2.3): Al Tareq ≤ AED 1,000, direct debit above, no salary transfer', () => {
+  E.init(D);
+  const U = {};
+  for (const p of D.personasUpgrade) U[p.id] = p;
+  // ---- routing constant + threshold (inclusive) ----
+  eq(E.REPAYMENT_ROUTING && E.REPAYMENT_ROUTING.altareqMaxAmount, 1000, 'REPAYMENT_ROUTING = { altareqMaxAmount: 1000 }');
+  for (const [amt, m] of [[999, 'ALTAREQ'], [1000, 'ALTAREQ'], [1000.01, 'DIRECT_DEBIT'], [3000, 'DIRECT_DEBIT']]) {
+    eq(E.repaymentFor(amt).method, m, 'repaymentFor(' + amt + ') → ' + m);
+  }
+  const at = E.repaymentFor(1000), dd = E.repaymentFor(1000.01);
+  ok(at.label === 'Al Tareq recurring payment' && dd.label === 'Direct debit mandate', 'labels: Al Tareq recurring payment / Direct debit mandate');
+  ok(at.threshold === 1000 && dd.threshold === 1000 && at.basis === 'approved amount' && dd.basis === 'approved amount', 'threshold 1000 and basis "approved amount" on both');
+  ok(/banking app via Al Tareq/.test(at.setup) && /revocable in the Al Tareq consent dashboard/.test(at.setup), 'Al Tareq setup text (banking app, revocable in the consent dashboard)');
+  ok(/own bank account/.test(dd.setup) && /active before the first collection/.test(dd.setup), 'direct-debit setup text (own account, active before the first collection)');
+  ok(ARABIC.test(at.labelAr) && ARABIC.test(dd.labelAr), 'both methods carry an Arabic label');
+  throwsWith(() => E.repaymentFor(0), 'positive', 'repaymentFor(0) throws');
+  throwsWith(() => E.repaymentFor('abc'), 'positive', 'repaymentFor(non-number) throws');
+
+  // ---- every approved persona carries a repayment consistent with its approved amount; refers/declines null ----
+  const runs = [];
+  const add = (label, rec) => { collect(rec.reasonCodes); runs.push([label, rec]); return rec; };
+  for (const p of D.personasLoan) add(p.id + ' personal loan', decidePersona('personal_loan', p));
+  add('r2 + Credit Passport', decidePersona('personal_loan', P.r2, { consents: { aecb: true, openFinance: true, creditPassport: true } }));
+  for (const p of D.personasSplit) add(p.id + ' split', decidePersona('split', p));
+  add('r1 salary advance', decidePersona('salary_advance', P.r1, { amount: 20000, tenorMonths: 1 }));
+  add('u1 upgrade (with statements)', E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true, internationalStatements: true } }));
+  add('u1 upgrade (no statements)', E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true } }));
+  add('u2 upgrade', E.decide({ productId: 'starter_loan', applicant: U.u2, consents: { aecb: true, openFinance: true, internationalStatements: true } }));
+  let approvedRuns = 0;
+  for (const [label, rec] of runs) {
+    if (rec.outcome === 'APPROVE') {
+      approvedRuns++;
+      const want = rec.limit.approved <= 1000 ? 'ALTAREQ' : 'DIRECT_DEBIT';
+      ok(rec.repayment && rec.repayment.method === want && rec.repayment.amount === rec.limit.approved,
+         label + ': repayment ' + (rec.repayment && rec.repayment.method) + ' for approved ' + rec.limit.approved);
+      ok(rec.token.conditions.includes(want === 'ALTAREQ' ? AT_COND : DD_COND) &&
+         !rec.token.conditions.includes(want === 'ALTAREQ' ? DD_COND : AT_COND), label + ': token carries the matching method condition only');
+    } else {
+      eq(rec.repayment, null, label + ' (' + rec.outcome + '): repayment null');
+    }
+    ok(!(rec.token ? rec.token.conditions : []).some(mentionsSalaryTransfer), label + ': no token condition mentions a salary transfer');
+  }
+  ok(approvedRuns >= 9, 'repayment checked on ' + approvedRuns + ' approvals');
+  const byLabel = (l) => runs.find(r => r[0] === l)[1];
+  eq(byLabel('c1 split').repayment.method, 'DIRECT_DEBIT', 'c1 school fees AED 12,000 → direct debit');
+  eq(byLabel('c4 split').repayment.method, 'DIRECT_DEBIT', 'c4 flights AED 4,800 → direct debit');
+  eq(byLabel('r1 salary advance').repayment.method, 'DIRECT_DEBIT', 'r1 salary advance AED 13,500 → direct debit');
+  ok(byLabel('r1 salary advance').token.conditions.includes('Repaid in one instalment on the next salary date — no salary transfer required'),
+     'salary advance token: repaid in one instalment on the next salary date — no salary transfer required');
+  ok(byLabel('r2 + Credit Passport').token.conditions.includes('Remittance-linked repayment schedule'), 'cross-border approval keeps the remittance-linked schedule');
+
+  // ---- the starter loan itself (AED 1,000) and the upgrade, per selected option ----
+  eq(E.repaymentFor(U.u1.priorLoan.amount).method, 'ALTAREQ', 'starter loan AED 1,000 → Al Tareq recurring payment');
+  const u1 = byLabel('u1 upgrade (with statements)');
+  eq(u1.limit.approved, 3000, 'u1 upgrade offer ceiling AED 3,000');
+  eq(u1.repayment.method, 'DIRECT_DEBIT', 'u1 upgrade AED 3,000 → direct debit at decision time');
+  E.selectUpgradeOption(u1.id, { amount: 1000, months: 6 });
+  let u1r = E.getDecision(u1.id);
+  ok(u1r.repayment.method === 'ALTAREQ' && u1r.repayment.amount === 1000, 'selecting AED 1,000 → Al Tareq');
+  ok(u1r.token.conditions.includes(AT_COND) && !u1r.token.conditions.includes(DD_COND) && u1r.token.conditions[1] === AT_COND,
+     'token repayment line switches to Al Tareq (second line, after the KFS)');
+  eq(E.execSteps('starter_loan', u1.id).find(x => x.type === 'REPAYMENT_SET_UP').label, 'Al Tareq payment consent authorised',
+     'execSteps(starter_loan, id) labels REPAYMENT_SET_UP for Al Tareq');
+  E.selectUpgradeOption(u1.id, { amount: 1100, months: 6 });
+  u1r = E.getDecision(u1.id);
+  ok(u1r.repayment.method === 'DIRECT_DEBIT' && u1r.token.conditions.includes(DD_COND) && !u1r.token.conditions.includes(AT_COND),
+     'switching to AED 1,100 → direct debit, token follows');
+  eq(u1r.token.conditions.filter(c => c === AT_COND || c === DD_COND).length, 1, 'exactly one repayment condition after switching');
+  const rs = E.execSteps('starter_loan', u1.id).find(x => x.type === 'REPAYMENT_SET_UP');
+  ok(rs.label === 'Direct debit mandate active' && rs.method === 'DIRECT_DEBIT' && /own bank account/.test(rs.description),
+     'execSteps label/description follow the method (Direct debit mandate active)');
+  E.selectUpgradeOption(u1.id, { amount: 1000, months: 6 });
+  for (const t of ['OFFER_ACCEPTED', 'KFS_ACKNOWLEDGED', 'AGREEMENT_SIGNED']) E.recordEvent(u1.id, t);
+  throwsWith(() => E.recordEvent(u1.id, 'DISBURSED'), 'no disbursement until repayment collection is set up', 'upgrade: DISBURSED before REPAYMENT_SET_UP throws');
+  E.recordEvent(u1.id, 'REPAYMENT_SET_UP');
+  const evRs = E.getDecision(u1.id).events.find(e => e.type === 'REPAYMENT_SET_UP');
+  ok(evRs && evRs.method === 'ALTAREQ' && evRs.label === 'Al Tareq payment consent authorised', 'REPAYMENT_SET_UP event records the method (Al Tareq)');
+  ok(E.getDecision(u1.id).audit.some(a => a.detail === 'REPAYMENT_SET_UP · Al Tareq payment consent authorised'), 'audit trail names the method');
+  E.recordEvent(u1.id, 'COOLING_OFF_CLEARED'); E.recordEvent(u1.id, 'DISBURSED');
+  ok(E.getDecision(u1.id).status === 'EXECUTED' && E.getDecision(u1.id).events.length === 6, 'upgrade at AED 1,000: 6 steps → EXECUTED');
+
+  // ---- generic step list, product guard ----
+  const gen = E.execSteps('personal_loan').find(x => x.type === 'REPAYMENT_SET_UP');
+  ok(gen.label === 'Repayment set up' && gen.method === null && /no salary transfer required/.test(gen.description), 'execSteps without a decision: generic repayment step');
+  throwsWith(() => E.execSteps('personal_loan', u1.id), 'not personal_loan', 'execSteps with a decision of another product throws');
+  const r1 = byLabel('r1 personal loan');
+  eq(E.execSteps('personal_loan', r1.id)[3].label, 'Direct debit mandate active', 'r1 AED 150,000: step 4 is "Direct debit mandate active"');
+
+  // ---- split purchase ≤ AED 1,000 and "split another purchase" ----
+  const small = clone(P.c1); small.purchase.amount = 900; small.defaultRequest.amount = 900;
+  const sSmall = decidePersona('split', small);
+  ok(sSmall.outcome === 'APPROVE' && sSmall.limit.approved === 900 && sSmall.repayment.method === 'ALTAREQ' &&
+     sSmall.token.conditions.includes(AT_COND), 'split of AED 900 → Al Tareq recurring payment (token follows)');
+  const c1 = byLabel('c1 split');
+  const d1 = E.drawdownCheck(c1.id, 800, {});
+  ok(d1.allowed && d1.repayment && d1.repayment.method === 'ALTAREQ', 'split another purchase AED 800 → Al Tareq');
+  const d2 = E.drawdownCheck(c1.id, 5000, {});
+  ok(d2.allowed && d2.repayment.method === 'DIRECT_DEBIT', 'split another purchase AED 5,000 → direct debit');
+  const d3 = E.drawdownCheck(c1.id, 900, { arrears: true });
+  ok(!d3.allowed && d3.repayment === null, 'blocked split carries no repayment');
+  const adv = clone(P.r1);
+  const aSmall = decidePersona('salary_advance', adv, { amount: 1000, tenorMonths: 1 });
+  ok(aSmall.repayment.method === 'ALTAREQ' && aSmall.token.conditions.includes(AT_COND), 'salary advance of AED 1,000 → Al Tareq');
+
+  // ---- platform rule: shown on every pack, never editable ----
+  for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance']) {
+    const pr = E.getPolicy(pid).platform;
+    ok(pr && pr.repaymentCollection && pr.repaymentCollection.altareqMaxAmount === 1000 && pr.repaymentCollection.editable === false &&
+       pr.repaymentCollection.rule === 'Repayment collection: Al Tareq ≤ AED 1,000 · direct debit above · no salary transfer required',
+       pid + ' pack carries the locked repayment platform rule');
+  }
+  throwsWith(() => E.publishPolicy('personal_loan', { altareqMaxAmount: 5000 }, { author: 'a.hassan', approver: 'm.rashid' }),
+             'platform rule', 'publish cannot change the Al Tareq threshold');
+  throwsWith(() => E.simulateBook('split', { repaymentCollection: {} }), 'platform rule', 'simulate refuses the platform rule too');
+
+  // ---- no decision anywhere mentions a salary transfer ----
+  const all = E.listDecisions();
+  ok(all.every(r => !(r.token ? r.token.conditions : []).some(mentionsSalaryTransfer)), 'no token condition on any of ' + all.length + ' decisions mentions a salary transfer');
+  ok(E.execSteps('split').every(x => !mentionsSalaryTransfer(x.label + ' ' + x.description)), 'no execution step mentions a salary transfer');
+});
+
+// ---------------------------------------------------------------------------
+group('13. Home-country statements (v2.4): parser, underwriter request, re-decision that supersedes', () => {
+  E.init(D);
+  const U = {};
+  for (const p of D.personasUpgrade) U[p.id] = p;
+  const HDFC = 'HDFC_Statement_Jan–Jun_2026.pdf', SBI = 'SBI_Statement_Jan–Jun_2026.pdf', HBL = 'HBL_Statement_Jan–Jun_2026.pdf';
+  const META = { type: 'HOME_STATEMENTS', months: 6, country: 'IN', analyst: 'A. Farsi (Credit Analyst)', note: 'Thin file — 6 months of Indian statements' };
+
+  // ---- personas + vocabulary ----
+  eq(U.u1.name, 'Anita Thomas', 'u1 is Anita Thomas');
+  eq(U.u1.nameAr, 'أنيتا توماس', 'u1 Arabic name أنيتا توماس');
+  ok(/Kerala/.test(U.u1.tagline) && U.u1.monthsInUae === 5 && U.u1.connected.avgMonthlyIncome === 9500 && U.u1.connected.avgMonthlySpend === 5600,
+     'Anita: nurse from Kerala, 5 months in the UAE, income 9,500, spend 5,600');
+  ok(!('international' in U.u1) && !('international' in U.u2), 'v2.1 international blocks replaced by homeStatements');
+  for (const f of ['data.js', 'engine.js']) {
+    ok(!/Ana Reyes|آنا رييس/.test(fs.readFileSync(path.join(__dirname, f), 'utf8')), f + ' no longer mentions Ana Reyes');
+  }
+  eq(E.STATEMENT_CORRIDORS.join(','), 'IN,PK,EG', 'STATEMENT_CORRIDORS = IN, PK, EG');
+  ok(E.STATEMENT_FX.INR > 0 && E.STATEMENT_FX.PKR > 0 && E.STATEMENT_FX.EGP > 0, 'fixed demo FX table for INR, PKR, EGP → AED');
+  for (const c of ['RC_STATEMENTS_REQUESTED', 'RC_STATEMENTS_INCOMPLETE', 'RC_STATEMENTS_INTEGRITY', 'RC_STATEMENTS_USED']) {
+    ok(D.reasonCodes[c] && D.reasonCodes[c].en && ARABIC.test(D.reasonCodes[c].ar), 'new code ' + c + ' has English + Arabic');
+  }
+  eq(D.reasonCodes.RC_STATEMENTS_REQUESTED.en, 'Send us 6 months of your home-country bank statements so we can review a higher amount.', 'RC_STATEMENTS_REQUESTED customer message');
+
+  // ---- parser (pure) ----
+  const before = E.listDecisions().length;
+  const pr = E.parseStatements({ country: 'IN', bank: 'HDFC Bank', file: HDFC, applicantId: 'r2', productId: 'personal_loan' });
+  eq(E.listDecisions().length, before, 'parseStatements stores nothing');
+  ok(JSON.stringify(pr) === JSON.stringify(E.parseStatements({ country: 'India', bank: 'HDFC Bank', file: HDFC, applicantId: 'r2', productId: 'personal_loan' })),
+     'parser is deterministic (country by code or name)');
+  ok(pr.kind === 'HOME_STATEMENTS' && pr.country === 'IN' && pr.bank === 'HDFC Bank' && pr.file === HDFC && pr.currency === 'INR', 'r2 parse: India · HDFC Bank · file · INR');
+  ok(pr.integrity === 'PASS' && pr.nameMatch === true && pr.monthsPresent === 6 && pr.complete && pr.period.from === '2026-01-01' && pr.period.to === '2026-06',
+     'r2 parse: integrity PASS, name matches the Emirates ID, 6 of 6 months (Jan–Jun 2026)');
+  ok(pr.accountOpenSince === '2016-03' && pr.returnedItems === 0 && pr.overdraftDays === 0, 'r2 parse: account open since 2016, 0 returned items, 0 overdraft days');
+  ok(pr.obligationsMonthlyAed === 450 && pr.emis.length === 1 && /Education loan/.test(pr.emis[0].label), 'r2 parse: education-loan EMI ≈ AED 450/mo');
+  eq(pr.avgBalanceAed, 9800, 'r2 parse: average balance ≈ AED 9,800');
+  ok(pr.remittanceMonths === 6 && pr.uaeSalaryMonths === 6 && pr.remittanceConsistencyPct >= 90 && pr.remittanceConsistencyPct <= 94,
+     'r2 parse: remittances 6 of 6 months, ≈ 92% consistent with the UAE salary (' + pr.remittanceConsistencyPct + '%)');
+  eq(pr.otherIncomeMonthlyAed, 0, 'r2 parse: no other home-country income');
+  ok(pr.usable === true && pr.reasonCode === null, 'r2 statements usable');
+  const keys = pr.findings.map(f => f.key).join(',');
+  eq(keys, 'integrity,nameMatch,months,conduct,tenure,emis,buffer,remittances', 'findings: integrity, name, 6/6 months, conduct, tenure, EMIs, buffer, remittances');
+  ok(pr.findings.every(f => f.label && f.value && f.effect && f.status), 'every finding has label, value, effect and status');
+  ok(/DBR and free cash flow/.test(pr.findings.find(f => f.key === 'emis').effect), 'EMI finding: counted in DBR and free cash flow');
+  ok(/haircut/.test(pr.findings.find(f => f.key === 'remittances').effect), 'personal-loan findings name their effect on the decision (haircut)');
+  throwsWith(() => E.parseStatements({ country: 'Philippines', file: HDFC, applicantId: 'r2' }), 'statements from Philippines are not supported yet', 'unsupported country throws');
+  throwsWith(() => E.parseStatements({ country: 'PH', file: HDFC, applicantId: 'r2' }), 'statements from Philippines are not supported yet', 'unsupported country code throws with the country name');
+  throwsWith(() => E.parseStatements({ country: 'IN', applicantId: 'r1' }), 'no home-country statements', 'applicant without statements throws');
+  const fake = E.parseStatements({ country: 'IN', bank: 'HDFC Bank', file: 'HDFC_Statement_Jan–Jun_2026_edited.pdf', applicantId: 'r2' });
+  ok(fake.integrity === 'FAIL' && fake.usable === false && fake.reasonCode === 'RC_STATEMENTS_INTEGRITY' && fake.nameMatch === false,
+     'unknown / tampered file → integrity FAIL (RC_STATEMENTS_INTEGRITY)');
+  ok(fake.findings[0].status === 'FAIL' && /fraud review/.test(fake.findings[0].effect) && fake.findings.slice(1).every(f => f.status === 'SKIP'), 'tampered file: nothing else is read');
+  const wrongCountry = E.parseStatements({ country: 'PK', file: HDFC, applicantId: 'r2' });
+  eq(wrongCountry.integrity, 'FAIL', 'genuine file under the wrong country → integrity FAIL');
+  const part = E.parseStatements({ country: 'IN', file: HDFC, applicantId: 'r2', months: 5 });
+  ok(part.integrity === 'PASS' && part.monthsPresent === 5 && !part.complete && part.reasonCode === 'RC_STATEMENTS_INCOMPLETE' && part.missingMonths[0] === '2026-01',
+     '5 of 6 months → RC_STATEMENTS_INCOMPLETE (Jan 2026 missing)');
+  throwsWith(() => E.parseStatements({ country: 'IN', file: HDFC, applicantId: 'r2', months: 7 }), 'months covered', 'months covered beyond 6 throws');
+
+  // ---- r2: refer → request → upload → parse → re-decide ----
+  const r2 = decidePersona('personal_loan', P.r2);
+  eq(r2.outcome, 'REFER', 'r2 (no data) → REFER thin file');
+  throwsWith(() => E.redecide(r2.id), 'no home-country statements have been received', 're-deciding without documents throws');
+  throwsWith(() => E.submitStatements(r2.id, { country: 'IN', file: HDFC }), 'request them first', 'uploading before a request throws');
+  throwsWith(() => E.requestDocuments(r2.id, Object.assign({}, META, { country: 'Philippines' })), 'not supported yet', 'requesting an unsupported corridor throws');
+  throwsWith(() => E.requestDocuments(r2.id, Object.assign({}, META, { analyst: ' ' })), 'analyst', 'request needs the analyst name');
+  throwsWith(() => E.requestDocuments(r2.id, Object.assign({}, META, { months: 3 })), 'last 6 months', 'request is always 6 months');
+  const rq = E.requestDocuments(r2.id, META);
+  ok(rq.status === 'AWAITING_DOCUMENTS' && rq.documentRequest.country === 'IN' && rq.documentRequest.months === 6 &&
+     rq.documentRequest.reasonCode === 'RC_STATEMENTS_REQUESTED' && ARABIC.test(rq.documentRequest.customerMessage.ar),
+     'request: AWAITING_DOCUMENTS, India, 6 months, RC_STATEMENTS_REQUESTED (EN + AR)');
+  ok(rq.audit.some(a => a.action === 'DOCUMENTS_REQUESTED' && a.actor === META.analyst && /SLA paused/.test(a.detail)), 'request audit-logged with the analyst; SLA paused');
+  const qr = E.referQueue().find(x => x.id === r2.id);
+  ok(qr && qr.status === 'AWAITING_DOCUMENTS' && qr.slaPaused === true && qr.slaHoursLeft === 8, 'queue: "awaiting documents", SLA paused at 8h');
+  throwsWith(() => E.requestDocuments(r2.id, META), 'already requested', 'requesting twice throws (wrong state)');
+  throwsWith(() => E.redecide(r2.id), 'still waiting for the customer', 're-deciding before the upload throws');
+  throwsWith(() => E.submitStatements(r2.id, { country: 'Egypt-ish', file: HDFC }), 'not supported yet', 'upload from an unsupported country throws');
+  const inc = E.submitStatements(r2.id, { country: 'IN', bank: 'HDFC Bank', file: HDFC, months: 5 });
+  ok(inc.status === 'AWAITING_DOCUMENTS' && inc.documents.parsed.reasonCode === 'RC_STATEMENTS_INCOMPLETE' &&
+     inc.audit.some(a => a.action === 'DOCUMENTS_INCOMPLETE'), 'incomplete upload: stays AWAITING_DOCUMENTS, customer asked again');
+  const sub = E.submitStatements(r2.id, { country: 'IN', bank: 'HDFC Bank', file: HDFC });
+  ok(sub.status === 'DOCUMENTS_RECEIVED' && sub.documents.parsed.usable && sub.documents.file === HDFC, 'complete upload: DOCUMENTS_RECEIVED with the parsed statements');
+  ok(E.referQueue().find(x => x.id === r2.id).slaPaused === false, 'queue: SLA resumes once documents arrive');
+  throwsWith(() => E.submitStatements(r2.id, { country: 'IN', file: HDFC }), 'already received', 'uploading again throws');
+  const r2s = E.redecide(r2.id);
+  collect(r2s.reasonCodes);
+  ok(r2s.id !== r2.id && r2s.supersedes === r2.id && E.getDecision(r2.id).supersededBy === r2s.id && E.getDecision(r2.id).status === 'SUPERSEDED',
+     're-decision is a NEW record: supersedes ' + r2.id + ', original marked SUPERSEDED');
+  ok(r2s.redecision && r2s.redecision.trigger === 'UNDERWRITER_REQUEST' && r2s.redecision.original.outcome === 'REFER' &&
+     r2s.redecision.documentRequest.analyst === META.analyst, 'redecision links trigger, original outcome and the request');
+  ok(r2s.audit.some(a => a.action === 'REDECISION' && a.detail.includes(r2.id)) && E.getDecision(r2.id).audit.some(a => a.action === 'SUPERSEDED'),
+     'both records are audit-linked');
+  eq(r2s.outcome, 'APPROVE', 'r2 with statements → APPROVE');
+  eq(r2s.score.grade, 'B', 'r2 statements grade B (capped)');
+  eq(r2s.score.basis, 'HOME_STATEMENTS', 'scorecard basis HOME_STATEMENTS (proxy 640)');
+  eq(r2s.limit.approved, 45000, 'r2 statements approve AED 45,000');
+  eq(r2s.limit.bindingConstraint, 'STATEMENTS_HAIRCUT', 'binding: the smaller statements haircut (25%)');
+  eq(r2s.features.statementsHaircutPct, 25, 'haircut 25% (50% − conduct 10 − buffer 5 − corroboration 10)');
+  ok(r2s.reasonCodes.includes('RC_STATEMENTS_USED'), 'reason RC_STATEMENTS_USED');
+  ok(r2s.features.existingObligations === 450 && r2s.features.dbrPct <= 50, 'the AED 450 EMI is counted in DBR (' + r2s.features.dbrPct + '%)');
+  ok(r2s.dataPulls.some(d => d.source === 'HOME_STATEMENTS' && d.status === 'PARSED'), 'HOME_STATEMENTS data pull recorded');
+  ok(r2s.homeStatements && r2s.homeStatements.file === HDFC && r2s.consents.homeStatements.source === 'UNDERWRITER_REQUEST', 'record carries the parsed statements + consent source');
+  ok(r2s.rules.find(r => r.id === 'POL_HOME_STATEMENTS').result === 'PASS' && r2s.rules.find(r => r.id === 'POL_THIN_FILE').result === 'PASS',
+     'POL_HOME_STATEMENTS PASS; thin file substituted');
+  ok(r2s.repayment && r2s.repayment.method === 'DIRECT_DEBIT', 'AED 45,000 approval repaid by direct debit (v2.3)');
+  const r2cp = decidePersona('personal_loan', P.r2, { consents: { aecb: true, openFinance: true, creditPassport: true } });
+  ok(r2s.limit.approved > r2cp.limit.approved && r2cp.limit.approved === 30000, 'statements approve more than the Credit Passport path (45,000 > 30,000)');
+  const cmp = r2s.evidenceComparison;
+  eq(cmp.map(c => c.path).join(','), 'NO_DATA,CREDIT_PASSPORT,HOME_STATEMENTS', 'comparison: no data / Credit Passport / statements');
+  ok(cmp[0].outcome === 'REFER' && cmp[1].outcome === 'APPROVE' && cmp[1].approved === 30000 && cmp[1].grade === 'B' &&
+     cmp[2].approved === 45000 && cmp[2].grade === 'B', 'comparison figures: REFER · AED 30,000 B · AED 45,000 B');
+  ok(!E.referQueue().some(x => x.id === r2.id) && !E.referQueue().some(x => x.id === r2s.id), 'queue drops the original; the approval is not a refer');
+  throwsWith(() => E.redecide(r2.id), 'already superseded', 're-deciding a superseded decision throws');
+  throwsWith(() => E.override(r2.id, { outcome: 'APPROVE', reasonCode: 'RC_MANUAL_REVIEW', analyst: 'a', approver: 'b' }), 'superseded', 'overriding a superseded decision throws');
+
+  // ---- tampered upload → fraud review (REFER), never a decline ----
+  const r2b = decidePersona('personal_loan', P.r2);
+  E.requestDocuments(r2b.id, META);
+  E.submitStatements(r2b.id, { country: 'IN', bank: 'HDFC Bank', file: 'HDFC_Statement_Jan–Jun_2026_edited.pdf' });
+  eq(E.getDecision(r2b.id).status, 'DOCUMENTS_RECEIVED', 'tampered upload is received (fraud review happens on the re-decision)');
+  const r2f = E.redecide(r2b.id);
+  collect(r2f.reasonCodes);
+  ok(r2f.outcome === 'REFER' && r2f.reasonCodes.includes('RC_STATEMENTS_INTEGRITY') && r2f.rules.find(r => r.id === 'POL_HOME_STATEMENTS').result === 'REFER',
+     'integrity FAIL → REFER to fraud review (RC_STATEMENTS_INTEGRITY), not DECLINE');
+  ok(r2f.dataPulls.some(d => d.source === 'HOME_STATEMENTS' && d.status === 'INTEGRITY_FAIL'), 'pull recorded as INTEGRITY_FAIL');
+  ok(E.referQueue().some(x => x.id === r2f.id) && !E.referQueue().some(x => x.id === r2b.id), 'the fraud-review re-decision replaces the original in the queue');
+
+  // ---- wrong states ----
+  const r1 = decidePersona('personal_loan', P.r1);
+  throwsWith(() => E.requestDocuments(r1.id, META), 'only on an open REFER', 'request on an approval at the requested amount throws');
+  const r4 = decidePersona('personal_loan', P.r4);
+  throwsWith(() => E.requestDocuments(r4.id, META), 'only on an open REFER', 'request on a DECLINE throws');
+  const c2 = decidePersona('split', P.c2);
+  throwsWith(() => E.requestDocuments(c2.id, META), 'personal-loan and upgrade', 'request on a split refer throws (statements feed loans and upgrades)');
+  const below = E.requestDocuments(r2cp.id, META);
+  eq(below.status, 'AWAITING_DOCUMENTS', 'request allowed on an approval below the requested amount (Credit Passport 30,000 of 60,000)');
+  throwsWith(() => E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: CONSENT_ALL, statements: pr }), 'personal-loan and upgrade', 'statements on a split decision throw');
+
+  // ---- Anita (u1): BASE → upload → ENHANCED (customer-initiated, supersedes) ----
+  const base = E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true } });
+  ok(base.tier === 'BASE' && base.upgrade.maxAmount === 1500 && base.upgrade.maxTenorMonths === 3 && base.upgrade.aprFloor === 0.42,
+     'Anita without statements → BASE (1,500 · 3 months · 42%)');
+  const sbi = E.parseStatements({ country: 'IN', bank: 'State Bank of India', file: SBI, applicantId: 'u1', productId: 'starter_loan' });
+  ok(sbi.integrity === 'PASS' && sbi.nameMatch && sbi.monthsPresent === 6 && sbi.accountOpenSince === '2014-08' && sbi.returnedItems === 0,
+     'SBI parse: PASS, name match, 6 of 6, account since 2014, 0 returned items');
+  ok(sbi.obligationsMonthlyAed === 350 && sbi.avgBalanceAed === 4200 && sbi.remittanceConsistencyPct >= 93 && sbi.remittanceConsistencyPct <= 97 &&
+     sbi.remittanceMonths === 5 && sbi.uaeSalaryMonths === 5, 'SBI parse: home-loan EMI AED 350, balance AED 4,200, remittances 5 of 5 UAE salary months ≈ 95% (' + sbi.remittanceConsistencyPct + '%)');
+  ok(/24 months/.test(sbi.findings.find(f => f.key === 'tenure').effect), 'upgrade findings: account history credited as 24 months');
+  throwsWith(() => E.decide({ productId: 'starter_loan', applicant: U.u2, consents: { aecb: true, openFinance: true }, statements: sbi }),
+             'belong to applicant u1', 'statements of another applicant throw');
+  throwsWith(() => E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true }, supersedes: base.id }),
+             'needs new evidence', 'superseding without statements throws');
+  const enh = E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true }, statements: sbi, supersedes: base.id });
+  collect(enh.reasonCodes);
+  ok(enh.outcome === 'APPROVE' && enh.tier === 'ENHANCED' && enh.upgrade.maxAmount === 3000 && enh.upgrade.maxTenorMonths === 6 && enh.upgrade.aprFloor === 0.35,
+     'Anita with statements → ENHANCED (3,000 · 6 months · 35%)');
+  ok(enh.features.freeCashFlowMonthly === 3550 && enh.features.maxInstalment === 1775 && enh.features.incomeHistoryMonths === 29 &&
+     enh.features.homeCountryObligations === 350, 'v2.1 numbers kept: FCF 3,550 · budget 1,775 · history 29 · EMI 350');
+  eq(E.quoteUpgrade(enh.id, 3000).options[5].monthlyPayment, 552.27, 'v2.1 number kept: 6 months @ 3,000 = AED 552.27/mo');
+  ok(enh.supersedes === base.id && E.getDecision(base.id).supersededBy === enh.id && enh.redecision.trigger === 'CUSTOMER_UPLOAD',
+     'ENHANCED offer supersedes the BASE offer (customer upload)');
+  ok(enh.evidenceComparison.map(c => c.path + ':' + c.tier).join(',') === 'NO_DATA:BASE,HOME_STATEMENTS:ENHANCED', 'upgrade comparison: BASE → ENHANCED');
+  throwsWith(() => E.selectUpgradeOption(base.id, { amount: 1500, months: 3 }), 'superseded', 'the superseded BASE offer can no longer be chosen');
+  const u1x = E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true } });
+  E.selectUpgradeOption(u1x.id, { amount: 1500, months: 3 }); E.recordEvent(u1x.id, 'OFFER_ACCEPTED');
+  throwsWith(() => E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true }, statements: sbi, supersedes: u1x.id }),
+             'already accepted', 'an accepted offer cannot be superseded');
+  const tampered = E.parseStatements({ country: 'IN', file: 'SBI_Statement_Jan–Jun_2026_edited.pdf', applicantId: 'u1', productId: 'starter_loan' });
+  const fr = E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true }, statements: tampered });
+  collect(fr.reasonCodes);
+  ok(fr.outcome === 'REFER' && fr.reasonCodes[0] === 'RC_STATEMENTS_INTEGRITY', 'tampered upgrade statements → REFER (fraud review), not DECLINE');
+  const part1 = E.parseStatements({ country: 'IN', file: SBI, applicantId: 'u1', productId: 'starter_loan', months: 4 });
+  const pb = E.decide({ productId: 'starter_loan', applicant: U.u1, consents: { aecb: true, openFinance: true }, statements: part1 });
+  collect(pb.reasonCodes);
+  ok(pb.outcome === 'APPROVE' && pb.tier === 'BASE' && pb.reasonCodes.includes('RC_STATEMENTS_INCOMPLETE'), 'incomplete upgrade statements → not used (BASE + RC_STATEMENTS_INCOMPLETE)');
+
+  // ---- Bilal (u2): HBL statements don't override a repayment breach ----
+  const hbl = E.parseStatements({ country: 'PK', bank: 'HBL', file: HBL, applicantId: 'u2', productId: 'starter_loan' });
+  ok(hbl.integrity === 'PASS' && hbl.nameMatch && hbl.monthsPresent === 6 && hbl.country === 'PK' && hbl.currency === 'PKR', 'HBL (Pakistan) parse: PASS, 6 of 6, PKR');
+  const u2 = E.decide({ productId: 'starter_loan', applicant: U.u2, consents: { aecb: true, openFinance: true }, statements: hbl });
+  collect(u2.reasonCodes);
+  ok(u2.outcome === 'DECLINE' && u2.reasonCodes[0] === 'RC_STARTER_LATE' && u2.rules.find(r => r.id === 'POL_HOME_STATEMENTS').result === 'PASS',
+     'Bilal with verified statements → still DECLINE RC_STARTER_LATE');
+
+  // ---- Youssef (seeded, Egypt, awaiting documents) ----
+  const y = E.referQueue().find(x => x.name === 'Youssef Hassan');
+  ok(y && y.seeded && y.status === 'AWAITING_DOCUMENTS' && y.slaPaused === true && y.documentRequest.country === 'EG' && /CIB/.test(y.documentRequest.bank),
+     'seeded Youssef Hassan: Egypt, CIB statements requested, AWAITING_DOCUMENTS, SLA paused');
+
+  // ---- reason codes + determinism ----
+  for (const rec of E.listDecisions()) collect(rec.reasonCodes);
+  const missing = [...emittedCodes].filter(c => !D.reasonCodes[c]);
+  ok(missing.length === 0, 'every emitted reason code exists (missing: ' + missing.join(', ') + ')');
+  for (const c of ['RC_STATEMENTS_INCOMPLETE', 'RC_STATEMENTS_INTEGRITY', 'RC_STATEMENTS_USED']) ok(emittedCodes.has(c), c + ' is emitted');
+  function snap() {
+    E.init(D);
+    const a = decidePersona('personal_loan', P.r2);
+    E.requestDocuments(a.id, META);
+    E.submitStatements(a.id, { country: 'IN', bank: 'HDFC Bank', file: HDFC });
+    const b = E.redecide(a.id);
+    return JSON.stringify({ a: E.getDecision(a.id), b, q: E.referQueue() });
+  }
+  ok(snap() === snap(), 'two fresh init() runs produce identical request → upload → re-decision records');
 });
 
 // ---------------------------------------------------------------------------

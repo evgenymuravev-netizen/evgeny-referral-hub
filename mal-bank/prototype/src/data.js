@@ -11,6 +11,9 @@
  *  - 5 personal-loan personas (r1..r5), unchanged intended outcomes.
  *  - 2 starter-loan upgrade personas (u1..u2, Addendum v2.1): thin-file
  *    newcomers re-decided after their AED 1,000 starter loan.
+ *  - Seeded home-country bank statements (Addendum v2.4) for r2, u1 and u2:
+ *    6 monthly rows each, in local currency, read by Mizan's simulated parser;
+ *    plus one seeded Workbench case awaiting Egyptian statements.
  *  - Bilingual (EN + Modern Standard Arabic) customer-safe reason codes.
  *  - 5 seeded day-zero early-warning signals (consumer only).
  *  - A seeded deterministic sample book (120 split + 140 personal-loan +
@@ -56,6 +59,25 @@
   // split persona's monthlyIncome / monthlySpend arrays (oldest first).
   const monthLabels = ['2025-07', '2025-08', '2025-09', '2025-10', '2025-11', '2025-12',
                        '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+
+  // Seeded home-country statements (Addendum v2.4). Each statement is the last
+  // 6 complete months in the account's own currency, one row per month:
+  //   avgBalance — average daily balance; remittance — the credit received from
+  //   the customer's UAE account that month ({day, amount}) or null; emi — the
+  //   recurring loan debit (0 when none); returnedItems / overdraftDays — conduct.
+  // `file` is the genuine bank-issued e-statement; any other file name parses as
+  // an integrity failure (the tamper path). Mizan converts to AED at its fixed
+  // demo FX table and derives every figure — nothing below is pre-aggregated.
+  function homeStatements(country, bank, file, accountHolder, accountOpenSince, emiLabel, emi, rows) {
+    return {
+      country, bank, file, accountHolder, accountOpenSince,
+      currency: { IN: 'INR', PK: 'PKR', EG: 'EGP' }[country],
+      issuer: bank + ' e-statement (digitally signed PDF)',
+      emiLabel,
+      months: rows.map(([month, avgBalance, remittance]) => ({
+        month, avgBalance, remittance, emi, otherIncome: 0, returnedItems: 0, overdraftDays: 0 }))
+    };
+  }
 
   // ---------------------------------------------------------------------------
   // Split personas (NOOR-PIVOT §Split personas). Each one already made a big
@@ -187,7 +209,20 @@
       homeBureau: { country: 'India', bureau: 'CIBIL via AECB × Nova Credit Passport',
                     score: 776, scoreRange: '300–900', historyYears: 6, obligationsMonthlyAed: 1100 },
       bankData: { source: 'ALTAREQ_TPP', banks: ['ENBD'], monthsAvailable: 7,
-                  salaryDetected: true, avgSalaryCredit: 17000 },
+                  salaryDetected: true, avgSalaryCredit: 17000, salaryCreditDay: 27 },
+      // v2.4 — 6 months of HDFC statements (India), uploaded when the analyst asks.
+      // Education-loan EMI INR 10,227 (≈ AED 450), average balance ≈ AED 9,800,
+      // a remittance from her UAE salary every month (≈ 92% consistent).
+      homeStatements: homeStatements('IN', 'HDFC Bank', 'HDFC_Statement_Jan–Jun_2026.pdf', 'PRIYA NAIR', '2016-03',
+        'Education loan EMI (HDFC Credila)', 10227,
+        [ // month, avg balance (INR), remittance from the UAE {day, amount INR} | null
+          ['2026-01', 214800, { day: 28, amount: 113600 }],
+          ['2026-02', 219600, { day: 28, amount: 100000 }],
+          ['2026-03', 226300, { day: 29, amount: 113600 }],
+          ['2026-04', 221900, { day: 28, amount: 127200 }],
+          ['2026-05', 228400, { day: 31, amount: 104500 }],   // 4 days after salary — still consistent, scored half on timing
+          ['2026-06', 225362, { day: 28, amount: 131800 }]
+        ]),
       defaultRequest: { amount: 60000, tenorMonths: 24 }
     },
     { // r3 — APPROVE but limit sharply reduced; bindingConstraint DBR_HEADROOM
@@ -235,18 +270,19 @@
   // Starter-loan upgrade personas u1..u2 (NOOR-PIVOT Addendum v2.1). Thin-file
   // newcomers who took Noor's starter loan (AED 1,000 · 1 month · 50% APR) and
   // are now re-decided on richer data: connected UAE accounts (Open Finance)
-  // plus, optionally, parsed international bank statements (home-country history).
+  // plus, optionally, 6 months of home-country bank statements (v2.4) that the
+  // customer uploads and Mizan parses.
   //
   // connected.monthlyIncome / monthlySpend follow the split-persona convention:
   // 12 slots aligned to monthLabels, null outside the connected window, mean of
   // the non-null months === the stated average, stdev/mean ≈ incomeVolatilityPct.
-  // international.obligationsMonthlyAed is a home-country loan that is only
-  // visible to the decision when the customer shares the statements.
+  // The home-loan EMI in homeStatements is only visible to the decision when the
+  // customer shares the statements.
   // ---------------------------------------------------------------------------
   const personasUpgrade = [
-    { // u1 — APPROVE, ENHANCED tier with statements (up to AED 3,000 · 6 months · from 35% APR); BASE without
-      id: 'u1', name: 'Ana Reyes', nameAr: 'آنا رييس',
-      tagline: 'Nurse, 5 months in the UAE — repaid her starter loan on time',
+    { // u1 — APPROVE: BASE without statements; ENHANCED (up to AED 3,000 · 6 months · from 35% APR) with them
+      id: 'u1', name: 'Anita Thomas', nameAr: 'أنيتا توماس',
+      tagline: 'Nurse from Kerala, 5 months in the UAE — repaid her starter loan on time',
       age: 29, residency: 'NEW_RESIDENT', monthsInUae: 5,
       employment: { employer: 'Private hospital, Dubai', type: 'PRIVATE', retiree: false },
       priorLoan: { ref: 'MZN-S-0412', productId: 'starter_loan', amount: 1000, tenorMonths: 1, apr: 0.50,
@@ -254,13 +290,24 @@
       aecb: { hit: true, score: null, tradelines: 1, worstDelinquency: 'NONE', chequeReturns12m: 0,
               obligationsMonthly: 0, note: 'File created by the starter loan — 1 tradeline, paid on time, no score yet' },
       connected: { source: 'ALTAREQ_TPP', banks: ['ENBD'], monthsAvailable: 5, avgMonthlyIncome: 9500,
-                   avgMonthlySpend: 5600, incomeVolatilityPct: 4,
+                   avgMonthlySpend: 5600, incomeVolatilityPct: 4, salaryCreditDay: 28,
                    // Salary + shift allowances since arrival; mean 9,500, vol 4.04%
                    monthlyIncome: [null, null, null, null, null, null, null, 9000, 9950, 9150, 9900, 9500],
                    monthlySpend: [null, null, null, null, null, null, null, 5400, 5900, 5300, 5800, 5600] },
-      international: { country: 'Philippines', bank: 'BDO Unibank', source: 'Statements (24 months, parsed)',
-                       monthsAvailable: 24, avgMonthlyIncomeAed: 6800, incomeVolatilityPct: 6, avgBalanceAed: 4200,
-                       overdrafts12m: 0, obligationsMonthlyAed: 350 /* home-country personal loan, paid on time */ }
+      // v2.4 — State Bank of India, account open since 2014; home-loan EMI INR 7,955
+      // (≈ AED 350), average balance ≈ AED 4,200. January is her last month in
+      // Kerala (no UAE salary yet); Feb–Jun each carry a remittance from her UAE
+      // salary (≈ 95% consistent).
+      homeStatements: homeStatements('IN', 'State Bank of India', 'SBI_Statement_Jan–Jun_2026.pdf', 'ANITA THOMAS', '2014-08',
+        'Home loan EMI (SBI)', 7955,
+        [
+          ['2026-01', 101200, null],
+          ['2026-02', 88600, { day: 28, amount: 56800 }],
+          ['2026-03', 92300, { day: 29, amount: 48300 }],
+          ['2026-04', 97800, { day: 30, amount: 56800 }],
+          ['2026-05', 93900, { day: 29, amount: 68000 }],
+          ['2026-06', 98930, { day: 28, amount: 50000 }]
+        ])
     },
     { // u2 — DECLINE: the starter loan was repaid 14 days late → starter terms continue (RC_STARTER_LATE)
       id: 'u2', name: 'Bilal Ahmed', nameAr: 'بلال أحمد',
@@ -272,14 +319,36 @@
       aecb: { hit: true, score: null, tradelines: 1, worstDelinquency: 'NONE', chequeReturns12m: 0,
               obligationsMonthly: 0, note: 'File created by the starter loan — 1 tradeline, repaid 14 days late, no score yet' },
       connected: { source: 'ALTAREQ_TPP', banks: ['Mashreq'], monthsAvailable: 7, avgMonthlyIncome: 6500,
-                   avgMonthlySpend: 4300, incomeVolatilityPct: 5,
+                   avgMonthlySpend: 4300, incomeVolatilityPct: 5, salaryCreditDay: 26,
                    // mean 6,500, vol 5.25%
                    monthlyIncome: [null, null, null, null, null, 6100, 6950, 6250, 6850, 6050, 6750, 6550],
                    monthlySpend: [null, null, null, null, null, 4100, 4500, 4200, 4600, 4000, 4400, 4300] },
-      international: { country: 'Pakistan', bank: 'HBL', source: 'Statements (18 months, parsed)',
-                       monthsAvailable: 18, avgMonthlyIncomeAed: 3100, incomeVolatilityPct: 8, avgBalanceAed: 1600,
-                       overdrafts12m: 0, obligationsMonthlyAed: 0 }
+      // v2.4 — HBL (Pakistan), 6 months, clean: no EMIs, average balance ≈ AED 1,600.
+      // The statements are fine; the late starter repayment still blocks the upgrade.
+      homeStatements: homeStatements('PK', 'HBL', 'HBL_Statement_Jan–Jun_2026.pdf', 'BILAL AHMED', '2019-05',
+        null, 0,
+        [
+          ['2026-01', 116400, { day: 27, amount: 151500 }],
+          ['2026-02', 124900, { day: 27, amount: 140900 }],
+          ['2026-03', 118700, { day: 31, amount: 151500 }],
+          ['2026-04', 127300, { day: 27, amount: 162100 }],
+          ['2026-05', 119800, { day: 31, amount: 151500 }],
+          ['2026-06', 120172, { day: 28, amount: 137800 }]
+        ])
     }
+  ];
+
+  // ---------------------------------------------------------------------------
+  // Seeded Workbench case (v2.4) — an analyst has already asked this customer for
+  // 6 months of Egyptian bank statements; the refer SLA is paused while Noor waits.
+  // Summary data only (like the other seeded queue rows).
+  // ---------------------------------------------------------------------------
+  const seededDocumentCases = [
+    { id: 'MZN-H-110', name: 'Youssef Hassan', nameAr: 'يوسف حسن', productId: 'personal_loan',
+      reason: 'RC_THIN_FILE', country: 'EG', bank: 'CIB (Commercial International Bank)',
+      waitingHours: 2.6, slaHoursLeftAtPause: 5.4, requestedBy: 'A. Farsi (Credit Analyst)',
+      requestedAt: TODAY + 'T07:12:00.000Z',
+      note: 'Thin file, 4 months in the UAE, salary verified via connected account — 6 months of CIB statements to size the limit.' }
   ];
 
   // ---------------------------------------------------------------------------
@@ -358,17 +427,30 @@
       ar: 'لإبقاء الأقساط ضمن القدرة على السداد، تم تحديد خطة تقسيط بمدة أطول.' },
     // --- Starter loan → upgrade (Addendum v2.1) ---------------------------------
     RC_UPGRADE_ENHANCED: {
-      en: 'Upgraded using your connected UAE accounts and verified international bank statements.',
-      ar: 'تمت ترقية عرضك بناءً على حساباتك المصرفية المرتبطة في الإمارات وكشوف حساباتك المصرفية الدولية التي تم التحقق منها.' },
+      en: 'Upgraded using your connected UAE accounts and your verified home-country bank statements.',
+      ar: 'تمت ترقية عرضك بناءً على حساباتك المصرفية المرتبطة في الإمارات وكشوف حسابك المصرفي في بلدك الأم التي تم التحقق منها.' },
     RC_UPGRADE_BASE: {
-      en: 'Upgraded using your connected UAE accounts — add international statements for a larger limit and a lower rate.',
-      ar: 'تمت ترقية عرضك بناءً على حساباتك المصرفية المرتبطة في الإمارات — أضف كشوف حساباتك المصرفية الدولية للحصول على حد أعلى ومعدل فائدة أقل.' },
+      en: 'Upgraded using your connected UAE accounts — add 6 months of home-country bank statements for a larger limit and a lower rate.',
+      ar: 'تمت ترقية عرضك بناءً على حساباتك المصرفية المرتبطة في الإمارات — أضف كشوف حسابك المصرفي في بلدك الأم عن آخر ستة أشهر للحصول على حد أعلى ومعدل فائدة أقل.' },
     RC_STARTER_LATE: {
       en: 'Previous loan was repaid late — starter terms continue; upgrade can be reviewed after 3 on-time months.',
       ar: 'تم سداد القرض السابق بعد موعد استحقاقه — تستمر شروط قرض البداية، ويمكن مراجعة الترقية بعد ثلاثة أشهر من السداد في المواعيد المحددة.' },
     RC_OPTION_UNAFFORDABLE: {
       en: 'This amount and term would take the instalment above what your cash flow supports.',
-      ar: 'هذا المبلغ مع هذه المدة سيرفع القسط الشهري فوق ما يسمح به تدفقك النقدي.' }
+      ar: 'هذا المبلغ مع هذه المدة سيرفع القسط الشهري فوق ما يسمح به تدفقك النقدي.' },
+    // --- Home-country bank statements (Addendum v2.4) ---------------------------
+    RC_STATEMENTS_REQUESTED: {
+      en: 'Send us 6 months of your home-country bank statements so we can review a higher amount.',
+      ar: 'يُرجى تزويدنا بكشوف حسابك المصرفي في بلدك الأم عن آخر ستة أشهر حتى نتمكن من دراسة منحك مبلغاً أعلى.' },
+    RC_STATEMENTS_INCOMPLETE: {
+      en: 'The bank statements do not cover all of the last 6 months — please upload the missing months.',
+      ar: 'لا تغطي كشوف الحساب المصرفي الأشهر الستة الأخيرة كاملةً — يُرجى تحميل الأشهر الناقصة.' },
+    RC_STATEMENTS_INTEGRITY: {
+      en: 'The bank statements could not be verified (document integrity or account-holder name) — the application was referred for review.',
+      ar: 'تعذّر التحقق من كشوف الحساب المصرفي (سلامة المستند أو اسم صاحب الحساب) — تمت إحالة الطلب إلى المراجعة.' },
+    RC_STATEMENTS_USED: {
+      en: 'Decided using your verified home-country bank statements — account history, clean conduct and remittances that match your UAE salary.',
+      ar: 'تم اتخاذ القرار استناداً إلى كشوف حسابك المصرفي في بلدك الأم التي تم التحقق منها — سجل الحساب وانتظام التعاملات والتحويلات المتوافقة مع راتبك في الإمارات.' }
   };
 
   // ---------------------------------------------------------------------------
@@ -513,6 +595,7 @@
     personasSplit: personasSplit,
     personasLoan: personasLoan,
     personasUpgrade: personasUpgrade,
+    seededDocumentCases: seededDocumentCases,
     reasonCodes: reasonCodes,
     earlyWarning: earlyWarning,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook() },

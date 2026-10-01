@@ -22,8 +22,19 @@
  *    accounts.
  *  - Conventional consumer-protection execution order (CBUAE Consumer Protection
  *    Regulation 8/2020 + Standards): offer accepted → Key Facts Statement
- *    acknowledged → agreement e-signed → cooling-off cleared → disbursed.
- *    An approval is a risk decision, NOT a loan — out-of-order steps throw.
+ *    acknowledged → agreement e-signed → repayment set up → cooling-off cleared
+ *    → disbursed. An approval is a risk decision, NOT a loan — out-of-order
+ *    steps throw.
+ *  - Repayment collection (Addendum v2.3, one platform rule for every product):
+ *    collected from the customer's own bank account, never via their salary —
+ *    approved amount ≤ AED 1,000 → Al Tareq recurring payment (Open Finance
+ *    payment initiation), above → direct debit mandate (UAE DDS).
+ *  - Home-country bank statements (Addendum v2.4): 6 months from India, Pakistan
+ *    or Egypt, parsed for integrity, name match, conduct, EMIs, buffer and
+ *    remittance corroboration. Evidence, not an override: the customer uploads
+ *    them in a journey, or an underwriter requests them on a refer, and Mizan
+ *    re-decides as a NEW decision that supersedes the original. A failed
+ *    integrity or name check refers to fraud review — never an automatic decline.
  *  - Split pricing: flat monthly fee on the principal, with the APR equivalent
  *    (IRR of the instalment schedule) disclosed for the KFS.
  *  - Thin-file thesis: an AECB no-hit customer with enough connected-account
@@ -56,8 +67,10 @@
   const CASH_FLOW_PROXY_BASE = 640;      // scorecard base on the AECB no-hit cash-flow path
 
   // Conventional execution events, in the only valid order (CBUAE consumer protection).
+  // REPAYMENT_SET_UP (Addendum v2.3) sits between e-signature and cooling-off:
+  // nothing is disbursed until collection from the customer's own account exists.
   const EXEC_EVENTS = ['OFFER_ACCEPTED', 'KFS_ACKNOWLEDGED', 'AGREEMENT_SIGNED',
-                       'COOLING_OFF_CLEARED', 'DISBURSED'];
+                       'REPAYMENT_SET_UP', 'COOLING_OFF_CLEARED', 'DISBURSED'];
   // UI labels/descriptions per step, plus the guard text quoted when a step is
   // attempted out of order (keyed by the step that was EXPECTED next).
   const EXEC_STEP_INFO = {
@@ -72,7 +85,13 @@
     AGREEMENT_SIGNED: {
       label: 'Agreement signed',
       description: 'Loan agreement e-signed via UAE PASS',
-      guard: 'the agreement must be e-signed via UAE PASS before the cooling-off period can start' },
+      guard: 'the agreement must be e-signed via UAE PASS before repayment collection is set up or the cooling-off period can start' },
+    // Label and description follow the decision's repayment method when execSteps
+    // is given a decision id (see REPAYMENT_METHODS); these are the generic ones.
+    REPAYMENT_SET_UP: {
+      label: 'Repayment set up',
+      description: 'Al Tareq recurring payment consent up to AED 1,000, direct debit mandate above — from the customer\'s own account, no salary transfer required',
+      guard: 'no disbursement until repayment collection is set up — authorise the Al Tareq recurring payment (up to AED 1,000) or activate the direct debit mandate (above) first' },
     COOLING_OFF_CLEARED: {
       label: 'Cooling-off cleared',
       description: '5 business days elapsed, or written waiver signed (CPR 8/2020)',
@@ -104,7 +123,7 @@
   // vs params (editable in the console under 4-eyes governance).
   // ---------------------------------------------------------------------------
   function defaultPolicies() {
-    return {
+    const packs = {
       split: {
         productId: 'split', version: 1,
         publishedAt: null, publishedBy: 'system (default pack)', approvedBy: 'system',
@@ -159,6 +178,9 @@
                   scoreDecline: 600, tokenValidityDays: 7 }
       }
     };
+    // Platform rules (v2.3) ride on every pack, read-only.
+    for (const pid of Object.keys(packs)) packs[pid].platform = JSON.parse(JSON.stringify(PLATFORM_RULES));
+    return packs;
   }
 
   // Editable-parameter bounds enforced on publishPolicy/simulateBook.
@@ -187,21 +209,61 @@
   // income and spending at all; below this the case is referred.
   const UPGRADE_MIN_CONNECTED_MONTHS = 3;
 
-  // Approval-token conditions by product (conventional recourse + disclosure).
-  const TOKEN_CONDITIONS = {
-    personal_loan: ['Key Facts Statement acknowledged (AR + EN)',
-                    'Salary transfer assignment or direct debit mandate',
-                    'Credit life & job-loss cover offered (optional)'],
-    split: ['Key Facts Statement acknowledged (AR + EN)',
-            'Direct debit mandate on connected account'],
-    salary_advance: ['Key Facts Statement acknowledged (AR + EN)',
-                     'Repayable in full from the next salary credit'],
-    // The last line is replaced by the chosen option when selectUpgradeOption runs.
-    starter_loan: ['Key Facts Statement acknowledged (AR + EN)',
-                   'Direct debit mandate on connected account',
-                   'Customer chooses the amount and term within the offer before accepting']
+  // ---------------------------------------------------------------------------
+  // Repayment collection (Addendum v2.3) — ONE platform rule for every product.
+  // Noor never asks the customer to move their salary; repayments are collected
+  // from the customer's own bank account, and the APPROVED AMOUNT picks the rail:
+  //   ≤ AED 1,000 (inclusive)  → Al Tareq recurring payment (UAE Open Finance
+  //                               payment initiation; authorised in the banking app)
+  //   > AED 1,000               → direct debit mandate (UAE Direct Debit System)
+  // Split: the approved purchase-plan amount; upgrade: the selected option's
+  // amount (recomputed on selectUpgradeOption); "split another purchase": the
+  // new plan's amount. Declines and refers carry repayment: null.
+  // ---------------------------------------------------------------------------
+  const REPAYMENT_ROUTING = Object.freeze({ altareqMaxAmount: 1000 });
+  const REPAYMENT_METHODS = {
+    ALTAREQ: {
+      label: 'Al Tareq recurring payment', labelAr: 'دفعة متكررة عبر منصة الطارق',
+      setup: 'Customer authorises a recurring payment consent in their banking app via Al Tareq — instant, digital, revocable in the Al Tareq consent dashboard',
+      condition: 'Repayment set up via Al Tareq recurring payment consent',
+      stepLabel: 'Al Tareq payment consent authorised' },
+    DIRECT_DEBIT: {
+      label: 'Direct debit mandate', labelAr: 'تفويض بالخصم المباشر',
+      setup: 'Mandate on the customer\'s own bank account; must be active before the first collection',
+      condition: 'Direct debit mandate active on the customer\'s bank account',
+      stepLabel: 'Direct debit mandate active' }
   };
+  const REPAYMENT_CONDITIONS = [REPAYMENT_METHODS.ALTAREQ.condition, REPAYMENT_METHODS.DIRECT_DEBIT.condition];
+  // Shown as a locked row on every policy pack; not a param, so publish refuses it.
+  const PLATFORM_RULES = {
+    repaymentCollection: { altareqMaxAmount: REPAYMENT_ROUTING.altareqMaxAmount, editable: false,
+      rule: 'Repayment collection: Al Tareq ≤ AED 1,000 · direct debit above · no salary transfer required' }
+  };
+  const PLATFORM_KEYS = ['repaymentCollection', 'altareqMaxAmount', 'repaymentRouting'];
+  function repaymentFor(amount) {
+    if (!Number.isFinite(amount) || amount <= 0) throw err('repaymentFor needs a positive approved amount in AED');
+    const method = amount <= REPAYMENT_ROUTING.altareqMaxAmount ? 'ALTAREQ' : 'DIRECT_DEBIT';
+    const m = REPAYMENT_METHODS[method];
+    return { method, label: m.label, labelAr: m.labelAr, setup: m.setup,
+             threshold: REPAYMENT_ROUTING.altareqMaxAmount, basis: 'approved amount', amount };
+  }
+
+  // Approval-token conditions by product (conventional recourse + disclosure).
+  // The repayment line is method-specific and sits second on every product.
+  const KFS_CONDITION = 'Key Facts Statement acknowledged (AR + EN)';
+  const ADVANCE_CONDITION = 'Repaid in one instalment on the next salary date — no salary transfer required';
+  // The last upgrade line is replaced by the chosen option when selectUpgradeOption runs.
   const UPGRADE_CHOICE_PENDING = 'Customer chooses the amount and term within the offer before accepting';
+  function tokenConditions(productId, repayment) {
+    const repay = repayment ? REPAYMENT_METHODS[repayment.method].condition : null;
+    const byProduct = {
+      personal_loan: [KFS_CONDITION, repay, 'Credit life & job-loss cover offered (optional)'],
+      split: [KFS_CONDITION, repay],
+      salary_advance: [KFS_CONDITION, repay, ADVANCE_CONDITION],
+      starter_loan: [KFS_CONDITION, repay, UPGRADE_CHOICE_PENDING]
+    };
+    return (byProduct[productId] || [KFS_CONDITION, repay]).filter(Boolean);
+  }
 
   // ---------------------------------------------------------------------------
   // Utilities
@@ -474,6 +536,219 @@
     ];
   }
 
+  // ---------------------------------------------------------------------------
+  // Home-country bank statements (Addendum v2.4) — a deterministic, simulated
+  // parser over each customer's seeded statement rows (MizanData personas,
+  // `homeStatements`). Three corridors; the window is always the last 6 complete
+  // months; amounts are converted at a fixed demo FX table.
+  //
+  //   integrity     the genuine bank-issued file for that country → PASS; any other
+  //                 file (or the right file under the wrong country) → FAIL
+  //   name match    account holder on the statement = the Emirates ID name
+  //   months        6 of the last 6, continuous — else RC_STATEMENTS_INCOMPLETE
+  //   conduct       returned items + overdraft days (0 + 0 = clean)
+  //   tenure        account open since (≥ 5 years = long)
+  //   EMIs          recurring loan debits → AED, counted in DBR and free cash flow
+  //   buffer        average balance in AED (≥ half a month of UAE income = buffer)
+  //   remittances   for every statement month in which Open Finance saw a UAE salary
+  //                 credit: timing (0–3 days after payday 1, 4–7 days ½, later 0)
+  //                 × ½ + amount stability (1 − |amount − median| / median) × ½,
+  //                 averaged → remittanceConsistencyPct (≥ 85% = corroborated)
+  // Evidence → decision (STATEMENT_EVIDENCE):
+  //   personal loan, AECB no-hit: scorecard base 640 (grade capped at B) +20 long
+  //     tenure, +20 clean conduct, +10 buffer, +15 corroborated income; the 50%
+  //     newcomer haircut shrinks by 10 (conduct), 5 (buffer), 10 (corroboration),
+  //     floor 25%. EMIs count in DBR for every applicant.
+  //   upgrade: verified statements credit the account history (capped at 24
+  //     months) toward the enhanced tier's income-history test, and surface EMIs.
+  // ---------------------------------------------------------------------------
+  const STATEMENT_CORRIDORS = ['IN', 'PK', 'EG'];
+  const CORRIDORS = {
+    IN: { name: 'India', adjective: 'Indian', currency: 'INR' },
+    PK: { name: 'Pakistan', adjective: 'Pakistani', currency: 'PKR' },
+    EG: { name: 'Egypt', adjective: 'Egyptian', currency: 'EGP' }
+  };
+  // AED per unit of local currency — fixed demo rates, shown in the UI.
+  const STATEMENT_FX = Object.freeze({ INR: 0.044, PKR: 0.0132, EGP: 0.0757 });
+  const STATEMENT_MONTHS = 6;
+  const OTHER_COUNTRIES = { PH: 'Philippines', LK: 'Sri Lanka', NP: 'Nepal', BD: 'Bangladesh', NG: 'Nigeria', KE: 'Kenya' };
+  const STATEMENT_EVIDENCE = {
+    proxyBase: 640, tenureMonths: 60, bufferIncomeShare: 0.5, corroborationPct: 85,
+    overlays: { tenure: 20, conduct: 20, buffer: 10, corroboration: 15 },
+    haircut: { basePct: 50, conduct: 10, buffer: 5, corroboration: 10, floorPct: 25 },
+    historyCreditMaxMonths: 24
+  };
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monLabel = (ym) => MON[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4);
+  const grp = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  function median(a) {
+    if (!a.length) return 0;
+    const b = a.slice().sort((x, y) => x - y), m = Math.floor(b.length / 2);
+    return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2;
+  }
+  function shiftMonth(ym, k) {
+    const d = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1 + k, 1));
+    return d.toISOString().slice(0, 7);
+  }
+  // The last n complete months, oldest first, ending with the last month in MizanData.monthLabels.
+  function lastMonths(n) {
+    const end = D.monthLabels[D.monthLabels.length - 1];
+    const out = [];
+    for (let k = n - 1; k >= 0; k--) out.push(shiftMonth(end, -k));
+    return out;
+  }
+  function corridorOf(country) {
+    const raw = String(country === undefined || country === null ? '' : country).trim();
+    if (!raw) throw err('statements need a country — Mizan reads statements from India, Pakistan and Egypt');
+    const up = raw.toUpperCase();
+    for (const cc of STATEMENT_CORRIDORS) if (up === cc || up === CORRIDORS[cc].name.toUpperCase()) return cc;
+    throw err('statements from ' + (OTHER_COUNTRIES[up] || raw) + ' are not supported yet — Mizan reads statements from India, Pakistan and Egypt');
+  }
+  const normName = (n) => String(n || '').toUpperCase().replace(/[^A-Z\s]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+  // UAE salary months seen via Open Finance, the payday, and monthly UAE income.
+  function uaeSalaryInfo(a) {
+    const cn = a.connected || null, bd = a.bankData || null;
+    let months;
+    if (cn && Array.isArray(cn.monthlyIncome) && cn.monthlyIncome.length === D.monthLabels.length) {
+      months = D.monthLabels.filter((_, i) => cn.monthlyIncome[i] !== null && cn.monthlyIncome[i] !== undefined);
+    } else {
+      const n = (bd && bd.monthsAvailable) || (cn && cn.monthsAvailable) || 0;
+      months = n > 0 ? lastMonths(n) : [];
+    }
+    return { months, day: (cn && cn.salaryCreditDay) || (bd && bd.salaryCreditDay) || 28,
+             income: (a.employment && a.employment.salaryMonthly) || (cn && cn.avgMonthlyIncome) || (bd && bd.avgSalaryCredit) || 0 };
+  }
+  // Pure: reads the applicant's seeded statement rows, never the clock or the engine state.
+  function parseStatementsFor(a, input) {
+    const cc = corridorOf(input.country);
+    const hs = a && a.homeStatements;
+    if (!hs) throw err('no home-country statements on file for ' + ((a && (a.name || a.id)) || 'this applicant') + ' in this demo');
+    const want = input.months === undefined || input.months === null ? STATEMENT_MONTHS : input.months;
+    if (!Number.isInteger(want) || want < 1 || want > STATEMENT_MONTHS) throw err('months covered must be a whole number from 1 to 6');
+    const productId = input.productId || null;
+    const file = String(input.file || hs.file);
+    const genuine = file === hs.file && cc === hs.country;
+    const currency = hs.currency, fx = STATEMENT_FX[currency];
+    const out = { kind: 'HOME_STATEMENTS', applicantId: a.id || null, applicantName: a.name || null,
+                  country: cc, countryName: CORRIDORS[cc].name, bank: input.bank || hs.bank, file,
+                  currency, fxToAed: fx, monthsExpected: STATEMENT_MONTHS };
+    if (!genuine) {
+      Object.assign(out, {
+        monthsPresent: 0, period: null, missingMonths: [], continuous: false, complete: false,
+        integrity: 'FAIL',
+        integrityDetail: file === hs.file
+          ? 'issuer ' + hs.bank + ' does not match the selected country (' + CORRIDORS[cc].name + ')'
+          : 'edits detected — the file is not the bank-issued e-statement (PDF modified after issue; fonts and metadata inconsistent)',
+        nameMatch: false, accountHolder: null, accountOpenSince: null, accountTenureMonths: null,
+        returnedItems: null, overdraftDays: null, obligationsMonthlyAed: null, emis: [], avgBalanceAed: null,
+        remittanceMonths: null, uaeSalaryMonths: null, remittanceConsistencyPct: null, otherIncomeMonthlyAed: null,
+        evidence: { tenureLong: false, conductClean: false, bufferOk: false, corroborated: false },
+        usable: false, reasonCode: 'RC_STATEMENTS_INTEGRITY' });
+      out.findings = statementFindings(out, productId);
+      return out;
+    }
+    const rows = hs.months.slice(-want);
+    const months = rows.map(r => r.month);
+    const window = lastMonths(STATEMENT_MONTHS);
+    const missing = window.filter(m => !months.includes(m));
+    const continuous = months.every((m, i) => i === 0 || m === shiftMonth(months[i - 1], 1));
+    const complete = missing.length === 0 && continuous;
+    const nameMatch = normName(hs.accountHolder) === normName(a.name);
+    const t = D.TODAY.slice(0, 7);
+    const tenure = (Number(t.slice(0, 4)) - Number(hs.accountOpenSince.slice(0, 4))) * 12 +
+                   (Number(t.slice(5, 7)) - Number(hs.accountOpenSince.slice(5, 7)));
+    const emiLocal = rows.map(r => r.emi || 0);
+    const emiMonths = emiLocal.filter(x => x > 0).length;
+    const recurring = emiMonths > 0 && emiMonths >= rows.length - 1;     // a loan debit in (almost) every month
+    const obligationsMonthlyAed = recurring ? Math.round(mean(emiLocal) * fx) : 0;
+    const avgLocal = mean(rows.map(r => r.avgBalance));
+    const avgBalanceAed = Math.round(avgLocal * fx);
+    const uae = uaeSalaryInfo(a);
+    const salaried = rows.filter(r => uae.months.includes(r.month));
+    const rems = salaried.map(r => r.remittance).filter(Boolean);
+    const med = median(rems.map(x => x.amount));
+    const scores = salaried.map(r => {
+      if (!r.remittance) return 0;
+      const d = r.remittance.day - uae.day;
+      const timing = d >= 0 && d <= 3 ? 1 : (d >= 0 && d <= 7 ? 0.5 : 0);
+      const amount = med > 0 ? Math.max(0, 1 - Math.abs(r.remittance.amount - med) / med) : 0;
+      return 0.5 * timing + 0.5 * amount;
+    });
+    const consistency = salaried.length ? Math.round(mean(scores) * 100) : 0;
+    const returnedItems = rows.reduce((x, r) => x + (r.returnedItems || 0), 0);
+    const overdraftDays = rows.reduce((x, r) => x + (r.overdraftDays || 0), 0);
+    const SE = STATEMENT_EVIDENCE;
+    Object.assign(out, {
+      monthsPresent: window.length - missing.length,
+      period: { from: months[0] + '-01', to: months[months.length - 1], label: monLabel(months[0]) + ' – ' + monLabel(months[months.length - 1]) },
+      missingMonths: missing, continuous, complete,
+      integrity: 'PASS', integrityDetail: 'no edits detected — ' + hs.issuer,
+      nameMatch, accountHolder: hs.accountHolder,
+      accountOpenSince: hs.accountOpenSince, accountTenureMonths: tenure,
+      returnedItems, overdraftDays,
+      obligationsMonthlyAed,
+      emis: recurring ? [{ label: hs.emiLabel || 'Loan EMI', amountLocal: median(emiLocal.filter(x => x > 0)), amountAed: obligationsMonthlyAed }] : [],
+      avgBalanceAed, avgBalanceLocal: Math.round(avgLocal),
+      remittanceMonths: rems.length, uaeSalaryMonths: salaried.length, remittanceConsistencyPct: consistency,
+      remittanceMedianAed: Math.round(med * fx),
+      otherIncomeMonthlyAed: Math.round(mean(rows.map(r => r.otherIncome || 0)) * fx),
+      evidence: { tenureLong: tenure >= SE.tenureMonths, conductClean: returnedItems === 0 && overdraftDays === 0,
+                  bufferOk: uae.income > 0 && avgBalanceAed >= SE.bufferIncomeShare * uae.income,
+                  corroborated: salaried.length > 0 && consistency >= SE.corroborationPct },
+      bufferIncomeShare: uae.income > 0 ? Math.round(avgBalanceAed / uae.income * 100) / 100 : null
+    });
+    out.usable = nameMatch && complete;
+    out.reasonCode = !nameMatch ? 'RC_STATEMENTS_INTEGRITY' : (!complete ? 'RC_STATEMENTS_INCOMPLETE' : null);
+    out.findings = statementFindings(out, productId);
+    return out;
+  }
+  // The parse panel's checklist: one row per check, each with its effect on the decision.
+  function statementFindings(x, productId) {
+    const pl = productId === 'personal_loan', up = productId === 'starter_loan';
+    const ov = STATEMENT_EVIDENCE.overlays, hc = STATEMENT_EVIDENCE.haircut;
+    const f = [];
+    const push = (key, label, status, value, effect) => f.push({ key, label, status, value, effect });
+    const FRAUD = 'Referred to fraud review (RC_STATEMENTS_INTEGRITY) — never an automatic decline';
+    if (x.integrity !== 'PASS') {
+      push('integrity', 'Document integrity', 'FAIL', x.integrityDetail, FRAUD);
+      for (const [k, l] of [['nameMatch', 'Account holder matches the Emirates ID'], ['months', '6 of the last 6 months'],
+                            ['conduct', 'Returned items & overdraft days'], ['tenure', 'Account history'], ['emis', 'Home-country EMIs'],
+                            ['buffer', 'Buffer — average balance'], ['remittances', 'Remittances match the UAE salary']]) {
+        push(k, l, 'SKIP', 'not read', 'Not used — the document failed integrity');
+      }
+      return f;
+    }
+    const e = x.evidence, cur = x.currency;
+    push('integrity', 'Document integrity', 'PASS', x.integrityDetail, 'Statements can be used');
+    push('nameMatch', 'Account holder matches the Emirates ID', x.nameMatch ? 'PASS' : 'FAIL',
+         x.accountHolder + (x.nameMatch ? ' = ' : ' ≠ ') + (x.applicantName || '—') + ' (Emirates ID)', x.nameMatch ? 'Identity confirmed' : FRAUD);
+    push('months', '6 of the last 6 months', x.complete ? 'PASS' : 'FAIL',
+         x.monthsPresent + ' of 6 months · ' + x.period.label + (x.missingMonths.length ? ' · missing ' + x.missingMonths.map(monLabel).join(', ') : ' · continuous'),
+         x.complete ? 'Complete window' : 'RC_STATEMENTS_INCOMPLETE — the customer is asked for the missing months; not used yet');
+    push('conduct', 'Returned items & overdraft days', e.conductClean ? 'PASS' : 'WARN', x.returnedItems + ' returned items · ' + x.overdraftDays + ' overdraft days',
+         e.conductClean ? (pl ? 'Clean conduct — score +' + ov.conduct + ' · newcomer haircut −' + hc.conduct + ' pts' : (up ? 'Clean conduct — supports the enhanced tier' : 'Clean conduct')) : 'No conduct credit');
+    const years = Math.floor(x.accountTenureMonths / 12);
+    push('tenure', 'Account history', e.tenureLong ? 'PASS' : 'INFO', 'open since ' + monLabel(x.accountOpenSince) + ' (' + years + ' year' + (years === 1 ? '' : 's') + ')',
+         pl ? (e.tenureLong ? 'Long banking relationship — score +' + ov.tenure : 'Under 5 years — no tenure credit')
+            : (up ? 'Credited as ' + Math.min(x.accountTenureMonths, STATEMENT_EVIDENCE.historyCreditMaxMonths) + ' months of home-country history (cap 24) toward the enhanced tier' : 'Account tenure'));
+    push('emis', 'Home-country EMIs', x.emis.length ? 'INFO' : 'PASS',
+         x.emis.length ? x.emis.map(m => m.label + ' ' + cur + ' ' + grp(m.amountLocal) + '/mo = AED ' + grp(m.amountAed) + '/mo').join('; ') : 'none found',
+         x.emis.length ? 'Counted in DBR and free cash flow — obligations in both countries' : 'No home-country loans to count');
+    push('buffer', 'Buffer — average balance', e.bufferOk ? 'PASS' : 'INFO',
+         cur + ' ' + grp(x.avgBalanceLocal) + ' = AED ' + grp(x.avgBalanceAed) + (x.bufferIncomeShare !== null ? ' (' + x.bufferIncomeShare.toFixed(2) + '× monthly UAE income)' : ''),
+         e.bufferOk ? (pl ? 'Buffer — score +' + ov.buffer + ' · haircut −' + hc.buffer + ' pts' : 'Buffer above half a month of income') : 'Informational — below half a month of income');
+    push('remittances', 'Remittances match the UAE salary', e.corroborated ? 'PASS' : 'WARN',
+         x.remittanceMonths + ' of ' + x.uaeSalaryMonths + ' salary months · ' + x.remittanceConsistencyPct + '% consistent with UAE salary credits (Open Finance)',
+         e.corroborated ? (pl ? 'UAE income corroborated — score +' + ov.corroboration + ' · haircut −' + hc.corroboration + ' pts' : 'UAE income corroborated') : 'Not corroborated — no credit');
+    if (x.otherIncomeMonthlyAed > 0) push('otherIncome', 'Other home-country income', 'INFO', 'AED ' + grp(x.otherIncomeMonthlyAed) + '/mo', 'Informational — not counted toward affordability');
+    return f;
+  }
+  function findApplicant(id) {
+    for (const list of [D.personasLoan, D.personasUpgrade, D.personasSplit]) for (const p of list || []) if (p.id === id) return p;
+    return null;
+  }
+
   const GRADE_BANDS = [[740, 'A'], [680, 'B'], [620, 'C'], [560, 'D']];
   function pointsToGrade(points) {
     if (points === null || points === undefined) return null;
@@ -603,27 +878,39 @@
   // Scorecards
   // ---------------------------------------------------------------------------
   // Personal loan / salary advance — scorecard v0 (CONTRACT §2.2), with the
-  // connected-account salary verification overlay replacing the old in-house
-  // salary-transfer overlay.
-  function loanScore(p, crossBorder, connectedSalary) {
+  // connected-account salary verification overlay (+15) replacing the v1
+  // in-house payroll overlay.
+  function loanScore(p, crossBorder, connectedSalary, st) {
     // Cross-border path: consented home-bureau score is the base, with a flat
-    // conservatism overlay; grade capped at B.
+    // conservatism overlay; grade capped at B. Verified home-country statements
+    // (v2.4) on an AECB no-hit: proxy base 640 plus evidence overlays, grade capped at B.
+    const stPath = !p.aecbHit && !!st;
     const base = (p.aecbHit && p.score !== null) ? p.score
-               : (crossBorder && p.homeBureau ? p.homeBureau.score : null);
+               : (crossBorder && p.homeBureau ? p.homeBureau.score : (stPath ? STATEMENT_EVIDENCE.proxyBase : null));
     const sc = SCORECARDS.loan;
     if (base === null) {
       return { model: sc.model, version: sc.version, base: null, overlays: [], points: null, grade: null };
     }
     const overlays = [];
     if (crossBorder) overlays.push({ name: 'Cross-border conservatism', delta: -40 });
+    if (stPath) {
+      const ev = st.evidence, ov = STATEMENT_EVIDENCE.overlays;
+      if (!crossBorder) overlays.push({ name: 'Statements proxy base (AECB no-hit) — grade capped at B', delta: 0 });
+      if (ev.tenureLong) overlays.push({ name: 'Home statements — account open ≥ 5 years', delta: ov.tenure });
+      if (ev.conductClean) overlays.push({ name: 'Home statements — clean conduct (0 returned items, 0 overdraft days)', delta: ov.conduct });
+      if (ev.bufferOk) overlays.push({ name: 'Home statements — buffer ≥ half a month of income', delta: ov.buffer });
+      if (ev.corroborated) overlays.push({ name: 'Home statements — remittances match the UAE salary (≥ 85%)', delta: ov.corroboration });
+    }
     if (p.esrPct !== null && p.esrPct > 40) overlays.push({ name: 'ESR > 40%', delta: -20 });
     if (p.chequeReturns12m >= 1) overlays.push({ name: 'Returned cheques (12m)', delta: -30 });
     if (connectedSalary) overlays.push({ name: 'Salary verified via connected account', delta: 15 });
     if (p.tenureMonths >= 24) overlays.push({ name: 'Employment tenure ≥ 24m', delta: 10 });
     const points = base + overlays.reduce((s, o) => s + o.delta, 0);
     let grade = pointsToGrade(points);
-    if (crossBorder && grade === 'A') grade = 'B';
-    return { model: sc.model, version: sc.version, base, overlays, points, grade };
+    if ((crossBorder || stPath) && grade === 'A') grade = 'B';
+    const out = { model: sc.model, version: sc.version, base, overlays, points, grade };
+    if (stPath) out.basis = crossBorder ? 'CREDIT_PASSPORT' : 'HOME_STATEMENTS';
+    return out;
   }
 
   // Split — cash-flow scorecard (repurposed from the v1 business cash-flow card).
@@ -680,9 +967,15 @@
   // ---------------------------------------------------------------------------
   // Personal loan evaluation (formerly the v1 retail product)
   // ---------------------------------------------------------------------------
-  function evaluateLoan(p, amount, tenorMonths, pol, consents) {
+  function evaluateLoan(p, amount, tenorMonths, pol, consents, statements) {
     const reg = pol.regulatory, prm = pol.params;
     const rs = makeRuleSet();
+    // Home-country statements (v2.4): usable = integrity PASS + name match + 6 of 6
+    // months. Integrity or name failure → REFER to fraud review; incomplete → not used.
+    const st = statements || null;
+    const stUsable = !!(st && st.usable);
+    const stFraud = !!(st && (st.integrity !== 'PASS' || st.nameMatch !== true));
+    const statementsPath = !p.aecbHit && stUsable;
 
     // Cross-border Credit Passport path: a thin-file newcomer whose home-country
     // bureau file is importable AND consented is underwritten on that file —
@@ -690,8 +983,13 @@
     // falling to the thin-file REFER. No consent → the thin-file path is unchanged.
     const crossBorder = !p.aecbHit && p.creditPassportAvailable === true &&
                         !!(consents && consents.creditPassport === true) && !!p.homeBureau;
-    // Consented home-country obligations count toward serviceability.
-    const obligations = p.obligationsMonthly + (crossBorder ? (p.homeBureau.obligationsMonthlyAed || 0) : 0);
+    // Consented home-country obligations count toward serviceability: the Credit
+    // Passport file's and/or the EMIs found in verified statements (the larger when
+    // both are present — they describe the same loans).
+    const cpObl = crossBorder ? (p.homeBureau.obligationsMonthlyAed || 0) : 0;
+    const stObl = stUsable ? (st.obligationsMonthlyAed || 0) : 0;
+    const homeObl = crossBorder && stUsable ? Math.max(cpObl, stObl) : cpObl + stObl;
+    const obligations = p.obligationsMonthly + homeObl;
     // Salary verified through connected accounts (UAE Open Finance) — requires the
     // open-finance consent when a consent record is supplied (simulation rows have none).
     const openFinanceOk = !consents || consents.openFinance === true;
@@ -735,17 +1033,29 @@
     // Thin-file strategy: configurable action, default REFER.
     // A consented Credit Passport file substitutes for local depth.
     rs.add('POL_THIN_FILE', 'Credit file depth (thin-file strategy)', 'POLICY',
-           p.aecbHit ? 'PASS' : (crossBorder ? 'PASS' : (prm.thinFileAction === 'DECLINE' ? 'FAIL' : 'REFER')),
-           p.aecbHit ? 'file present' : (crossBorder ? 'no-hit — Credit Passport substitutes' : 'no-hit / thin file'),
+           p.aecbHit ? 'PASS' : ((crossBorder || statementsPath) ? 'PASS' : (prm.thinFileAction === 'DECLINE' ? 'FAIL' : 'REFER')),
+           p.aecbHit ? 'file present'
+                     : (crossBorder && statementsPath ? 'no-hit — Credit Passport + verified home-country statements substitute'
+                       : (crossBorder ? 'no-hit — Credit Passport substitutes'
+                         : (statementsPath ? 'no-hit — verified home-country statements substitute' : 'no-hit / thin file'))),
            'AECB hit', 'RC_THIN_FILE');
     if (crossBorder) {
       rs.add('POL_CREDIT_PASSPORT', 'Consented home-country bureau file verified (Credit Passport)', 'POLICY',
              'PASS', p.homeBureau.bureau + ' · ' + p.homeBureau.score + ' (' + p.homeBureau.country + ', ' +
              p.homeBureau.historyYears + 'y history)', 'consent + home-bureau hit', null);
     }
+    if (st) {
+      rs.add('POL_HOME_STATEMENTS', 'Home-country bank statements verified (integrity, name match, 6 of the last 6 months)', 'POLICY',
+             stUsable ? 'PASS' : (stFraud ? 'REFER' : 'INFO'),
+             st.bank + ' (' + st.countryName + ') · ' + (st.integrity === 'PASS' ? st.monthsPresent + ' of 6 months · name ' + (st.nameMatch ? 'matches' : 'does not match') +
+               (stUsable ? ' · EMIs AED ' + st.obligationsMonthlyAed + '/mo · remittances ' + st.remittanceConsistencyPct + '% consistent' : '')
+               : 'integrity FAIL — fraud review'),
+             'integrity PASS · name match · 6 of 6 months',
+             stFraud ? 'RC_STATEMENTS_INTEGRITY' : (stUsable ? null : 'RC_STATEMENTS_INCOMPLETE'));
+    }
 
     // Scorecard v0
-    const score = loanScore(p, crossBorder, connectedSalary);
+    const score = loanScore(p, crossBorder, connectedSalary, statementsPath ? st : null);
     const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
     if (score.points !== null) {
       const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
@@ -780,9 +1090,24 @@
     ];
     let { approved, binding } = pickMin(candidates);
 
-    // Cross-border haircut: the limit is computed normally, then halved — the
-    // entry book on home-country data starts at 50% of the equivalent local limit.
-    if (crossBorder && Number.isFinite(approved) && approved > 0) {
+    // Newcomer haircut. Verified home-country statements (v2.4) prove conduct,
+    // buffer and income, so the 50% haircut shrinks: −10 pts clean conduct, −5
+    // buffer, −10 corroborated income, floor 25%. Otherwise the Credit Passport
+    // entry book starts at 50% of the equivalent local limit.
+    let statementsHaircutPct = null;
+    if (statementsPath && Number.isFinite(approved) && approved > 0) {
+      const ev = st.evidence, hc = STATEMENT_EVIDENCE.haircut;
+      const parts = [];
+      if (ev.conductClean) parts.push('−' + hc.conduct + ' clean conduct');
+      if (ev.bufferOk) parts.push('−' + hc.buffer + ' buffer');
+      if (ev.corroborated) parts.push('−' + hc.corroboration + ' corroborated income');
+      const relief = (ev.conductClean ? hc.conduct : 0) + (ev.bufferOk ? hc.buffer : 0) + (ev.corroborated ? hc.corroboration : 0);
+      statementsHaircutPct = Math.max(hc.floorPct, hc.basePct - relief);
+      const kept = floor1000(approved * (1 - statementsHaircutPct / 100));
+      candidates.push({ label: 'Newcomer haircut ' + statementsHaircutPct + '% (was ' + hc.basePct + '%' + (parts.length ? ': ' + parts.join(', ') : '') +
+                               ') — verified home-country statements', value: kept, key: 'STATEMENTS_HAIRCUT' });
+      approved = kept; binding = 'STATEMENTS_HAIRCUT';
+    } else if (crossBorder && Number.isFinite(approved) && approved > 0) {
       const haircut = floor1000(approved * 0.5);
       candidates.push({ label: 'Cross-border haircut — 50% of normal limit (Credit Passport entry book)',
                         value: haircut, key: 'CROSS_BORDER_HAIRCUT' });
@@ -804,6 +1129,7 @@
 
     // Reason codes attached to non-decline outcomes
     if (outcome === 'APPROVE') {
+      if (statementsPath) rs.reason('RC_STATEMENTS_USED');
       if (crossBorder) rs.reason('RC_CROSS_BORDER');
       if (binding === 'RETIREE_CAP') rs.reason('RC_RETIREE_CAP');
       if (approved < amount) rs.reason('RC_LIMIT_REDUCED');
@@ -818,7 +1144,9 @@
       effectiveTenor: effTenor, scoreBase: score.base, overlayNet,
       retiree: p.retiree, thinFile: !p.aecbHit,
       crossBorder: crossBorder,
-      homeObligationsMonthly: crossBorder ? (p.homeBureau.obligationsMonthlyAed || 0) : 0
+      homeObligationsMonthly: homeObl,
+      homeStatementsUsed: stUsable,
+      statementsHaircutPct
     };
     const limit = {
       requested: amount, approved: outcome === 'DECLINE' ? 0 : approved,
@@ -1158,7 +1486,8 @@
                obligationsMonthly: ab.obligationsMonthly || 0, worstDelinquency: ab.worstDelinquency || 'NONE',
                chequeReturns12m: ab.chequeReturns12m || 0, note: ab.note || null };
       connected = Object.assign({ source: 'ALTAREQ_TPP', banks: [], monthsAvailable: 0 }, a.connected || {});
-      intl = a.international ? Object.assign({}, a.international) : null;
+      // v2.4: a persona's home-country history reaches the decision only as parsed statements.
+      intl = null;
     }
     if (!Number.isFinite(connected.avgMonthlyIncome) || !Number.isFinite(connected.avgMonthlySpend)) {
       throw err('upgrade applicant needs connected-account income and spend (avgMonthlyIncome / avgMonthlySpend)');
@@ -1176,11 +1505,15 @@
   }
 
   // Upgrade evaluator. Order of work:
-  //  1. Tier. International statements are optional. When consented and parsed,
-  //     income history = UAE connected months + statement months; at least
-  //     minIncomeHistoryMonthsEnhanced (12) unlocks ENHANCED, otherwise BASE.
-  //     The statements also surface home-country obligations, which then count
-  //     against free cash flow and DBR. Without statements they stay invisible.
+  //  1. Tier. Home-country statements are optional (v2.4: uploaded, 6 months,
+  //     parsed). Verified statements credit the account's history — months since
+  //     it opened, capped at 24 — so income history = UAE connected months +
+  //     credited home history; at least minIncomeHistoryMonthsEnhanced (12)
+  //     unlocks ENHANCED, otherwise BASE. (Anita: 5 UAE + 24 = 29.) The statements
+  //     also surface home-country EMIs, which then count against free cash flow
+  //     and DBR. Without statements they stay invisible. Integrity or name failure
+  //     → REFER (fraud review); an incomplete window → not used.
+  //     Sample-book rows keep their own `statements` / `statementMonths` fields.
   //  2. Affordability.
   //       free cash flow = income − spend − AECB obligations − home-country obligations (if visible)
   //       maxInstalment  = instalmentToFcfMaxPct% × free cash flow       (u1 enhanced: 50% × 3,550 = 1,775)
@@ -1193,15 +1526,29 @@
   //     POL_STARTER_REPAID_ON_TIME (DPD 0 or DECLINE RC_STARTER_LATE),
   //     POL_CONNECTED_ACCOUNTS, POL_INCOME_HISTORY, POL_FREE_CASH_FLOW,
   //     POL_INTERNATIONAL_STATEMENTS (informational; sets the tier).
-  function evaluateUpgrade(p, amount, tenorMonths, pol, consents) {
+  function evaluateUpgrade(p, amount, tenorMonths, pol, consents, statements) {
     const reg = pol.regulatory, prm = pol.params;
     const rs = makeRuleSet();
-    const statementsConsented = consents ? consents.internationalStatements === true : p.statementsOffered;
-    const intl = statementsConsented && p.intl ? p.intl : null;
+    const st = statements || null;
+    let intl = null, stState = 'NONE';
+    if (p.isRow) {
+      const consented = consents ? (consents.homeStatements === true || consents.internationalStatements === true) : p.statementsOffered;
+      if (consented && p.intl) { intl = p.intl; stState = 'USED'; }
+    } else if (st) {
+      if (st.integrity !== 'PASS' || st.nameMatch !== true) stState = 'FRAUD';
+      else if (!st.complete) stState = 'INCOMPLETE';
+      else {
+        stState = 'USED';
+        intl = { country: st.countryName, bank: st.bank, source: 'Home-country statements (' + st.monthsPresent + ' months, parsed)',
+                 monthsAvailable: Math.min(st.accountTenureMonths, STATEMENT_EVIDENCE.historyCreditMaxMonths),
+                 accountOpenSince: st.accountOpenSince, avgBalanceAed: st.avgBalanceAed,
+                 obligationsMonthlyAed: st.obligationsMonthlyAed, remittanceConsistencyPct: st.remittanceConsistencyPct };
+      }
+    }
 
     // ---- 1. Tier ----
-    const internationalMonths = intl ? (intl.monthsAvailable || 0) : null;
-    const incomeHistoryMonths = p.connectedMonths + (internationalMonths || 0);
+    const homeHistoryMonths = intl ? (intl.monthsAvailable || 0) : null;
+    const incomeHistoryMonths = p.connectedMonths + (homeHistoryMonths || 0);
     const homeCountryObligations = intl ? (intl.obligationsMonthlyAed || 0) : null;   // null = not visible
     const enhancedEligible = !!intl && incomeHistoryMonths >= prm.minIncomeHistoryMonthsEnhanced;
     const tierKey = enhancedEligible ? 'enhanced' : 'base';
@@ -1224,7 +1571,7 @@
     const byDbr = maxUpgradePrincipal(dbrBudget, floorApr, maxTenor, step);
 
     // ---- 3. Offer ceiling + default option ----
-    const tierLabel = enhancedEligible ? 'Enhanced (UAE accounts + international statements)' : 'Base (UAE accounts only)';
+    const tierLabel = enhancedEligible ? 'Enhanced (UAE accounts + home-country statements)' : 'Base (UAE accounts only)';
     const candidates = [
       { label: 'Tier cap — ' + tierLabel, value: tier.maxAmount, key: 'TIER_CAP' },
       { label: 'Largest amount whose ' + maxTenor + '-month instalment fits ' + prm.instalmentToFcfMaxPct +
@@ -1271,22 +1618,28 @@
            connectedOk ? 'PASS' : 'REFER',
            p.connectedMonths + ' months' + (p.banks.length ? ' · ' + p.banks.join(', ') : '') + ' · income ' + aed(income) + '/mo',
            '≥ ' + UPGRADE_MIN_CONNECTED_MONTHS + ' months connected', 'RC_CONNECTED_HISTORY');
-    rs.add('POL_INCOME_HISTORY', 'Income history for the enhanced tier (UAE + international)', 'POLICY',
+    rs.add('POL_INCOME_HISTORY', 'Income history for the enhanced tier (UAE connected months + home-country account history from verified statements, up to 24)', 'POLICY',
            enhancedEligible ? 'PASS' : 'INFO',
            incomeHistoryMonths + ' months (' + p.connectedMonths + ' UAE' +
-             (intl ? ' + ' + internationalMonths + ' international' : ', no international statements') + ')' +
+             (intl ? ' + ' + homeHistoryMonths + ' home-country' + (intl.accountOpenSince ? ' — account open since ' + monLabel(intl.accountOpenSince) : '')
+                   : ', no verified home-country statements') + ')' +
              (enhancedEligible ? '' : ' — base tier'),
            '≥ ' + prm.minIncomeHistoryMonthsEnhanced + ' months for the enhanced tier', null);
     rs.add('POL_FREE_CASH_FLOW', 'Free cash flow supports at least the smallest upgrade', 'POLICY',
            byFcf >= prm.minAmount ? 'PASS' : 'FAIL',
            aed(fcf) + '/mo → instalment budget ' + aed(maxInstalment) + '/mo',
            aed(prm.minAmount) + ' over ' + maxTenor + ' months must fit', 'RC_FREE_CASH_FLOW');
-    rs.add('POL_INTERNATIONAL_STATEMENTS', 'International bank statements (optional — sets the tier)', 'POLICY',
-           intl ? 'PASS' : 'INFO',
-           intl ? ((intl.bank ? intl.bank + (intl.country ? ' (' + intl.country + ')' : '') + ' · ' : '') + internationalMonths +
-                   ' months parsed' + (homeCountryObligations ? ' · home-country loan ' + aed(homeCountryObligations) + '/mo surfaced' : ''))
-                : (statementsConsented ? 'consented — no statements supplied' : 'not provided — base tier'),
-           'optional', null);
+    rs.add('POL_HOME_STATEMENTS', 'Home-country bank statements (optional — verified statements set the tier)', 'POLICY',
+           stState === 'USED' ? 'PASS' : (stState === 'FRAUD' ? 'REFER' : 'INFO'),
+           stState === 'USED'
+             ? ((intl.bank ? intl.bank + (intl.country ? ' (' + intl.country + ')' : '') + ' · ' : '') +
+                (p.isRow ? homeHistoryMonths + ' months parsed' : '6 of 6 months · ' + homeHistoryMonths + ' months of history credited') +
+                (homeCountryObligations ? ' · home-country EMI ' + aed(homeCountryObligations) + '/mo surfaced' : ''))
+             : (stState === 'FRAUD' ? st.bank + ' — ' + (st.integrity !== 'PASS' ? 'integrity FAIL' : 'name does not match the Emirates ID') + ' — fraud review'
+               : (stState === 'INCOMPLETE' ? st.bank + ' — ' + st.monthsPresent + ' of 6 months; the customer is asked for the rest'
+                 : 'not provided — base tier')),
+           'optional · integrity, name match, 6 of 6 months',
+           stState === 'FRAUD' ? 'RC_STATEMENTS_INTEGRITY' : (stState === 'INCOMPLETE' ? 'RC_STATEMENTS_INCOMPLETE' : null));
 
     const outcome = outcomeFromRules(rs.rules);
     // The tier code leads an approval; on a refer the refer reason leads (it is what the analyst queue shows).
@@ -1306,7 +1659,8 @@
       dbrCapApplied: dbrCap,
       incomeHistoryMonths,
       connectedMonths: p.connectedMonths,
-      internationalMonths,
+      homeHistoryMonths,
+      homeStatements: stState,
       connectedBanks: p.banks.slice(),
       incomeVolatilityPct: p.incomeVolatilityPct,
       starterDpd: pr.dpd,
@@ -1350,10 +1704,10 @@
              effTenor: limit.planMonths, tier: outcome === 'DECLINE' ? null : TIER, upgrade };
   }
 
-  function evaluate(productId, rawApplicant, amount, tenorMonths, pol, consents) {
-    if (productId === 'starter_loan') return evaluateUpgrade(normalizeUpgrade(rawApplicant), amount, tenorMonths, pol, consents);
+  function evaluate(productId, rawApplicant, amount, tenorMonths, pol, consents, statements) {
+    if (productId === 'starter_loan') return evaluateUpgrade(normalizeUpgrade(rawApplicant), amount, tenorMonths, pol, consents, statements);
     if (productId === 'split') return evaluateSplit(normalizeSplit(rawApplicant), amount, tenorMonths, pol);
-    if (productId === 'personal_loan') return evaluateLoan(normalizeLoan(rawApplicant), amount, tenorMonths, pol, consents);
+    if (productId === 'personal_loan') return evaluateLoan(normalizeLoan(rawApplicant), amount, tenorMonths, pol, consents, statements);
     if (productId === 'salary_advance') return evaluateAdvance(normalizeLoan(rawApplicant), amount, tenorMonths, pol);
     throw err('unknown productId "' + productId + '"');
   }
@@ -1362,7 +1716,20 @@
   // Simulated data pulls for the decision record / orchestration timeline.
   // Sources: AECB_CONSUMER | CREDIT_PASSPORT | OPEN_FINANCE | DOCUMENTS
   // ---------------------------------------------------------------------------
-  function buildDataPulls(productId, ev, consents, seq) {
+  // The HOME_STATEMENTS pull (v2.4) — what the parser found, as written to the record.
+  function statementsPull(st, seq, i) {
+    return { source: 'HOME_STATEMENTS',
+             status: st.usable ? 'PARSED' : (st.integrity !== 'PASS' || !st.nameMatch ? 'INTEGRITY_FAIL' : 'INCOMPLETE'),
+             latencyMs: pullLatency(seq, i), cached: false,
+             summary: { country: st.countryName, bank: st.bank, file: st.file, period: st.period ? st.period.label : '—',
+                        months: st.integrity === 'PASS' ? st.monthsPresent + ' of 6' : 'not read', integrity: st.integrity,
+                        nameMatch: st.integrity === 'PASS' ? (st.nameMatch ? 'yes' : 'no') : 'not verified',
+                        accountOpenSince: st.accountOpenSince ? monLabel(st.accountOpenSince) : '—',
+                        returnedItems: st.returnedItems, emisAed: st.obligationsMonthlyAed, avgBalanceAed: st.avgBalanceAed,
+                        remittances: st.remittanceConsistencyPct === null ? '—' : st.remittanceMonths + ' of ' + st.uaeSalaryMonths + ' · ' + st.remittanceConsistencyPct + '%',
+                        fx: st.currency + '→AED ' + st.fxToAed } };
+  }
+  function buildDataPulls(productId, ev, consents, seq, statements) {
     const pulls = [];
     let i = 0;
     const p = ev.profile;
@@ -1382,14 +1749,7 @@
       pulls.push({ source: 'OPEN_FINANCE', status: 'OK', latencyMs: pullLatency(seq, i++), cached: false,
                    summary: { provider: 'Al Tareq (UAE Open Finance)', banks: p.banks.slice(), monthsAvailable: p.connectedMonths,
                               avgMonthlyIncome: p.income, avgMonthlySpend: p.spend, incomeVolatilityPct: p.incomeVolatilityPct } });
-      if (consents && consents.internationalStatements === true && p.intl) {
-        const x = p.intl;
-        pulls.push({ source: 'INTERNATIONAL_STATEMENTS', status: 'PARSED', latencyMs: pullLatency(seq, i++), cached: false,
-                     summary: { country: x.country, bank: x.bank, source: x.source, monthsAvailable: x.monthsAvailable,
-                                avgMonthlyIncomeAed: x.avgMonthlyIncomeAed, incomeVolatilityPct: x.incomeVolatilityPct,
-                                avgBalanceAed: x.avgBalanceAed, overdrafts12m: x.overdrafts12m,
-                                obligationsMonthlyAed: x.obligationsMonthlyAed } });
-      }
+      if (statements) pulls.push(statementsPull(statements, seq, i++));
       return pulls;
     }
     pulls.push({ source: 'AECB_CONSUMER', status: p.aecbHit ? 'HIT' : 'NO_HIT',
@@ -1427,6 +1787,7 @@
                    summary: { note: 'salary certificate / statement upload fallback',
                               salaryDetected: p.salaryDetected, avgSalaryCredit: p.salaryMonthly } });
     }
+    if (statements) pulls.push(statementsPull(statements, seq, i++));
     return pulls;
   }
 
@@ -1548,6 +1909,16 @@
       return { id: 'MZN-H-' + String(101 + i), name, segment: 'CONSUMER', productId, reason,
                waitingHours, slaHoursLeft: Math.round((sla - waitingHours) * 10) / 10, seeded: true };
     });
+    // v2.4 — seeded cases already waiting on home-country statements (no PRNG draws).
+    for (const c of (D.seededDocumentCases || [])) {
+      const cc = corridorOf(c.country);
+      queue.push({ id: c.id, name: c.name, segment: 'CONSUMER', productId: c.productId, reason: c.reason,
+                   waitingHours: c.waitingHours, slaHoursLeft: c.slaHoursLeftAtPause, seeded: true,
+                   status: 'AWAITING_DOCUMENTS', slaPaused: true,
+                   documentRequest: { type: 'HOME_STATEMENTS', months: STATEMENT_MONTHS, country: cc, countryName: CORRIDORS[cc].name,
+                                      bank: c.bank, analyst: c.requestedBy, requestedAt: c.requestedAt, note: c.note,
+                                      reasonCode: 'RC_STATEMENTS_REQUESTED' } });
+    }
     const referAging = { '<4h': 0, '4-24h': 0, '>24h': 0 };
     for (const q of queue) referAging[q.waitingHours < 4 ? '<4h' : (q.waitingHours <= 24 ? '4-24h' : '>24h')]++;
     // add aggregate (non-case-level) seeded aging mass
@@ -1568,13 +1939,31 @@
   function manifests() { ensureInit(); return clone(MANIFESTS); }
 
   // Execution steps with UI labels for a product (descriptions vary for DISBURSED).
-  function execSteps(productId) {
+  // With a decision id, REPAYMENT_SET_UP carries that decision's method (v2.3):
+  // "Al Tareq payment consent authorised" or "Direct debit mandate active". Once
+  // the step is recorded, the method recorded on the event wins.
+  function execSteps(productId, decisionId) {
     const pid = productId || 'personal_loan';
     if (!MANIFESTS.some(m => m.productId === pid)) throw err('unknown productId "' + productId + '"');
+    let method = null;
+    if (decisionId !== undefined && decisionId !== null) {
+      ensureInit();
+      const rec = getDecisionRef(decisionId);
+      if (rec.productId !== pid) throw err('decision ' + decisionId + ' is a ' + rec.productId + ' decision, not ' + pid);
+      const done = rec.events.find(e => e.type === 'REPAYMENT_SET_UP');
+      method = done && done.method ? done.method : (rec.repayment ? rec.repayment.method : null);
+    }
     return EXEC_EVENTS.map(type => {
       const info = EXEC_STEP_INFO[type];
-      const description = typeof info.description === 'string' ? info.description : info.description[pid];
-      return { type, label: info.label, description };
+      let label = info.label;
+      let description = typeof info.description === 'string' ? info.description : info.description[pid];
+      if (type === 'REPAYMENT_SET_UP' && method) {
+        label = REPAYMENT_METHODS[method].stepLabel;
+        description = REPAYMENT_METHODS[method].setup;
+      }
+      const step = { type, label, description };
+      if (type === 'REPAYMENT_SET_UP') step.method = method;
+      return step;
     });
   }
 
@@ -1630,6 +2019,9 @@
     const params = normalizeParams(productId, rawParams);
     const bounds = PARAM_BOUNDS[productId];
     for (const key of Object.keys(params)) {
+      if (PLATFORM_KEYS.includes(key)) {
+        throw err('"' + key + '" is a platform rule shared by every Noor product (' + PLATFORM_RULES.repaymentCollection.rule + ') — it cannot be edited via publishPolicy');
+      }
       if (key in pol.regulatory) {
         throw err('"' + key + '" is a locked regulatory primitive (CBUAE Reg 29/2011 / Federal Law 6/2010 / Consumer Protection) — it cannot be edited via publishPolicy');
       }
@@ -1750,8 +2142,8 @@
 
   function policyHistory(productId) { ensureInit(); getPolicyRef(productId); return clone(S.policyHistory[productId]); }
 
-  function tokenFor(productId, recId, issuedAt, pol, ev, extra) {
-    const conditions = TOKEN_CONDITIONS[productId].slice();
+  function tokenFor(productId, recId, issuedAt, pol, ev, extra, repayment) {
+    const conditions = tokenConditions(productId, repayment);
     if (productId === 'personal_loan' && ev && ev.features && ev.features.crossBorder) {
       conditions.push('Remittance-linked repayment schedule');
     }
@@ -1761,7 +2153,8 @@
              conditions };
   }
 
-  function decide(application) {
+  // `internal` (not part of the public contract) carries redecide()'s trigger.
+  function decide(application, internal) {
     ensureInit();
     if (!application || typeof application !== 'object') throw err('decide(application) requires an application object');
     const { productId, applicant, consents } = application;
@@ -1794,15 +2187,43 @@
     if (!Number.isFinite(amount) || amount <= 0) throw err('application.amount must be a positive number (AED)');
     if (!Number.isFinite(tenorMonths) || tenorMonths <= 0) throw err('application.tenorMonths must be a positive number');
 
+    // v2.4 — home-country statements: a parseStatements() result (customer upload in a
+    // journey, or what an underwriter requested), or the v2.1 consent flag, which
+    // parses the customer's seeded statements as if they had been uploaded.
+    let statements = null;
+    if (application.statements !== undefined && application.statements !== null) {
+      const sIn = application.statements;
+      if (typeof sIn !== 'object' || sIn.kind !== 'HOME_STATEMENTS') throw err('application.statements must be a parseStatements() result');
+      if (!STATEMENT_PRODUCTS.includes(productId)) throw err('home-country statements feed personal-loan and upgrade decisions only (not ' + productId + ')');
+      if (sIn.applicantId && applicant.id && sIn.applicantId !== applicant.id) {
+        throw err('these statements belong to applicant ' + sIn.applicantId + ', not ' + applicant.id);
+      }
+      statements = clone(sIn);
+    } else if ((consents.homeStatements === true || consents.internationalStatements === true) && applicant.homeStatements &&
+               STATEMENT_PRODUCTS.includes(productId)) {
+      const hs = applicant.homeStatements;
+      statements = parseStatementsFor(applicant, { country: hs.country, bank: hs.bank, file: hs.file, productId });
+    }
+    // A re-decision supersedes an earlier decision for the same customer and product.
+    let orig = null;
+    if (application.supersedes !== undefined && application.supersedes !== null) {
+      orig = S.byId[application.supersedes];
+      if (!orig) throw err('unknown decision id "' + application.supersedes + '" to supersede');
+      checkSupersedable(orig, productId, applicant, statements);
+    }
+    const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
+
     const pol = getPolicyRef(productId);
-    const ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents);
+    const ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements);
 
     S.seq += 1;
     const id = 'MZN-' + String(S.seq).padStart(6, '0');
     const createdAt = nowIso();
     const consentAt = createdAt;
-    const pulls = buildDataPulls(productId, ev, consents, S.seq);
-    const token = ev.outcome === 'APPROVE' ? tokenFor(productId, id, createdAt, pol, ev) : null;
+    const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
+    // Repayment collection follows the approved amount (v2.3); refer/decline → null.
+    const repayment = ev.outcome === 'APPROVE' && ev.limit.approved > 0 ? repaymentFor(ev.limit.approved) : null;
+    const token = ev.outcome === 'APPROVE' ? tokenFor(productId, id, createdAt, pol, ev, null, repayment) : null;
 
     const record = {
       id, createdAt, productId, segment: 'CONSUMER',
@@ -1810,7 +2231,9 @@
       request: { amount: Math.round(amount), tenorMonths: Math.round(tenorMonths) },
       consents: { aecb: { granted: true, at: consentAt },
                   openFinance: { granted: consents.openFinance === true, at: consents.openFinance === true ? consentAt : null },
-                  creditPassport: { granted: consents.creditPassport === true, at: consents.creditPassport === true ? consentAt : null } },
+                  creditPassport: { granted: consents.creditPassport === true, at: consents.creditPassport === true ? consentAt : null },
+                  homeStatements: { granted: !!statements, at: statements ? consentAt : null,
+                                    source: statements ? (trigger || 'CUSTOMER_UPLOAD') : null } },
       dataPulls: pulls,
       features: ev.features,
       rules: ev.rules,
@@ -1820,12 +2243,18 @@
       outcome: ev.outcome,
       reasonCodes: ev.reasonCodes.slice(),
       token,
+      repayment,
       policyVersion: pol.version, engineVersion: ENGINE_VERSION,
       events: [],
       audit: [{ at: createdAt, actor: 'engine', action: 'DECISION_CREATED',
                 detail: ev.outcome + ' · policy v' + pol.version + ' · ' + ev.score.model + ' ' + ev.score.version }],
       override: null,
-      status: 'OPEN'
+      status: 'OPEN',
+      // v2.4 — the statements this decision read (null when none), and what they were worth.
+      homeStatements: statements,
+      evidenceComparison: statements ? evidenceComparison(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, ev) : null,
+      supersedes: orig ? orig.id : null,
+      supersededBy: null
     };
     if (productId === 'starter_loan') {
       // DecisionRecord additions for the upgrade (Addendum v2.1).
@@ -1834,13 +2263,146 @@
       record.tier = ev.tier;
       record.upgrade = ev.upgrade;
       record.selection = null;
-      record.consents.internationalStatements = { granted: consents.internationalStatements === true,
-                                                  at: consents.internationalStatements === true ? consentAt : null };
       record.audit[0].detail += ' · tier ' + (ev.tier || '—');
+    }
+    if (statements) {
+      record.audit.push({ at: createdAt, actor: 'engine', action: 'STATEMENTS_READ',
+                          detail: statements.bank + ' (' + statements.countryName + ') · ' + statements.file + ' · integrity ' + statements.integrity +
+                                  (statements.integrity === 'PASS' ? ' · name ' + (statements.nameMatch ? 'match' : 'mismatch') + ' · ' + statements.monthsPresent + ' of 6 months' : '') });
+    }
+    if (orig) {
+      // Audit-linked both ways: the new record names the original and the original names its successor.
+      record.redecision = { supersedes: orig.id, trigger,
+                            original: { outcome: orig.outcome, approved: orig.limit.approved, grade: orig.score ? orig.score.grade : null,
+                                        tier: orig.tier || null, status: orig.status, reasonCodes: orig.reasonCodes.slice() },
+                            documentRequest: orig.documentRequest ? clone(orig.documentRequest) : null };
+      record.audit.push({ at: createdAt, actor: 'engine', action: 'REDECISION',
+                          detail: 'supersedes ' + orig.id + ' (' + orig.outcome + ') · ' + (trigger === 'UNDERWRITER_REQUEST' ? 'statements requested by the underwriter' : 'statements uploaded by the customer') });
+      orig.supersededBy = id;
+      orig.status = 'SUPERSEDED';
+      orig.audit.push({ at: createdAt, actor: 'engine', action: 'SUPERSEDED',
+                        detail: 'superseded by ' + id + ' (' + ev.outcome + ') — re-decided on home-country statements' });
     }
     S.decisions.push(record);
     S.byId[id] = record;
     return record;
+  }
+  const STATEMENT_PRODUCTS = ['personal_loan', 'starter_loan'];
+  function checkSupersedable(orig, productId, applicant, statements) {
+    if (orig.productId !== productId) throw err('cannot supersede ' + orig.id + ' — it is a ' + orig.productId + ' decision, not ' + productId);
+    const oid = orig.applicantSnapshot && orig.applicantSnapshot.id;
+    if (oid && applicant.id && oid !== applicant.id) throw err('cannot supersede ' + orig.id + ' — it belongs to applicant ' + oid);
+    if (orig.supersededBy) throw err(orig.id + ' is already superseded by ' + orig.supersededBy);
+    if (orig.events.length) throw err('cannot supersede ' + orig.id + ' — the offer was already accepted (' + orig.events[0].type + ' recorded)');
+    if (orig.override) throw err('cannot supersede ' + orig.id + ' — it was resolved by override');
+    if (!statements) throw err('a re-decision needs new evidence — pass the parsed home-country statements');
+  }
+  // What the statements were worth: the same application decided without
+  // home-country data, with the Credit Passport (where the customer has one),
+  // and with the statements. Pure evaluations — nothing is stored.
+  function evidenceComparison(productId, applicant, amount, tenorMonths, pol, consents, ev) {
+    if (!STATEMENT_PRODUCTS.includes(productId)) return null;
+    const base = Object.assign({}, consents, { creditPassport: false, homeStatements: false, internationalStatements: false });
+    const row = (path, label, e) => ({ path, label, outcome: e.outcome, approved: e.outcome === 'DECLINE' ? 0 : e.limit.approved,
+                                       grade: e.score.grade, bindingConstraint: e.limit.bindingConstraint, tier: e.tier || null,
+                                       maxTenorMonths: e.upgrade ? e.upgrade.maxTenorMonths : null, aprFloor: e.upgrade ? e.upgrade.aprFloor : null,
+                                       reasonCodes: e.reasonCodes.slice() });
+    const out = [row('NO_DATA', productId === 'starter_loan' ? 'UAE accounts only' : 'No home-country data',
+                     evaluate(productId, applicant, amount, tenorMonths, pol, base, null))];
+    if (productId === 'personal_loan' && applicant.aecb && applicant.aecb.creditPassportAvailable && applicant.homeBureau && !(applicant.aecb.hit)) {
+      out.push(row('CREDIT_PASSPORT', 'Credit Passport', evaluate(productId, applicant, amount, tenorMonths, pol, Object.assign({}, base, { creditPassport: true }), null)));
+    }
+    out.push(row('HOME_STATEMENTS', 'Home-country statements', ev));
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Home-country statements — public API (Addendum v2.4)
+  // ---------------------------------------------------------------------------
+  // Pure: parse a customer's seeded statements. Unknown file → integrity FAIL.
+  function parseStatements(input) {
+    ensureInit();
+    if (!input || typeof input !== 'object') throw err('parseStatements needs {country, bank, file, applicantId}');
+    corridorOf(input.country);
+    const a = findApplicant(input.applicantId);
+    if (!a) throw err('unknown applicant "' + input.applicantId + '"');
+    return parseStatementsFor(a, input);
+  }
+  // Underwriter asks for evidence on a refer (or an approval below the request):
+  // status AWAITING_DOCUMENTS, refer SLA paused, customer message RC_STATEMENTS_REQUESTED.
+  function requestDocuments(decisionId, req) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    if (rec.supersededBy) throw err(decisionId + ' was superseded by ' + rec.supersededBy + ' — work on the newer decision');
+    if (rec.status === 'AWAITING_DOCUMENTS') throw err('statements were already requested on ' + decisionId + ' — waiting for the customer to upload them');
+    if (rec.status === 'DOCUMENTS_RECEIVED') throw err('statements were already received on ' + decisionId + ' — re-decide with them');
+    const below = rec.outcome === 'APPROVE' && rec.limit.approved < rec.limit.requested && rec.events.length === 0;
+    const openRefer = rec.outcome === 'REFER' && !rec.override;
+    if (!openRefer && !below) {
+      throw err('statements can be requested only on an open REFER or an approval below the requested amount — ' + decisionId + ' is ' +
+                rec.outcome + (rec.override ? ' (resolved by override)' : (rec.events.length ? ' (offer already accepted)' : '')));
+    }
+    if (!STATEMENT_PRODUCTS.includes(rec.productId)) throw err('home-country statements feed personal-loan and upgrade decisions only (' + decisionId + ' is ' + rec.productId + ')');
+    if (!req || typeof req !== 'object') throw err('requestDocuments needs {type:"HOME_STATEMENTS", months:6, country, analyst, note}');
+    if (req.type !== undefined && req.type !== 'HOME_STATEMENTS') throw err('requestDocuments supports type HOME_STATEMENTS only');
+    if (req.months !== undefined && req.months !== STATEMENT_MONTHS) throw err('home-country statements always cover the last 6 months (asked ' + req.months + ')');
+    const cc = corridorOf(req.country);
+    if (typeof req.analyst !== 'string' || !req.analyst.trim()) throw err('requestDocuments needs the analyst name');
+    const at = nowIso();
+    const msg = D.reasonCodes.RC_STATEMENTS_REQUESTED;
+    rec.documentRequest = { type: 'HOME_STATEMENTS', months: STATEMENT_MONTHS, country: cc, countryName: CORRIDORS[cc].name,
+                            analyst: req.analyst.trim(), note: req.note ? String(req.note) : '', requestedAt: at,
+                            reasonCode: 'RC_STATEMENTS_REQUESTED', customerMessage: { en: msg.en, ar: msg.ar },
+                            slaHoursLeftAtPause: REFER_SLA_HOURS[rec.productId] || 8, statusBefore: rec.status };
+    rec.status = 'AWAITING_DOCUMENTS';
+    rec.audit.push({ at, actor: req.analyst.trim(), action: 'DOCUMENTS_REQUESTED',
+                     detail: '6 months of ' + CORRIDORS[cc].name + ' bank statements · RC_STATEMENTS_REQUESTED · refer SLA paused' + (req.note ? ' · ' + req.note : '') });
+    return rec;
+  }
+  // The customer's upload: parsed and attached. Integrity/name failures are kept
+  // (the re-decision refers them to fraud review); an incomplete window stays
+  // AWAITING_DOCUMENTS — the customer is asked again (RC_STATEMENTS_INCOMPLETE).
+  function submitStatements(decisionId, upload) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    if (rec.status !== 'AWAITING_DOCUMENTS') {
+      throw err('no statements were requested on ' + decisionId +
+                (rec.status === 'DOCUMENTS_RECEIVED' ? ' — statements already received; re-decide with them' : ' — request them first (requestDocuments)'));
+    }
+    if (!upload || typeof upload !== 'object') throw err('submitStatements needs {country, bank, file}');
+    const parsed = parseStatementsFor(rec.applicantSnapshot, { country: upload.country, bank: upload.bank, file: upload.file,
+                                                               months: upload.months, productId: rec.productId });
+    const at = nowIso();
+    const incomplete = parsed.integrity === 'PASS' && parsed.nameMatch && !parsed.complete;
+    rec.documents = { type: 'HOME_STATEMENTS', file: parsed.file, country: parsed.country, submittedAt: at, parsed };
+    if (incomplete) {
+      rec.audit.push({ at, actor: 'customer', action: 'DOCUMENTS_INCOMPLETE',
+                       detail: parsed.file + ' · ' + parsed.monthsPresent + ' of 6 months · RC_STATEMENTS_INCOMPLETE — customer asked for the missing months' });
+      return rec;
+    }
+    rec.status = 'DOCUMENTS_RECEIVED';
+    rec.audit.push({ at, actor: 'customer', action: 'DOCUMENTS_RECEIVED',
+                     detail: parsed.file + ' · integrity ' + parsed.integrity + (parsed.integrity === 'PASS'
+                       ? ' · name ' + (parsed.nameMatch ? 'match' : 'mismatch') + ' · ' + parsed.monthsPresent + ' of 6 months · EMIs AED ' +
+                         parsed.obligationsMonthlyAed + '/mo · remittances ' + parsed.remittanceConsistencyPct + '%'
+                       : ' — fraud review on re-decision') + ' · refer SLA resumes' });
+    return rec;
+  }
+  // Mizan re-decides on the evidence: a NEW DecisionRecord that supersedes the original.
+  function redecide(decisionId) {
+    ensureInit();
+    const orig = getDecisionRef(decisionId);
+    if (orig.supersededBy) throw err(decisionId + ' is already superseded by ' + orig.supersededBy);
+    if (orig.status !== 'DOCUMENTS_RECEIVED' || !orig.documents) {
+      throw err('re-deciding needs documents — no home-country statements have been received on ' + decisionId +
+                (orig.status === 'AWAITING_DOCUMENTS' ? ' (still waiting for the customer)' : ' (request them first)'));
+    }
+    const c = orig.consents || {};
+    return decide({ productId: orig.productId, applicant: orig.applicantSnapshot,
+                    amount: orig.request.amount, tenorMonths: orig.request.tenorMonths,
+                    consents: { aecb: true, openFinance: !!(c.openFinance && c.openFinance.granted),
+                                creditPassport: !!(c.creditPassport && c.creditPassport.granted) },
+                    statements: orig.documents.parsed, supersedes: orig.id }, { trigger: 'UNDERWRITER_REQUEST' });
   }
 
   // Convenience for simulation — same logic, no side effects, no record stored.
@@ -1951,6 +2513,7 @@
     ensureInit();
     const rec = upgradeRecord(decisionId, 'selectUpgradeOption');
     if (rec.outcome !== 'APPROVE') throw err('options can only be chosen on an approved upgrade (outcome is ' + rec.outcome + ')');
+    if (rec.supersededBy) throw err('this offer was superseded by ' + rec.supersededBy + ' — choose on the newer decision');
     if (rec.events.length > 0) {
       throw err('the option is fixed — the offer was already accepted (OFFER_ACCEPTED recorded ' + rec.events[0].at + ')');
     }
@@ -1975,17 +2538,23 @@
     const at = nowIso();
     rec.selection = { amount, months, apr: opt.apr, monthlyPayment: opt.monthlyPayment, totalRepayable: opt.totalRepayable,
                       totalInterest: opt.totalInterest, partnerIncome: opt.partnerIncome, dbrPct: opt.dbrPct, selectedAt: at };
-    // Token conditions refreshed: the "choose an option" line becomes the option itself.
+    // Repayment collection follows the chosen amount (v2.3): AED 1,000 → Al Tareq, AED 1,100 → direct debit.
+    rec.repayment = repaymentFor(amount);
+    // Token conditions refreshed: the repayment line follows the method, and the
+    // "choose an option" line becomes the option itself.
     if (rec.token) {
       const line = 'Selected option: ' + aed(amount) + ' over ' + months + ' month' + (months === 1 ? '' : 's') + ' at ' +
                    pctStr(opt.apr) + ' APR (' + money(opt.monthlyPayment) + '/mo) — fixed when the offer is accepted';
-      rec.token.conditions = rec.token.conditions
-        .filter(c => c !== UPGRADE_CHOICE_PENDING && !/^Selected option: /.test(c))
-        .concat([line]);
+      const kept = rec.token.conditions
+        .filter(c => c !== UPGRADE_CHOICE_PENDING && !/^Selected option: /.test(c) && !REPAYMENT_CONDITIONS.includes(c));
+      const at1 = kept.indexOf(KFS_CONDITION) + 1;
+      kept.splice(at1, 0, REPAYMENT_METHODS[rec.repayment.method].condition);
+      rec.token.conditions = kept.concat([line]);
     }
     rec.audit.push({ at, actor: 'customer', action: 'OPTION_SELECTED',
                      detail: aed(amount) + ' · ' + months + ' months · APR ' + pctStr(opt.apr) + ' · ' + money(opt.monthlyPayment) +
-                             '/mo · partner income ' + money(opt.partnerIncome) + ' · DBR ' + opt.dbrPct + '%' });
+                             '/mo · partner income ' + money(opt.partnerIncome) + ' · DBR ' + opt.dbrPct + '% · repayment ' +
+                             rec.repayment.label });
     return rec;
   }
 
@@ -2049,10 +2618,13 @@
       S.splitDraws[decisionId] = draws;
     }
     const remainingAfter = allowed ? remaining - amount : remaining;
+    // Each split is its own purchase plan, so it gets its own collection rail (v2.3).
+    const repayment = allowed ? repaymentFor(amount) : null;
     rec.audit.push({ at, actor: 'engine', action: 'SPLIT_CHECK',
                      detail: (allowed ? 'allowed' : 'blocked') + ' · ' + aed(amount) + ' · Pay in ' + months +
-                             (reasonCodes.length ? ' · ' + reasonCodes.join(',') : '') });
-    return { allowed, amount, remainingAfter, reasonCodes,
+                             (reasonCodes.length ? ' · ' + reasonCodes.join(',') : '') +
+                             (repayment ? ' · repayment ' + repayment.label : '') });
+    return { allowed, amount, remainingAfter, reasonCodes, repayment,
              plan: { months, requestedMonths: reqMonths, adjusted: months !== reqMonths,
                      monthlyPayment: plan.monthlyPayment, monthlyFee: plan.monthlyFee,
                      planTotal: plan.planTotal, aprEquivalent: plan.aprEquivalent } };
@@ -2069,6 +2641,7 @@
       throw err('unknown execution event "' + eventType + '" — valid events: ' + EXEC_EVENTS.join(' → '));
     }
     if (rec.outcome !== 'APPROVE') throw err('execution events can only be recorded against an approved decision (outcome is ' + rec.outcome + ')');
+    if (rec.supersededBy) throw err(decisionId + ' was superseded by ' + rec.supersededBy + ' — execute the newer decision');
     if (rec.status === 'EXECUTED') throw err('agreement already fully executed for ' + decisionId);
     const expected = EXEC_EVENTS[rec.events.length];
     if (eventType !== expected) {
@@ -2079,8 +2652,15 @@
       throw err('choose an option before accepting — select an amount and term (selectUpgradeOption) first');
     }
     const at = nowIso();
-    rec.events.push({ type: eventType, at });
-    rec.audit.push({ at, actor: 'product-layer', action: 'EXEC_EVENT', detail: eventType });
+    const event = { type: eventType, at };
+    if (eventType === 'REPAYMENT_SET_UP') {
+      // The method is fixed here: upgrades by the option accepted, everything else by the approved amount.
+      const rep = rec.repayment || repaymentFor(rec.limit.approved);
+      event.method = rep.method;
+      event.label = REPAYMENT_METHODS[rep.method].stepLabel;
+    }
+    rec.events.push(event);
+    rec.audit.push({ at, actor: 'product-layer', action: 'EXEC_EVENT', detail: eventType + (event.label ? ' · ' + event.label : '') });
     if (rec.events.length === EXEC_EVENTS.length) {
       rec.status = 'EXECUTED';
       rec.audit.push({ at: nowIso(), actor: 'engine', action: 'STATUS',
@@ -2096,6 +2676,7 @@
     ensureInit();
     const rec = getDecisionRef(decisionId);
     if (rec.outcome !== 'REFER' || rec.override) throw err('override applies only to open REFER decisions');
+    if (rec.supersededBy) throw err(decisionId + ' was superseded by ' + rec.supersededBy + ' — work on the newer decision');
     if (!o || (o.outcome !== 'APPROVE' && o.outcome !== 'DECLINE')) throw err('override outcome must be APPROVE or DECLINE');
     if (!o.reasonCode || !D.reasonCodes[o.reasonCode]) throw err('override requires a valid reasonCode from MizanData.reasonCodes');
     if (typeof o.analyst !== 'string' || !o.analyst.trim() || typeof o.approver !== 'string' || !o.approver.trim()) {
@@ -2110,13 +2691,14 @@
     rec.outcome = o.outcome;
     rec.status = 'OVERRIDDEN';
     if (!rec.reasonCodes.includes(o.reasonCode)) rec.reasonCodes.push(o.reasonCode);
+    if (o.outcome === 'APPROVE' && rec.limit.approved > 0) rec.repayment = repaymentFor(rec.limit.approved);
     if (o.outcome === 'APPROVE' && !rec.token && rec.limit.approved > 0) {
       const pol = getPolicyRef(rec.productId);
       rec.token = tokenFor(rec.productId, rec.id, at, pol, { features: rec.features },
-                           'Approved by override — ' + o.analyst + ' / ' + o.approver);
+                           'Approved by override — ' + o.analyst + ' / ' + o.approver, rec.repayment);
     }
     if (o.outcome === 'DECLINE') {
-      rec.limit.approved = 0; rec.token = null; rec.pricing = null;
+      rec.limit.approved = 0; rec.token = null; rec.pricing = null; rec.repayment = null;
       if (rec.limit.capacity !== undefined) rec.limit.capacity = 0;
     }
     rec.audit.push({ at, actor: o.analyst, action: 'OVERRIDE',
@@ -2129,14 +2711,20 @@
 
   function referQueue() {
     ensureInit();
+    // Open refers plus cases waiting on (or holding) requested statements; a
+    // superseded decision drops out — its re-decision takes its place if still open.
     const open = S.decisions
-      .filter(r => r.outcome === 'REFER' && !r.override)
+      .filter(r => !r.supersededBy && ((r.outcome === 'REFER' && !r.override) || r.status === 'AWAITING_DOCUMENTS' || r.status === 'DOCUMENTS_RECEIVED'))
       .map(r => {
         const sla = REFER_SLA_HOURS[r.productId] || 8;
         const name = r.applicantSnapshot.name || r.id;
+        const dr = r.documentRequest;
         return { id: r.id, name, segment: 'CONSUMER', productId: r.productId, createdAt: r.createdAt,
                  reason: r.reasonCodes[0] || 'RC_MANUAL_REVIEW', reasonCodes: r.reasonCodes.slice(),
-                 waitingHours: 0, slaHoursLeft: sla, seeded: false };
+                 waitingHours: 0, slaHoursLeft: dr ? dr.slaHoursLeftAtPause : sla, seeded: false,
+                 status: r.status, slaPaused: r.status === 'AWAITING_DOCUMENTS',
+                 documentRequest: dr ? { country: dr.country, countryName: dr.countryName, analyst: dr.analyst, requestedAt: dr.requestedAt } : null,
+                 supersedes: r.supersedes || null };
       });
     return open.concat(clone(S.seeded.queue));
   }
@@ -2202,6 +2790,11 @@
   const MizanEngine = {
     VERSION: ENGINE_VERSION,
     EXEC_EVENTS: EXEC_EVENTS.slice(),
+    REPAYMENT_ROUTING,
+    repaymentFor,
+    STATEMENT_CORRIDORS: STATEMENT_CORRIDORS.slice(),
+    STATEMENT_FX,
+    parseStatements, requestDocuments, submitStatements, redecide,
     init, manifests, execSteps, getPolicy, publishPolicy, policyHistory, policyInvariants,
     decide, decideRaw, simulateBook, drawdownCheck, recordEvent, override,
     quoteUpgrade, selectUpgradeOption,
