@@ -9,10 +9,12 @@
  *    cash-flow customers who already made a big purchase and may split it
  *    into Pay in 3 / 6 / 12.
  *  - 5 personal-loan personas (r1..r5), unchanged intended outcomes.
+ *  - 2 starter-loan upgrade personas (u1..u2, Addendum v2.1): thin-file
+ *    newcomers re-decided after their AED 1,000 starter loan.
  *  - Bilingual (EN + Modern Standard Arabic) customer-safe reason codes.
  *  - 5 seeded day-zero early-warning signals (consumer only).
- *  - A seeded deterministic sample book (120 split + 140 personal-loan rows)
- *    for policy simulation.
+ *  - A seeded deterministic sample book (120 split + 140 personal-loan +
+ *    80 starter-loan rows) for policy simulation.
  *
  * No DOM access. No dependency on engine.js. Runs in Node >= 16 and browsers.
  * All synthetic dates derive from TODAY — never from the wall clock.
@@ -230,6 +232,57 @@
   ];
 
   // ---------------------------------------------------------------------------
+  // Starter-loan upgrade personas u1..u2 (NOOR-PIVOT Addendum v2.1). Thin-file
+  // newcomers who took Noor's starter loan (AED 1,000 · 1 month · 50% APR) and
+  // are now re-decided on richer data: connected UAE accounts (Open Finance)
+  // plus, optionally, parsed international bank statements (home-country history).
+  //
+  // connected.monthlyIncome / monthlySpend follow the split-persona convention:
+  // 12 slots aligned to monthLabels, null outside the connected window, mean of
+  // the non-null months === the stated average, stdev/mean ≈ incomeVolatilityPct.
+  // international.obligationsMonthlyAed is a home-country loan that is only
+  // visible to the decision when the customer shares the statements.
+  // ---------------------------------------------------------------------------
+  const personasUpgrade = [
+    { // u1 — APPROVE, ENHANCED tier with statements (up to AED 3,000 · 6 months · from 35% APR); BASE without
+      id: 'u1', name: 'Ana Reyes', nameAr: 'آنا رييس',
+      tagline: 'Nurse, 5 months in the UAE — repaid her starter loan on time',
+      age: 29, residency: 'NEW_RESIDENT', monthsInUae: 5,
+      employment: { employer: 'Private hospital, Dubai', type: 'PRIVATE', retiree: false },
+      priorLoan: { ref: 'MZN-S-0412', productId: 'starter_loan', amount: 1000, tenorMonths: 1, apr: 0.50,
+                   disbursedAt: '2026-06-01', dueAt: '2026-07-01', repaidAt: '2026-07-01', dpd: 0, partnerIncome: 41.67 },
+      aecb: { hit: true, score: null, tradelines: 1, worstDelinquency: 'NONE', chequeReturns12m: 0,
+              obligationsMonthly: 0, note: 'File created by the starter loan — 1 tradeline, paid on time, no score yet' },
+      connected: { source: 'ALTAREQ_TPP', banks: ['ENBD'], monthsAvailable: 5, avgMonthlyIncome: 9500,
+                   avgMonthlySpend: 5600, incomeVolatilityPct: 4,
+                   // Salary + shift allowances since arrival; mean 9,500, vol 4.04%
+                   monthlyIncome: [null, null, null, null, null, null, null, 9000, 9950, 9150, 9900, 9500],
+                   monthlySpend: [null, null, null, null, null, null, null, 5400, 5900, 5300, 5800, 5600] },
+      international: { country: 'Philippines', bank: 'BDO Unibank', source: 'Statements (24 months, parsed)',
+                       monthsAvailable: 24, avgMonthlyIncomeAed: 6800, incomeVolatilityPct: 6, avgBalanceAed: 4200,
+                       overdrafts12m: 0, obligationsMonthlyAed: 350 /* home-country personal loan, paid on time */ }
+    },
+    { // u2 — DECLINE: the starter loan was repaid 14 days late → starter terms continue (RC_STARTER_LATE)
+      id: 'u2', name: 'Bilal Ahmed', nameAr: 'بلال أحمد',
+      tagline: 'Driver, 7 months in the UAE — repaid his starter loan 14 days late',
+      age: 33, residency: 'NEW_RESIDENT', monthsInUae: 7,
+      employment: { employer: 'Fleet operator, Dubai', type: 'PRIVATE', retiree: false },
+      priorLoan: { ref: 'MZN-S-0377', productId: 'starter_loan', amount: 1000, tenorMonths: 1, apr: 0.50,
+                   disbursedAt: '2026-05-15', dueAt: '2026-06-15', repaidAt: '2026-06-29', dpd: 14, partnerIncome: 41.67 },
+      aecb: { hit: true, score: null, tradelines: 1, worstDelinquency: 'NONE', chequeReturns12m: 0,
+              obligationsMonthly: 0, note: 'File created by the starter loan — 1 tradeline, repaid 14 days late, no score yet' },
+      connected: { source: 'ALTAREQ_TPP', banks: ['Mashreq'], monthsAvailable: 7, avgMonthlyIncome: 6500,
+                   avgMonthlySpend: 4300, incomeVolatilityPct: 5,
+                   // mean 6,500, vol 5.25%
+                   monthlyIncome: [null, null, null, null, null, 6100, 6950, 6250, 6850, 6050, 6750, 6550],
+                   monthlySpend: [null, null, null, null, null, 4100, 4500, 4200, 4600, 4000, 4400, 4300] },
+      international: { country: 'Pakistan', bank: 'HBL', source: 'Statements (18 months, parsed)',
+                       monthsAvailable: 18, avgMonthlyIncomeAed: 3100, incomeVolatilityPct: 8, avgBalanceAed: 1600,
+                       overdrafts12m: 0, obligationsMonthlyAed: 0 }
+    }
+  ];
+
+  // ---------------------------------------------------------------------------
   // Reason codes — customer-safe, bilingual (EN + Modern Standard Arabic), as
   // CBUAE disclosure requires. Conventional terminology: قرض (loan), فائدة
   // (interest), رسوم (fees), معدل الفائدة السنوي (APR). Every code the engine can
@@ -302,7 +355,20 @@
       ar: 'لا يتوفر سجل كافٍ للحسابات المرتبطة بعد — يرجى ربط حساب الراتب أو الانتظار حتى تتوفر بيانات لأشهر إضافية.' },
     RC_PLAN_ADJUSTED: {
       en: 'To keep instalments affordable, the plan was set to a longer term.',
-      ar: 'لإبقاء الأقساط ضمن القدرة على السداد، تم تحديد خطة تقسيط بمدة أطول.' }
+      ar: 'لإبقاء الأقساط ضمن القدرة على السداد، تم تحديد خطة تقسيط بمدة أطول.' },
+    // --- Starter loan → upgrade (Addendum v2.1) ---------------------------------
+    RC_UPGRADE_ENHANCED: {
+      en: 'Upgraded using your connected UAE accounts and verified international bank statements.',
+      ar: 'تمت ترقية عرضك بناءً على حساباتك المصرفية المرتبطة في الإمارات وكشوف حساباتك المصرفية الدولية التي تم التحقق منها.' },
+    RC_UPGRADE_BASE: {
+      en: 'Upgraded using your connected UAE accounts — add international statements for a larger limit and a lower rate.',
+      ar: 'تمت ترقية عرضك بناءً على حساباتك المصرفية المرتبطة في الإمارات — أضف كشوف حساباتك المصرفية الدولية للحصول على حد أعلى ومعدل فائدة أقل.' },
+    RC_STARTER_LATE: {
+      en: 'Previous loan was repaid late — starter terms continue; upgrade can be reviewed after 3 on-time months.',
+      ar: 'تم سداد القرض السابق بعد موعد استحقاقه — تستمر شروط قرض البداية، ويمكن مراجعة الترقية بعد ثلاثة أشهر من السداد في المواعيد المحددة.' },
+    RC_OPTION_UNAFFORDABLE: {
+      en: 'This amount and term would take the instalment above what your cash flow supports.',
+      ar: 'هذا المبلغ مع هذه المدة سيرفع القسط الشهري فوق ما يسمح به تدفقك النقدي.' }
   };
 
   // ---------------------------------------------------------------------------
@@ -414,15 +480,42 @@
     return rows;
   }
 
+  // starter_loan (80 rows): customers who took the AED 1,000 starter loan and
+  //   are due a re-decision. ~80% repaid on time (starterDpd 0), the rest late;
+  //   most have 3–12 months of connected UAE accounts (~5% only 1–2); ~55%
+  //   share international statements (6–30 months); income lognormal (median
+  //   ~7.5k), spend 40–102% of income; ~20% carry a small AECB obligation and
+  //   ~35% a home-country loan (homeObligations) that is only visible to the
+  //   decision when statements are shared.
+  function buildStarterBook() {
+    const rnd = mulberry32(20260719 ^ 0x57A28);
+    const normal = makeNormal(rnd);
+    const rows = [];
+    for (let i = 1; i <= 80; i++) {
+      const income = roundTo(clamp(Math.exp(Math.log(7500) + 0.35 * normal(0, 1)), 3500, 20000), 100);
+      const spend = roundTo(income * clamp(normal(0.66, 0.13), 0.4, 1.02), 100);
+      const aecbObligations = rnd() < 0.2 ? roundTo(income * (0.03 + 0.12 * rnd()), 50) : 0;
+      const homeObligations = rnd() < 0.35 ? roundTo(150 + 700 * rnd(), 50) : 0;
+      const connectedMonths = rnd() < 0.05 ? 1 + Math.floor(rnd() * 2) : 3 + Math.floor(rnd() * 10);
+      const statements = rnd() < 0.55;
+      const statementMonths = statements ? 6 + Math.floor(rnd() * 25) : 0;
+      const starterDpd = rnd() < 0.8 ? 0 : [3, 7, 14, 21, 35][Math.floor(rnd() * 5)];
+      rows.push({ id: 'SL-' + String(i).padStart(3, '0'), starterDpd, connectedMonths, statements, statementMonths,
+                  income, spend, aecbObligations, homeObligations });
+    }
+    return rows;
+  }
+
   const MizanData = {
     VERSION: 'data-2.0',
     TODAY: TODAY,
     monthLabels: monthLabels,
     personasSplit: personasSplit,
     personasLoan: personasLoan,
+    personasUpgrade: personasUpgrade,
     reasonCodes: reasonCodes,
     earlyWarning: earlyWarning,
-    sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook() },
+    sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook() },
     history: { days: 90, seed: 20260719 }
   };
 

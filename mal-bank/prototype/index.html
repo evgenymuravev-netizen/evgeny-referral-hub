@@ -509,6 +509,44 @@ details.tbl-view table { margin-top:6px; }
   .publish-grid { grid-template-columns:1fr !important; }
   .callouts-row .chip { white-space:normal; max-width:100%; border-radius:var(--radius-md); }
 }
+/* Credit upgrade — starter loan → upgrade (Addendum v2.1) */
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.res-INFO { color:var(--sky-ink); }
+.cmp-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.cmp-strip .cmp { border:1px solid var(--hairline-soft); border-radius:var(--radius-md); padding:12px 14px; background:var(--panel); min-width:0; }
+.cmp-strip .cmp-l { font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.cmp-strip .cmp-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:0 6px; margin:3px 0 1px; }
+.cmp-strip .cmp-from { font-family:var(--font-ui); font-size:14px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.cmp-strip .cmp-arrow { font-size:14px; color:var(--brand-ink); }
+.cmp-strip .cmp-to { font-family:var(--font-ui); font-size:21px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em; line-height:1.25; white-space:nowrap; }
+.cmp-strip .cmp-s { font-size:12px; color:var(--muted); }
+.purchase-card .pc-copy em.pc-late { color:var(--warn); }
+.up-amount-head { display:flex; align-items:baseline; justify-content:space-between; gap:4px 12px; flex-wrap:wrap; margin-bottom:4px; }
+.up-amount-head .ua-v { font-family:var(--font-ui); font-size:24px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+.plan-row .pr-x { white-space:nowrap; }
+.legend .swd { width:16px; height:0; border-top:2px dashed var(--muted); display:inline-block; }
+.legend .swh { width:10px; height:10px; border-radius:3px; display:inline-block; border:1px solid var(--s1);
+  background:repeating-linear-gradient(45deg, var(--s1) 0 1.5px, transparent 1.5px 4px); opacity:.6; }
+.kfs-note { margin-top:10px; }
+.accept-row { display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap; margin-top:12px; }
+.inv-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+.inv { display:flex; gap:9px; align-items:flex-start; padding:8px 11px; border-radius:var(--radius-sm); background:var(--ok-soft); font-size:13px; }
+.inv.bad { background:var(--bad-soft); }
+.inv .inv-ico { flex:0 0 auto; font-weight:700; color:var(--ok); line-height:1.45; }
+.inv.bad .inv-ico { color:var(--bad); }
+.inv .inv-t { display:block; color:var(--ink); font-weight:600; }
+.inv .inv-m { display:block; color:var(--ink-2); font-size:12.5px; margin-top:1px; }
+.tier-block + .tier-block { margin-top:10px; }
+.tier-block .tb-h { font-family:var(--font-label); font-size:12.5px; font-weight:500; color:var(--ink-2); margin-bottom:4px; }
+.tier-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.tier-grid .bg-cell label { font-size:12px; margin-bottom:3px; }
+.curve-tbl td.bad { color:var(--bad); font-weight:600; }
+.pi-tiles { margin-top:10px; }
+@media (max-width:600px) {
+  .cmp-strip { grid-template-columns:1fr; }
+  .tier-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 
 </style>
 
@@ -534,6 +572,7 @@ details.tbl-view table { margin-top:6px; }
     <section data-screen="overview" id="scr-overview"></section>
     <section data-screen="split" id="scr-split"></section>
     <section data-screen="loan" id="scr-loan"></section>
+    <section data-screen="upgrade" id="scr-upgrade"></section>
     <section data-screen="policy" id="scr-policy"></section>
     <section data-screen="workbench" id="scr-workbench"></section>
     <section data-screen="log" id="scr-log"></section>
@@ -630,13 +669,15 @@ function outcomeChip(oc) { return h('span', { class: 'oc oc-' + oc, text: oc });
 /* ================= Globals wired at boot ================= */
 var MD = null, ME = null;      // MizanData, MizanEngine
 var PRODUCT_LABEL = { split: 'Split a purchase', personal_loan: 'Personal loan', salary_advance: 'Salary advance' };
-var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', salary_advance: 'Salary advance' };
+var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', starter_loan: 'Starter loan', salary_advance: 'Salary advance' };
 function productLabel(pid, short) { return (short ? PRODUCT_SHORT[pid] : PRODUCT_LABEL[pid]) || pid || '—'; }
 var PULL_LABEL = {
   AECB_CONSUMER: 'AECB consumer report + score (real-time, consent-bound cache)',
   OPEN_FINANCE: 'Connected accounts — UAE Open Finance via Al Tareq',
   DOCUMENTS: 'Salary certificate / statement upload + parsing',
-  CREDIT_PASSPORT: 'Credit Passport — home-country bureau (AECB × Nova Credit)'
+  CREDIT_PASSPORT: 'Credit Passport — home-country bureau (AECB × Nova Credit)',
+  PRIOR_DECISION: 'Prior decision — the starter loan and how it was repaid',
+  INTERNATIONAL_STATEMENTS: 'International bank statements — home-country history, parsed'
 };
 var EXEC_WHY = 'Why it matters: the customer accepts the offer, reads the Key Facts Statement in Arabic and English, e-signs via UAE PASS and gets the cooling-off period before any money moves (CBUAE Consumer Protection Regulation 8/2020 and Standards). An approval is not a loan.';
 function execStepsFor(pid) {
@@ -651,6 +692,7 @@ var SCREENS = [
   { id: 'overview',   label: 'Overview',         sub: 'What Mizan is',            icon: 'M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z' },
   { id: 'split',      label: 'Split a purchase', sub: 'Pay in 3 · 6 · 12',        icon: 'M8 2a6 6 0 1 0 6 6H8zM10 1.6V6h4.4A6 6 0 0 0 10 1.6z' },
   { id: 'loan',       label: 'Personal loan',    sub: 'Salary + AECB + DBR',      icon: 'M2 4h12v8H2zM2 6.8h12M4.5 10h3', stroke: true },
+  { id: 'upgrade',    label: 'Credit upgrade',   sub: 'Starter loan → more for less', icon: 'M2 12.5l4-4 2.5 2.5L14 5.5M10.5 5.5H14V9', stroke: true },
   { id: 'policy',     label: 'Policy console',   sub: 'Packs & primitives',       icon: 'M2 4h12M2 8h12M2 12h12M5 2.5v3M11 6.5v3M7 10.5v3', stroke: true },
   { id: 'workbench',  label: 'Workbench',        sub: 'Refer queue',              icon: 'M2 3h12v7h-4l-1 2H7l-1-2H2zM2 10v3h12v-3' },
   { id: 'log',        label: 'Decision log',     sub: 'Replay & audit',           icon: 'M3 2h8l3 3v9H3zM6 7h5M6 10h5', stroke: true },
@@ -749,6 +791,7 @@ document.addEventListener('DOMContentLoaded', function () {
   Overview.build();
   Split.build();
   Loan.build();
+  Upgrade.build();
   Policy.build();
   Workbench.build();
   LogScreen.build();
@@ -852,11 +895,15 @@ function pullsTimeline(rec, opts) {
   var steps = [];
   steps.push({ title: 'Consent registry — consent verified', sum: 'AECB consent evidenced (Federal Law 6/2010)' +
     (c.openFinance && c.openFinance.granted ? ' · Open Finance consent active (Al Tareq)' : '') +
-    (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport consent active (home-country bureau)' : ''), lat: null });
+    (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport consent active (home-country bureau)' : '') +
+    (c.internationalStatements && c.internationalStatements.granted ? ' · International statements shared (home-country bank)' : '') +
+    (c.internationalStatements && !c.internationalStatements.granted ? ' · International statements not shared (optional)' : ''), lat: null });
   (rec.dataPulls || []).forEach(function (p) {
     steps.push({ title: PULL_LABEL[p.source] || p.source, sum: pullSummary(p), lat: p.latencyMs });
   });
-  steps.push({ title: rec.productId === 'split' ? 'Cash-flow policy pack + scorecard + split capacity' : 'Policy pack + scorecard + DBR limit engine',
+  if (rec.kind === 'UPGRADE') steps.push({ title: 'Upgrade policy pack — tier, APR curve, affordability per option',
+    sum: 'every rule evaluated · tier set · offer ceiling and options derived', lat: null });
+  else steps.push({ title: rec.productId === 'split' ? 'Cash-flow policy pack + scorecard + split capacity' : 'Policy pack + scorecard + DBR limit engine',
     sum: 'every rule evaluated · grade assigned · limit and pricing derived', lat: null });
 
   var tl = h('div', { class: 'timeline' });
@@ -929,8 +976,9 @@ function limitBlock(rec) {
     h('dt', null, h('strong', { text: approve ? 'Approved amount' : (rec.outcome === 'REFER' ? 'Provisional amount' : 'Approved amount') })),
     h('dd', { class: 'num' }, h('strong', { text: fmtAED(lim.approved) })));
   if (lim.capacity !== undefined) {
-    kv.appendChild(h('dt', { text: 'Split capacity' }));
-    kv.appendChild(h('dd', { class: 'num', text: fmtAED(lim.capacity) + (lim.planMonths ? ' · sized on Pay in ' + lim.planMonths : '') }));
+    var isUp = rec.kind === 'UPGRADE';
+    kv.appendChild(h('dt', { text: isUp ? 'Upgrade ceiling' : 'Split capacity' }));
+    kv.appendChild(h('dd', { class: 'num', text: fmtAED(lim.capacity) + (lim.planMonths ? (isUp ? ' · default term ' + lim.planMonths + ' months' : ' · sized on Pay in ' + lim.planMonths) : '') }));
   }
   kv.appendChild(h('dt', { text: 'Binding constraint' }));
   kv.appendChild(h('dd', null, approve ? h('code', { text: lim.bindingConstraint || '—' }) : h('span', { class: 'small muted', text: '— shown for approvals only' })));
@@ -961,6 +1009,15 @@ function pricingBlock(rec) {
         h('dt', { text: 'Fee' }), h('dd', { class: 'num', text: fmtMoney(p.fee) + ' flat' })),
       h('div', { class: 'callout callout-info small', text: p.note || 'Flat fee, no interest.' }));
   }
+  if (p.mode === 'TENOR_CURVE_APR') {
+    var cv = p.curve || [];
+    return h('div', { class: 'kv' },
+      h('dt', { text: 'Pricing mode' }), h('dd', null, h('code', { text: 'TENOR_CURVE_APR' })),
+      h('dt', { text: 'Tier' }), h('dd', null, h('strong', { text: p.tier || rec.tier || '—' })),
+      h('dt', { text: 'APR by term' }), h('dd', { class: 'num', text: cv.map(function (c) { return fmtApr(c.apr); }).join(' · ') + ' (1 → ' + cv.length + ' months)' }),
+      h('dt', { text: 'Lowest APR' }), h('dd', { class: 'num', text: fmtApr(p.aprFloor) + ' at ' + cv.length + ' months' }),
+      h('dt', { text: 'Guarantee' }), h('dd', { class: 'small', text: 'Partner income rises with every extra month — enforced when the policy is published.' }));
+  }
   if (p.mode === 'MONTHLY_FEE') {
     return h('div', { class: 'kv' },
       h('dt', { text: 'Pricing mode' }), h('dd', null, h('code', { text: 'MONTHLY_FEE' })),
@@ -988,6 +1045,13 @@ function kfsBlock(rec, months) {
   var p = rec.pricing;
   if (rec.outcome !== 'APPROVE' || !p) return null;
   var reg = currentReg(rec.productId);
+  if (p.mode === 'TENOR_CURVE_APR') {
+    var s = rec.selection;
+    if (!s) return h('div', { class: 'small muted', text: 'No option chosen yet — the KFS figures follow the customer’s amount × term choice.' });
+    return h('div', { class: 'kfs-wrap', dataset: { months: String(s.months) } },
+      upgradeKfsTiles(s, s.amount, reg.coolingOffDays),
+      h('div', { class: 'kfs-foot', text: 'Chosen option: ' + fmtAED(s.amount) + ' over ' + monthsTxt(s.months) + '. ' + UPGRADE_KFS_NOTE }));
+  }
   if (p.mode === 'MONTHLY_FEE') {
     var plan = findPlan(p, months || p.selectedMonths) || findPlan(p, p.selectedMonths);
     if (!plan) return null;
@@ -1045,8 +1109,9 @@ function reasonsBlock(rec) {
 function decisionGrid(rec, opts) {
   opts = opts || {};
   var grid = h('div', { class: 'dgrid', style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:12px;' });
-  grid.appendChild(h('div', null, h('h3', { text: 'Score & grade' }), scoreBlock(rec)));
-  grid.appendChild(h('div', null, h('h3', { text: rec.productId === 'split' ? 'Amount — binding-constraint trace' : 'Limit — binding-constraint trace' }), limitBlock(rec)));
+  if (rec.kind === 'UPGRADE') grid.appendChild(h('div', null, h('h3', { text: 'Tier & affordability' }), upgradeTierBlock(rec)));
+  else grid.appendChild(h('div', null, h('h3', { text: 'Score & grade' }), scoreBlock(rec)));
+  grid.appendChild(h('div', null, h('h3', { text: rec.productId === 'split' ? 'Amount — binding-constraint trace' : (rec.kind === 'UPGRADE' ? 'Offer ceiling — binding-constraint trace' : 'Limit — binding-constraint trace') }), limitBlock(rec)));
   if (!opts.skipPricing) grid.appendChild(h('div', null, h('h3', { text: 'Pricing guidance' }), pricingBlock(rec)));
   var tok = tokenBlock(rec); if (tok) grid.appendChild(h('div', null, h('h3', { text: 'Approval token' }), tok));
   grid.appendChild(h('div', null, h('h3', { text: 'Reason codes — EN / AR' }), reasonsBlock(rec)));
@@ -1775,6 +1840,508 @@ var Loan = {
     afterEngineMutation();
   }
 };
+/* ================= Credit upgrade — starter loan → upgrade (Addendum v2.1) ================= */
+/* APR as a short percentage: 0.35 → "35%", 0.426 → "42.6%" */
+function fmtApr(r) { return !isNum(r) ? '—' : String(Number((r * 100).toFixed(2))) + '%'; }
+function fmtX(x) { return !isNum(x) ? '—' : '×' + Number(x).toFixed(1); }
+function monthsTxt(n) { return n + ' month' + (n === 1 ? '' : 's'); }
+var TIER_LABEL = { ENHANCED: 'Enhanced — UAE accounts + international statements', BASE: 'Base — UAE accounts only' };
+/* Nice axis step: the smallest of {1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8} × 10^k that is ≥ v */
+function niceStepUp(v) {
+  if (!(v > 0)) return 1;
+  var p = Math.pow(10, Math.floor(Math.log10(v)));
+  var ms = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+  for (var i = 0; i < ms.length; i++) if (ms[i] * p >= v - 1e-12) return ms[i] * p;
+  return 10 * p;
+}
+
+/* Tier + affordability block — replaces the scorecard block on upgrade records
+   (a starter-loan thin file has an AECB file but no score yet). */
+function upgradeTierBlock(rec) {
+  var f = rec.features || {}, pl = rec.priorLoan || {};
+  var kv = h('div', { class: 'kv' });
+  function row(k, v) { kv.appendChild(h('dt', { text: k })); kv.appendChild(h('dd', { class: 'num', text: v })); }
+  kv.appendChild(h('dt', { text: 'Tier' }));
+  kv.appendChild(h('dd', null, rec.tier ? h('span', { class: 'chip acc', text: rec.tier }) : h('span', { class: 'small muted', text: 'none — no upgrade' })));
+  row('Starter loan', (pl.ref || '—') + ' · ' + (pl.dpd === 0 ? 'repaid on time' : 'repaid ' + pl.dpd + ' days late'));
+  row('Income history', (f.incomeHistoryMonths || 0) + ' months (' + (f.connectedMonths || 0) + ' UAE' + (isNum(f.internationalMonths) ? ' + ' + f.internationalMonths + ' international' : '') + ')');
+  row('Free cash flow', fmtAED(f.freeCashFlowMonthly) + '/mo');
+  row('Instalment budget', fmtAED(f.maxInstalment) + '/mo');
+  row('Home-country loans', isNum(f.homeCountryObligations) ? fmtAED(f.homeCountryObligations) + '/mo (from the statements)' : 'not visible — no statements');
+  row('DBR at the default option', fmtPct(f.dbrPct, 1));
+  return h('div', null, kv,
+    h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'No scorecard grade: the AECB file is one tradeline old and has no score yet. The starter loan’s repayment record and the tier rules carry this decision.' }));
+}
+/* KFS tiles for one upgrade option (selection or live choice) */
+function upgradeKfsTiles(o, amount, coolingOffDays, id) {
+  return h('div', { class: 'kfs k6', id: id || null, dataset: { months: String(o.months), amount: String(amount) } },
+    kfTile('apr', 'APR', fmtApr(o.apr), 'fixed, reducing balance'),
+    kfTile('monthlyPayment', 'Monthly payment', fmtMoney(o.monthlyPayment), 'equal instalments'),
+    kfTile('payments', 'Number of payments', String(o.months), 'one a month'),
+    kfTile('totalRepayable', 'Total repayable', fmtMoney(o.totalRepayable), 'principal ' + fmtAED(amount)),
+    kfTile('totalInterest', 'Total interest', fmtMoney(o.totalInterest), '= total cost of credit = partner income'),
+    kfTile('coolingOff', 'Cooling-off', (coolingOffDays || 5) + ' days', 'business days, waivable in writing'));
+}
+var UPGRADE_KFS_NOTE = 'A longer term lowers the APR and the monthly payment but raises the total interest — the KFS shows both.';
+
+/* "Lower APR, more partner income" — bars = partner income (= total interest) per term at the chosen amount
+   (--s1, left axis), line = APR (--s2, right axis). Both axes start at zero so neither scale exaggerates.
+   Dashed reference = what the starter loan earned. Selected term highlighted; terms that don't fit are hatched + faded.
+   Hover/focus a term for its figures; click a term that fits to choose it. */
+var UPGRADE_CHART_UID = 0;
+function upgradeChart(quote, opts) {
+  opts = opts || {};
+  var o = quote.options || [];
+  var n = o.length;
+  if (!n) return h('div', { class: 'small muted', text: 'No options to chart.' });
+  var starter = isNum(opts.starter) ? opts.starter : 0;
+  var narrow = false; try { narrow = window.innerWidth < 600; } catch (e) {}
+  var W = narrow ? 400 : 640, H = narrow ? 262 : 272, padL = narrow ? 40 : 52, padR = narrow ? 38 : 50, padT = 30, padB = 40;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  var DIV = 5;
+  var maxPI = Math.max.apply(null, o.map(function (x) { return x.partnerIncome; }).concat([starter]));
+  var stepL = niceStepUp(maxPI * 1.12 / DIV), yMaxL = stepL * DIV;
+  var maxApr = Math.max.apply(null, o.map(function (x) { return x.apr; }));
+  var stepR = niceStepUp(maxApr * 1.04 / DIV), yMaxR = stepR * DIV;
+  var yL = function (v) { return padT + plotH * (1 - v / yMaxL); };
+  var yR = function (v) { return padT + plotH * (1 - v / yMaxR); };
+  var band = plotW / n, barW = Math.min(46, band * 0.54);
+  var cx = function (i) { return padL + band * i + band / 2; };
+  var uid = 'uph' + (++UPGRADE_CHART_UID);
+  var svg = chartSvg(W, H, 'Partner income and APR by term at ' + fmtAED(quote.amount) + '. Longer terms have a lower APR and earn the lending partner more.');
+  /* hatch for terms that don't fit — light, 45°, tone-on-tone */
+  var defs = S('defs');
+  var pat = S('pattern', { id: uid, patternUnits: 'userSpaceOnUse', width: '6', height: '6', patternTransform: 'rotate(45)' });
+  pat.appendChild(S('rect', { width: '6', height: '6', style: 'fill:var(--panel);' }));
+  pat.appendChild(S('line', { x1: '0', y1: '0', x2: '0', y2: '6', style: 'stroke:var(--s1);stroke-width:2;opacity:.45;' }));
+  defs.appendChild(pat); svg.appendChild(defs);
+  /* selected term — a quiet column behind the marks */
+  var selIdx = -1;
+  o.forEach(function (x, i) { if (x.months === opts.selectedMonths) selIdx = i; });
+  if (selIdx >= 0) svg.appendChild(S('rect', { class: 'up-sel-band', x: padL + band * selIdx + 3, y: padT - 22, width: band - 6, height: plotH + 22 + padB - 4, rx: 10, style: 'fill:var(--brand-soft);' }));
+  /* gridlines + both axes' ticks (aligned: same 5 divisions) */
+  var kfmt = function (v) { return v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + 'k' : String(Math.round(v * 100) / 100); };
+  for (var g = 0; g <= DIV; g++) {
+    var gy = padT + plotH * (1 - g / DIV);
+    svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: gy, y2: gy, style: 'stroke:var(--grid);stroke-width:1;' }));
+    svg.appendChild(S('text', { x: padL - 6, y: gy + 3.5, 'text-anchor': 'end', class: 'ticknum', text: kfmt(stepL * g) }));
+    svg.appendChild(S('text', { x: W - padR + 6, y: gy + 3.5, 'text-anchor': 'start', class: 'ticknum', text: fmtApr(stepR * g) }));
+  }
+  /* axis titles, each with its series swatch so identity is never colour-alone */
+  svg.appendChild(S('rect', { x: padL - (narrow ? 34 : 44), y: 6, width: 8, height: 8, rx: 2, style: 'fill:var(--s1);' }));
+  svg.appendChild(S('text', { x: padL - (narrow ? 22 : 32), y: 13.5, text: narrow ? 'Partner income, AED' : 'Partner income (AED)' }));
+  svg.appendChild(S('line', { x1: W - padR - (narrow ? 26 : 30), x2: W - padR - (narrow ? 16 : 20), y1: 10, y2: 10, style: 'stroke:var(--s2);stroke-width:2.5;stroke-linecap:round;' }));
+  svg.appendChild(S('text', { x: W - padR - (narrow ? 12 : 16), y: 13.5, text: 'APR' }));
+  /* bars — partner income */
+  var base = yL(0);
+  o.forEach(function (x, i) {
+    var top = yL(x.partnerIncome), bx = cx(i) - barW / 2;
+    var isSel = i === selIdx;
+    var fill = !x.fits ? 'url(#' + uid + ')' : 'var(--s1)';
+    var style = 'fill:' + fill + ';' + (!x.fits ? 'stroke:var(--s1);stroke-opacity:.5;stroke-width:1;' : (isSel ? '' : 'fill-opacity:.62;'));
+    svg.appendChild(S('path', { class: 'up-bar' + (isSel ? ' sel' : '') + (x.fits ? '' : ' unfit'), 'data-months': String(x.months), d: roundTopRect(bx, top, barW, Math.max(0.5, base - top), 4), style: style }));
+    /* value label above each bar — muted, the chosen term in ink */
+    svg.appendChild(S('text', { x: cx(i), y: top - 6, 'text-anchor': 'middle', class: 'ticknum' + (isSel ? ' dlabel' : ''), style: HALO + (isSel ? 'font-weight:600;' : ''), text: (narrow ? '' : '') + (Math.round(x.partnerIncome * 100) / 100).toFixed(2) }));
+    /* x labels: term, plus "doesn't fit" */
+    svg.appendChild(S('text', { x: cx(i), y: H - padB + 16, 'text-anchor': 'middle', class: isSel ? 'dlabel' : '', style: isSel ? 'font-weight:600;' : '', text: x.months + (narrow ? ' mo' : (x.months === 1 ? ' month' : ' months')) }));
+    if (!x.fits) svg.appendChild(S('text', { x: cx(i), y: H - padB + 29, 'text-anchor': 'middle', class: 'nodata', text: narrow ? 'no fit' : 'doesn’t fit' }));
+  });
+  svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: base, y2: base, style: 'stroke:var(--axis);stroke-width:1;' }));
+  /* reference — the starter loan's partner income */
+  if (starter > 0) {
+    var ry = yL(starter);
+    svg.appendChild(S('line', { class: 'up-ref', x1: padL, x2: W - padR, y1: ry, y2: ry, style: 'stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4;' }));
+    svg.appendChild(S('text', { x: padL + 4, y: ry - 5, class: 'dlabel', style: HALO + 'font-size:10px;', text: 'Starter loan · ' + fmtMoney(starter) }));
+  }
+  /* APR line on the right axis */
+  var d = o.map(function (x, i) { return (i ? 'L' : 'M') + cx(i) + ',' + yR(x.apr); }).join(' ');
+  svg.appendChild(S('path', { class: 'up-apr-line', d: d, style: 'fill:none;stroke:var(--s2);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;' }));
+  o.forEach(function (x, i) {
+    var isSel = i === selIdx;
+    svg.appendChild(S('circle', { class: 'up-apr-pt', cx: cx(i), cy: yR(x.apr), r: isSel ? 5.5 : 4,
+      style: (x.fits ? 'fill:var(--s2);' : 'fill:var(--panel);') + 'stroke:' + (x.fits ? 'var(--panel)' : 'var(--s2)') + ';stroke-width:2;' }));
+  });
+  /* direct label for the chosen term's APR */
+  if (selIdx >= 0) {
+    var sx = cx(selIdx), sy = yR(o[selIdx].apr);
+    var anchorEnd = selIdx === n - 1;
+    svg.appendChild(S('text', { x: anchorEnd ? sx - 9 : sx + 9, y: sy - 8, 'text-anchor': anchorEnd ? 'end' : 'start', class: 'dlabel', style: HALO + 'font-weight:600;', text: fmtApr(o[selIdx].apr) + ' APR' }));
+  }
+  /* hover + focus per term (hit target = the whole column); click chooses a term that fits */
+  var cbox = h('div', { class: 'chart-box' });
+  var tip = makeTip(cbox);
+  o.forEach(function (x, i) {
+    var aria = monthsTxt(x.months) + ': APR ' + fmtApr(x.apr) + ', ' + fmtMoney(x.monthlyPayment) + ' a month, partner income ' + fmtMoney(x.partnerIncome) + (x.fits ? '' : ' — does not fit the budget');
+    var hit = S('rect', { x: padL + band * i, y: padT - 20, width: band, height: plotH + 20 + padB, fill: 'transparent', tabindex: '0', 'aria-label': aria, style: x.fits ? 'cursor:pointer;' : '' });
+    function show(ev) {
+      var r = cbox.getBoundingClientRect();
+      var px = ev && ev.clientX !== undefined ? ev.clientX - r.left : cx(i) / W * cbox.clientWidth;
+      var py = ev && ev.clientY !== undefined ? ev.clientY - r.top : 40;
+      tip.show(monthsTxt(x.months) + (x.fits ? '' : ' — doesn’t fit'), [
+        { label: 'Partner income', value: fmtMoney(x.partnerIncome), color: 'var(--s1)' },
+        { label: 'APR', value: fmtApr(x.apr), color: 'var(--s2)' },
+        { label: 'Monthly payment', value: fmtMoney(x.monthlyPayment) },
+        { label: 'vs starter loan', value: fmtX(x.partnerIncomeVsStarterX) }], px, py);
+    }
+    hit.addEventListener('pointermove', show); hit.addEventListener('focus', show);
+    hit.addEventListener('pointerleave', tip.hide); hit.addEventListener('blur', tip.hide);
+    if (x.fits && opts.onPick) {
+      hit.addEventListener('click', function () { opts.onPick(x.months); });
+      hit.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); opts.onPick(x.months); } });
+    }
+    svg.appendChild(hit);
+  });
+  cbox.appendChild(svg);
+  var legend = h('div', { class: 'legend' },
+    h('span', { class: 'lg' }, h('span', { class: 'sw', style: 'background:var(--s1);' }), 'Partner income = total interest (left axis)'),
+    h('span', { class: 'lg' }, h('span', { class: 'swl', style: 'border-top-color:var(--s2);' }), 'APR (right axis)'),
+    h('span', { class: 'lg' }, h('span', { class: 'swd' }), 'Starter loan earned ' + fmtMoney(starter)),
+    o.some(function (x) { return !x.fits; }) ? h('span', { class: 'lg' }, h('span', { class: 'swh' }), 'Doesn’t fit the budget') : null);
+  return h('div', { class: 'up-chart-wrap' }, legend, cbox,
+    tableView(['Term', 'APR', 'Monthly payment', 'Total interest = partner income', 'vs starter', 'Fits'], o.map(function (x) {
+      return [monthsTxt(x.months), fmtApr(x.apr), fmtMoney(x.monthlyPayment), fmtMoney(x.partnerIncome), fmtX(x.partnerIncomeVsStarterX), x.fits ? 'yes' : 'no'];
+    })));
+}
+
+var Upgrade = {
+  sel: null, rec: null, pendingId: null, amount: null, months: null, quote: null, execBuilt: false,
+  build: function () {
+    var root = clear($('#scr-upgrade'));
+    root.appendChild(screenHead('Credit lifecycle — re-decision on new data', 'From starter loan to upgrade',
+      'A thin-file customer repaid Noor’s AED 1,000 starter loan on time. Mizan re-decides on connected UAE accounts — plus international bank statements, if the customer adds them — and offers more for less. The customer picks the amount and the term: the longer the term, the lower the APR, and the lending partner still earns more.'));
+    var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
+    root.appendChild(h('div', { class: 'grid2' }, left, right));
+
+    var pWrap = h('div', { class: 'grid-cards', id: 'up-personas' });
+    (MD.personasUpgrade || []).forEach(function (p) {
+      var pl = p.priorLoan || {}, cn = p.connected || {}, x = p.international || {};
+      var onTime = pl.dpd === 0;
+      pWrap.appendChild(h('button', { class: 'pcard', id: 'upp-' + p.id, 'aria-pressed': 'false', onclick: function () { Upgrade.pick(p); } },
+        h('span', { class: 'pname' }, h('span', { text: p.name }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: p.nameAr || '' })),
+        h('span', { class: 'ptag', text: p.tagline || '' }),
+        h('span', { class: 'pchips' },
+          h('span', { class: 'chip ' + (onTime ? 'chip-ok' : 'chip-warn'), text: onTime ? 'Starter repaid on time' : 'Starter repaid ' + pl.dpd + ' days late' }),
+          h('span', { class: 'chip', text: 'Income ' + fmtAED(cn.avgMonthlyIncome) + '/mo' }),
+          h('span', { class: 'chip', text: (cn.monthsAvailable || 0) + ' mo connected' }),
+          x.bank ? h('span', { class: 'chip acc', text: x.bank + ' · ' + x.monthsAvailable + ' mo statements' }) : null)));
+    });
+    left.appendChild(h('div', { class: 'panel' }, h('h3', null, 'Customers ', h('span', { class: 'h3-note', text: '(u1–u2, synthetic)' })), pWrap));
+    left.appendChild(h('div', { id: 'up-prior', class: 'purchase-card' }, h('div', { class: 'pc-empty', text: 'Pick a customer — Noor shows the starter loan and how it was repaid.' })));
+
+    var form = h('div', { class: 'panel', id: 'up-form' });
+    form.appendChild(h('h3', { text: 'Consent — two required, one optional' }));
+    form.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'up-c-aecb' }), h('label', { for: 'up-c-aecb' },
+      h('div', { class: 'cb-title', text: 'AECB credit bureau check — required' }),
+      h('div', { class: 'cb-legal', text: 'I consent to Noor requesting my credit report from Al Etihad Credit Bureau (Federal Law 6/2010). The starter loan created the file; a bureau check is mandatory before more credit is granted.' }))));
+    form.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'up-c-of' }), h('label', { for: 'up-c-of' },
+      h('div', { class: 'cb-title', text: 'Connect UAE bank accounts (Open Finance via Al Tareq) — required' }),
+      h('div', { class: 'cb-legal', text: 'I consent to Noor reading my connected-account income and spending through the Al Tareq consent layer (CBUAE Open Finance) to re-decide my limit and rate.' }))));
+    form.appendChild(h('div', { class: 'consent-box' }, h('input', { type: 'checkbox', id: 'up-c-intl' }), h('label', { for: 'up-c-intl' },
+      h('div', { class: 'cb-title', text: 'International bank statements — optional' }),
+      h('div', { class: 'cb-legal' }, 'Add your home-country bank statements to unlock a bigger limit and a lower rate. ',
+        h('span', { id: 'up-intl-detail', text: 'Parsed for income history and existing loans; used only for this decision.' })))));
+    form.appendChild(h('div', { id: 'up-consent-err', 'aria-live': 'polite' }));
+    form.appendChild(h('div', { class: 'btnrow', style: 'margin-top:10px;' },
+      h('button', { class: 'btn btn-primary', id: 'up-submit', text: 'Re-decide', onclick: function () { Upgrade.submit(); } }),
+      h('span', { class: 'small muted', text: 'POST /decisions · product starter_loan · re-decision' })));
+    left.appendChild(form);
+    left.appendChild(h('div', { class: 'panel', id: 'up-orch' }, h('h3', { text: 'Orchestration' }),
+      h('div', { class: 'small muted', text: 'Re-decide to watch Mizan read the prior decision, the AECB file the starter loan created, the connected UAE accounts and — with consent — the international statements.' })));
+
+    right.appendChild(h('div', { id: 'up-decision' }, h('div', { class: 'panel' }, h('h3', { text: 'Decision' }),
+      h('div', { class: 'small muted', text: 'The upgrade offer appears here: what changes from the starter loan, the options to choose from, and the Key Facts Statement figures for your choice.' }))));
+    right.appendChild(h('div', { id: 'up-shape' }));
+    right.appendChild(h('div', { id: 'up-chart' }));
+    right.appendChild(h('div', { id: 'up-kfs' }));
+    right.appendChild(h('div', { id: 'up-token' }));
+    right.appendChild(h('div', { id: 'up-exec' }));
+    right.appendChild(h('div', { id: 'up-details' }));
+  },
+  slots: ['#up-shape', '#up-chart', '#up-kfs', '#up-token', '#up-exec', '#up-details'],
+  pickById: function (id) {
+    var p = (MD.personasUpgrade || []).filter(function (x) { return x.id === id; })[0];
+    if (p) Upgrade.pick(p);
+  },
+  pick: function (p) {
+    Upgrade.sel = p; Upgrade.rec = null; Upgrade.pendingId = null; Upgrade.quote = null; Upgrade.execBuilt = false;
+    $all('#up-personas .pcard').forEach(function (c) { var on = c.id === 'upp-' + p.id; c.classList.toggle('sel', on); c.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    ['#up-c-aecb', '#up-c-of', '#up-c-intl'].forEach(function (s) { $(s).checked = false; });
+    var x = p.international;
+    $('#up-intl-detail').textContent = x ? x.bank + ' (' + x.country + ') — ' + x.monthsAvailable + ' months of statements, parsed for income history and existing loans; used only for this decision.' : 'Parsed for income history and existing loans; used only for this decision.';
+    clear($('#up-consent-err'));
+    Upgrade.slots.forEach(function (s) { clear($(s)); });
+    var dec = clear($('#up-decision'));
+    dec.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Decision' }),
+      h('div', { class: 'small muted', text: 'Ready — tick the consents and re-decide ' + firstName(p.name) + '’s credit. Try it with and without the international statements.' })));
+    var orch = clear($('#up-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(h('div', { class: 'small muted', text: 'Ready — the re-decision reads four sources, in order.' }));
+    Upgrade.renderPrior();
+  },
+  renderPrior: function () {
+    var box = clear($('#up-prior'));
+    var p = Upgrade.sel; if (!p || !p.priorLoan) return;
+    var pl = p.priorLoan, onTime = pl.dpd === 0;
+    box.appendChild(h('div', { class: 'pc-eyebrow' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' }), 'Starter loan · ' + (pl.ref || '')));
+    box.appendChild(h('div', { class: 'pc-copy' }, firstName(p.name) + '’s ' + fmtAED(pl.amount) + ' starter loan was repaid ',
+      onTime ? h('em', { text: 'on time.' }) : h('em', { class: 'pc-late', text: pl.dpd + ' days late.' })));
+    box.appendChild(h('div', { class: 'pc-via', text: onTime ? 'Its job was to create a repayment record and an AECB file. It did both — now Noor can offer more, for less.' : 'It created a repayment record and an AECB file — with one late payment on it.' }));
+    box.appendChild(h('div', { class: 'pc-grid', id: 'up-prior-grid' },
+      h('div', null, h('span', { class: 'pc-k', text: 'Amount' }), h('span', { class: 'pc-v', text: fmtAED(pl.amount) })),
+      h('div', null, h('span', { class: 'pc-k', text: 'Tenor' }), h('span', { class: 'pc-v', text: monthsTxt(pl.tenorMonths) })),
+      h('div', null, h('span', { class: 'pc-k', text: 'APR' }), h('span', { class: 'pc-v', text: fmtApr(pl.apr) })),
+      h('div', null, h('span', { class: 'pc-k', text: 'Partner income' }), h('span', { class: 'pc-v', text: fmtMoney(pl.partnerIncome) })),
+      h('div', null, h('span', { class: 'pc-k', text: 'Due' }), h('span', { class: 'pc-v', text: fmtLongDate(pl.dueAt) })),
+      h('div', { dataset: { k: 'repaid' } }, h('span', { class: 'pc-k', text: 'Repaid' }), h('span', { class: 'pc-v', text: fmtLongDate(pl.repaidAt) + ' · ' + (onTime ? 'on time' : pl.dpd + ' days late') }))));
+  },
+  submit: function () {
+    var errBox = clear($('#up-consent-err'));
+    if (!Upgrade.sel) { errBox.appendChild(h('div', { class: 'callout callout-warn', text: 'Pick a customer first.' })); return; }
+    var cA = $('#up-c-aecb').checked, cO = $('#up-c-of').checked, cI = $('#up-c-intl').checked;
+    var p = Upgrade.sel, rec;
+    try {
+      rec = ME.decide({ productId: 'starter_loan', applicant: p, consents: { aecb: cA, openFinance: cO, internationalStatements: cI } });
+    } catch (err) {
+      /* Consent gate lives in the engine — shown inline, never as a fatal error */
+      var why = [];
+      if (!cA) why.push(h('li', { text: 'AECB: Federal Law 6/2010 requires the customer’s consent before a credit report is requested, and the bureau check is mandatory before more credit is granted.' }));
+      if (!cO) why.push(h('li', { text: 'Open Finance (Al Tareq): the upgrade re-decides on connected-account income and spending. Without this consent there is nothing new to decide on.' }));
+      errBox.appendChild(h('div', { class: 'callout callout-error', dataset: { blocked: (!cA || !cO) ? 'consent' : 'engine' } },
+        h('div', { class: 'co-title', text: (!cA || !cO) ? 'Re-decision blocked — consent missing' : 'Engine rejected the re-decision' }),
+        h('div', { class: 'co-body' }, h('code', { text: err && err.message ? err.message : String(err) }),
+          why.length ? h('ul', { class: 'small', style: 'margin:6px 0 0 16px;padding:0;' }, why) : null,
+          h('div', { class: 'small muted', style: 'margin-top:4px;', text: 'International statements stay optional — they only decide the tier.' }))));
+      return;
+    }
+    Upgrade.rec = null; Upgrade.pendingId = rec.id; Upgrade.execBuilt = false;
+    Upgrade.slots.forEach(function (s) { clear($(s)); });
+    clear($('#up-decision'));
+    var orch = clear($('#up-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(pullsTimeline(rec, { onDone: function () { if (Upgrade.pendingId === rec.id) Upgrade.showDecision(rec); } }));
+    afterEngineMutation();
+  },
+  locked: function () { return !!(Upgrade.rec && Upgrade.rec.events && Upgrade.rec.events.length); },
+  showDecision: function (rec) {
+    Upgrade.rec = rec;
+    var up = rec.upgrade;
+    Upgrade.quote = null;
+    if (rec.outcome === 'APPROVE' && up) {
+      var d = up.defaultSelection || { amount: up.maxAmount, months: up.maxTenorMonths };
+      Upgrade.amount = d.amount; Upgrade.months = d.months;
+      try { Upgrade.quote = ME.quoteUpgrade(rec.id, Upgrade.amount); } catch (e) { Upgrade.quote = null; }
+    }
+    Upgrade.renderDecision();
+    if (Upgrade.quote) { Upgrade.renderShape(); Upgrade.renderChart(); Upgrade.renderKfs(); }
+    Upgrade.renderDetails();
+  },
+  renderDecision: function () {
+    var rec = Upgrade.rec; if (!rec) return;
+    var box = clear($('#up-decision'));
+    var up = rec.upgrade, pl = rec.priorLoan || {}, f = rec.features || {};
+    var p = Upgrade.sel || rec.applicantSnapshot || {};
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', { text: 'Decision' }));
+    var word = rec.outcome === 'APPROVE' ? 'Upgrade approved' : (rec.outcome === 'DECLINE' ? 'No upgrade yet' : 'Referred for review');
+    panel.appendChild(h('div', { class: 'outcome-banner ' + rec.outcome, id: 'up-banner', dataset: { outcome: rec.outcome } },
+      h('span', { class: 'ob-word', text: word }),
+      h('div', null,
+        h('div', { class: 'ob-meta' }, h('code', { text: rec.id }), ' · Starter loan → upgrade · policy v' + rec.policyVersion + ' · ' + fmtDT(rec.createdAt)),
+        h('div', { class: 'ob-meta', text: (p.name || '') + (rec.tier ? ' · tier ' + TIER_LABEL[rec.tier] : ' · starter terms continue') }))));
+    if (rec.outcome === 'APPROVE' && up) {
+      function cmp(key, label, from, to, sub) {
+        return h('div', { class: 'cmp', dataset: { cmp: key } }, h('div', { class: 'cmp-l', text: label }),
+          h('div', { class: 'cmp-row' }, h('span', { class: 'cmp-from', text: from }), h('span', { class: 'cmp-arrow', 'aria-hidden': 'true', text: '→' }), h('span', { class: 'sr-only', text: ' to ' }), h('span', { class: 'cmp-to', text: to })),
+          h('div', { class: 'cmp-s', text: sub }));
+      }
+      panel.appendChild(h('div', { class: 'cmp-strip', id: 'up-compare', 'aria-label': 'Starter loan compared with the upgrade' },
+        cmp('amount', 'Amount', fmtAED(pl.amount), fmtAED(up.maxAmount), 'up to — you choose'),
+        cmp('tenor', 'Term', monthsTxt(pl.tenorMonths), monthsTxt(up.maxTenorMonths), 'up to — you choose'),
+        cmp('apr', 'APR', fmtApr(pl.apr), fmtApr(up.aprFloor), 'from — lower on longer terms')));
+      var cf = up.counterfactual || {};
+      if (rec.tier === 'ENHANCED') {
+        var surfaced = isNum(f.homeCountryObligations) && f.homeCountryObligations > 0
+          ? ' and surfaced a ' + fmtAED(f.homeCountryObligations) + '/mo home-country loan, now counted in affordability.'
+          : ' and showed no home-country loans.';
+        panel.appendChild(h('div', { class: 'callout callout-info', id: 'up-counterfactual', dataset: { tier: 'ENHANCED' } },
+          h('div', { class: 'co-title', text: 'What the international statements were worth' }),
+          h('div', { class: 'co-body', text: 'Without the international statements: up to ' + fmtAED(cf.maxAmount) + ' · ' + monthsTxt(cf.maxTenorMonths) + ' · from ' + fmtApr(cf.aprAtMaxTenor) + ' APR. The statements added ' + (f.internationalMonths || 0) + ' months of income history' + surfaced })));
+      } else {
+        var shared = rec.consents && rec.consents.internationalStatements && rec.consents.internationalStatements.granted;
+        panel.appendChild(h('div', { class: 'callout callout-info', id: 'up-counterfactual', dataset: { tier: 'BASE' } },
+          h('div', { class: 'co-title', text: shared ? 'Not enough history for the enhanced tier yet' : 'Add international statements for more' }),
+          h('div', { class: 'co-body', text: (shared ? 'The statements shared give ' + (f.incomeHistoryMonths || 0) + ' months of income history in total; the enhanced tier needs ' + (currentParams('starter_loan').minIncomeHistoryMonthsEnhanced || 12) + '. '
+              : 'This offer uses the connected UAE accounts only (' + (f.connectedMonths || 0) + ' months of income history). ') +
+            'With enough verified history the offer can reach up to ' + fmtAED(cf.maxAmount) + ' · ' + monthsTxt(cf.maxTenorMonths) + ' · from ' + fmtApr(cf.aprAtMaxTenor) + ' APR' + (shared ? '.' : ' — re-decide with the optional consent ticked.') })));
+      }
+    }
+    if (rec.outcome === 'DECLINE') {
+      panel.appendChild(h('div', { class: 'callout callout-info', id: 'up-starter-continues', style: 'margin-top:12px;' },
+        h('div', { class: 'co-title', text: 'Starter terms continue' }),
+        h('div', { class: 'co-body', text: firstName(p.name) + ' keeps the starter loan: ' + fmtAED(pl.amount) + ' · ' + monthsTxt(pl.tenorMonths) + ' · ' + fmtApr(pl.apr) + ' APR. After 3 on-time months Noor reviews the upgrade again — budgets and goals carry on as before.' })));
+    }
+    if (rec.outcome === 'REFER') {
+      panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
+        h('div', { class: 'co-title', text: 'Referred — a designed path, not a failure' }),
+        h('div', { class: 'co-body' }, 'An analyst reviews the case with the full pre-assembled file (SLA 4 hours) before any offer is made. ',
+          h('button', { class: 'btn btn-ghost', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
+    }
+    panel.appendChild(h('div', { style: 'margin-top:14px;', id: 'up-reasons' }, h('h3', { text: 'Reason codes — EN / AR' }), reasonsBlock(rec)));
+    box.appendChild(panel);
+  },
+  /* Amount slider + one row per term — the customer shapes the offer */
+  renderShape: function () {
+    var rec = Upgrade.rec, up = rec && rec.upgrade; if (!up) return;
+    var box = clear($('#up-shape'));
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', null, 'Shape your upgrade ', h('span', { class: 'h3-note', text: '— pick the amount, then the term' })));
+    var locked = Upgrade.locked();
+    var rng = h('input', { type: 'range', id: 'up-amount', min: String(up.minAmount), max: String(up.maxAmount), step: String(up.amountStep), value: String(Upgrade.amount), 'aria-label': 'Upgrade amount (AED)', disabled: locked ? 'disabled' : null });
+    var num = h('input', { type: 'number', id: 'up-amount-n', min: String(up.minAmount), max: String(up.maxAmount), step: String(up.amountStep), value: String(Upgrade.amount), 'aria-label': 'Upgrade amount in AED (number)', disabled: locked ? 'disabled' : null });
+    rng.addEventListener('input', function () { Upgrade.setAmount(Number(rng.value)); });
+    num.addEventListener('change', function () { Upgrade.setAmount(Number(num.value)); });
+    panel.appendChild(h('div', { class: 'field', style: 'margin-bottom:14px;' },
+      h('div', { class: 'up-amount-head' },
+        h('label', { for: 'up-amount', style: 'margin:0;', text: 'Amount' }),
+        h('span', { class: 'ua-v', id: 'up-amount-val', text: fmtAED(Upgrade.amount) })),
+      h('div', { class: 'slider-row' }, rng, num),
+      h('div', { class: 'bounds', text: fmtAED(up.minAmount) + ' to ' + fmtAED(up.maxAmount) + ', in steps of ' + fmtAED(up.amountStep) })));
+    panel.appendChild(h('div', { class: 'plan-list', id: 'up-opts', role: 'radiogroup', 'aria-label': 'Term' }));
+    panel.appendChild(h('div', { class: 'plan-note', id: 'up-opts-note' }));
+    box.appendChild(panel);
+    Upgrade.renderOptions();
+  },
+  renderOptions: function () {
+    var box = $('#up-opts'), rec = Upgrade.rec, q = Upgrade.quote;
+    if (!box || !q) return;
+    clear(box);
+    var up = rec.upgrade, locked = Upgrade.locked();
+    q.options.forEach(function (o) {
+      var selected = o.months === Upgrade.months;
+      var disabled = !o.fits || (locked && !selected);
+      var why = !o.fits
+        ? 'Doesn’t fit — ' + (o.reason === 'RC_OPTION_UNAFFORDABLE' ? fmtMoney(o.monthlyPayment) + '/mo is above the ' + fmtMoney(up.maxInstalment) + '/mo your cash flow supports' : (o.detail || 'outside the budget'))
+        : (locked && !selected ? 'Fixed when the offer was accepted' : '');
+      box.appendChild(h('button', { class: 'plan-row' + (selected ? ' sel' : ''), id: 'up-opt-' + o.months, role: 'radio', 'aria-checked': selected ? 'true' : 'false',
+        disabled: disabled ? 'disabled' : null, dataset: { months: String(o.months), fits: String(!!o.fits) },
+        onclick: function () { Upgrade.choose(o.months); } },
+        h('span', { class: 'pr-dot', 'aria-hidden': 'true' }),
+        h('span', { class: 'pr-main' }, h('span', { class: 'pr-name', text: monthsTxt(o.months) + ' · ' + fmtApr(o.apr) + ' APR' }),
+          h('span', { class: 'pr-apr' }, 'total interest ' + fmtMoney(o.totalInterest) + ' · ', h('span', { class: 'pr-x', text: 'partner income ' + fmtX(o.partnerIncomeVsStarterX) + ' vs starter' })),
+          why ? h('span', { class: 'pr-why', text: why }) : null),
+        h('span', { class: 'pr-right' }, h('span', { class: 'pr-pay', text: fmtMoney(o.monthlyPayment) + '/mo' }), h('span', { class: 'pr-fee', text: 'total ' + fmtMoney(o.totalRepayable) }))));
+    });
+    var note = $('#up-opts-note');
+    if (note) {
+      note.textContent = locked
+        ? 'Fixed at offer acceptance: ' + fmtAED(rec.selection.amount) + ' over ' + monthsTxt(rec.selection.months) + '.'
+        : 'Every option comes from the same decision. Terms whose instalment is above ' + fmtMoney(up.maxInstalment) + '/mo — half of the free cash flow — are shown but can’t be chosen.';
+    }
+  },
+  setAmount: function (v) {
+    var rec = Upgrade.rec; if (!rec || !rec.upgrade || Upgrade.locked()) return;
+    var q;
+    try { q = ME.quoteUpgrade(rec.id, v); }
+    catch (err) { var e = $('#up-opts-note'); if (e) e.textContent = (err && err.message) || String(err); return; }
+    Upgrade.quote = q; Upgrade.amount = q.amount;
+    var rng = $('#up-amount'), num = $('#up-amount-n'), val = $('#up-amount-val');
+    if (rng && Number(rng.value) !== q.amount) rng.value = String(q.amount);
+    if (num && Number(num.value) !== q.amount) num.value = String(q.amount);
+    if (val) val.textContent = fmtAED(q.amount);
+    /* keep the chosen term if it still fits; otherwise the nearest longer term that does (shorter as a last resort) */
+    var cur = q.options[Upgrade.months - 1];
+    if (!cur || !cur.fits) {
+      var next = q.options.filter(function (o) { return o.fits && o.months > Upgrade.months; })[0] ||
+                 q.options.filter(function (o) { return o.fits; }).slice(-1)[0];
+      if (next) Upgrade.months = next.months;
+    }
+    Upgrade.renderOptions(); Upgrade.renderChart(); Upgrade.renderKfs();
+  },
+  choose: function (m) {
+    if (!Upgrade.quote || Upgrade.locked()) return;
+    var o = Upgrade.quote.options[m - 1]; if (!o || !o.fits) return;
+    Upgrade.months = m;
+    Upgrade.renderOptions(); Upgrade.renderChart(); Upgrade.renderKfs();
+    var b = $('#up-opt-' + m); if (b) b.focus();
+  },
+  renderChart: function () {
+    var rec = Upgrade.rec, q = Upgrade.quote; if (!rec || !q) return;
+    var box = clear($('#up-chart'));
+    box.appendChild(h('div', { class: 'panel' },
+      h('h3', null, 'Lower APR, more partner income ', h('span', { class: 'h3-note', text: '— ' + fmtAED(q.amount) + ' at every term' })),
+      h('p', { class: 'small muted', style: 'margin:0 0 6px;', text: 'Each extra month lowers the APR and the monthly payment, and adds interest — which is what the lending partner earns and what the customer pays in total. The partner still earns more than on the starter loan.' }),
+      upgradeChart(q, { selectedMonths: Upgrade.months, starter: rec.upgrade.starterPartnerIncome, onPick: function (m) { Upgrade.choose(m); } })));
+  },
+  current: function () { return Upgrade.quote ? Upgrade.quote.options[Upgrade.months - 1] : null; },
+  renderKfs: function () {
+    var rec = Upgrade.rec, o = Upgrade.current(); if (!rec || !o) return;
+    var box = clear($('#up-kfs'));
+    var locked = Upgrade.locked(), sel = rec.selection;
+    var same = !!(sel && sel.amount === Upgrade.amount && sel.months === Upgrade.months);
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', null, 'KFS preview — the option you picked ', h('span', { class: 'h3-note', text: '(feeds the Key Facts Statement, AR + EN)' })));
+    panel.appendChild(upgradeKfsTiles(o, Upgrade.amount, currentReg('starter_loan').coolingOffDays, 'up-kfs-tiles'));
+    panel.appendChild(h('div', { class: 'callout callout-info small kfs-note', id: 'up-kfs-note', text: UPGRADE_KFS_NOTE }));
+    var label = locked ? 'Option accepted' : (same ? 'Option chosen' : (sel ? 'Switch to this option' : 'Accept this option'));
+    var btn = h('button', { class: 'btn btn-primary', id: 'up-accept', text: label, disabled: (locked || same) ? 'disabled' : null, onclick: function () { Upgrade.accept(); } });
+    var hint = locked ? 'Fixed at offer acceptance — the agreement steps below use exactly these figures.'
+      : (same ? 'Chosen. Run the five steps below — or move the slider and switch before you accept the offer.'
+        : fmtAED(Upgrade.amount) + ' · ' + monthsTxt(Upgrade.months) + ' · ' + fmtApr(o.apr) + ' APR · ' + fmtMoney(o.monthlyPayment) + '/mo');
+    panel.appendChild(h('div', { class: 'accept-row' }, btn, h('span', { class: 'small muted', id: 'up-accept-hint', text: hint })));
+    if (sel && !same && !locked) {
+      panel.appendChild(h('div', { class: 'callout callout-warn small', id: 'up-sel-differs', text: 'The offer still holds your earlier choice — ' + fmtAED(sel.amount) + ' over ' + monthsTxt(sel.months) + '. Switch to update it before accepting the offer.' }));
+    }
+    panel.appendChild(h('div', { id: 'up-accept-err', 'aria-live': 'polite' }));
+    box.appendChild(panel);
+  },
+  accept: function () {
+    var rec = Upgrade.rec; if (!rec) return;
+    var errBox = $('#up-accept-err'); if (errBox) clear(errBox);
+    var updated;
+    try {
+      updated = ME.selectUpgradeOption(rec.id, { amount: Upgrade.amount, months: Upgrade.months });
+    } catch (err) {
+      /* Expected engine refusal (unaffordable / outside the offer / already accepted) — inline, never fatal */
+      var eb = $('#up-accept-err');
+      if (eb) eb.appendChild(h('div', { class: 'callout callout-error', dataset: { refused: 'option' } },
+        h('div', { class: 'co-title', text: 'Option refused by the engine' }),
+        h('div', { class: 'co-body' }, h('code', { text: err && err.message ? err.message : String(err) }),
+          h('div', { class: 'small', style: 'margin-top:4px;', text: 'Mizan re-checks every choice against the cash-flow budget and the 50% DBR cap — the screen cannot talk it into an option that does not fit.' }))));
+      return;
+    }
+    Upgrade.rec = updated;
+    Upgrade.renderOptions(); Upgrade.renderKfs(); Upgrade.renderToken();
+    if (!Upgrade.execBuilt) {
+      Upgrade.execBuilt = true;
+      buildExecPanel(updated, 'up-exec', {
+        onEvent: function (r) {
+          Upgrade.rec = r;
+          if (r.events.length === 1) { var a = $('#up-amount'), n = $('#up-amount-n'); if (a) a.disabled = true; if (n) n.disabled = true; }
+          Upgrade.renderOptions(); Upgrade.renderKfs(); Upgrade.renderToken();
+        },
+        executedNote: 'The upgraded loan exists now, on the option fixed at offer acceptance, and is credited to ' + firstName((Upgrade.sel || {}).name) + '’s account. '
+      });
+    }
+    afterEngineMutation();
+  },
+  renderToken: function () {
+    var rec = Upgrade.rec; if (!rec || !rec.token || !rec.selection) return;
+    var box = clear($('#up-token'));
+    box.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Approval token — issued for the option you chose' }), tokenBlock(rec)));
+  },
+  renderDetails: function () {
+    var rec = Upgrade.rec; if (!rec) return;
+    var box = clear($('#up-details'));
+    var panel = h('div', { class: 'panel' });
+    panel.appendChild(h('h3', null, 'How Mizan decided ', h('span', { class: 'h3-note', text: '— every rule, the tier and the ceiling' })));
+    var grid = h('div', { class: 'dgrid', style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;' });
+    grid.appendChild(h('div', null, h('h3', { text: 'Tier & affordability' }), upgradeTierBlock(rec)));
+    grid.appendChild(h('div', null, h('h3', { text: 'Offer ceiling — binding-constraint trace' }), limitBlock(rec)));
+    panel.appendChild(grid);
+    panel.appendChild(h('div', { style: 'margin-top:12px;' }, h('h3', { text: 'Every rule evaluated' }), rulesTable(rec)));
+    box.appendChild(panel);
+  }
+};
 /* ================= Policy console ================= */
 var REG_CITES = {
   dbrCapPct: 'CBUAE Reg 29/2011 (Retail Loans) — DBR ≤ 50% of income, double-enforced by the engine',
@@ -2160,7 +2727,7 @@ function caseFile(rec) {
   wrap.appendChild(grid);
   wrap.appendChild(h('div', { style: 'margin-top:12px;' }, h('h3', { text: 'Every rule evaluated — pass and fail alike' }), rulesTable(rec)));
   var grid2 = h('div', { class: 'dgrid', style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:12px;' });
-  grid2.appendChild(h('div', null, h('h3', { text: 'Score breakdown' }), scoreBlock(rec)));
+  grid2.appendChild(h('div', null, h('h3', { text: rec.kind === 'UPGRADE' ? 'Tier & affordability' : 'Score breakdown' }), rec.kind === 'UPGRADE' ? upgradeTierBlock(rec) : scoreBlock(rec)));
   grid2.appendChild(h('div', null, h('h3', { text: 'Limit trace' }), limitBlock(rec)));
   grid2.appendChild(h('div', null, h('h3', { text: 'Reason codes' }), reasonsBlock(rec)));
   wrap.appendChild(grid2);

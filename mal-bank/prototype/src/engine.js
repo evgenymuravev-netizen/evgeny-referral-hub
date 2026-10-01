@@ -1,11 +1,16 @@
 /*
  * Mizan — Noor's credit decisioning layer · MizanEngine (engine-2.0)
- * One shared engine behind Noor's three consumer credit products:
+ * One shared engine behind Noor's four consumer credit products:
  *   split          — retroactive Pay in 3 / 6 / 12 on a verified past purchase,
  *                    revolving split capacity sized on connected-account cash flow
  *   personal_loan  — conventional amortising cash loan (reducing-balance APR)
+ *   starter_loan   — small entry loan with an upgrade path: after an on-time
+ *                    repayment, a re-decision on connected UAE accounts (+ optional
+ *                    international statements) offers more for less — the customer
+ *                    picks amount × tenor on an APR curve that falls with tenor
  *   salary_advance — single-repayment advance against the next salary, flat fee
- * Binding spec: ../NOOR-PIVOT.md (overrides ../CONTRACT.md where they conflict).
+ * Binding spec: ../NOOR-PIVOT.md (overrides ../CONTRACT.md where they conflict;
+ * Addendum v2.1 covers the starter-loan upgrade).
  *
  * Guardrails encoded as code reviewers can read:
  *  - DBR ≤ 50% of income, ≤ 30% for retirees (CBUAE Reg 29/2011) — every product,
@@ -26,6 +31,9 @@
  *  - Cross-border Credit Passport path for personal-loan newcomers (consented
  *    home-bureau file, conservative overlay, grade cap B, 50% limit haircut).
  *  - 4-eyes on policy publish and refer overrides; regulatory primitives locked.
+ *  - Starter-loan upgrade: a longer tenor must never cost a higher APR, and the
+ *    lending partner's income (= total interest) must rise strictly with tenor —
+ *    the PARTNER-INCOME GUARANTEE, enforced as a policy invariant at publish.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -74,7 +82,8 @@
       description: {
         personal_loan: 'Funds credited to the customer\'s account',
         split: 'Purchase amount credited back — freed cash routed to the customer\'s goal',
-        salary_advance: 'Advance credited to the customer\'s account'
+        salary_advance: 'Advance credited to the customer\'s account',
+        starter_loan: 'Upgraded loan credited to the customer\'s account'
       },
       guard: 'funds must be disbursed to complete the sequence' }
   };
@@ -84,6 +93,8 @@
       segment: 'CONSUMER', structure: 'Instalment plan (revolving split capacity)', pricingMode: 'MONTHLY_FEE' },
     { productId: 'personal_loan', nameEn: 'Personal loan', nameAr: 'قرض شخصي',
       segment: 'CONSUMER', structure: 'Amortising loan (reducing balance)', pricingMode: 'BANDED_APR' },
+    { productId: 'starter_loan', nameEn: 'Starter loan', nameAr: 'قرض البداية',
+      segment: 'CONSUMER', structure: 'Short amortising loan with an upgrade path', pricingMode: 'TENOR_CURVE_APR' },
     { productId: 'salary_advance', nameEn: 'Salary advance', nameAr: 'سلفة على الراتب',
       segment: 'CONSUMER', structure: 'Single-repayment advance', pricingMode: 'FLAT_FEE' }
   ];
@@ -120,6 +131,24 @@
                   pricingBands: { A: [0.0599, 0.0699], B: [0.0799, 0.0999], C: [0.1199, 0.1499] },
                   tokenValidityDays: 14 }
       },
+      // Starter loan → upgrade (Addendum v2.1). `starter` is the entry offer (for
+      // reference); `tiers` are the two upgrade offers. Every tier is an APR curve
+      // falling linearly from aprAtOneMonth to aprAtMaxTenor (see the pricing math
+      // block). Publish-time invariants: see starterInvariants().
+      starter_loan: {
+        productId: 'starter_loan', version: 1,
+        publishedAt: null, publishedBy: 'system (default pack)', approvedBy: 'system',
+        regulatory: { dbrCapPct: 50, dbrCapRetireePct: 30, aecbCheckRequired: true, coolingOffDays: 5 },
+        params: { starter: { amount: 1000, tenorMonths: 1, apr: 0.50 },
+                  tiers: {
+                    // UAE connected accounts + international statements
+                    enhanced: { maxAmount: 3000, maxTenorMonths: 6, aprAtOneMonth: 0.45, aprAtMaxTenor: 0.35 },
+                    // UAE connected accounts only
+                    base: { maxAmount: 1500, maxTenorMonths: 3, aprAtOneMonth: 0.48, aprAtMaxTenor: 0.42 }
+                  },
+                  minAmount: 500, amountStep: 100, instalmentToFcfMaxPct: 50,
+                  minIncomeHistoryMonthsEnhanced: 12, minOnTimeStarterRepayments: 1, tokenValidityDays: 7 }
+      },
       salary_advance: {
         productId: 'salary_advance', version: 1,
         publishedAt: null, publishedBy: 'system (default pack)', approvedBy: 'system',
@@ -143,8 +172,20 @@
                      minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5], productCap: [100000, 2000000],
                      tokenValidityDays: [3, 30] },
     salary_advance: { pctOfSalary: [50, 90], capAmount: [5000, 25000], flatFee: [25, 300],
-                      minSalary: [3000, 15000], scoreDecline: [550, 700], tokenValidityDays: [3, 14] }
+                      minSalary: [3000, 15000], scoreDecline: [550, 700], tokenValidityDays: [3, 14] },
+    starter_loan: { minAmount: [100, 2000], amountStep: [50, 500], instalmentToFcfMaxPct: [10, 80],
+                    minIncomeHistoryMonthsEnhanced: [3, 36], minOnTimeStarterRepayments: [1, 6],
+                    tokenValidityDays: [1, 30] }
   };
+  // Bounds for the starter loan's nested params ({starter}, {tiers.enhanced|base}).
+  // APRs are annual decimals; months must be whole numbers.
+  const STARTER_BOUNDS = { amount: [500, 5000], tenorMonths: [1, 6], apr: [0.05, 0.60] };
+  const TIER_BOUNDS = { maxAmount: [500, 20000], maxTenorMonths: [2, 12], aprAtOneMonth: [0.05, 0.60], aprAtMaxTenor: [0.05, 0.60] };
+  const MONTH_KEYS = ['tenorMonths', 'maxTenorMonths'];
+  const TIER_KEYS = ['enhanced', 'base'];
+  // Upgrade re-decisions need a few months of connected UAE history to read
+  // income and spending at all; below this the case is referred.
+  const UPGRADE_MIN_CONNECTED_MONTHS = 3;
 
   // Approval-token conditions by product (conventional recourse + disclosure).
   const TOKEN_CONDITIONS = {
@@ -154,8 +195,13 @@
     split: ['Key Facts Statement acknowledged (AR + EN)',
             'Direct debit mandate on connected account'],
     salary_advance: ['Key Facts Statement acknowledged (AR + EN)',
-                     'Repayable in full from the next salary credit']
+                     'Repayable in full from the next salary credit'],
+    // The last line is replaced by the chosen option when selectUpgradeOption runs.
+    starter_loan: ['Key Facts Statement acknowledged (AR + EN)',
+                   'Direct debit mandate on connected account',
+                   'Customer chooses the amount and term within the offer before accepting']
   };
+  const UPGRADE_CHOICE_PENDING = 'Customer chooses the amount and term within the offer before accepting';
 
   // ---------------------------------------------------------------------------
   // Utilities
@@ -186,6 +232,10 @@
   const pct1 = (n, d) => d > 0 ? Math.round((n / d) * 1000) / 10 : 0;
   // Deterministic thousands separator for human-readable labels (no locale dependency).
   const aed = (n) => 'AED ' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  // Money with fils (2 dp), same deterministic separator: AED 3,112.50
+  const money = (n) => 'AED ' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  // Annual rate as a percentage with 2 dp: 0.35 → '35.00%'
+  const pctStr = (r) => (r * 100).toFixed(2) + '%';
 
   // Standard annuity math (personal-loan DBR headroom, CONTRACT §2.2):
   //   headroomMonthly = dbrCap × income − existing obligations
@@ -265,6 +315,163 @@
   function snapSplitTerm(tenor, terms) {
     for (const n of terms) if (tenor <= n) return n;
     return terms[terms.length - 1];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Starter-loan upgrade pricing math (pricingMode TENOR_CURVE_APR)
+  //
+  // 1. APR curve. Each upgrade tier has two anchors, the APR at a 1-month tenor
+  //    and the APR at the tier's maximum tenor, and the APR falls in a straight
+  //    line between them:
+  //        apr(t) = aprAtOneMonth − (aprAtOneMonth − aprAtMaxTenor) × (t − 1) / (maxTenor − 1)
+  //    Enhanced default, 45% → 35% over 1..6 months: 45, 43, 41, 39, 37, 35 %.
+  //    Base default,     48% → 42% over 1..3 months: 48, 45, 42 %.
+  //    APRs are rounded to 4 dp (0.01 percentage point) and the rounded APR is
+  //    the one used in the payment math, so the APR disclosed is the APR charged.
+  //
+  // 2. Amortisation. Standard reducing-balance annuity at r = apr / 12:
+  //        P = A × r / (1 − (1 + r)^−n)        (n = 1 reduces to P = A × (1 + r))
+  //    The instalment is rounded UP to the fils, so n equal instalments always
+  //    repay the principal in full. That convention costs the customer less than
+  //    1 fils per instalment, and it is why the 6-month KFS at AED 3,000 reads
+  //    AED 552.27 (exact 552.2639). Then:
+  //        totalRepayable = P × n
+  //        totalInterest  = P × n − A
+  //
+  // 3. Partner income. The lending partner earns the interest and the upgrade
+  //    has no fees, so partner income IS the total interest. The same figure is
+  //    the customer's total cost of credit, and the UI labels it as both.
+  //
+  // 4. Why a longer tenor can carry a lower APR and still earn the partner more.
+  //    Interest accrues on the outstanding balance every month, so roughly
+  //        totalInterest ≈ (apr / 12) × A × (n + 1) / 2
+  //    Adding a month adds about half a month of interest on the whole
+  //    principal, which outweighs a 2-point APR cut. A steep enough cut breaks
+  //    this, and the publish-time PARTNER-INCOME GUARANTEE catches it: interest
+  //    per AED 1 of principal,
+  //        interest(t) = t × P(A = 1, apr(t), t) − 1,
+  //    must rise strictly with t for every tier. P is proportional to A, so
+  //    checking A = 1 proves it for every amount (the guarantee is checked on
+  //    exact, unrounded math). Example breach: enhanced aprAtMaxTenor 10% gives
+  //    the curve 45, 38, 31, 24, 17, 10 % and interest per AED 1,000 of 37.50,
+  //    47.75, 52.11, 50.50 … The 4-month option would earn less than the
+  //    3-month option, so publish refuses.
+  // ---------------------------------------------------------------------------
+  function tenorCurve(tier) {
+    const out = [];
+    const span = tier.maxTenorMonths - 1;
+    for (let t = 1; t <= tier.maxTenorMonths; t++) {
+      const apr = span > 0
+        ? tier.aprAtOneMonth - (tier.aprAtOneMonth - tier.aprAtMaxTenor) * (t - 1) / span
+        : tier.aprAtOneMonth;
+      out.push({ months: t, apr: round4(apr) });
+    }
+    return out;
+  }
+  // Round UP to the fils; the tiny epsilon stops float noise (3112.5000000001)
+  // from adding a spurious fils.
+  const ceilFils = (x) => Math.ceil(x * 100 - 1e-7) / 100;
+  // Exact (unrounded) amortising instalment for principal A at an annual APR over n months.
+  function amortisingPayment(amount, apr, n) {
+    const r = apr / 12;
+    if (n === 1) return amount * (1 + r);
+    return annuityPayment(amount, r, n);
+  }
+  // One customer-facing option: the instalment is rounded up to the fils and
+  // the totals follow from it, so payment × n = total repayable on the KFS.
+  function upgradeOption(amount, apr, n) {
+    const monthlyPayment = ceilFils(amortisingPayment(amount, apr, n));
+    const totalRepayable = round2(monthlyPayment * n);
+    const totalInterest = round2(totalRepayable - amount);
+    return { months: n, apr, monthlyPayment, totalRepayable, totalInterest, partnerIncome: totalInterest };
+  }
+  // Exact interest per AED 1 of principal over n months, which is what the guarantee checks.
+  function interestPerUnit(apr, n) { return n * amortisingPayment(1, apr, n) - 1; }
+  // Largest principal, floored to the amount step, whose n-month instalment
+  // (rounded up to the fils) fits within a monthly budget.
+  function maxUpgradePrincipal(budget, apr, n, step) {
+    if (!(budget > 0)) return 0;
+    let A = floorTo(budget / amortisingPayment(1, apr, n), step);
+    while (A > 0 && ceilFils(amortisingPayment(A, apr, n)) > budget) A -= step;
+    return Math.max(0, A);
+  }
+  // Every option 1..maxTenor at one amount, each checked against the two
+  // affordability budgets frozen on the decision:
+  //   cash flow: instalment ≤ instalmentToFcfMaxPct% × free cash flow (maxInstalment)
+  //   DBR:       (existing obligations + instalment) / income ≤ dbr cap (50%, 30% retirees)
+  // ctx = { curve, maxInstalment, dbr:{capPct, incomeMonthly, obligationsMonthly}, starterPartnerIncome }
+  function upgradeOptionsFor(ctx, amount) {
+    return ctx.curve.map(c => {
+      const o = upgradeOption(amount, c.apr, c.months);
+      const dbrPct = ctx.dbr.incomeMonthly > 0
+        ? Math.round(((ctx.dbr.obligationsMonthly + o.monthlyPayment) / ctx.dbr.incomeMonthly) * 1000) / 10 : 999;
+      const overFcf = o.monthlyPayment > ctx.maxInstalment;
+      const overDbr = dbrPct > ctx.dbr.capPct;
+      const out = { months: o.months, apr: o.apr, monthlyPayment: o.monthlyPayment, totalRepayable: o.totalRepayable,
+                    totalInterest: o.totalInterest, partnerIncome: o.partnerIncome,
+                    partnerIncomeVsStarterX: ctx.starterPartnerIncome > 0
+                      ? Math.round((o.partnerIncome / ctx.starterPartnerIncome) * 10) / 10 : null,
+                    fits: !overFcf && !overDbr };
+      if (!out.fits) {
+        out.reason = overFcf ? 'RC_OPTION_UNAFFORDABLE' : 'RC_DBR_EXCEEDED';
+        out.detail = overFcf
+          ? money(o.monthlyPayment) + '/mo is above the ' + money(ctx.maxInstalment) + '/mo your cash flow supports'
+          : 'debt burden would be ' + dbrPct + '%, above the ' + ctx.dbr.capPct + '% cap';
+      }
+      out.dbrPct = dbrPct;
+      return out;
+    });
+  }
+
+  // Publish-time invariants for the starter-loan pack, as a list of checks (pass
+  // and fail alike) so the console can show them live. validateParams throws
+  // the first failure as a plain "Mizan: …" message.
+  //   (1) TENOR_COST         longer tenor must not cost more: aprAtMaxTenor ≤ aprAtOneMonth, each tier
+  //   (2) PARTNER_INCOME     partner income strictly increasing in tenor, each tier (checked at A = 1)
+  //   (3) TIER_GENEROSITY    enhanced at least as generous as base: maxAmount ≥, maxTenor ≥, aprAtMaxTenor ≤
+  function starterInvariants(prm) {
+    const tiers = prm.tiers;
+    let msg1 = null;
+    for (const k of TIER_KEYS) {
+      const t = tiers[k];
+      if (!(t.aprAtMaxTenor <= t.aprAtOneMonth)) {
+        msg1 = 'pricing curve for the ' + k + ' tier charges more for a longer tenor — APR at ' + t.maxTenorMonths +
+               ' months (' + pctStr(t.aprAtMaxTenor) + ') is above the 1-month APR (' + pctStr(t.aprAtOneMonth) +
+               '); a longer tenor must not cost more';
+        break;
+      }
+    }
+    let msg2 = null;
+    for (const k of TIER_KEYS) {
+      const curve = tenorCurve(tiers[k]);
+      for (let i = 1; i < curve.length && !msg2; i++) {
+        const prev = interestPerUnit(curve[i - 1].apr, curve[i - 1].months);
+        const cur = interestPerUnit(curve[i].apr, curve[i].months);
+        if (!(cur > prev + 1e-12)) {
+          msg2 = 'pricing curve breaks the partner-income guarantee — the ' + curve[i].months + '-month option would earn ' +
+                 (cur < prev ? 'less than' : 'no more than') + ' the ' + curve[i - 1].months + '-month option (' + k +
+                 ' tier: ' + money(cur * 1000) + ' vs ' + money(prev * 1000) + ' interest per AED 1,000)';
+        }
+      }
+      if (msg2) break;
+    }
+    const e = tiers.enhanced, b = tiers.base;
+    let msg3 = null;
+    if (!(e.maxAmount >= b.maxAmount)) {
+      msg3 = 'the enhanced tier must be at least as generous as the base tier — its maximum amount (' + aed(e.maxAmount) +
+             ') is below the base tier\'s (' + aed(b.maxAmount) + ')';
+    } else if (!(e.maxTenorMonths >= b.maxTenorMonths)) {
+      msg3 = 'the enhanced tier must be at least as generous as the base tier — its maximum tenor (' + e.maxTenorMonths +
+             ' months) is shorter than the base tier\'s (' + b.maxTenorMonths + ' months)';
+    } else if (!(e.aprAtMaxTenor <= b.aprAtMaxTenor)) {
+      msg3 = 'the enhanced tier must be at least as generous as the base tier — its lowest APR (' + pctStr(e.aprAtMaxTenor) +
+             ') is above the base tier\'s (' + pctStr(b.aprAtMaxTenor) + ')';
+    }
+    return [
+      { id: 'TENOR_COST', label: 'A longer tenor never costs a higher APR (each tier)', ok: !msg1, message: msg1 },
+      { id: 'PARTNER_INCOME', label: 'Partner-income guarantee: partner income rises with every extra month (each tier)', ok: !msg2, message: msg2 },
+      { id: 'TIER_GENEROSITY', label: 'Enhanced tier at least as generous as base (amount, tenor, lowest APR)', ok: !msg3, message: msg3 }
+    ];
   }
 
   const GRADE_BANDS = [[740, 'A'], [680, 'B'], [620, 'C'], [560, 'D']];
@@ -910,7 +1117,241 @@
              outcome, reasonCodes: rs.reasons, effTenor: planMonths };
   }
 
+  // ---------------------------------------------------------------------------
+  // Starter loan → upgrade (Addendum v2.1)
+  //
+  // Applicant: an upgrade persona (priorLoan + aecb + connected + optional
+  // international block) or a sampleBook.starter_loan row ({starterDpd,
+  // connectedMonths, statements, statementMonths, income, spend,
+  // aecbObligations, homeObligations}).
+  // ---------------------------------------------------------------------------
+  function normalizeUpgrade(a) {
+    if (!a || typeof a !== 'object') throw err('upgrade applicant payload missing');
+    const isRow = !a.priorLoan && a.starterDpd !== undefined;
+    if (!a.priorLoan && !isRow) {
+      throw err('starter_loan re-decides an existing starter loan — applicant.priorLoan is required');
+    }
+    const emp = a.employment || {};
+    let prior, aecb, connected, intl;
+    if (isRow) {
+      prior = { ref: 'starter · ' + a.id, productId: 'starter_loan', amount: 1000, tenorMonths: 1, apr: 0.50,
+                disbursedAt: null, dueAt: null, repaidAt: 'repaid', dpd: a.starterDpd || 0, partnerIncome: 41.67 };
+      aecb = { hit: true, score: null, tradelines: 1, obligationsMonthly: a.aecbObligations || 0,
+               worstDelinquency: 'NONE', chequeReturns12m: 0, note: null };
+      connected = { source: 'ALTAREQ_TPP', banks: [], monthsAvailable: a.connectedMonths || 0,
+                    avgMonthlyIncome: a.income, avgMonthlySpend: a.spend, incomeVolatilityPct: null };
+      // Statements exist only for rows that offer them; the home-country loan is a
+      // fact about the customer, but it is only visible through the statements.
+      intl = a.statements ? { country: null, bank: null, source: 'Statements (parsed)', monthsAvailable: a.statementMonths || 0,
+                              avgMonthlyIncomeAed: null, incomeVolatilityPct: null, avgBalanceAed: null, overdrafts12m: null,
+                              obligationsMonthlyAed: a.homeObligations || 0 } : null;
+    } else {
+      const pl = a.priorLoan;
+      prior = { ref: pl.ref || null, productId: pl.productId || 'starter_loan', amount: pl.amount, tenorMonths: pl.tenorMonths,
+                apr: pl.apr, disbursedAt: pl.disbursedAt || null, dueAt: pl.dueAt || null, repaidAt: pl.repaidAt || null,
+                dpd: Number.isFinite(pl.dpd) ? pl.dpd : 0,
+                partnerIncome: Number.isFinite(pl.partnerIncome) ? pl.partnerIncome
+                  : upgradeOption(pl.amount, pl.apr, pl.tenorMonths).partnerIncome };
+      if (Number.isFinite(pl.onTimeRepayments)) prior.onTimeRepayments = pl.onTimeRepayments;
+      const ab = a.aecb || {};
+      aecb = { hit: ab.hit === true, score: ab.score === undefined ? null : ab.score, tradelines: ab.tradelines || 0,
+               obligationsMonthly: ab.obligationsMonthly || 0, worstDelinquency: ab.worstDelinquency || 'NONE',
+               chequeReturns12m: ab.chequeReturns12m || 0, note: ab.note || null };
+      connected = Object.assign({ source: 'ALTAREQ_TPP', banks: [], monthsAvailable: 0 }, a.connected || {});
+      intl = a.international ? Object.assign({}, a.international) : null;
+    }
+    if (!Number.isFinite(connected.avgMonthlyIncome) || !Number.isFinite(connected.avgMonthlySpend)) {
+      throw err('upgrade applicant needs connected-account income and spend (avgMonthlyIncome / avgMonthlySpend)');
+    }
+    return {
+      id: a.id || null, name: a.name || a.id || 'Applicant', retiree: !!emp.retiree, isRow,
+      prior, aecbHit: aecb.hit, score: aecb.score, tradelines: aecb.tradelines,
+      obligationsMonthly: aecb.obligationsMonthly, worstDelinquency: aecb.worstDelinquency,
+      chequeReturns12m: aecb.chequeReturns12m, aecbNote: aecb.note,
+      connectedSource: connected.source, banks: (connected.banks || []).slice(), connectedMonths: connected.monthsAvailable || 0,
+      income: connected.avgMonthlyIncome, spend: connected.avgMonthlySpend,
+      incomeVolatilityPct: Number.isFinite(connected.incomeVolatilityPct) ? connected.incomeVolatilityPct : null,
+      intl, statementsOffered: isRow ? !!a.statements : !!intl
+    };
+  }
+
+  // Upgrade evaluator. Order of work:
+  //  1. Tier. International statements are optional. When consented and parsed,
+  //     income history = UAE connected months + statement months; at least
+  //     minIncomeHistoryMonthsEnhanced (12) unlocks ENHANCED, otherwise BASE.
+  //     The statements also surface home-country obligations, which then count
+  //     against free cash flow and DBR. Without statements they stay invisible.
+  //  2. Affordability.
+  //       free cash flow = income − spend − AECB obligations − home-country obligations (if visible)
+  //       maxInstalment  = instalmentToFcfMaxPct% × free cash flow       (u1 enhanced: 50% × 3,550 = 1,775)
+  //       DBR budget     = dbrCap% × income − all visible obligations     (50%; 30% retirees)
+  //  3. Offer ceiling = min(tier maxAmount, largest amount whose max-tenor
+  //     instalment fits each budget). Max tenor is the cheapest per month, so
+  //     the ceiling always fits there, and the default selection is the longest
+  //     tenor that fits at the ceiling.
+  //  4. Rules (all recorded): REG_AECB_CHECK, REG_DBR_CAP (at the default option),
+  //     POL_STARTER_REPAID_ON_TIME (DPD 0 or DECLINE RC_STARTER_LATE),
+  //     POL_CONNECTED_ACCOUNTS, POL_INCOME_HISTORY, POL_FREE_CASH_FLOW,
+  //     POL_INTERNATIONAL_STATEMENTS (informational; sets the tier).
+  function evaluateUpgrade(p, amount, tenorMonths, pol, consents) {
+    const reg = pol.regulatory, prm = pol.params;
+    const rs = makeRuleSet();
+    const statementsConsented = consents ? consents.internationalStatements === true : p.statementsOffered;
+    const intl = statementsConsented && p.intl ? p.intl : null;
+
+    // ---- 1. Tier ----
+    const internationalMonths = intl ? (intl.monthsAvailable || 0) : null;
+    const incomeHistoryMonths = p.connectedMonths + (internationalMonths || 0);
+    const homeCountryObligations = intl ? (intl.obligationsMonthlyAed || 0) : null;   // null = not visible
+    const enhancedEligible = !!intl && incomeHistoryMonths >= prm.minIncomeHistoryMonthsEnhanced;
+    const tierKey = enhancedEligible ? 'enhanced' : 'base';
+    const TIER = enhancedEligible ? 'ENHANCED' : 'BASE';
+    const tier = prm.tiers[tierKey];
+    const otherKey = enhancedEligible ? 'base' : 'enhanced';
+    const curve = tenorCurve(tier);
+
+    // ---- 2. Affordability ----
+    const income = p.income;
+    const visibleObligations = p.obligationsMonthly + (homeCountryObligations || 0);
+    const fcf = Math.round(income - p.spend - visibleObligations);
+    const maxInstalment = Math.max(0, Math.floor((prm.instalmentToFcfMaxPct / 100) * fcf));
+    const dbrCap = dbrCapFor(reg, p.retiree);
+    const dbrBudget = Math.floor((dbrCap / 100) * income - visibleObligations);   // may be ≤ 0
+    const step = prm.amountStep;
+    const maxTenor = tier.maxTenorMonths;
+    const floorApr = curve[curve.length - 1].apr;
+    const byFcf = maxUpgradePrincipal(maxInstalment, floorApr, maxTenor, step);
+    const byDbr = maxUpgradePrincipal(dbrBudget, floorApr, maxTenor, step);
+
+    // ---- 3. Offer ceiling + default option ----
+    const tierLabel = enhancedEligible ? 'Enhanced (UAE accounts + international statements)' : 'Base (UAE accounts only)';
+    const candidates = [
+      { label: 'Tier cap — ' + tierLabel, value: tier.maxAmount, key: 'TIER_CAP' },
+      { label: 'Largest amount whose ' + maxTenor + '-month instalment fits ' + prm.instalmentToFcfMaxPct +
+               '% of free cash flow (' + aed(maxInstalment) + '/mo)', value: byFcf, key: 'FREE_CASH_FLOW' },
+      { label: 'Largest amount within the ' + dbrCap + '% DBR headroom (' + aed(Math.max(0, dbrBudget)) + '/mo) on ' +
+               maxTenor + ' months', value: byDbr, key: 'DBR_HEADROOM' }
+    ];
+    const { approved: ceiling, binding } = pickMin(candidates);
+    const ctx = { curve, maxInstalment, dbr: { capPct: dbrCap, incomeMonthly: income, obligationsMonthly: visibleObligations },
+                  starterPartnerIncome: p.prior.partnerIncome };
+    const offerable = ceiling >= prm.minAmount;
+    let defaultOption = null;
+    if (offerable) {
+      const opts = upgradeOptionsFor(ctx, ceiling);
+      for (let i = opts.length - 1; i >= 0; i--) if (opts[i].fits) { defaultOption = opts[i]; break; }
+    }
+    // DBR is evaluated on the default option, or on the smallest offer at the
+    // longest tenor when nothing can be offered at all.
+    const dbrProbe = defaultOption || upgradeOptionsFor(ctx, prm.minAmount)[maxTenor - 1];
+
+    // ---- 4. Rules, in the Addendum's order ----
+    rs.add('REG_AECB_CHECK', 'AECB consumer report pulled before credit decision', 'REGULATORY', 'PASS',
+           p.aecbHit ? 'HIT — ' + p.tradelines + ' tradeline' + (p.tradelines === 1 ? '' : 's') +
+                       (p.score === null || p.score === undefined ? ', no score yet' : ', score ' + p.score) : 'NO_HIT',
+           'pull required');
+    rs.add('REG_DBR_CAP', 'Debt burden ratio incl. the new instalment within ' + dbrCap + '% cap (Reg 29/2011' +
+           (p.retiree ? ', retiree' : '') + ') — at the default option; every selection is re-checked', 'REGULATORY',
+           dbrBudget > 0 && dbrProbe.dbrPct <= dbrCap ? 'PASS' : 'FAIL',
+           dbrProbe.dbrPct + '% (' + aed(defaultOption ? ceiling : prm.minAmount) + ' · ' + dbrProbe.months + ' months)',
+           dbrCap + '%', 'RC_DBR_EXCEEDED');
+    const pr = p.prior;
+    const repaid = !!pr.repaidAt;
+    const onTimeRepayments = Number.isFinite(pr.onTimeRepayments) ? pr.onTimeRepayments
+                           : (repaid && pr.dpd === 0 ? pr.tenorMonths : 0);
+    const repaidOk = repaid && pr.dpd === 0 && onTimeRepayments >= prm.minOnTimeStarterRepayments;
+    rs.add('POL_STARTER_REPAID_ON_TIME', 'Starter loan repaid on time (no days past due)', 'POLICY',
+           repaidOk ? 'PASS' : 'FAIL',
+           (pr.ref ? pr.ref + ' · ' : '') + (repaid ? (pr.dpd === 0 ? 'repaid on time' : 'repaid ' + pr.dpd + ' days late') : 'not yet repaid') +
+             ' · ' + onTimeRepayments + ' on-time repayment' + (onTimeRepayments === 1 ? '' : 's'),
+           'DPD 0 and ≥ ' + prm.minOnTimeStarterRepayments + ' on-time repayment' + (prm.minOnTimeStarterRepayments === 1 ? '' : 's'),
+           'RC_STARTER_LATE');
+    const connectedOk = p.connectedMonths >= UPGRADE_MIN_CONNECTED_MONTHS && income > 0;
+    rs.add('POL_CONNECTED_ACCOUNTS', 'Connected UAE accounts show income and spending (Open Finance)', 'POLICY',
+           connectedOk ? 'PASS' : 'REFER',
+           p.connectedMonths + ' months' + (p.banks.length ? ' · ' + p.banks.join(', ') : '') + ' · income ' + aed(income) + '/mo',
+           '≥ ' + UPGRADE_MIN_CONNECTED_MONTHS + ' months connected', 'RC_CONNECTED_HISTORY');
+    rs.add('POL_INCOME_HISTORY', 'Income history for the enhanced tier (UAE + international)', 'POLICY',
+           enhancedEligible ? 'PASS' : 'INFO',
+           incomeHistoryMonths + ' months (' + p.connectedMonths + ' UAE' +
+             (intl ? ' + ' + internationalMonths + ' international' : ', no international statements') + ')' +
+             (enhancedEligible ? '' : ' — base tier'),
+           '≥ ' + prm.minIncomeHistoryMonthsEnhanced + ' months for the enhanced tier', null);
+    rs.add('POL_FREE_CASH_FLOW', 'Free cash flow supports at least the smallest upgrade', 'POLICY',
+           byFcf >= prm.minAmount ? 'PASS' : 'FAIL',
+           aed(fcf) + '/mo → instalment budget ' + aed(maxInstalment) + '/mo',
+           aed(prm.minAmount) + ' over ' + maxTenor + ' months must fit', 'RC_FREE_CASH_FLOW');
+    rs.add('POL_INTERNATIONAL_STATEMENTS', 'International bank statements (optional — sets the tier)', 'POLICY',
+           intl ? 'PASS' : 'INFO',
+           intl ? ((intl.bank ? intl.bank + (intl.country ? ' (' + intl.country + ')' : '') + ' · ' : '') + internationalMonths +
+                   ' months parsed' + (homeCountryObligations ? ' · home-country loan ' + aed(homeCountryObligations) + '/mo surfaced' : ''))
+                : (statementsConsented ? 'consented — no statements supplied' : 'not provided — base tier'),
+           'optional', null);
+
+    const outcome = outcomeFromRules(rs.rules);
+    // The tier code leads an approval; on a refer the refer reason leads (it is what the analyst queue shows).
+    const tierCode = enhancedEligible ? 'RC_UPGRADE_ENHANCED' : 'RC_UPGRADE_BASE';
+    if (outcome === 'APPROVE') rs.reasons.unshift(tierCode);
+    else if (outcome === 'REFER') rs.reasons.push(tierCode);
+    const approved = outcome === 'DECLINE' ? 0 : ceiling;
+
+    const features = {
+      verifiedIncome: income,
+      avgMonthlySpend: p.spend,
+      existingObligations: p.obligationsMonthly,
+      homeCountryObligations,
+      freeCashFlowMonthly: fcf,
+      maxInstalment,
+      instalmentBudgetDbr: dbrBudget,
+      dbrCapApplied: dbrCap,
+      incomeHistoryMonths,
+      connectedMonths: p.connectedMonths,
+      internationalMonths,
+      connectedBanks: p.banks.slice(),
+      incomeVolatilityPct: p.incomeVolatilityPct,
+      starterDpd: pr.dpd,
+      starterOnTimeRepayments: onTimeRepayments,
+      tierEvaluated: TIER,
+      defaultMonths: defaultOption ? defaultOption.months : null,
+      newInstalment: defaultOption ? defaultOption.monthlyPayment : 0,
+      dbrPct: dbrProbe.dbrPct,
+      thinFile: p.score === null || p.score === undefined
+    };
+    const limit = {
+      requested: amount, approved,
+      bindingConstraint: binding,
+      trace: candidates.map(c => ({ label: c.label, value: c.value })),
+      capacity: approved,
+      planMonths: defaultOption ? defaultOption.months : null
+    };
+    let upgrade = null, pricing = null;
+    if (outcome !== 'DECLINE') {
+      const other = prm.tiers[otherKey];
+      upgrade = {
+        tier: TIER,
+        maxAmount: ceiling, tierMaxAmount: tier.maxAmount, minAmount: prm.minAmount, amountStep: step,
+        maxTenorMonths: maxTenor,
+        curve: curve.map(c => ({ months: c.months, apr: c.apr })),
+        aprAtOneMonth: curve[0].apr, aprFloor: floorApr,
+        maxInstalment,
+        dbr: { capPct: dbrCap, incomeMonthly: income, obligationsMonthly: visibleObligations },
+        starterPartnerIncome: pr.partnerIncome,
+        defaultSelection: defaultOption ? Object.assign({ amount: ceiling }, defaultOption) : null,
+        // The other tier, so the UI can say what the statements were (or would be) worth.
+        counterfactual: { tier: otherKey === 'base' ? 'BASE' : 'ENHANCED', maxAmount: other.maxAmount,
+                          maxTenorMonths: other.maxTenorMonths, aprAtMaxTenor: other.aprAtMaxTenor }
+      };
+      pricing = { mode: 'TENOR_CURVE_APR', tier: TIER, curve: upgrade.curve.map(c => ({ months: c.months, apr: c.apr })),
+                  aprFloor: floorApr, aprAtOneMonth: curve[0].apr };
+    }
+    const score = { model: 'starter_upgrade_v0', version: '0.1', basis: 'REPAYMENT_RECORD',
+                    base: null, overlays: [], points: null, grade: null };
+    return { profile: p, features, rules: rs.rules, score, limit, pricing, outcome, reasonCodes: rs.reasons,
+             effTenor: limit.planMonths, tier: outcome === 'DECLINE' ? null : TIER, upgrade };
+  }
+
   function evaluate(productId, rawApplicant, amount, tenorMonths, pol, consents) {
+    if (productId === 'starter_loan') return evaluateUpgrade(normalizeUpgrade(rawApplicant), amount, tenorMonths, pol, consents);
     if (productId === 'split') return evaluateSplit(normalizeSplit(rawApplicant), amount, tenorMonths, pol);
     if (productId === 'personal_loan') return evaluateLoan(normalizeLoan(rawApplicant), amount, tenorMonths, pol, consents);
     if (productId === 'salary_advance') return evaluateAdvance(normalizeLoan(rawApplicant), amount, tenorMonths, pol);
@@ -925,6 +1366,32 @@
     const pulls = [];
     let i = 0;
     const p = ev.profile;
+    // Upgrade re-decision: the prior decision first (the starter loan and how it
+    // was repaid), then the AECB file it created, the connected UAE accounts and,
+    // only with consent, the parsed international statements.
+    if (productId === 'starter_loan') {
+      const pr = p.prior;
+      pulls.push({ source: 'PRIOR_DECISION', status: pr.dpd === 0 && pr.repaidAt ? 'REPAID_ON_TIME' : 'REPAID_LATE',
+                   latencyMs: pullLatency(seq, i++), cached: false,
+                   summary: { ref: pr.ref, product: 'Starter loan', amount: pr.amount, tenorMonths: pr.tenorMonths,
+                              apr: pctStr(pr.apr), repaidAt: pr.repaidAt, dpd: pr.dpd, partnerIncome: money(pr.partnerIncome) } });
+      pulls.push({ source: 'AECB_CONSUMER', status: p.aecbHit ? 'HIT' : 'NO_HIT', latencyMs: pullLatency(seq, i++), cached: false,
+                   summary: { score: p.score === null || p.score === undefined ? 'no score yet' : p.score,
+                              tradelines: p.tradelines, worstDelinquency: p.worstDelinquency,
+                              obligationsMonthly: p.obligationsMonthly } });
+      pulls.push({ source: 'OPEN_FINANCE', status: 'OK', latencyMs: pullLatency(seq, i++), cached: false,
+                   summary: { provider: 'Al Tareq (UAE Open Finance)', banks: p.banks.slice(), monthsAvailable: p.connectedMonths,
+                              avgMonthlyIncome: p.income, avgMonthlySpend: p.spend, incomeVolatilityPct: p.incomeVolatilityPct } });
+      if (consents && consents.internationalStatements === true && p.intl) {
+        const x = p.intl;
+        pulls.push({ source: 'INTERNATIONAL_STATEMENTS', status: 'PARSED', latencyMs: pullLatency(seq, i++), cached: false,
+                     summary: { country: x.country, bank: x.bank, source: x.source, monthsAvailable: x.monthsAvailable,
+                                avgMonthlyIncomeAed: x.avgMonthlyIncomeAed, incomeVolatilityPct: x.incomeVolatilityPct,
+                                avgBalanceAed: x.avgBalanceAed, overdrafts12m: x.overdrafts12m,
+                                obligationsMonthlyAed: x.obligationsMonthlyAed } });
+      }
+      return pulls;
+    }
     pulls.push({ source: 'AECB_CONSUMER', status: p.aecbHit ? 'HIT' : 'NO_HIT',
                  latencyMs: pullLatency(seq, i++), cached: false,
                  summary: productId === 'split'
@@ -969,13 +1436,14 @@
   function init(data) {
     if (!data || data.TODAY !== '2026-07-19' || !Array.isArray(data.personasSplit) ||
         !Array.isArray(data.personasLoan) || !data.reasonCodes || !data.sampleBook ||
-        !Array.isArray(data.sampleBook.split) || !Array.isArray(data.sampleBook.personal_loan) || !data.history) {
+        !Array.isArray(data.sampleBook.split) || !Array.isArray(data.sampleBook.personal_loan) ||
+        !Array.isArray(data.sampleBook.starter_loan) || !data.history) {
       throw err('init() requires the MizanData object (load data.js first)');
     }
     D = data;
     S = {
       policies: defaultPolicies(),
-      policyHistory: { split: [], personal_loan: [], salary_advance: [] },
+      policyHistory: { split: [], personal_loan: [], starter_loan: [], salary_advance: [] },
       decisions: [],           // newest first via listDecisions()
       byId: Object.create(null),
       seq: 0, clockTicks: 0,
@@ -1005,7 +1473,7 @@
       personal_loan: { base: 14.5, weekend: 0.55, friday: 0.8, A: 0.60, R: 0.18, stp: 0.78 }
     };
     const blank = () => ({ decisions: 0, APPROVE: 0, REFER: 0, DECLINE: 0, stp: 0 });
-    const tot = { split: blank(), personal_loan: blank(), salary_advance: blank() };
+    const tot = { split: blank(), personal_loan: blank(), starter_loan: blank(), salary_advance: blank() };
     const daily = [];
     for (let d = 0; d < days; d++) {
       const date = addDaysIso(D.TODAY, -(days - 1 - d));
@@ -1024,6 +1492,23 @@
       }
       daily.push(row);
     }
+    // Starter-loan upgrade re-decisions (Addendum v2.1): a modest seeded history,
+    // ~4 a day, ≈74/3/23 (declines are mostly late starter repayments), STP ≈96%.
+    // Drawn from a SEPARATE seeded stream so the split / personal-loan history
+    // above stays exactly as it was before the addendum.
+    const rndU = mulberry32(D.history.seed ^ 0x51A27);
+    for (let d = 0; d < days; d++) {
+      const dow = new Date(daily[d].date + 'T00:00:00Z').getUTCDay();
+      const factor = (dow === 6 || dow === 0) ? 1.1 : 1.0;
+      const n = Math.max(1, Math.round(4 * factor * (0.85 + 0.3 * rndU())));
+      const a = Math.round(n * (0.74 + (rndU() - 0.5) * 0.08));
+      const r = rndU() < 0.12 ? 1 : 0;
+      const x = Math.max(0, n - a - r);
+      const t = tot.starter_loan;
+      // STP accumulated unrounded: at ~4 a day, per-day rounding would read 100%.
+      t.decisions += n; t.APPROVE += a; t.REFER += r; t.DECLINE += x; t.stp += n * 0.96;
+      daily[d].APPROVE += a; daily[d].REFER += r; daily[d].DECLINE += x;
+    }
     // Decline-reason mix (seeded weights over the seeded decline volume).
     const reasonWeights = [
       ['RC_FREE_CASH_FLOW', 0.24], ['RC_SCORE_LOW', 0.22], ['RC_DBR_EXCEEDED', 0.15],
@@ -1038,6 +1523,10 @@
       const n = i === reasonWeights.length - 1 ? declines - assigned : Math.round(declines * w);
       declineReasons[code] = n; assigned += n;
     }
+    // Starter-loan upgrade declines: ~80% late starter repayment, the rest free cash flow.
+    const starterLate = Math.round(tot.starter_loan.DECLINE * 0.8);
+    declineReasons.RC_STARTER_LATE = starterLate;
+    declineReasons.RC_FREE_CASH_FLOW += tot.starter_loan.DECLINE - starterLate;
     // Grade distribution over scored seeded decisions (cash-flow path scores thin files too).
     const scored = Math.round((tot.split.decisions + tot.personal_loan.decisions) * 0.94);
     const gradeDist = { A: Math.round(scored * 0.21), B: Math.round(scored * 0.33),
@@ -1074,7 +1563,7 @@
     S.seeded = { daily, tot, declineReasons, gradeDist, refers, overrides, queue, referAging, vintages };
   }
   // Refer SLAs: split is an in-app instant product; loans allow a working-day review.
-  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, salary_advance: 4 };
+  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, starter_loan: 4, salary_advance: 4 };
 
   function manifests() { ensureInit(); return clone(MANIFESTS); }
 
@@ -1096,10 +1585,49 @@
   }
   function getPolicy(productId) { ensureInit(); return clone(getPolicyRef(productId)); }
 
-  // Validates candidate params: known keys only, regulatory keys rejected, bounds enforced.
-  function validateParams(productId, params) {
+  // Starter loan: nested params may be sent partially ({tiers:{enhanced:{aprAtMaxTenor:0.33}}});
+  // they are merged over the live values so publish/simulate always see complete objects.
+  // Other products pass through unchanged.
+  function normalizeParams(productId, params) {
+    if (productId !== 'starter_loan' || !params || typeof params !== 'object' || Array.isArray(params)) return params;
+    const cur = getPolicyRef(productId).params;
+    const out = Object.assign({}, params);
+    const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+    if ('starter' in params && isObj(params.starter)) out.starter = Object.assign({}, cur.starter, params.starter);
+    if ('tiers' in params && isObj(params.tiers)) {
+      out.tiers = {};
+      for (const k of Object.keys(params.tiers)) {
+        if (!TIER_KEYS.includes(k)) throw err('unknown tier "' + k + '" — tiers are enhanced and base');
+      }
+      for (const k of TIER_KEYS) {
+        out.tiers[k] = Object.assign({}, cur.tiers[k], isObj(params.tiers[k]) ? params.tiers[k] : {});
+      }
+    }
+    return out;
+  }
+  // Bounds check for one nested object of numeric fields (starter, a tier).
+  function checkNested(path, obj, bounds) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw err(path + ' must be an object');
+    for (const f of Object.keys(obj)) {
+      if (!(f in bounds)) throw err('unknown policy parameter "' + path + '.' + f + '"');
+    }
+    for (const f of Object.keys(bounds)) {
+      const v = obj[f], bd = bounds[f];
+      if (!Number.isFinite(v)) throw err('parameter "' + path + '.' + f + '" must be a number');
+      if (MONTH_KEYS.includes(f) && !Number.isInteger(v)) throw err('parameter "' + path + '.' + f + '" must be a whole number of months');
+      if (v < bd[0] || v > bd[1]) {
+        throw err('parameter "' + path + '.' + f + '"=' + v + ' outside allowed bounds [' + bd[0] + ', ' + bd[1] + ']');
+      }
+    }
+  }
+
+  // Validates candidate params: known keys only, regulatory keys rejected, bounds
+  // enforced, cross-field rules, and (starter loan) the publish-time invariants.
+  // Returns the normalised params (complete nested objects for the starter loan).
+  function validateParams(productId, rawParams, opts) {
     const pol = getPolicyRef(productId);
-    if (!params || typeof params !== 'object' || Array.isArray(params)) throw err('params must be an object');
+    if (!rawParams || typeof rawParams !== 'object' || Array.isArray(rawParams)) throw err('params must be an object');
+    const params = normalizeParams(productId, rawParams);
     const bounds = PARAM_BOUNDS[productId];
     for (const key of Object.keys(params)) {
       if (key in pol.regulatory) {
@@ -1125,6 +1653,11 @@
         if (!(v.A <= v.B && v.B <= v.C)) throw err('monthlyFeeRate must be risk-ordered: A ≤ B ≤ C');
       } else if (key === 'thinFileAction') {
         if (v !== 'REFER' && v !== 'DECLINE') throw err('thinFileAction must be REFER or DECLINE');
+      } else if (productId === 'starter_loan' && key === 'starter') {
+        checkNested('starter', v, STARTER_BOUNDS);
+      } else if (productId === 'starter_loan' && key === 'tiers') {
+        if (!v || typeof v !== 'object') throw err('tiers must be an object with enhanced and base');
+        for (const k of TIER_KEYS) checkNested('tiers.' + k, v[k], TIER_BOUNDS);
       } else {
         const bd = bounds[key];
         if (!Number.isFinite(v)) throw err('parameter "' + key + '" must be a number');
@@ -1138,6 +1671,52 @@
     if (merged.scoreRefer !== undefined && merged.scoreDecline !== undefined && merged.scoreRefer < merged.scoreDecline) {
       throw err('scoreRefer (' + merged.scoreRefer + ') must be at or above scoreDecline (' + merged.scoreDecline + ')');
     }
+    if (productId === 'starter_loan') {
+      for (const k of TIER_KEYS) {
+        if (merged.tiers[k].maxAmount < merged.minAmount) {
+          throw err('the ' + k + ' tier maximum (' + aed(merged.tiers[k].maxAmount) + ') is below the minimum upgrade amount (' +
+                    aed(merged.minAmount) + ')');
+        }
+      }
+      // Publish-time invariants — the first failure is thrown as a plain message.
+      if (!(opts && opts.skipInvariants)) {
+        const bad = starterInvariants(merged).find(c => !c.ok);
+        if (bad) throw err(bad.message);
+      }
+    }
+    return params;
+  }
+
+  // Read-only: the starter-loan invariants for a draft, as a checklist (the
+  // policy console renders it live). Bounds errors come back as `error`.
+  // Also returns each tier's curve with exact interest per AED 1,000, so the
+  // console can show the guarantee without re-implementing the math.
+  function policyInvariants(productId, draftParams) {
+    ensureInit();
+    const pol = getPolicyRef(productId);
+    if (productId !== 'starter_loan') return { ok: true, error: null, checks: [], curves: null };
+    let params;
+    try { params = validateParams(productId, draftParams || {}, { skipInvariants: true }); }
+    catch (e) { return { ok: false, error: e.message, checks: [], curves: null }; }
+    const merged = Object.assign({}, pol.params, params);
+    const checks = starterInvariants(merged);
+    const curves = {};
+    for (const k of TIER_KEYS) {
+      curves[k] = tenorCurve(merged.tiers[k]).map(c => ({ months: c.months, apr: c.apr,
+        interestPer1000: round2(1000 * interestPerUnit(c.apr, c.months)) }));
+    }
+    return { ok: checks.every(c => c.ok), error: null, checks, curves };
+  }
+  // Leaf-level diff of two param values, so nested changes read as
+  // "tiers.enhanced.aprAtMaxTenor: 0.35 → 0.33" in the policy history.
+  function leafChanges(prefix, before, after, out) {
+    const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+    if (isObj(before) && isObj(after)) {
+      for (const k of Object.keys(after)) leafChanges(prefix + '.' + k, before[k], after[k], out);
+      return out;
+    }
+    if (JSON.stringify(before) !== JSON.stringify(after)) out.push({ key: prefix, from: clone(before), to: clone(after) });
+    return out;
   }
 
   function publishPolicy(productId, params, meta) {
@@ -1150,13 +1729,16 @@
     if (meta.author.trim().toLowerCase() === meta.approver.trim().toLowerCase()) {
       throw err('4-eyes violation — policy author and approver must be different people');
     }
-    validateParams(productId, params);
+    params = validateParams(productId, params);
     const changes = [];
     for (const key of Object.keys(params)) {
       const before = JSON.stringify(pol.params[key]), after = JSON.stringify(params[key]);
-      if (before !== after) changes.push({ key, from: JSON.parse(before), to: JSON.parse(after) });
+      if (before === after) continue;
+      // Starter-loan history records nested changes leaf by leaf; other packs keep the v2.0 top-level diff.
+      if (productId === 'starter_loan') leafChanges(key, pol.params[key], params[key], changes);
+      else changes.push({ key, from: JSON.parse(before), to: JSON.parse(after) });
     }
-    for (const c of changes) pol.params[c.key] = clone(params[c.key]);
+    for (const key of Object.keys(params)) pol.params[key] = clone(params[key]);
     pol.version += 1;
     pol.publishedAt = nowIso();
     pol.publishedBy = meta.author;
@@ -1194,8 +1776,21 @@
     if (productId === 'split' && consents.openFinance !== true) {
       throw err('Open Finance consent (connected accounts via Al Tareq) is required for split — it underwrites on connected-account cash flow');
     }
-    const amount = application.amount;
-    const tenorMonths = application.tenorMonths;
+    // The starter-loan upgrade re-decides on connected UAE accounts — Open Finance consent is mandatory;
+    // international statements are optional (they decide the tier).
+    if (productId === 'starter_loan' && consents.openFinance !== true) {
+      throw err('Open Finance consent (connected UAE accounts via Al Tareq) is required for the starter-loan upgrade — it re-decides on connected-account cash flow');
+    }
+    let amount = application.amount;
+    let tenorMonths = application.tenorMonths;
+    if (productId === 'starter_loan') {
+      // The customer asks for the upgrade and shapes it afterwards (quoteUpgrade /
+      // selectUpgradeOption), so amount and tenor are optional: they default to the
+      // enhanced tier's ceiling and are recorded as the request only.
+      const en = getPolicyRef('starter_loan').params.tiers.enhanced;
+      if (amount === undefined || amount === null) amount = en.maxAmount;
+      if (tenorMonths === undefined || tenorMonths === null) tenorMonths = en.maxTenorMonths;
+    }
     if (!Number.isFinite(amount) || amount <= 0) throw err('application.amount must be a positive number (AED)');
     if (!Number.isFinite(tenorMonths) || tenorMonths <= 0) throw err('application.tenorMonths must be a positive number');
 
@@ -1232,6 +1827,17 @@
       override: null,
       status: 'OPEN'
     };
+    if (productId === 'starter_loan') {
+      // DecisionRecord additions for the upgrade (Addendum v2.1).
+      record.kind = 'UPGRADE';
+      record.priorLoan = clone(applicant.priorLoan || ev.profile.prior);
+      record.tier = ev.tier;
+      record.upgrade = ev.upgrade;
+      record.selection = null;
+      record.consents.internationalStatements = { granted: consents.internationalStatements === true,
+                                                  at: consents.internationalStatements === true ? consentAt : null };
+      record.audit[0].detail += ' · tier ' + (ev.tier || '—');
+    }
     S.decisions.push(record);
     S.byId[id] = record;
     return record;
@@ -1241,35 +1847,51 @@
   function rowAmount(row) {
     return row.amount !== undefined ? row.amount : (row.purchaseAmount !== undefined ? row.purchaseAmount : 100000);
   }
+  // Starter-loan rows carry no request: the upgrade is offered up to the tier ceiling.
+  function rowRequest(productId, row) {
+    return productId === 'starter_loan' ? [null, null] : [rowAmount(row), row.tenorMonths || 12];
+  }
   function decideRaw(productId, sampleRow) {
     ensureInit();
     const pol = getPolicyRef(productId);
-    const ev = evaluate(productId, sampleRow, rowAmount(sampleRow), sampleRow.tenorMonths || 12, pol);
+    const rq = rowRequest(productId, sampleRow);
+    const ev = evaluate(productId, sampleRow, rq[0], rq[1], pol);
     return { outcome: ev.outcome, reasonCodes: ev.reasonCodes.slice(),
              grade: ev.score.grade, approved: ev.limit.approved,
              bindingConstraint: ev.limit.bindingConstraint, dbrPct: ev.features.dbrPct };
   }
 
   function bookFor(productId) {
+    if (productId === 'starter_loan') return D.sampleBook.starter_loan;
     return productId === 'split' ? D.sampleBook.split : D.sampleBook.personal_loan;  // salary_advance reuses the loan book
   }
 
   function simulateBook(productId, candidateParams) {
     ensureInit();
     const pol = getPolicyRef(productId);
-    validateParams(productId, candidateParams);
+    const params = validateParams(productId, candidateParams);
     const book = bookFor(productId);
     const candidate = clone(pol);
-    for (const key of Object.keys(candidateParams)) candidate.params[key] = clone(candidateParams[key]);
+    for (const key of Object.keys(params)) candidate.params[key] = clone(params[key]);
     const before = { APPROVE: 0, REFER: 0, DECLINE: 0 };
     const after = { APPROVE: 0, REFER: 0, DECLINE: 0 };
     const flips = [];
     let flipCount = 0;
+    // Starter loan: the economic effect of a pricing change, summed over the rows
+    // each policy approves, at each row's default option (the ceiling amount at
+    // the longest tenor that fits).
+    const isUpgrade = productId === 'starter_loan';
+    const econ = { b: { n: 0, apr: 0, pi: 0 }, a: { n: 0, apr: 0, pi: 0 } };
+    const tally = (acc, ev) => {
+      const d = ev.outcome === 'APPROVE' && ev.upgrade ? ev.upgrade.defaultSelection : null;
+      if (d) { acc.n++; acc.apr += d.apr; acc.pi += d.partnerIncome; }
+    };
     for (const row of book) {
-      const amt = rowAmount(row), ten = row.tenorMonths || 12;
-      const b = evaluate(productId, row, amt, ten, pol);
-      const a = evaluate(productId, row, amt, ten, candidate);
+      const rq = rowRequest(productId, row);
+      const b = evaluate(productId, row, rq[0], rq[1], pol);
+      const a = evaluate(productId, row, rq[0], rq[1], candidate);
       before[b.outcome]++; after[a.outcome]++;
+      if (isUpgrade) { tally(econ.b, b); tally(econ.a, a); }
       if (b.outcome !== a.outcome) {
         flipCount++;
         if (flips.length < 20) {
@@ -1285,7 +1907,86 @@
       ', refers ' + before.REFER + ' → ' + after.REFER +
       ', declines ' + before.DECLINE + ' → ' + after.DECLINE +
       ' (' + flipCount + ' outcome flips).';
-    return { size: book.length, before, after, flips, summary };
+    if (!isUpgrade) return { size: book.length, before, after, flips, summary };
+    const pricingImpact = {
+      avgAprBefore: econ.b.n ? round4(econ.b.apr / econ.b.n) : null,
+      avgAprAfter: econ.a.n ? round4(econ.a.apr / econ.a.n) : null,
+      partnerIncomeBefore: round2(econ.b.pi),
+      partnerIncomeAfter: round2(econ.a.pi),
+      approvedBefore: econ.b.n, approvedAfter: econ.a.n
+    };
+    const impactLine = ' At each approved customer\'s default option: average APR ' +
+      (pricingImpact.avgAprBefore === null ? '—' : pctStr(pricingImpact.avgAprBefore)) + ' → ' +
+      (pricingImpact.avgAprAfter === null ? '—' : pctStr(pricingImpact.avgAprAfter)) + ', partner income ' +
+      money(pricingImpact.partnerIncomeBefore) + ' → ' + money(pricingImpact.partnerIncomeAfter) + '.';
+    return { size: book.length, before, after, flips, summary: summary + impactLine, pricingImpact };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Starter-loan upgrade: the customer shapes the offer (Addendum v2.1).
+  // Both calls read the terms FROZEN on the decision (curve, budgets, bounds), so
+  // a policy published later never changes an offer already made.
+  // ---------------------------------------------------------------------------
+  function upgradeRecord(decisionId, fn) {
+    const rec = getDecisionRef(decisionId);
+    if (rec.kind !== 'UPGRADE') throw err(fn + ' applies to starter-loan upgrade decisions only (' + decisionId + ' is ' + rec.productId + ')');
+    if (!rec.upgrade) throw err('no upgrade offer on ' + decisionId + ' (outcome ' + rec.outcome + ') — starter terms continue');
+    return rec;
+  }
+  // Every option 1..maxTenor at one amount. The amount is snapped to the amount
+  // step and clamped into [minAmount, maxAmount]; `amount` in the result is the
+  // one actually quoted.
+  function quoteUpgrade(decisionId, amount) {
+    ensureInit();
+    const rec = upgradeRecord(decisionId, 'quoteUpgrade');
+    if (!Number.isFinite(amount)) throw err('quoteUpgrade needs an amount in AED');
+    const up = rec.upgrade;
+    const snapped = Math.round(amount / up.amountStep) * up.amountStep;
+    const used = Math.min(up.maxAmount, Math.max(up.minAmount, snapped));
+    return { amount: used, requested: amount, clamped: used !== amount, options: upgradeOptionsFor(up, used) };
+  }
+  // Store the customer's choice. Refuses an option that does not fit, anything
+  // outside the offer, and any change once OFFER_ACCEPTED is recorded.
+  function selectUpgradeOption(decisionId, choice) {
+    ensureInit();
+    const rec = upgradeRecord(decisionId, 'selectUpgradeOption');
+    if (rec.outcome !== 'APPROVE') throw err('options can only be chosen on an approved upgrade (outcome is ' + rec.outcome + ')');
+    if (rec.events.length > 0) {
+      throw err('the option is fixed — the offer was already accepted (OFFER_ACCEPTED recorded ' + rec.events[0].at + ')');
+    }
+    if (!choice || !Number.isFinite(choice.amount) || !Number.isFinite(choice.months)) {
+      throw err('selectUpgradeOption needs {amount, months}');
+    }
+    const up = rec.upgrade;
+    const amount = choice.amount, months = choice.months;
+    if (!Number.isInteger(months) || months < 1 || months > up.maxTenorMonths) {
+      throw err('outside the offer — the term must be 1 to ' + up.maxTenorMonths + ' months (asked ' + months + ')');
+    }
+    const onStep = Math.abs(amount / up.amountStep - Math.round(amount / up.amountStep)) < 1e-9;
+    if (amount < up.minAmount || amount > up.maxAmount || !onStep) {
+      throw err('outside the offer — the amount must be ' + aed(up.minAmount) + ' to ' + aed(up.maxAmount) +
+                ' in steps of ' + aed(up.amountStep) + ' (asked ' + aed(amount) + ')');
+    }
+    const opt = upgradeOptionsFor(up, amount)[months - 1];
+    if (!opt.fits) {
+      throw err('this option does not fit — ' + aed(amount) + ' over ' + months + ' month' + (months === 1 ? '' : 's') + ': ' +
+                opt.detail + ' (' + opt.reason + ')');
+    }
+    const at = nowIso();
+    rec.selection = { amount, months, apr: opt.apr, monthlyPayment: opt.monthlyPayment, totalRepayable: opt.totalRepayable,
+                      totalInterest: opt.totalInterest, partnerIncome: opt.partnerIncome, dbrPct: opt.dbrPct, selectedAt: at };
+    // Token conditions refreshed: the "choose an option" line becomes the option itself.
+    if (rec.token) {
+      const line = 'Selected option: ' + aed(amount) + ' over ' + months + ' month' + (months === 1 ? '' : 's') + ' at ' +
+                   pctStr(opt.apr) + ' APR (' + money(opt.monthlyPayment) + '/mo) — fixed when the offer is accepted';
+      rec.token.conditions = rec.token.conditions
+        .filter(c => c !== UPGRADE_CHOICE_PENDING && !/^Selected option: /.test(c))
+        .concat([line]);
+    }
+    rec.audit.push({ at, actor: 'customer', action: 'OPTION_SELECTED',
+                     detail: aed(amount) + ' · ' + months + ' months · APR ' + pctStr(opt.apr) + ' · ' + money(opt.monthlyPayment) +
+                             '/mo · partner income ' + money(opt.partnerIncome) + ' · DBR ' + opt.dbrPct + '%' });
+    return rec;
   }
 
   function getDecisionRef(decisionId) {
@@ -1373,6 +2074,10 @@
     if (eventType !== expected) {
       throw err('out of sequence — expected ' + expected + ' next (' + EXEC_STEP_INFO[expected].guard + ')');
     }
+    // An upgrade offer is a menu: the customer must pick amount × tenor first.
+    if (eventType === 'OFFER_ACCEPTED' && rec.kind === 'UPGRADE' && !rec.selection) {
+      throw err('choose an option before accepting — select an amount and term (selectUpgradeOption) first');
+    }
     const at = nowIso();
     rec.events.push({ type: eventType, at });
     rec.audit.push({ at, actor: 'product-layer', action: 'EXEC_EVENT', detail: eventType });
@@ -1380,7 +2085,8 @@
       rec.status = 'EXECUTED';
       rec.audit.push({ at: nowIso(), actor: 'engine', action: 'STATUS',
                        detail: 'EXECUTED — consumer-protection sequence complete; ' +
-                               (rec.productId === 'split' ? 'the instalment plan now exists' : 'the loan now exists') });
+                               (rec.productId === 'split' ? 'the instalment plan now exists'
+                                 : (rec.kind === 'UPGRADE' ? 'the upgraded loan now exists' : 'the loan now exists')) });
     }
     return rec;
   }
@@ -1439,7 +2145,7 @@
     ensureInit();
     const sd = S.seeded;
     const prod = {};
-    for (const pid of ['split', 'personal_loan', 'salary_advance']) prod[pid] = Object.assign({}, sd.tot[pid]);
+    for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance']) prod[pid] = Object.assign({}, sd.tot[pid]);
     const declineReasons = Object.assign({}, sd.declineReasons);
     const gradeDist = Object.assign({}, sd.gradeDist);
     const daily = clone(sd.daily);
@@ -1496,8 +2202,9 @@
   const MizanEngine = {
     VERSION: ENGINE_VERSION,
     EXEC_EVENTS: EXEC_EVENTS.slice(),
-    init, manifests, execSteps, getPolicy, publishPolicy, policyHistory,
+    init, manifests, execSteps, getPolicy, publishPolicy, policyHistory, policyInvariants,
     decide, decideRaw, simulateBook, drawdownCheck, recordEvent, override,
+    quoteUpgrade, selectUpgradeOption,
     listDecisions, getDecision, referQueue, metrics
   };
 
