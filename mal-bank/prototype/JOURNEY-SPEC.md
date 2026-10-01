@@ -128,3 +128,17 @@ repayment shows Direct debit at 15,000 and switches to Al Tareq when the amount 
 product minimum note shows); the decision appears in the Decision log; host home shows the funded card;
 works at 390px (phone full-width, panel below) without horizontal scroll; "Illustrative host app" tag
 visible; no Botim logo assets present.
+
+## Amendment — team Figma frames received (supersedes "Host-app framing" and step 0)
+
+The host is the team's **botim money** concept (dark): pill tabs Pay / Credit / Invest / Insights, a
+**Connected accounts** strip with **"Add another +"**, round action buttons, an "Insights for you" carousel
+("Big transactions detected · 3 transactions available for installments"), the "Ask me anything or
+search" bar and bottom nav Home / Calls / Chats / money / All. Match the frames' layout and components;
+render the wordmark as plain text "botim money" (no logo artwork) with the tag "Concept — illustrative
+host app". Two entry points, in this order: **(1) Connected accounts → Add another +** opens Noor's
+web-view to connect a bank via Al Tareq (bank approval leaves the web-view); back in Botim the new bank
+card appears in the strip. **(2) Credit tab → "How much can you borrow?"** opens Noor's web-view for
+pre-qualification and the loan application (steps 7–16 as specced); back in Botim the Credit tab shows
+the active loan. Optional teaser only: the botim AI "Pick one to split" card list, labelled as needing a
+1-month "repay next month" plan that the engine does not have yet.
