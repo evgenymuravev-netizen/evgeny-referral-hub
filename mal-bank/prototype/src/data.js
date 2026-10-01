@@ -13,13 +13,16 @@
  *    newcomers re-decided after their AED 1,000 starter loan.
  *  - 1 customer-journey persona (j1, Addendum v2.6): a Botim user who applies
  *    for a personal loan through Noor's web-view; plus the lender of record.
+ *  - 1 car-loan persona (a1, Addendum v2.7): an affluent client buying a family
+ *    SUV, whose verified rental income (Open Finance) finances AED 30,000 more;
+ *    plus a hand-written car-loan sample book (16 rows) for policy simulation.
  *  - Seeded home-country bank statements (Addendum v2.4) for r2, u1 and u2:
  *    6 monthly rows each, in local currency, read by Mizan's simulated parser;
  *    plus one seeded Workbench case awaiting Egyptian statements.
  *  - Bilingual (EN + Modern Standard Arabic) customer-safe reason codes.
  *  - 5 seeded day-zero early-warning signals (consumer only).
  *  - A seeded deterministic sample book (120 split + 140 personal-loan +
- *    80 starter-loan rows) for policy simulation.
+ *    80 starter-loan rows, + 17 hand-written car-loan rows) for policy simulation.
  *
  * No DOM access. No dependency on engine.js. Runs in Node >= 16 and browsers.
  * All synthetic dates derive from TODAY — never from the wall clock.
@@ -380,6 +383,63 @@
   ];
 
   // ---------------------------------------------------------------------------
+  // Car-loan persona (Addendum v2.7, CAR-LOAN-SPEC.md). Loan-persona shape like
+  // j1 (employment / aecb / bankData), so normalizeLoan() reads him unchanged,
+  // plus a `connected` block that the engine reads ONLY when the customer grants
+  // Open Finance consent, and the dealer's `vehicleQuote`.
+  //   Documents path: salary from the salary certificate + AECB → salary counts,
+  //     declared rental income does not (not verifiable in an instant decision).
+  //   Open Finance path: 12 months of connected accounts show the salary every
+  //     month and the rent landing every quarter in a different bank, so the rent
+  //     counts at the policy's regularIncomeCountedPct (75%).
+  // connected.monthlyIncome / monthlySpend follow the split-persona convention
+  // (12 slots aligned to monthLabels, mean === the stated average). Bank names,
+  // masks and balances are internal text labels only — the lender never sees them.
+  // ---------------------------------------------------------------------------
+  const personasCar = [
+    { // a1 — APPROVE both ways: documents only AED 150,000 (DBR binds); Open Finance AED 180,000 (80% LTV maximum)
+      id: 'a1', name: 'Karim Nassar', nameAr: 'كريم نصار',
+      tagline: 'Commercial Director, 11 years in the UAE — buying a family SUV; rents out an apartment',
+      age: 44, residency: 'RESIDENT', monthsInUae: 132,
+      employment: { employer: 'FMCG distributor, Dubai', title: 'Commercial Director', type: 'PRIVATE',
+                    salaryMonthly: 45000, tenureMonths: 72, retiree: false },
+      aecb: { hit: true, score: 790, esrPct: 44, obligationsMonthly: 19700,
+              obligationsBreakdown: [{ label: 'Home mortgage', monthly: 17200 }, { label: 'Credit cards', monthly: 2500 }],
+              tradelines: 5, chequeReturns12m: 0, worstDelinquency: 'NONE', creditPassportAvailable: false },
+      // The documents path: salary verified from the salary certificate.
+      bankData: { source: 'DOCUMENTS', salaryDetected: true, salaryCertificate: true },
+      connected: { source: 'ALTAREQ_TPP', banks: ['Mashreq', 'HSBC', 'ADCB'], monthsAvailable: 12,
+                   accounts: [
+                     { bank: 'Mashreq', type: 'Current account', mask: '7714', balance: 64200, salaryAccount: true },
+                     { bank: 'HSBC', type: 'Current account', mask: '3302', balance: 118500, rentAccount: true },
+                     { bank: 'ADCB', type: 'Savings account', mask: '5568', balance: 236000 }
+                   ],
+                   // Salary 45,000 every month + rent 27,000 in Jan / Apr / Jul / Oct → mean 54,000
+                   avgMonthlyIncome: 54000, avgMonthlySpend: 18000,
+                   // The salary is identical every month and the rent lands on schedule, so the
+                   // income is treated as stable (the quarterly rent is scheduled, not volatility).
+                   incomeVolatilityPct: 0, salaryCreditDay: 25,
+                   salaryCredits: { monthly: 45000, months: 12, sameEmployer: true, account: 'Mashreq ••7714' },
+                   // Repayments seen leaving the accounts every month — the same as the AECB figure
+                   observedObligationsMonthly: 19700, observedObligationsLabel: 'Home mortgage + credit cards',
+                   regularIncome: [
+                     { type: 'RENTAL', label: 'Rent — apartment (tenancy registered with Ejari)', frequency: 'QUARTERLY',
+                       amountPerReceipt: 27000, receipts12m: 4, monthlyEquivalent: 9000, onSchedule: true, matchesTenancy: true,
+                       account: 'HSBC ••3302' }
+                   ],
+                   // Jul '25 … Jun '26: rent months are Jul, Oct, Jan, Apr
+                   monthlyIncome: [72000, 45000, 45000, 72000, 45000, 45000, 72000, 45000, 45000, 72000, 45000, 45000],
+                   // mean 18,000 (December higher: travel)
+                   monthlySpend: [17600, 18400, 17900, 18200, 17300, 19600, 17800, 17500, 18100, 18300, 17700, 17600] },
+      // The dealer's quote — no real make, model or dealer. Valid for 14 days from TODAY.
+      vehicleQuote: { category: 'SUV', condition: 'NEW', modelYear: 2026, priceAed: 225000, dealer: 'Partner dealer, Dubai',
+                      quoteRef: 'DQ-2026-0418', validUntil: addDaysIso(TODAY, 14) },
+      // The regulatory maximum: 80% of AED 225,000, so a 20% down payment of AED 45,000.
+      defaultRequest: { amount: 180000, tenorMonths: 60 }
+    }
+  ];
+
+  // ---------------------------------------------------------------------------
   // Seeded Workbench case (v2.4) — an analyst has already asked this customer for
   // 6 months of Egyptian bank statements; the refer SLA is paused while Noor waits.
   // Summary data only (like the other seeded queue rows).
@@ -491,7 +551,17 @@
       ar: 'تعذّر التحقق من كشوف الحساب المصرفي (سلامة المستند أو اسم صاحب الحساب) — تمت إحالة الطلب إلى المراجعة.' },
     RC_STATEMENTS_USED: {
       en: 'Decided using your verified home-country bank statements — account history, clean conduct and remittances that match your UAE salary.',
-      ar: 'تم اتخاذ القرار استناداً إلى كشوف حسابك المصرفي في بلدك الأم التي تم التحقق منها — سجل الحساب وانتظام التعاملات والتحويلات المتوافقة مع راتبك في الإمارات.' }
+      ar: 'تم اتخاذ القرار استناداً إلى كشوف حسابك المصرفي في بلدك الأم التي تم التحقق منها — سجل الحساب وانتظام التعاملات والتحويلات المتوافقة مع راتبك في الإمارات.' },
+    // --- Car loan (Addendum v2.7) ---------------------------------------------------
+    RC_LTV_CAP: {
+      en: 'The amount is limited to 80% of the vehicle\'s value.',
+      ar: 'يقتصر مبلغ القرض على 80٪ من قيمة المركبة.' },
+    RC_VEHICLE_INELIGIBLE: {
+      en: 'The vehicle does not meet the age or quotation requirements.',
+      ar: 'لا تستوفي المركبة متطلبات العمر أو عرض السعر.' },
+    RC_BELOW_MIN_AMOUNT: {
+      en: 'The amount we can offer is below the minimum for this product.',
+      ar: 'المبلغ الذي يمكن تقديمه أقل من الحد الأدنى المطلوب لهذا المنتج.' }
   };
 
   // ---------------------------------------------------------------------------
@@ -629,6 +699,62 @@
     return rows;
   }
 
+  // car_loan (17 rows, hand-written — Addendum v2.7): a small, readable book in
+  //   which every row exercises one rule, so a simulation reads like a story.
+  //   Row shape = a personal-loan row (salaryMonthly, aecbScore, esrPct, …) plus
+  //   `vehicle` {priceAed, condition, modelYear}, amount / tenor, and — on the
+  //   rows whose customer granted Open Finance — `openFinance: true` with a
+  //   `connected` block (income, spending, observed obligations, regular income).
+  //   At the default pack: 8 APPROVE · 3 REFER · 6 DECLINE. Setting
+  //   regularIncomeCountedPct to 0 shrinks CL-001 (160,000 → 134,000) and flips
+  //   CL-002 to a decline (the rent was the difference).
+  function buildCarBook() {
+    const rent = (perReceipt, receipts) => [{ type: 'RENTAL', label: 'Rent — apartment', frequency: 'QUARTERLY', amountPerReceipt: perReceipt,
+      receipts12m: receipts, monthlyEquivalent: perReceipt * 4 / 12, onSchedule: true, matchesTenancy: true }];
+    const of = (income, spend, observed, ri) => ({ openFinance: true, connected: { source: 'ALTAREQ_TPP', monthsAvailable: 12, salaryDetected: true,
+      avgMonthlyIncome: income, avgMonthlySpend: spend, observedObligationsMonthly: observed, regularIncome: ri || [] } });
+    const car = (priceAed, condition, modelYear) => ({ vehicle: { priceAed, condition, modelYear } });
+    const base = { age: 38, monthsInUae: 72, retiree: false, salaryDetected: true, salaryCertificate: true,
+                   chequeReturns12m: 0, worstDelinquency: 'NONE', openFinance: false };
+    const rows = [
+      // APPROVE — Open Finance: verified rent lifts the DBR limit to the 80% LTV maximum (134,000 without it)
+      ['CL-001', { salaryMonthly: 30000, aecbScore: 760, esrPct: 32, obligationsMonthly: 12500, amount: 160000, tenorMonths: 60 }, car(200000, 'NEW', 2026), of(36000, 14000, 12500, rent(18000, 4))],
+      // APPROVE — Open Finance: without the rent the limit is below the AED 20,000 minimum (decline)
+      ['CL-002', { salaryMonthly: 20000, aecbScore: 720, esrPct: 48, obligationsMonthly: 9700, amount: 88000, tenorMonths: 60 }, car(110000, 'USED', 2023), of(24000, 9000, 9700, rent(12000, 4))],
+      // APPROVE — documents only, the request binds
+      ['CL-003', { salaryMonthly: 25000, aecbScore: 745, esrPct: 20, obligationsMonthly: 3000, amount: 80000, tenorMonths: 48 }, car(120000, 'NEW', 2025)],
+      // APPROVE — documents only, DBR headroom binds (RC_LIMIT_REDUCED)
+      ['CL-004', { salaryMonthly: 18000, aecbScore: 700, esrPct: 36, obligationsMonthly: 6500, amount: 150000, tenorMonths: 60 }, car(190000, 'NEW', 2026)],
+      // REFER — no AECB file (thin file)
+      ['CL-005', { salaryMonthly: 22000, aecbScore: null, esrPct: null, obligationsMonthly: 0, monthsInUae: 14, amount: 70000, tenorMonths: 48 }, car(100000, 'NEW', 2026)],
+      // REFER — score 650 sits between the decline cut-off and the refer line, no positive overlays
+      ['CL-006', { salaryMonthly: 15000, aecbScore: 650, esrPct: 13, obligationsMonthly: 2000, employment: { tenureMonths: 12 }, amount: 60000, tenorMonths: 48 }, car(85000, 'USED', 2024)],
+      // DECLINE — score below the cut-off
+      ['CL-007', { salaryMonthly: 16000, aecbScore: 600, esrPct: 19, obligationsMonthly: 3000, amount: 60000, tenorMonths: 48 }, car(90000, 'NEW', 2026)],
+      // DECLINE — used vehicle older than 5 years (RC_VEHICLE_INELIGIBLE)
+      ['CL-008', { salaryMonthly: 26000, aecbScore: 735, esrPct: 15, obligationsMonthly: 4000, amount: 45000, tenorMonths: 48 }, car(60000, 'USED', 2018)],
+      // DECLINE — DPD90 on the bureau file
+      ['CL-009', { salaryMonthly: 19000, aecbScore: 640, esrPct: 26, obligationsMonthly: 5000, worstDelinquency: 'DPD90', amount: 80000, tenorMonths: 60 }, car(110000, 'NEW', 2026)],
+      // REFER — no salary certificate on the documents path (income not verified)
+      ['CL-010', { salaryMonthly: 28000, aecbScore: 742, esrPct: 9, obligationsMonthly: 2500, salaryCertificate: false, amount: 100000, tenorMonths: 60 }, car(140000, 'NEW', 2026)],
+      // APPROVE — Open Finance, but only 3 of 4 quarterly rent receipts: rent not counted, DBR binds
+      ['CL-011', { salaryMonthly: 24000, aecbScore: 750, esrPct: 38, obligationsMonthly: 9000, amount: 184000, tenorMonths: 60 }, car(230000, 'NEW', 2026), of(29000, 11000, 9000, rent(15000, 3))],
+      // DECLINE — salary below the product minimum
+      ['CL-012', { salaryMonthly: 7000, aecbScore: 700, esrPct: 7, obligationsMonthly: 500, amount: 30000, tenorMonths: 36 }, car(50000, 'USED', 2023)],
+      // APPROVE — Open Finance, no regular income: the 80% LTV maximum binds
+      ['CL-013', { salaryMonthly: 40000, aecbScore: 770, esrPct: 15, obligationsMonthly: 6000, amount: 240000, tenorMonths: 60 }, car(300000, 'NEW', 2026), of(40000, 15000, 6000)],
+      // APPROVE — a 3-year-old used car within the 5-year limit (grade B)
+      ['CL-014', { salaryMonthly: 21000, aecbScore: 728, esrPct: 19, obligationsMonthly: 4000, amount: 60000, tenorMonths: 48 }, car(75000, 'USED', 2023)],
+      // APPROVE — retiree: the 30% DBR cap binds (RC_RETIREE_CAP)
+      ['CL-015', { salaryMonthly: 20000, aecbScore: 760, esrPct: 23, obligationsMonthly: 4500, age: 63, retiree: true, amount: 120000, tenorMonths: 60 }, car(160000, 'NEW', 2026)],
+      // DECLINE — request below the AED 20,000 product minimum
+      ['CL-016', { salaryMonthly: 12000, aecbScore: 710, esrPct: 13, obligationsMonthly: 1500, amount: 15000, tenorMonths: 36 }, car(25000, 'USED', 2022)],
+      // DECLINE — existing obligations already above 50% of salary (no DBR headroom)
+      ['CL-017', { salaryMonthly: 15000, aecbScore: 700, esrPct: 53, obligationsMonthly: 8000, amount: 60000, tenorMonths: 48 }, car(90000, 'NEW', 2026)]
+    ];
+    return rows.map(([id, r, v, o]) => Object.assign({ id }, base, r, v, o || {}));
+  }
+
   // ---------------------------------------------------------------------------
   // Lenders of record (Addendum v2.5 / v2.6). Noor arranges and decides; a
   // partner bank books, funds and collects the loan, and receives a credit memo
@@ -646,11 +772,12 @@
     personasLoan: personasLoan,
     personasUpgrade: personasUpgrade,
     personasJourney: personasJourney,
+    personasCar: personasCar,
     seededDocumentCases: seededDocumentCases,
     lenders: lenders,
     reasonCodes: reasonCodes,
     earlyWarning: earlyWarning,
-    sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook() },
+    sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook() },
     history: { days: 90, seed: 20260719 }
   };
 

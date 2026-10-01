@@ -1224,6 +1224,95 @@ details.tbl-view table { margin-top:6px; }
 .bmc-repay { font-size:12.5px; color:var(--bk-muted); }
 .bmc-split { flex:0 0 auto; font-size:12px; font-weight:600; color:var(--bm-blue); border:1px solid var(--bm-blue); border-radius:var(--radius-pill); padding:3px 10px; opacity:.6; }
 .bmc-input { margin:6px 16px 34px; border-radius:var(--radius-pill); background:var(--bk-ground); border:1px solid var(--ph-line); padding:12px 16px; font-size:14px; color:var(--bk-muted); }
+/* ---------- v2.7 Car loan — a new policy pack on the shared layer (tokens only: light + dark follow the skin) ---------- */
+.demo-strip.demo-9 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media (max-width:1100px) { .demo-strip.demo-9 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:600px) { .demo-strip.demo-9 { grid-template-columns:1fr; } }
+.pcard.car-person { cursor:default; }
+.pcard.car-person:hover { transform:none; box-shadow:0 0 0 1px var(--brand) inset, var(--shadow-xs); }
+.car-ltv { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 12px; margin-top:12px; padding:10px 12px;
+  border-radius:var(--radius-md); background:var(--panel); border:1px solid var(--hairline-soft); }
+.car-ltv .cl-k { font-family:var(--font-label); font-size:13px; color:var(--muted); }
+.car-ltv .cl-v { font-family:var(--font-ui); font-size:20px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+.car-tenors { margin-top:2px; }
+.car-tenors .plan-row { padding:10px 14px; }
+.car-tenor .pr-right { max-width:60%; }
+.car-tenor .pr-fee { white-space:normal; }
+.car-hint { font-family:var(--font-label); font-size:12px; color:var(--faint); margin-top:6px; }
+/* Open Finance consent as a switch (the checkbox stays the control — keyboard and screen readers as usual) */
+.car-switch { position:relative; flex:0 0 38px; width:38px; height:22px; margin-top:1px; }
+.car-switch input { position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; z-index:1; }
+.car-switch .cs-track { position:absolute; inset:0; border-radius:var(--radius-pill); background:var(--hairline); transition:background var(--dur-fast) var(--ease-out); }
+.car-switch .cs-track::after { content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:var(--panel);
+  box-shadow:var(--shadow-xs); transition:transform var(--dur-fast) var(--ease-out); }
+.car-switch input:checked + .cs-track { background:var(--brand-fill); }
+.car-switch input:checked + .cs-track::after { transform:translateX(16px); background:#fff; }
+.car-switch input:focus-visible + .cs-track { outline:2px solid var(--sky); outline-offset:2px; }
+.consent-box.car-of { align-items:flex-start; }
+.btn.car-decide { border-radius:var(--radius-pill); padding:11px 28px; font-size:14px; }
+/* Decision — NoorScore row + figures */
+.ns-block.car-ns .ns-head { margin:12px 0 0; }
+.car-figs { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.car-figs .os-v { font-size:18px; white-space:nowrap; }
+/* "What Open Finance changed" — the hero of the screen */
+.car-cols { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.car-col { border:1px solid var(--hairline-soft); border-radius:var(--radius-md); padding:14px 16px; background:var(--panel-2); min-width:0; }
+.car-col.of { background:var(--panel); border-color:var(--brand-fill); box-shadow:0 0 0 1px var(--brand-fill) inset; }
+.car-col .cc-l { font-family:var(--font-label); font-size:12.5px; color:var(--muted); line-height:1.35; }
+.car-col .cc-v { font-family:var(--font-ui); font-size:28px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.01em; line-height:1.2; margin:6px 0 2px; }
+.car-col.docs .cc-v { color:var(--ink-2); }
+.car-col .cc-s { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.car-col .cc-x { font-family:var(--font-label); font-size:12px; color:var(--faint); margin-top:4px; font-variant-numeric:tabular-nums; }
+.car-plus-row { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; margin:16px 0 4px; }
+.car-plus { display:inline-flex; align-items:center; background:var(--brand-fill); color:#fff; border-radius:var(--radius-pill); padding:10px 22px;
+  font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.car-plus.flat { background:var(--panel-2); color:var(--ink); border:1px solid var(--hairline); }
+.car-why { flex:1 1 280px; margin:0; font-size:14px; line-height:1.5; color:var(--ink-2); }
+.car-bars { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+.car-bars-head { display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px 12px; font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.car-bars-head .car-ltv-key { color:var(--ink-2); display:inline-flex; align-items:center; gap:6px; }
+.car-bars-head .car-ltv-key::before { content:""; width:2px; height:12px; background:var(--ink); border-radius:1px; }
+.car-bar-row { display:grid; grid-template-columns:132px minmax(0,1fr) 96px; align-items:center; gap:10px; }
+.car-bar-row .cb-l { font-family:var(--font-label); font-size:12.5px; color:var(--muted); }
+.car-bar-row .cb-v { font-family:var(--font-ui); font-size:14px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; text-align:right; }
+.car-track { position:relative; height:14px; border-radius:var(--radius-pill); background:var(--meter-track); }
+.car-fill { position:absolute; inset:0 auto 0 0; border-radius:var(--radius-pill); }
+.car-fill.docs { background:var(--s3); }
+.car-fill.of { background:var(--brand-fill); }
+.car-ltv-line { position:absolute; top:-5px; bottom:-5px; width:2px; margin-left:-1px; background:var(--ink); border-radius:1px; }
+.car-drivers { list-style:none; margin:14px 0 0; padding:12px 0 0; border-top:1px solid var(--hairline-soft); display:flex; flex-direction:column; gap:6px; }
+.car-drivers li { display:flex; gap:8px; align-items:baseline; font-size:13.5px; color:var(--ink-2); line-height:1.4; }
+.car-drivers li::before { content:"✓"; flex:0 0 auto; color:var(--ok); font-weight:700; }
+.car-cta .callout { margin-top:0; }
+/* "What Open Finance found" (internal) — reuses the parse-panel rows */
+.car-found .scope-banner { margin-bottom:10px; }
+.car-found .pp-row .t-title { font-size:13.5px; }
+/* Binding trace inside the decision panel; rules grouped by category in a full-width panel below */
+.car-trace { margin-top:16px; }
+.car-sub-h { font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--ink); margin:0 0 8px; }
+.car-rules-h { font-family:var(--font-label); font-size:12.5px; font-weight:500; color:var(--brand-ink); margin:0 0 6px; padding-bottom:6px; border-bottom:1px solid var(--hairline-soft); }
+.car-how-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px 22px; align-items:start; }
+@media (max-width:1100px) { .car-how-grid { grid-template-columns:1fr; } }
+.kfs.car-kfs { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media (max-width:900px) { .kfs.car-kfs { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+/* KFS + conditions + links */
+.car-conds { margin:12px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px; }
+.car-conds li { display:flex; gap:8px; align-items:baseline; font-size:13px; color:var(--ink-2); }
+.car-conds li::before { content:"·"; color:var(--faint); flex:0 0 auto; }
+.car-conds li.car-specific { color:var(--ink); font-weight:500; }
+.car-conds li.car-specific::before { content:"◆"; color:var(--brand); font-size:9px; }
+.car-links { margin-top:14px; }
+@media (max-width:600px) {
+  .car-figs { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .car-figs .os-v { font-size:16px; white-space:normal; }
+  .car-figs .os:nth-child(3) { grid-column:auto; }
+  .car-cols { grid-template-columns:1fr; }
+  .car-col .cc-v { font-size:24px; }
+  .car-plus { font-size:19px; padding:9px 18px; }
+  .car-bar-row { grid-template-columns:minmax(0,1fr) 84px; }
+  .car-bar-row .cb-l { grid-column:1 / -1; }
+  .car-tenor .pr-right { max-width:55%; }
+}
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -1249,6 +1338,7 @@ details.tbl-view table { margin-top:6px; }
     <section data-screen="journey" id="scr-journey"></section>
     <section data-screen="split" id="scr-split"></section>
     <section data-screen="loan" id="scr-loan"></section>
+    <section data-screen="car" id="scr-car"></section>
     <section data-screen="upgrade" id="scr-upgrade"></section>
     <section data-screen="policy" id="scr-policy"></section>
     <section data-screen="workbench" id="scr-workbench"></section>
@@ -1347,7 +1437,7 @@ function outcomeChip(oc) { return h('span', { class: 'oc oc-' + oc, text: oc });
 /* ================= Globals wired at boot ================= */
 var MD = null, ME = null;      // MizanData, MizanEngine
 var PRODUCT_LABEL = { split: 'Split a purchase', personal_loan: 'Personal loan', salary_advance: 'Salary advance' };
-var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', starter_loan: 'Starter loan', salary_advance: 'Salary advance' };
+var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', starter_loan: 'Starter loan', salary_advance: 'Salary advance', car_loan: 'Car loan' };
 function productLabel(pid, short) { return (short ? PRODUCT_SHORT[pid] : PRODUCT_LABEL[pid]) || pid || '—'; }
 var PULL_LABEL = {
   AECB_CONSUMER: 'AECB consumer report + score (real-time, consent-bound cache)',
@@ -1511,6 +1601,7 @@ var SCREENS = [
   { id: 'journey',    label: 'Customer journey', sub: 'Botim → Noor web-view',    icon: 'M5 1.8h6a1.2 1.2 0 0 1 1.2 1.2v10a1.2 1.2 0 0 1-1.2 1.2H5A1.2 1.2 0 0 1 3.8 13V3A1.2 1.2 0 0 1 5 1.8zM7 12.2h2', stroke: true },
   { id: 'split',      label: 'Split a purchase', sub: 'Pay in 3 · 6 · 12',        icon: 'M8 2a6 6 0 1 0 6 6H8zM10 1.6V6h4.4A6 6 0 0 0 10 1.6z' },
   { id: 'loan',       label: 'Personal loan',    sub: 'Salary + AECB + DBR',      icon: 'M2 4h12v8H2zM2 6.8h12M4.5 10h3', stroke: true },
+  { id: 'car',        label: 'Car loan',         sub: 'Affluent · +AED 30k with Open Finance', icon: 'M2.2 11V8.4l1.5-3.5a1 1 0 0 1 .9-.6h6.8a1 1 0 0 1 .9.6l1.5 3.5V11zM2.2 8.4h11.6M4.8 11v1.7M11.2 11v1.7', stroke: true },
   { id: 'upgrade',    label: 'Credit upgrade',   sub: 'Starter loan → more for less', icon: 'M2 12.5l4-4 2.5 2.5L14 5.5M10.5 5.5H14V9', stroke: true },
   { id: 'policy',     label: 'Policy console',   sub: 'Packs & primitives',       icon: 'M2 4h12M2 8h12M2 12h12M5 2.5v3M11 6.5v3M7 10.5v3', stroke: true },
   { id: 'workbench',  label: 'Workbench',        sub: 'Refer queue',              icon: 'M2 3h12v7h-4l-1 2H7l-1-2H2zM2 10v3h12v-3' },
@@ -1614,6 +1705,7 @@ document.addEventListener('DOMContentLoaded', function () {
   Journey.build();
   Split.build();
   Loan.build();
+  Car.build();
   Upgrade.build();
   Policy.build();
   Workbench.build();
@@ -1637,12 +1729,14 @@ var Overview = {
   build: function () {
     var root = clear($('#scr-overview'));
     root.appendChild(screenHead('Mizan · ميزان — Noor’s credit decisioning layer', 'One engine behind every Noor credit decision',
-      'Interactive prototype: Split a purchase, Personal loan, the starter-loan upgrade and Salary advance, the policy console, refer workbench, decision replay and monitoring — all running against a real simulated decision engine in the browser.'));
+      'Interactive prototype: Split a purchase, Personal loan, the Car loan, the starter-loan upgrade and Salary advance, the policy console, refer workbench, decision replay and monitoring — all running against a real simulated decision engine in the browser.'));
 
     root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'What Mizan is' }),
       h('p', { class: 'lead' }, 'Mizan is Noor’s credit decisioning layer — one engine every Noor credit product calls (',
-        h('strong', { text: 'Split a purchase, Personal loan, Starter loan, Salary advance' }),
+        h('strong', { text: 'Split a purchase, Personal loan, Car loan, Starter loan, Salary advance' }),
         ') for approve / refer / decline + limit + pricing, with consent, AECB, connected-account (Open Finance / Al Tareq) data, policy and scoring behind one API — and every decision replayable for CBUAE model-risk and consumer-protection audit.'),
+      h('p', { class: 'lead', id: 'ov-pack-line' }, h('strong', { text: 'A new product is a policy pack, not a new engine. ' }),
+        'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.'),
       h('div', { class: 'tagline-quiet', text: 'Noor for your better financial sleep.' })));
 
     var positions = [
@@ -1668,14 +1762,15 @@ var Overview = {
       ['Step 5', 'Monitoring', 'STP vs targets per product and day-zero early warning.', function () { showScreen('monitoring'); }],
       ['Step 6', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
       ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
-      ['Step 8', 'Lender view — the credit memo', 'The credit memo the partner bank receives; Open Finance data never leaves Noor. Compare it with the internal Decision log.', function () { showScreen('lender'); }]
+      ['Step 8', 'Lender view — the credit memo', 'The credit memo the partner bank receives; Open Finance data never leaves Noor. Compare it with the internal Decision log.', function () { showScreen('lender'); }],
+      ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }]
     ];
-    var ds = h('div', { class: 'demo-strip demo-8' });
+    var ds = h('div', { class: 'demo-strip demo-9' });
     demo.forEach(function (d) {
       ds.appendChild(h('button', { class: 'demo-step ds-top', onclick: d[3] },
         h('div', { class: 'd-n', text: d[0] }), h('div', { class: 'd-t', text: d[1] }), h('div', { class: 'd-d', text: d[2] })));
     });
-    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — an eight-step click path' }), ds));
+    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — a nine-step click path' }), ds));
 
     var map = [
       ['Overview', 'Positioning · six positions', 'The argument, compressed'],
@@ -1685,6 +1780,7 @@ var Overview = {
       ['Personal loan', 'Salary via connected accounts · AECB · DBR · banded APR · KFS', 'Conventional amortising loan on the same engine; DBR headroom and retiree caps bind visibly'],
       ['Personal loan — Credit Passport path (r2)', 'Consented home-country bureau', 'Newcomers decided on two-country visibility — conservative overlay, grade cap, 50% haircut'],
       ['Salary advance', 'Flat fee · eligibility + limit', 'Another product, same engine — the cheapest proof of product-agnosticism'],
+      ['Car loan', 'New product = a policy pack · 80% LTV · 60 months · DBR 50% incl. cards · rental income counted only via Open Finance (75%) · RTA mortgage + insurance', 'Car loan — Karim: salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000)'],
       ['Credit upgrade', 'Re-decision on Open Finance + home-country statements (upload → parse → re-decide) · customer-chosen amount × tenor', 'APR falls with tenor while partner income rises — enforced at publish'],
       ['Home-country statements', 'India · Pakistan · Egypt, 6 months · underwriter request · parser: integrity, name match, conduct, EMIs, buffer, remittances · re-decision that supersedes', 'Evidence, not an override — Priya approved for AED 45,000 vs AED 30,000 on Credit Passport, audit-linked to the original refer'],
       ['Repayment collection', 'Al Tareq recurring payment up to AED 1,000 · direct debit mandate above · repayment set-up before cooling-off', 'One platform rule on every product — no salary transfer required'],
@@ -1749,7 +1845,8 @@ function pullsTimeline(rec, opts) {
   });
   if (rec.kind === 'UPGRADE') steps.push({ title: 'Upgrade policy pack — tier, APR curve, affordability per option',
     sum: 'every rule evaluated · tier set · offer ceiling and options derived', lat: null });
-  else steps.push({ title: rec.productId === 'split' ? 'Cash-flow policy pack + NoorScore + split capacity' : 'Policy pack + NoorScore + DBR limit engine',
+  else steps.push({ title: rec.productId === 'split' ? 'Cash-flow policy pack + NoorScore + split capacity'
+      : (rec.productId === 'car_loan' ? 'Car-loan policy pack + NoorScore + LTV / DBR limit engine' : 'Policy pack + NoorScore + DBR limit engine'),
     sum: 'every rule evaluated · NoorScore and grade assigned · limit and pricing derived', lat: null });
 
   var tl = h('div', { class: 'timeline' });
@@ -1844,10 +1941,12 @@ function limitBlock(rec) {
   if (lim.trace && lim.trace.length) {
     var tr = h('div', { class: 'trace' });
     var boundMarked = false;
+    /* v2.7 traces carry candidate keys: mark the recorded binding constraint even when two candidates tie */
+    var keyed = lim.trace.some(function (t) { return t.key; }) && lim.trace.some(function (t) { return t.key === lim.bindingConstraint; });
     lim.trace.forEach(function (t) {
-      var isBinding = approve && !boundMarked && Math.round(t.value) === Math.round(lim.approved);
+      var isBinding = approve && !boundMarked && (keyed ? t.key === lim.bindingConstraint : Math.round(t.value) === Math.round(lim.approved));
       if (isBinding) boundMarked = true;
-      tr.appendChild(h('div', { class: 'trace-row' + (isBinding ? ' binding' : '') },
+      tr.appendChild(h('div', { class: 'trace-row' + (isBinding ? ' binding' : ''), dataset: t.key ? { key: t.key } : null },
         h('span', { text: t.label + (isBinding ? '  — binds' : '') }),
         h('span', { class: 'tval', text: fmtAED(t.value) })));
     });
@@ -1934,6 +2033,9 @@ function kfsBlock(rec, months) {
         kfTile('totalInterest', 'Total interest', fmtMoney(k.totalInterest), 'at mid-band'),
         kfTile('earlySettlement', 'Early-settlement fee cap', k.earlySettlementFeeCap || '—', 'Reg 29/2011'),
         kfTile('coolingOff', 'Cooling-off', (k.coolingOffDays || reg.coolingOffDays || 5) + ' days', 'business days, waivable in writing'),
+        isNum(k.vehiclePrice) ? kfTile('vehiclePrice', 'Vehicle price', fmtAED(k.vehiclePrice), 'dealer quote') : null,
+        isNum(k.vehiclePrice) ? kfTile('downPayment', 'Down payment', fmtAED(k.downPayment), 'paid to the dealer') : null,
+        isNum(k.vehiclePrice) ? kfTile('ltv', 'Loan-to-value', fmtLtv(k.ltvPct), 'cap ' + (reg.ltvCapPct || 80) + '% (Reg 29/2011)') : null,
         repaymentKfsTile(rec.repayment || repayFor(k.principal))),
       h('div', { class: 'kfs-foot', text: 'Benchmark ' + (p.benchmark || 'EIBOR 3M + margin') + '. The KFS itself is a product-layer artifact in Arabic + English; Mizan supplies these figures and the engine records the acknowledgement.' }));
   }
@@ -2710,6 +2812,414 @@ var Loan = {
     afterEngineMutation();
   }
 };
+/* ================= Car loan (Addendum v2.7) — a new product is a policy pack on the shared layer ================= */
+var CAR_TENORS = [12, 24, 36, 48, 60];
+function carPersona() { return (MD && MD.personasCar && MD.personasCar[0]) || null; }
+function fmtLtv(p) { return !isNum(p) ? '—' : (Math.round(p) === Number(p) ? String(Math.round(p)) : Number(p).toFixed(2)) + '%'; }
+function signedAED(n) { return !isNum(n) ? '—' : (n > 0 ? '+' : (n < 0 ? '−' : '')) + fmtAED(Math.abs(n)); }
+function carBindWord(key, ltvCapPct, dbrPct) {
+  if (key === 'DBR') return 'DBR binds at ' + fmtPct(dbrPct, 2);
+  if (key === 'LTV_CAP') return (ltvCapPct || 80) + '% LTV maximum';
+  if (key === 'FCF') return 'free cash flow binds';
+  if (key === 'PRODUCT_CAP') return 'product cap binds';
+  return 'the amount requested';
+}
+/* One path of the comparison in plain words: "down payment AED 75,000 · DBR binds at 49.99%" */
+function carPathText(row, up) {
+  if (!row) return '';
+  if (row.outcome !== 'APPROVE') return row.outcome + (row.reasonCodes && row.reasonCodes[0] ? ' — ' + rcEn(row.reasonCodes[0]).replace(/\.$/, '') : '');
+  return 'down payment ' + fmtAED(row.downPayment) + ' · ' + carBindWord(row.bindingConstraint, up && up.ltvCapPct, row.dbrPct);
+}
+/* "What Open Finance was worth" as the v2.4 evidence strip (Workbench case file + Decision log replay) */
+function carUpliftStrip(rec) {
+  var up = rec.openFinanceUplift;
+  if (!up) {
+    return h('div', { class: 'callout callout-info small car-uplift-strip', dataset: { ref: rec.id, path: 'DOCUMENTS' } },
+      'Decided on documents only (salary certificate + AECB) — Open Finance was not granted, so declared rental income was not counted.');
+  }
+  var strip = h('div', { class: 'ev-strip car-uplift-strip', dataset: { ref: rec.id, uplift: String(up.upliftAed) }, 'aria-label': 'What each evidence path decided' });
+  [['DOCUMENTS', 'Documents only — salary certificate + AECB', up.documentsOnly], ['OPEN_FINANCE', 'With Open Finance', up.openFinance]].forEach(function (x) {
+    var c = x[2];
+    strip.appendChild(h('div', { class: 'ev' + (x[0] === 'OPEN_FINANCE' ? ' ev-new' : ''), dataset: { path: x[0], outcome: c.outcome, approved: String(c.approved) } },
+      h('div', { class: 'ev-l', text: x[1] }),
+      h('div', { class: 'ev-v' + (c.outcome === 'APPROVE' ? '' : ' ev-' + c.outcome), text: c.outcome === 'APPROVE' ? fmtAED(c.approved) : c.outcome }),
+      h('div', { class: 'ev-s', text: carPathText(c, up) })));
+  });
+  strip.appendChild(h('div', { class: 'ev', dataset: { path: 'UPLIFT', approved: String(up.upliftAed) } },
+    h('div', { class: 'ev-l', text: 'Open Finance uplift' }), h('div', { class: 'ev-v', text: signedAED(up.upliftAed) }),
+    h('div', { class: 'ev-s', text: isNum(up.downPaymentSavedAed) ? 'down payment ' + fmtAED(up.downPaymentSavedAed) + ' lower' : '' })));
+  return strip;
+}
+/* What the connected accounts showed — the parse-panel rows (v2.4), internal to Noor */
+function carFindingsList(findings) {
+  var tl = h('div', { class: 'timeline pp-list car-findings' });
+  (findings || []).forEach(function (f) {
+    tl.appendChild(h('div', { class: 't-step pp-row', dataset: { check: f.key, status: f.status } },
+      h('span', { class: 'pp-ico pp-' + f.status, 'aria-hidden': 'true', text: PF_ICON[f.status] || '·' }),
+      h('div', { class: 't-main' },
+        h('div', { class: 't-title' }, f.label, h('span', { class: 'sr-only', text: ' — ' + f.status })),
+        h('div', { class: 'pp-val', text: f.observation }),
+        h('div', { class: 'pp-eff', text: '→ ' + f.effect }))));
+  });
+  return tl;
+}
+/* Case file block (Workbench + Decision log): the vehicle, the two paths, and the internal findings */
+function carCaseBlock(rec) {
+  var v = (rec.request && rec.request.vehicle) || {};
+  var wrap = h('div', { class: 'car-case', style: 'margin-bottom:12px;' });
+  wrap.appendChild(h('h3', { text: 'Car loan — what Open Finance was worth (same application, each path)' }));
+  wrap.appendChild(h('div', { class: 'small muted', style: 'margin-bottom:8px;',
+    text: 'Vehicle: ' + [v.category, v.condition === 'NEW' ? 'new' : (v.condition === 'USED' ? 'used' : null), v.modelYear].filter(Boolean).join(' · ') + ' · ' + fmtAED(v.priceAed) +
+      (v.quoteRef ? ' · quote ' + v.quoteRef : '') + ' · ' + ((rec.features || {}).openFinance ? 'decided with Open Finance' : 'decided on documents only') }));
+  wrap.appendChild(carUpliftStrip(rec));
+  if (rec.openFinanceFindings) {
+    wrap.appendChild(h('div', { style: 'margin-top:10px;' },
+      h('div', { class: 'small', style: 'font-weight:600;margin-bottom:4px;', text: 'What Open Finance found — internal, never sent to the lender' }),
+      carFindingsList(rec.openFinanceFindings)));
+  }
+  return wrap;
+}
+var Car = {
+  sel: null, rec: null, pendingId: null, amount: null, months: 60, exec: null,
+  build: function () {
+    var root = clear($('#scr-car'));
+    root.appendChild(screenHead('New product on the shared layer', 'Car loan',
+      'Karim’s salary alone supports AED 150,000. Open Finance shows the rent he receives every quarter — Mizan counts it, and finances the full 80%: AED 30,000 more, on the same engine and the same policy rules.'));
+    var p = Car.sel = carPersona();
+    if (!p) { root.appendChild(h('div', { class: 'callout callout-error', text: 'No car-loan persona found in MizanData.personasCar.' })); return; }
+    var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
+    root.appendChild(h('div', { class: 'grid2' }, left, right));
+    root.appendChild(h('div', { class: 'stack', style: 'margin-top:14px;' }, h('div', { id: 'car-how' }), h('div', { id: 'car-kfs' }), h('div', { id: 'car-exec' })));
+    left.appendChild(Car.applicantCard(p));
+    left.appendChild(Car.vehicleCard(p));
+    left.appendChild(Car.form(p));
+    left.appendChild(h('div', { class: 'panel', id: 'car-orch' }));
+    right.appendChild(h('div', { id: 'car-decision' }));
+    right.appendChild(h('div', { id: 'car-uplift' }));
+    right.appendChild(h('div', { id: 'car-found' }));
+    Car.reset();
+  },
+  applicantCard: function (p) {
+    var emp = p.employment || {}, ab = p.aecb || {};
+    var parts = (ab.obligationsBreakdown || []).map(function (o) { var w = String(o.label || '').split(' '); return w[w.length - 1].toLowerCase(); });
+    return h('div', { class: 'panel', id: 'car-applicant' },
+      h('h3', null, 'Applicant ', h('span', { class: 'h3-note', text: '(a1, synthetic — affluent)' })),
+      h('div', { class: 'pcard sel car-person', id: 'carp-' + p.id, dataset: { id: p.id } },
+        h('span', { class: 'pname' }, h('span', { text: p.name }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: p.nameAr || '' })),
+        h('span', { class: 'ptag', text: p.tagline || '' }),
+        h('span', { class: 'pchips' },
+          h('span', { class: 'chip', dataset: { k: 'salary' }, text: 'Salary ' + fmtAED(emp.salaryMonthly) + '/mo' }),
+          h('span', { class: 'chip', dataset: { k: 'aecb' }, text: 'AECB ' + ab.score }),
+          h('span', { class: 'chip', dataset: { k: 'obligations' }, text: 'Obligations ' + fmtAED(ab.obligationsMonthly) + '/mo' + (parts.length ? ' (' + parts.join(' + ') + ')' : '') }),
+          h('span', { class: 'chip', text: (emp.title || 'Employed') + ' · ' + Math.round((p.monthsInUae || 0) / 12) + ' years in the UAE' }),
+          h('span', { class: 'chip acc', text: 'Rents out an apartment' }))));
+  },
+  maxAmount: function () {
+    var v = (Car.sel && Car.sel.vehicleQuote) || {}, ltv = currentReg('car_loan').ltvCapPct || 80;
+    return Math.floor((ltv / 100) * (v.priceAed || 0) / 1000) * 1000;
+  },
+  vehicleCard: function (p) {
+    var v = p.vehicleQuote || {}, ltv = currentReg('car_loan').ltvCapPct || 80, maxFin = Car.maxAmount();
+    function kv(k, val) { return h('div', null, h('span', { class: 'pc-k', text: k }), h('span', { class: 'pc-v', text: String(val === null || val === undefined ? '—' : val) })); }
+    return h('div', { class: 'purchase-card', id: 'car-vehicle', dataset: { price: String(v.priceAed), ltvMax: String(maxFin) } },
+      h('div', { class: 'pc-eyebrow' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' }), 'Dealer quote · ' + (v.quoteRef || '—')),
+      h('div', { class: 'pc-copy' }, 'A family ', h('em', { text: v.category || 'vehicle' }), ' — ' + (v.condition === 'NEW' ? 'new' : 'used') + ', model year ' + v.modelYear + ', ' + fmtAED(v.priceAed) + '.'),
+      h('div', { class: 'pc-via', text: (v.dealer || 'Dealer') + ' · secured by a vehicle mortgage registered with the RTA' }),
+      h('div', { class: 'pc-grid' },
+        kv('Category', v.category), kv('Condition', v.condition === 'NEW' ? 'New' : 'Used'), kv('Model year', v.modelYear), kv('Price', fmtAED(v.priceAed)),
+        kv('Dealer', v.dealer), kv('Quote ref', v.quoteRef), kv('Valid until', fmtLongDate(v.validUntil))),
+      h('div', { class: 'car-ltv', id: 'car-ltv-max', dataset: { amount: String(maxFin) } },
+        h('span', { class: 'cl-k', text: 'Max financing (' + ltv + '% LTV):' }), ' ', h('span', { class: 'cl-v', text: fmtAED(maxFin) })));
+  },
+  form: function (p) {
+    var ltv = currentReg('car_loan').ltvCapPct || 80, maxFin = Car.maxAmount(), minAmt = currentParams('car_loan').minAmount || 20000;
+    var form = h('div', { class: 'panel', id: 'car-form' });
+    form.appendChild(h('h3', { text: 'Request — amount, term and consent' }));
+    var amt = h('input', { type: 'range', min: String(minAmt), max: String(maxFin), step: '1000', id: 'car-amount', 'aria-label': 'Loan amount' });
+    var amtN = h('input', { type: 'number', min: String(minAmt), max: String(maxFin), step: '1000', id: 'car-amount-n', 'aria-label': 'Loan amount (number)' });
+    amt.addEventListener('input', function () { Car.setAmount(amt.value); });
+    amtN.addEventListener('change', function () { Car.setAmount(amtN.value); });
+    form.appendChild(h('div', { class: 'field' },
+      h('label', { for: 'car-amount', text: 'Loan amount (AED) — ' + fmtAED(minAmt) + ' up to the ' + ltv + '% LTV maximum, ' + fmtAED(maxFin) }),
+      h('div', { class: 'slider-row' }, amt, amtN),
+      h('div', { class: 'bounds', id: 'car-dp-line' })));
+    form.appendChild(h('div', { class: 'field' },
+      h('label', { id: 'car-tenor-l', text: 'Term — what each path finances at this amount (live, from the engine)' }),
+      h('div', { class: 'plan-list car-tenors', id: 'car-tenors', role: 'radiogroup', 'aria-labelledby': 'car-tenor-l' }),
+      h('div', { class: 'car-hint', id: 'car-tenor-hint', text: 'Each row: documents only (salary certificate + AECB) beside what Open Finance finances — a pure quote (quoteCar), nothing recorded until you decide. Regulatory cap: 60 months.' })));
+    form.appendChild(h('div', { class: 'consent-box' },
+      h('input', { type: 'checkbox', id: 'car-c-aecb', onchange: function () { Car.renderTenors(); } }),
+      h('label', { for: 'car-c-aecb' }, h('div', { class: 'cb-title', text: 'AECB credit bureau check — required' }),
+        h('div', { class: 'cb-legal', text: 'I consent to Noor requesting my credit report and score from Al Etihad Credit Bureau (Federal Law 6/2010). Mandatory before any loan: no consent record → no pull → no decision.' }))));
+    form.appendChild(h('div', { class: 'consent-box car-of' },
+      h('span', { class: 'car-switch' }, h('input', { type: 'checkbox', id: 'car-c-of', role: 'switch', onchange: function () { Car.renderTenors(); } }), h('span', { class: 'cs-track', 'aria-hidden': 'true' })),
+      h('label', { for: 'car-c-of' }, h('div', { class: 'cb-title', text: 'Open Finance — connect your accounts (Al Tareq) · optional' }),
+        h('div', { class: 'cb-legal', text: 'Share 12 months of account data through the Al Tareq consent layer (CBUAE Open Finance): Mizan verifies your salary and the rent you receive, and reads your spending and repayments. Read-only, revocable any time. Without it, the instant decision counts the salary on your certificate only.' }))));
+    form.appendChild(lenderShareNote('car-c-lender'));
+    form.appendChild(h('div', { id: 'car-consent-err', 'aria-live': 'polite' }));
+    form.appendChild(h('div', { class: 'btnrow', style: 'margin-top:12px;' },
+      h('button', { class: 'btn btn-primary car-decide', id: 'car-submit', type: 'button', text: 'Decide', onclick: function () { Car.submit(); } }),
+      h('span', { class: 'small muted', text: 'POST /decisions · product car_loan · a real DecisionRecord' })));
+    return form;
+  },
+  /* Back to Karim's default application: AED 180,000 over 60 months, AECB ticked, Open Finance on */
+  reset: function () {
+    var p = Car.sel = carPersona(); if (!p) return;
+    Car.rec = null; Car.pendingId = null; Car.exec = null;
+    Car.amount = p.defaultRequest.amount; Car.months = p.defaultRequest.tenorMonths;
+    var a = $('#car-c-aecb'), o = $('#car-c-of');
+    if (a) a.checked = true;
+    if (o) o.checked = true;
+    Car.syncAmount(); Car.renderTenors();
+    clear($('#car-consent-err'));
+    Car.clearOutputs();
+    var orch = clear($('#car-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(h('div', { class: 'small muted', text: 'Ready — decide ' + firstName(p.name) + '’s car loan to run the pulls: AECB, then connected accounts (with Open Finance) or the salary certificate (without).' }));
+  },
+  clearOutputs: function () {
+    var d = clear($('#car-decision'));
+    d.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Decision' }),
+      h('div', { class: 'small muted', text: 'The decision appears here — outcome, NoorScore, the offer, and what Open Finance changed.' })));
+    ['#car-uplift', '#car-found', '#car-how', '#car-kfs', '#car-exec'].forEach(function (s) { clear($(s)); });
+  },
+  consents: function () { return { aecb: !!($('#car-c-aecb') || {}).checked, openFinance: !!($('#car-c-of') || {}).checked }; },
+  setAmount: function (val) {
+    var mn = currentParams('car_loan').minAmount || 20000, mx = Car.maxAmount();
+    var n = Math.round(Number(val) / 1000) * 1000;
+    if (!isNum(n)) n = mx;
+    Car.amount = Math.max(mn, Math.min(mx, n));
+    Car.syncAmount(); Car.renderTenors();
+  },
+  syncAmount: function () {
+    var a = $('#car-amount'), n = $('#car-amount-n');
+    if (a) a.value = String(Car.amount);
+    if (n) n.value = String(Car.amount);
+    var v = (Car.sel && Car.sel.vehicleQuote) || {}, dp = $('#car-dp-line');
+    if (dp && v.priceAed) dp.textContent = 'If approved in full: down payment ' + fmtAED(v.priceAed - Car.amount) + ' (' + Math.round((v.priceAed - Car.amount) / v.priceAed * 100) + '% of ' + fmtAED(v.priceAed) + ')';
+  },
+  setMonths: function (n) { Car.months = n; Car.renderTenors(); },
+  /* Live, per term: what the documents path and the Open Finance path finance at this amount (ME.quoteCar — pure) */
+  renderTenors: function () {
+    var box = $('#car-tenors'); if (!box) return;
+    clear(box);
+    var cons = Car.consents();
+    CAR_TENORS.forEach(function (n) {
+      var q = null, blocked = false;
+      try { q = ME.quoteCar({ applicant: Car.sel, amount: Car.amount, tenorMonths: n, consents: cons }); } catch (e) { blocked = true; }
+      var up = q && q.openFinanceUplift;
+      var docs = up ? up.documentsOnly : (q ? q.row : null);
+      var sel = n === Car.months;
+      var main = blocked ? 'Tick the AECB consent to see what Mizan can finance'
+        : (up ? 'Documents only ' + (docs.outcome === 'APPROVE' ? fmtAED(docs.approved) : docs.outcome)
+          : (docs.outcome === 'APPROVE' ? 'Documents only — Open Finance off' : 'Documents only — ' + docs.outcome));
+      var pay = blocked ? '—' : (up ? (up.openFinance.outcome === 'APPROVE' ? fmtAED(up.openFinance.approved) : up.openFinance.outcome)
+        : (docs.outcome === 'APPROVE' ? fmtAED(docs.approved) : docs.outcome));
+      var fee = blocked ? '' : (up ? (up.upliftAed > 0 ? signedAED(up.upliftAed) + ' with Open Finance' : 'with Open Finance') : 'salary certificate + AECB');
+      box.appendChild(h('button', { class: 'plan-row car-tenor' + (sel ? ' sel' : ''), type: 'button', id: 'car-tenor-' + n, role: 'radio', 'aria-checked': sel ? 'true' : 'false',
+        dataset: { months: String(n), docs: docs ? String(docs.approved) : '', of: up ? String(up.openFinance.approved) : '', uplift: up ? String(up.upliftAed) : '' },
+        onclick: function () { Car.setMonths(n); } },
+        h('span', { class: 'pr-dot', 'aria-hidden': 'true' }),
+        h('span', { class: 'pr-main' }, h('span', { class: 'pr-name', text: n + ' months' }), h('span', { class: 'pr-apr', text: main })),
+        h('span', { class: 'pr-right' }, h('span', { class: 'pr-pay', text: pay }), h('span', { class: 'pr-fee', text: fee }))));
+    });
+  },
+  submit: function () {
+    var errBox = clear($('#car-consent-err'));
+    var c = Car.consents(), rec;
+    try {
+      rec = ME.decide({ productId: 'car_loan', applicant: Car.sel, amount: Car.amount, tenorMonths: Car.months, consents: c });
+    } catch (err) {
+      /* Expected engine refusals (consent, vehicle) render inline — never the fatal banner */
+      errBox.appendChild(h('div', { class: 'callout callout-error', dataset: { blocked: c.aecb ? 'engine' : 'consent' } },
+        h('div', { class: 'co-title', text: c.aecb ? 'Engine rejected the application' : 'Decision blocked — AECB consent missing' }),
+        h('div', { class: 'co-body' }, h('code', { text: err && err.message ? err.message : String(err) }),
+          c.aecb ? null : h('div', { class: 'small', style: 'margin-top:4px;', text: 'Federal Law 6/2010 requires the customer’s consent before a credit report is requested, and a bureau check is mandatory before any loan. No consent record → no pull → no decision.' }))));
+      return;
+    }
+    Car.rec = null; Car.pendingId = rec.id; Car.exec = null;
+    Car.clearOutputs();
+    var orch = clear($('#car-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(pullsTimeline(rec, { onDone: function () { if (Car.pendingId === rec.id) Car.showDecision(rec); } }));
+    afterEngineMutation();
+  },
+  showDecision: function (rec) {
+    Car.rec = rec;
+    Car.renderDecision(rec); Car.renderUplift(rec); Car.renderFound(rec); Car.renderHow(rec); Car.renderKfs(rec);
+    clear($('#car-exec'));
+    if (rec.outcome === 'APPROVE') {
+      Car.exec = buildExecPanel(rec, 'car-exec', { onEvent: function (r) { Car.rec = r; },
+        executedNote: lenderName() + ' pays the dealer and the car is released with the mortgage registered. The consumer-protection audit can replay approval → offer → KFS → e-sign → repayment set-up → cooling-off → disbursement end to end. ' });
+    }
+  },
+  renderDecision: function (rec) {
+    var box = clear($('#car-decision'));
+    var p = Car.sel || rec.applicantSnapshot || {}, f = rec.features || {}, k = rec.pricing && rec.pricing.kfs, s = rec.score || {};
+    var panel = h('div', { class: 'panel', id: 'car-decision-panel', dataset: { id: rec.id, outcome: rec.outcome, approved: String(rec.limit.approved) } });
+    panel.appendChild(h('h3', { text: 'Decision' }));
+    panel.appendChild(outcomeBanner(rec, (p.name || '') + ' · ' + fmtAED(rec.request.amount) + ' over ' + rec.request.tenorMonths + ' months · ' +
+      (f.openFinance ? 'with Open Finance (Al Tareq)' : 'documents only — salary certificate + AECB')));
+    var band = noorBand(s.points);
+    panel.appendChild(h('div', { class: 'ns-block car-ns', id: 'car-ns', dataset: { noorscore: isNum(s.points) ? String(s.points) : '', band: band || '' } },
+      h('div', { class: 'ns-head' },
+        h('span', { class: 'grade-chip', text: s.grade || '—', 'aria-label': 'Internal risk grade ' + (s.grade || 'unknown') }),
+        h('span', { class: 'ns-lbl', text: 'NoorScore' }), h('span', { class: 'ns-val', text: isNum(s.points) ? String(s.points) : '—' }), bandChip(band),
+        h('span', { class: 'small muted', text: f.salaryVerifiedViaConnectedAccount ? 'incl. +15 — salary verified in connected accounts' : 'bureau score + factor adjustments' }))));
+    if (rec.outcome !== 'DECLINE' && k) {
+      var fig = function (key, label, value, sub) {
+        return h('div', { class: 'os', dataset: { fig: key } }, h('div', { class: 'os-l', text: label }), h('div', { class: 'os-v', text: value }), h('div', { class: 'os-s', text: sub || '' }));
+      };
+      panel.appendChild(h('div', { class: 'offer-strip car-figs', id: 'car-figs' },
+        fig('approved', rec.outcome === 'REFER' ? 'Provisional amount' : 'Approved amount', fmtAED(rec.limit.approved), carBindWord(rec.limit.bindingConstraint, f.ltvCapPct, f.dbrPct)),
+        fig('apr', 'APR', fmtRate(k.rateMid), 'mid-band · grade ' + (rec.pricing.band || '—')),
+        fig('instalment', 'Monthly instalment', fmtMoney(k.monthlyInstalment), k.tenorMonths + ' months'),
+        fig('total', 'Total repayable', fmtMoney(k.totalRepayable), 'interest ' + fmtMoney(k.totalInterest)),
+        fig('downPayment', 'Down payment', fmtAED(k.downPayment), 'paid to the dealer'),
+        fig('ltv', 'Loan-to-value', fmtLtv(k.ltvPct), 'cap ' + (f.ltvCapPct || 80) + '% (Reg 29/2011)')));
+      if (rec.outcome === 'APPROVE' && rec.repayment) panel.appendChild(repaymentLine(rec.repayment, { id: 'car-repay' }));
+    }
+    panel.appendChild(h('div', { class: 'dgrid car-trace', id: 'car-trace' }, h('h4', { class: 'car-sub-h', text: 'Limit — binding-constraint trace' }), limitBlock(rec)));
+    if (rec.outcome === 'REFER') {
+      panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
+        h('div', { class: 'co-title', text: 'Routed to the refer workbench' }),
+        h('div', { class: 'co-body' }, 'A structured case with the full pre-assembled file is in the analyst queue (car-loan SLA: 8 hours). ',
+          h('button', { class: 'btn btn-ghost', type: 'button', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
+    }
+    if (rec.outcome === 'DECLINE') {
+      panel.appendChild(h('div', { class: 'callout callout-error', style: 'margin-top:12px;' }, h('div', { class: 'co-title', text: 'No offer' }),
+        h('div', { class: 'co-body', text: 'The reasons below are the ones the customer receives, in English and Arabic.' })));
+    }
+    if ((rec.reasonCodes || []).length) {
+      panel.appendChild(h('div', { id: 'car-reasons', style: 'margin-top:12px;' }, h('div', { class: 'small muted', style: 'margin-bottom:4px;', text: 'Reason codes — customer-safe, English + Arabic' }),
+        rec.reasonCodes.map(function (c) { return reasonLine(c); })));
+    }
+    box.appendChild(panel);
+  },
+  /* The hero: the same application on both evidence paths, from rec.openFinanceUplift (engine-computed, pure) */
+  renderUplift: function (rec) {
+    var box = clear($('#car-uplift'));
+    var up = rec.openFinanceUplift, f = rec.features || {};
+    if (!up) {
+      if (f.openFinance) return;
+      var pct = (currentParams('car_loan').regularIncomeCountedPct);
+      box.appendChild(h('div', { class: 'panel car-cta', id: 'car-cta-panel' },
+        h('h3', { text: 'What Open Finance could change' }),
+        h('div', { class: 'callout callout-info', id: 'car-cta' },
+          h('div', { class: 'co-title', text: 'Connect your accounts — verified rental income could raise this' }),
+          h('div', { class: 'co-body', text: 'This decision counted the salary on the certificate only (' + fmtAED(f.incomeCounted) + '/month). Declared rental income is not verifiable in an instant decision; with Open Finance (Al Tareq), Mizan reads 12 months of rent actually landing and counts ' + (isNum(pct) ? pct : 75) + '% of it.' }),
+          h('div', { class: 'btnrow', style: 'margin-top:10px;' },
+            h('button', { class: 'btn btn-primary car-decide', id: 'car-cta-connect', type: 'button', text: 'Connect accounts and re-decide',
+              onclick: function () { var o = $('#car-c-of'); if (o) o.checked = true; Car.renderTenors(); Car.submit(); } }),
+            h('span', { class: 'small muted', text: 'Al Tareq consent · read-only · revocable any time' })))));
+      return;
+    }
+    var d = up.documentsOnly, o = up.openFinance;
+    var panel = h('div', { class: 'panel car-uplift', id: 'car-uplift-panel', dataset: { uplift: String(up.upliftAed), docs: String(d.approved), of: String(o.approved), tenor: String(up.tenorMonths) } });
+    panel.appendChild(h('h3', null, 'What Open Finance changed ', h('span', { class: 'h3-note', text: '— same application, same rules, two evidence paths' })));
+    function col(cls, label, row, extra) {
+      return h('div', { class: 'car-col ' + cls, id: 'car-col-' + cls, dataset: { approved: String(row.approved), outcome: row.outcome } },
+        h('div', { class: 'cc-l', text: label }),
+        h('div', { class: 'cc-v', text: row.outcome === 'APPROVE' ? fmtAED(row.approved) : row.outcome }),
+        h('div', { class: 'cc-s', text: carPathText(row, up) }),
+        h('div', { class: 'cc-x', text: extra }));
+    }
+    panel.appendChild(h('div', { class: 'car-cols' },
+      col('docs', 'Documents only — salary certificate + AECB', d, 'income counted ' + fmtAED(d.incomeCounted) + '/mo · DBR ' + fmtPct(d.dbrPct, 2) + (isNum(d.monthlyInstalment) ? ' · ' + fmtMoney(d.monthlyInstalment) + '/mo' : '')),
+      col('of', 'With Open Finance', o, 'income counted ' + fmtAED(o.incomeCounted) + '/mo · DBR ' + fmtPct(o.dbrPct, 2) + (isNum(o.monthlyInstalment) ? ' · ' + fmtMoney(o.monthlyInstalment) + '/mo' : ''))));
+    var flat = up.upliftAed === 0;
+    panel.appendChild(h('div', { class: 'car-plus-row' },
+      h('span', { class: 'car-plus' + (flat ? ' flat' : ''), id: 'car-plus', text: flat ? 'Same amount either way' : signedAED(up.upliftAed) + ' financed' }),
+      h('p', { class: 'car-why', id: 'car-why', text: up.explanation })));
+    var scaleMax = up.vehiclePrice || Math.max(d.approved, o.approved, up.ltvMaxAmount) || 1;
+    var ltvPos = Math.max(0, Math.min(100, up.ltvMaxAmount / scaleMax * 100));
+    function bar(cls, label, amount) {
+      var w = Math.max(0, Math.min(100, amount / scaleMax * 100));
+      return h('div', { class: 'car-bar-row', dataset: { path: cls, amount: String(amount) } },
+        h('span', { class: 'cb-l', text: label }),
+        h('span', { class: 'car-track' }, h('span', { class: 'car-fill ' + cls, style: 'width:' + w.toFixed(2) + '%;' }),
+          h('span', { class: 'car-ltv-line', style: 'left:' + ltvPos.toFixed(2) + '%;' })),
+        h('span', { class: 'cb-v', text: fmtAED(amount) }));
+    }
+    panel.appendChild(h('div', { class: 'car-bars', id: 'car-bars', role: 'img',
+      'aria-label': 'Documents only ' + fmtAED(d.approved) + ', with Open Finance ' + fmtAED(o.approved) + ', against the ' + fmtAED(up.ltvMaxAmount) + ' loan-to-value maximum of a ' + fmtAED(scaleMax) + ' vehicle' },
+      h('div', { class: 'car-bars-head' }, h('span', { text: 'Financed, on the scale of the vehicle price (' + fmtAED(scaleMax) + ')' }),
+        h('span', { class: 'car-ltv-key', text: up.ltvCapPct + '% LTV line · ' + fmtAED(up.ltvMaxAmount) })),
+      bar('docs', 'Documents only', d.approved),
+      bar('of', 'With Open Finance', o.approved)));
+    var dl = h('ul', { class: 'car-drivers', id: 'car-drivers', 'aria-label': 'What drove the difference' });
+    (up.drivers || []).forEach(function (t) { dl.appendChild(h('li', { text: t })); });
+    panel.appendChild(dl);
+    box.appendChild(panel);
+  },
+  renderFound: function (rec) {
+    var box = clear($('#car-found'));
+    if (!rec.openFinanceFindings) return;
+    box.appendChild(h('div', { class: 'panel car-found', id: 'car-found-panel' },
+      h('h3', null, 'What Open Finance found ', h('span', { class: 'h3-note', text: '— the evidence behind the decision' })),
+      scopeBanner('internal', 'car-found-banner', 'Internal — never sent to the lender.', 'Noor-only working figures from 12 months of connected accounts; the lender of record receives bands and flags in the credit memo.'),
+      carFindingsList(rec.openFinanceFindings)));
+  },
+  renderHow: function (rec) {
+    var box = clear($('#car-how'));
+    var panel = h('div', { class: 'panel', id: 'car-how-panel' });
+    panel.appendChild(h('h3', null, 'How Mizan decided ', h('span', { class: 'h3-note', text: '— the shared engine, the car-loan pack v' + rec.policyVersion + ': every rule, regulatory and policy' })));
+    var rl = h('div', { class: 'car-how-grid', id: 'car-rules' });
+    rl.appendChild(h('div', null, h('div', { class: 'car-rules-h', text: 'NoorScore & grade' }), scoreBlock(rec)));
+    [['REGULATORY', 'Regulatory — locked (CBUAE Reg 29/2011 · Federal Law 6/2010)'], ['POLICY', 'Policy — the car-loan pack']].forEach(function (g) {
+      var list = h('div', { class: 'rule-list', dataset: { category: g[0] } });
+      (rec.rules || []).filter(function (r) { return r.category === g[0]; }).forEach(function (r) {
+        list.appendChild(h('div', { class: 'rule-item', dataset: { rule: r.id, result: r.result } },
+          h('div', { class: 'ri-head' }, h('strong', { class: 'res-' + r.result, text: r.result }), h('code', { class: 'small', text: r.id })),
+          h('div', { class: 'small', text: r.name || '' }),
+          h('div', { class: 'small muted', text: 'observed ' + fmtSummaryVal(r.observed) + ' · threshold ' + fmtSummaryVal(r.threshold) })));
+      });
+      rl.appendChild(h('div', { class: 'car-rule-col', dataset: { category: g[0] } }, h('div', { class: 'car-rules-h', text: g[1] }), list));
+    });
+    panel.appendChild(rl);
+    box.appendChild(panel);
+  },
+  renderKfs: function (rec) {
+    var box = clear($('#car-kfs'));
+    var panel = h('div', { class: 'panel', id: 'car-kfs-panel' });
+    panel.appendChild(h('h3', { text: 'KFS preview — feeds the Key Facts Statement (AR + EN)' }));
+    var k = rec.pricing && rec.pricing.kfs, lender = lenderName();
+    if (rec.outcome !== 'APPROVE' || !k) {
+      panel.appendChild(h('div', { class: 'small muted', text: rec.outcome === 'REFER' ? 'No KFS yet — the application is with a credit analyst.' : 'No KFS — the application was declined; the reasons above are the ones the customer receives.' }));
+    } else {
+      var reg = currentReg('car_loan');
+      var sec = String(k.security || reg.security || 'Vehicle mortgage registered with the RTA in favour of the lender').replace('the lender', lender);
+      var ins = String(k.insurance || 'Comprehensive motor insurance with the lender as loss payee').replace('the lender', lender);
+      var rv = rec.request.vehicle || {};
+      panel.appendChild(h('div', { class: 'kfs car-kfs', id: 'car-kfs-tiles' },
+        kfTile('lender', 'Lender', lender, 'lender of record · arranged by Noor'),
+        kfTile('vehiclePrice', 'Vehicle price', fmtAED(k.vehiclePrice), rv.quoteRef ? 'quote ' + rv.quoteRef : 'dealer quote'),
+        kfTile('downPayment', 'Down payment', fmtAED(k.downPayment), 'paid to the dealer'),
+        kfTile('ltv', 'Loan-to-value', fmtLtv(k.ltvPct), 'cap ' + (reg.ltvCapPct || 80) + '% (Reg 29/2011)'),
+        kfTile('apr', 'APR', fmtRate(k.rateMid), 'band ' + fmtRate(rec.pricing.rateMin) + ' – ' + fmtRate(rec.pricing.rateMax)),
+        kfTile('monthlyInstalment', 'Monthly instalment', fmtMoney(k.monthlyInstalment), 'reducing balance'),
+        kfTile('payments', 'Number of payments', String(k.tenorMonths), 'monthly'),
+        kfTile('totalRepayable', 'Total repayable', fmtMoney(k.totalRepayable), 'principal ' + fmtAED(k.principal)),
+        kfTile('totalInterest', 'Total interest', fmtMoney(k.totalInterest), 'total cost of credit'),
+        kfTile('earlySettlement', 'Early-settlement fee cap', k.earlySettlementFeeCap || '—', 'Reg 29/2011'),
+        kfTile('coolingOff', 'Cooling-off', (k.coolingOffDays || reg.coolingOffDays || 5) + ' days', 'business days, waivable in writing'),
+        h('div', { class: 'kf kf-wide', dataset: { kfs: 'security' } }, h('span', { class: 'kf-l', text: 'Security' }), h('span', { class: 'kf-v', text: sec })),
+        h('div', { class: 'kf kf-wide', dataset: { kfs: 'insurance' } }, h('span', { class: 'kf-l', text: 'Insurance' }), h('span', { class: 'kf-v', text: ins })),
+        repaymentKfsTile(rec.repayment)));
+      if (rec.token) {
+        var carLine = /motor insurance|with the RTA|^Down payment of/;
+        var conds = h('ul', { class: 'car-conds', id: 'car-conditions' });
+        (rec.token.conditions || []).forEach(function (c) { conds.appendChild(h('li', carLine.test(c) ? { class: 'car-specific', text: c } : { text: c })); });
+        panel.appendChild(h('div', { style: 'margin-top:12px;' },
+          h('div', { class: 'small muted', text: 'Approval token ' + rec.token.id + ' — conditions before the car is released (◆ = car-specific):' }), conds));
+      }
+    }
+    panel.appendChild(h('div', { class: 'btnrow car-links' },
+      h('button', { class: 'btn', type: 'button', id: 'car-memo-link', text: 'Open the lender’s memo →', onclick: function () { Lender.open(rec.id); } }),
+      h('button', { class: 'btn btn-ghost', type: 'button', id: 'car-log-link', text: 'Open in the Decision log →', onclick: function () { showScreen('log'); LogScreen.select(rec.id); } })));
+    box.appendChild(panel);
+  }
+};
 /* ================= Credit upgrade — starter loan → upgrade (Addendum v2.1) ================= */
 /* APR as a short percentage: 0.35 → "35%", 0.426 → "42.6%" */
 function fmtApr(r) { return !isNum(r) ? '—' : String(Number((r * 100).toFixed(2))) + '%'; }
@@ -3318,7 +3828,14 @@ var REG_CITES = {
   feeDisclosure: 'CPR 8/2020 + Consumer Protection Standards — monthly fee and APR equivalent in the KFS',
   earlySettlementFeeCap: 'CBUAE Reg 29/2011 — early-settlement fee ≤ 1% of outstanding, max AED 10,000'
 };
-var REG_CITES_BY_PRODUCT = { salary_advance: { tenorCapMonths: 'Single repayment from the next salary credit (1 month) — product structure, engine-enforced' } };
+var REG_CITES_BY_PRODUCT = { salary_advance: { tenorCapMonths: 'Single repayment from the next salary credit (1 month) — product structure, engine-enforced' },
+  /* v2.7 — the car-loan pack: the same DBR, plus the loan-to-value primitive and the security */
+  car_loan: {
+    dbrCapPct: 'CBUAE Reg 29/2011 — DBR ≤ 50% of salary and other regular income; the car loan sits inside the same 50% as every other instalment, credit cards included',
+    ltvCapPct: 'CBUAE Reg 29/2011 — car loan ≤ 80% of the vehicle’s value (no 20× salary multiple — the loan-to-value cap does that job), double-enforced by the engine',
+    tenorCapMonths: 'CBUAE Reg 29/2011 — car-loan tenor ≤ 60 months',
+    security: 'CBUAE Reg 29/2011 — secured by a mortgage over the car, registered with the RTA in favour of the lender'
+  } };
 /* Editable-parameter metadata — bounds mirror the engine's enforced PARAM_BOUNDS (the engine re-validates on simulate and publish) */
 var PARAM_META = {
   split: {
@@ -3355,6 +3872,22 @@ var PARAM_META = {
     minOnTimeStarterRepayments: ['On-time starter repayments required', 1, 6, 1],
     tokenValidityDays: ['Offer validity (days)', 1, 30, 1]
   },
+  car_loan: {
+    minSalary: ['Minimum monthly salary (AED)', 4000, 25000, 500],
+    minAge: ['Minimum age', 18, 25, 1],
+    maxAge: ['Maximum age', 60, 70, 1],
+    scoreDecline: ['AECB score — decline below', 550, 720, 5],
+    scoreRefer: ['AECB score — refer below (must be ≥ decline cut-off)', 600, 780, 5],
+    minMonthsInUae: ['Minimum months in UAE', 0, 24, 1],
+    chequeReturnsMax: ['Max cheque returns (12m)', 0, 5, 1],
+    minAmount: ['Minimum loan amount (AED)', 5000, 100000, 1000],
+    productCap: ['Product cap (AED)', 100000, 2000000, 50000],
+    maxVehicleAgeYears: ['Max age of a used vehicle (years)', 0, 10, 1],
+    regularIncomeCountedPct: ['Verified regular income counted toward DBR (%) — Open Finance only', 0, 100, 5],
+    regularIncomeMinMonths: ['Connected history needed to count regular income (months)', 12, 24, 1],
+    instalmentToFcfMaxPct: ['Max instalment as % of free cash flow (when spending is seen)', 10, 80, 5],
+    tokenValidityDays: ['Offer validity (days)', 3, 30, 1]
+  },
   salary_advance: {
     pctOfSalary: ['Advance as % of verified salary', 50, 90, 5],
     capAmount: ['Advance cap (AED)', 5000, 25000, 500],
@@ -3386,9 +3919,10 @@ function fmtParamVal(v) {
   if (typeof v === 'number' && v > 0 && v < 0.5) return fmtRate(v);
   return String(v);
 }
-function fmtRegVal(v) {
+function fmtRegVal(v, k) {
   if (Array.isArray(v)) return v.join(' / ') + ' months';
   if (typeof v === 'boolean') return v ? 'required' : 'no';
+  if (typeof v === 'number' && /Pct$/.test(k || '')) return v + '%';
   return String(v);
 }
 var Policy = {
@@ -3431,7 +3965,7 @@ var Policy = {
     Object.keys(reg).forEach(function (k) {
       tb.appendChild(h('tr', { class: 'lockrow' },
         h('td', null, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), h('code', { text: k })),
-        h('td', { class: 'num', text: fmtRegVal(reg[k]) }),
+        h('td', { class: 'num', text: fmtRegVal(reg[k], k) }),
         h('td', { class: 'muted small', text: byP[k] || REG_CITES[k] || 'Regulatory primitive' })));
     });
     /* Platform rule (v2.3) — the same locked row on every product pack */
@@ -3633,8 +4167,10 @@ var Policy = {
     var box = clear($('#pc-sim'));
     box.appendChild(h('h3', { text: 'Simulate before publish — replay the synthetic book' }));
     var sb = MD.sampleBook || {};
-    var n = Policy.pid === 'split' ? (sb.split || []).length + ' split' : (Policy.pid === 'starter_loan' ? (sb.starter_loan || []).length + ' starter-loan' : (sb.personal_loan || []).length + ' personal-loan');
-    var tryIt = Policy.pid === 'starter_loan' ? 'Try lowering the enhanced tier’s APR at max tenor: outcomes stay put, and the pricing impact shows what it does to APRs and partner income.' : 'Try raising the decline cut-off.';
+    var n = Policy.pid === 'split' ? (sb.split || []).length + ' split' : (Policy.pid === 'starter_loan' ? (sb.starter_loan || []).length + ' starter-loan'
+      : (Policy.pid === 'car_loan' ? (sb.car_loan || []).length + ' car-loan' : (sb.personal_loan || []).length + ' personal-loan'));
+    var tryIt = Policy.pid === 'starter_loan' ? 'Try lowering the enhanced tier’s APR at max tenor: outcomes stay put, and the pricing impact shows what it does to APRs and partner income.'
+      : (Policy.pid === 'car_loan' ? 'Try setting regularIncomeCountedPct to 0: the rows with verified rent lose it — one approval shrinks, one becomes a decline.' : 'Try raising the decline cut-off.');
     box.appendChild(h('p', { class: 'small muted', text: 'Runs the draft parameters against the seeded application sample (' + n + ' applications) and diffs outcomes against the live pack — the console never publishes blind. ' + tryIt }));
     box.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', id: 'pc-sim-run', text: 'Run simulation', onclick: function () {
       var res;
@@ -3686,6 +4222,18 @@ var Policy = {
       box.appendChild(h('div', { id: 'pc-sim-pricing', class: 'pi-tiles' },
         h('strong', { class: 'small', text: 'Pricing impact — at each approved customer’s default option (largest amount, longest term that fits)' }),
         h('div', { class: 'tbl-scroll', style: 'margin-top:4px;' }, pt)));
+    }
+    if (result.amountImpact) {
+      var ai = result.amountImpact;
+      var dAmt = ai.approvedAmountAfter - ai.approvedAmountBefore;
+      box.appendChild(h('div', { id: 'pc-sim-amounts', class: 'pi-tiles' },
+        h('strong', { class: 'small', text: 'Amount impact — most car-loan policy changes move amounts, not outcomes' }),
+        h('div', { class: 'tbl-scroll', style: 'margin-top:4px;' }, h('table', { class: 'tbl' },
+          h('thead', null, h('tr', null, h('th', { text: 'Measure' }), h('th', { class: 'num', text: 'Live pack' }), h('th', { class: 'num', text: 'Draft' }), h('th', { class: 'num', text: 'Change' }))),
+          h('tbody', null,
+            h('tr', { dataset: { k: 'approvedAmount' } }, h('td', { text: 'Approved amount, all approvals' }), h('td', { class: 'num nowrap', text: fmtAED(ai.approvedAmountBefore) }),
+              h('td', { class: 'num nowrap', text: fmtAED(ai.approvedAmountAfter) }), h('td', { class: 'num nowrap', text: (dAmt > 0 ? '+' : (dAmt < 0 ? '−' : '±')) + fmtAED(Math.abs(dAmt)) })),
+            h('tr', { dataset: { k: 'reduced' } }, h('td', { text: 'Approvals reduced / raised' }), h('td', { class: 'num', text: '—' }), h('td', { class: 'num', text: ai.approvalsReduced + ' / ' + ai.approvalsRaised }), h('td', { class: 'num', text: '' })))))));
     }
     var flips = result.flips || [];
     if (flips.length) {
@@ -3816,6 +4364,7 @@ function caseFile(rec) {
   if (rec.productId === 'split' && rec.applicantSnapshot && rec.applicantSnapshot.connected) {
     wrap.appendChild(h('div', { style: 'margin-bottom:12px;' }, h('h3', { text: 'Income vs spending — connected accounts' }), cashFlowCallouts(rec), cashFlowChart(rec.applicantSnapshot, { name: nameOf(rec) })));
   }
+  if (rec.productId === 'car_loan') wrap.appendChild(carCaseBlock(rec));
   if (rec.homeStatements) {
     wrap.appendChild(h('div', { style: 'margin-bottom:12px;' }, h('h3', { text: 'Home-country statements — parsed findings (as read for this decision)' }),
       statementsParsePanel(rec.homeStatements, { instant: true, noSkip: true, title: 'Parsed' })));
@@ -3839,7 +4388,7 @@ var Workbench = {
   build: function () {
     var root = clear($('#scr-workbench'));
     root.appendChild(screenHead('Human judgment, designed in', 'Refer workbench',
-      'Queues with SLAs (split 4h, personal loan 8h, salary advance 4h). The analyst opens a complete pre-assembled file — connected-account data, features, every rule fired, score, limit trace — and can ask for evidence (6 months of home-country statements) that Mizan re-decides on, or override with a reason code and a mandatory second approver.'));
+      'Queues with SLAs (split 4h, personal loan 8h, car loan 8h, salary advance 4h). The analyst opens a complete pre-assembled file — connected-account data, features, every rule fired, score, limit trace — and can ask for evidence (6 months of home-country statements) that Mizan re-decides on, or override with a reason code and a mandatory second approver.'));
     root.appendChild(h('div', { class: 'panel', id: 'wb-queue' }));
     root.appendChild(h('div', { id: 'wb-case', style: 'margin-top:14px;' }));
     Workbench.refresh();
@@ -4297,6 +4846,14 @@ function memoTermsTiles(m) {
   var tiles = [];
   if (isNum(t.amount)) tiles.push(kfTile('amount', 'Amount', fmtAED(t.amount), m.product.nameEn));
   else if (isNum(t.offerUpTo)) tiles.push(kfTile('amount', 'Offer', 'up to ' + fmtAED(t.offerUpTo), 'customer still choosing'));
+  /* v2.7 — the vehicle (dealer-quote data, exact figures allowed) */
+  if (t.vehicle) {
+    var tv = t.vehicle;
+    tiles.push(kfTile('vehicle', 'Vehicle', [tv.category, tv.condition === 'NEW' ? 'new' : (tv.condition === 'USED' ? 'used' : null), tv.modelYear].filter(Boolean).join(' · '), 'dealer quote'));
+    tiles.push(kfTile('vehiclePrice', 'Vehicle price', fmtAED(tv.priceAed), 'secured by a vehicle mortgage (RTA)'));
+    tiles.push(kfTile('ltv', 'Loan-to-value', fmtLtv(tv.ltvPct), 'cap 80% (Reg 29/2011)'));
+    tiles.push(kfTile('downPayment', 'Down payment', fmtAED(tv.downPayment), 'paid to the dealer'));
+  }
   if (isNum(t.planMonths)) tiles.push(kfTile('term', 'Plan', 'Pay in ' + t.planMonths, t.planMonths + ' monthly instalments'));
   else if (isNum(t.tenorMonths)) tiles.push(kfTile('term', 'Term', monthsTxt(t.tenorMonths), 'equal monthly instalments'));
   else if (isNum(t.maxTenorMonths)) tiles.push(kfTile('term', 'Term', 'up to ' + monthsTxt(t.maxTenorMonths), 'customer still choosing'));
@@ -4355,12 +4912,13 @@ function memoDoc(m) {
     (ns.factors && ns.factors.length) ? h('div', { class: 'ns-factors' }, h('span', { class: 'ns-fl', text: 'What moved it' }), factors) : null));
   body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Affordability — bands, never figures' }), memoKv([
       ['Income', af.incomeBand || 'Not verified', 'income'], ['Debt burden incl. this loan', af.dbrBand, 'dbr'],
-      ['Free cash flow', af.freeCashFlowBand || 'Not assessed for this product', 'fcf'], ['Instalment / free cash flow', af.instalmentToCashFlowBand || '—', 'share'],
+      ['Free cash flow', af.freeCashFlowBand || (m.product.productId === 'car_loan' ? 'Not assessed — spending not seen (salary certificate path)' : 'Not assessed for this product'), 'fcf'], ['Instalment / free cash flow', af.instalmentToCashFlowBand || '—', 'share'],
       ['Income verified via', af.incomeVerifiedVia, 'via']])));
   body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Bureau & verification — flags' }), memoKv([
       ['AECB checked', bu.aecbChecked ? 'Yes' : 'No', 'aecb'], ['AECB score band', bu.aecbScoreBand, 'aecbBand'], ['Delinquency', bu.delinquencyFlag, 'delinquency'],
       ['Returned cheques', bu.chequeReturnsFlag, 'cheques'], ['Home-country bureau', bu.homeCountryFile, 'cpass'], ['Identity', ve.identity, 'identity'],
-      ['Home-country statements', ve.homeStatements, 'statements'], ['Purchase', ve.purchaseVerified, 'purchase']])));
+      ['Home-country statements', ve.homeStatements, 'statements'], ['Purchase', ve.purchaseVerified, 'purchase'],
+      ['Other income', ve.otherIncome, 'otherIncome'], ['Down-payment source', ve.downPaymentSource, 'downPaymentSource']])));
   var rc = h('div', { class: 'memo-rc' });
   if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
   d.reasonCodes.forEach(function (c) {
@@ -5418,7 +5976,8 @@ var RC_SHORT = {
   RC_DELINQUENCY: 'Past-due history', RC_CHEQUE_RETURNS: 'Returned cheques', RC_SALARY_FLOOR: 'Income below minimum',
   RC_PURCHASE_UNVERIFIED: 'Purchase not verified', RC_AGE: 'Age outside range', RC_THIN_FILE: 'Thin credit file',
   RC_INCOME_VOLATILITY: 'Income too volatile', RC_CONNECTED_HISTORY: 'Too little connected history', RC_INCOME_UNVERIFIED: 'Income not verified',
-  RC_TENOR_CAP: 'Term outside permitted', RC_MANUAL_REVIEW: 'Manual review', RC_LIMIT_REDUCED: 'Amount reduced'
+  RC_TENOR_CAP: 'Term outside permitted', RC_MANUAL_REVIEW: 'Manual review', RC_LIMIT_REDUCED: 'Amount reduced',
+  RC_LTV_CAP: 'Limited to 80% of vehicle value', RC_VEHICLE_INELIGIBLE: 'Vehicle not eligible', RC_BELOW_MIN_AMOUNT: 'Below product minimum'
 };
 var Monitoring = {
   build: function () {
@@ -5428,6 +5987,7 @@ var Monitoring = {
     root.appendChild(h('div', { class: 'tiles', id: 'mn-tiles' }));
     root.appendChild(h('div', { class: 'stack' },
       h('div', { class: 'panel', id: 'mn-ew' }),
+      h('div', { class: 'panel', id: 'mn-products' }),
       h('div', { class: 'panel', id: 'mn-daily' }),
       h('div', { class: 'mn-grid' },
         h('div', { class: 'panel', id: 'mn-reasons' }),
@@ -5443,6 +6003,7 @@ var Monitoring = {
     if (!m) { clear($('#mn-tiles')).appendChild(h('div', { class: 'callout callout-error', text: 'metrics() unavailable.' })); return; }
     Monitoring.tiles(m);
     Monitoring.earlyWarning(m);
+    Monitoring.products(m);
     Monitoring.daily(m);
     Monitoring.reasons(m);
     Monitoring.grades(m);
@@ -5501,6 +6062,26 @@ var Monitoring = {
     t.appendChild(tb);
     box.appendChild(h('div', { class: 'tbl-scroll' }, t));
     box.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'Consented connected accounts surface distress the day it starts — goal contributions stopping, a remittance spike, a new home-country credit line, a late salary, balance depletion — and the response is same-day and calm, before DPD 30 ever prints.' }));
+  },
+  /* Every product the engine reports (v2.7: the car-loan pack appears with this session's decisions — a new pack has no seeded history) */
+  products: function (m) {
+    var box = clear($('#mn-products'));
+    if (!box) return;
+    box.appendChild(h('h3', { text: 'Decisions by product — 90d seeded history + this session' }));
+    var bp = m.byProduct || {};
+    var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
+      h('th', { text: 'Product' }), h('th', { class: 'num', text: 'Decisions' }), h('th', { class: 'num', text: 'Approve' }), h('th', { class: 'num', text: 'Refer' }),
+      h('th', { class: 'num', text: 'Decline' }), h('th', { class: 'num', text: 'STP' }))));
+    var tb = h('tbody');
+    Object.keys(bp).forEach(function (pid) {
+      var b = bp[pid];
+      tb.appendChild(h('tr', { dataset: { product: pid } },
+        h('td', null, h('span', { class: 'chip prod-chip', text: productLabel(pid, true) }), pid === 'car_loan' ? h('span', { class: 'small muted', text: ' new pack — no seeded history' }) : null),
+        h('td', { class: 'num', text: fmtN(b.decisions) }), h('td', { class: 'num', text: fmtN(b.APPROVE) }), h('td', { class: 'num', text: fmtN(b.REFER) }),
+        h('td', { class: 'num', text: fmtN(b.DECLINE) }), h('td', { class: 'num', text: b.decisions ? fmtPct(b.stpPct, 1) : '—' })));
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { class: 'tbl-scroll' }, t));
   },
   daily: function (m) {
     var box = clear($('#mn-daily'));
@@ -5647,7 +6228,7 @@ var Monitoring = {
     });
     svg.appendChild(S('line', { x1: padL, x2: W - padR, y1: padT + plotH, y2: padT + plotH, style: 'stroke:var(--axis);stroke-width:1;' }));
     box.appendChild(h('div', { class: 'chart-box' }, svg));
-    box.appendChild(h('div', { class: 'small muted', text: 'SLAs: split 4h, salary advance 4h, personal loan 8h — anything past 24h is a hard breach.' }));
+    box.appendChild(h('div', { class: 'small muted', text: 'SLAs: split 4h, salary advance 4h, personal loan 8h, car loan 8h — anything past 24h is a hard breach.' }));
     box.appendChild(tableView(['Bucket', 'Count'], rows.map(function (r) { return [r.bucket, r.count]; })));
   },
   vintages: function (m) {

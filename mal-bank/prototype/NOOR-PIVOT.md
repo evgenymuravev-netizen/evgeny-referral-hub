@@ -846,3 +846,65 @@ Built as JOURNEY-SPEC.md specifies, revised by the orchestrator's update from th
 - **Optional teaser built.** A read-only botim AI chat ("You made 3 large purchases on your Botim Card recently…"),
   opened from the ask bar and labelled "Next: split in chat (needs a 1-month 'repay next month' plan — not in the
   engine yet)". It calls no engine function and shows no prices; split plans stay 3 / 6 / 12.
+
+### As built — v2.7
+
+Built as CAR-LOAN-SPEC.md specifies (selftest 1123 green, of which the 997 earlier checks; acceptance 532 green,
+11 screens). Every number in the spec's table reproduces exactly from the engine — no rounding-cent differences:
+documents only AED 150,000 · 2,795.77 × 60 · 167,746.25 · DBR 49.99% · NoorScore 780 A · down payment 75,000;
+Open Finance AED 180,000 · 3,354.93 × 60 · 201,295.50 · DBR 44.55% (51.23% on salary alone) · NoorScore 795 A ·
+down payment 45,000 · 20.6% of FCF 16,300; uplift +AED 30,000; 36 months: 94,000 → 180,000. Decisions and
+deviations:
+
+- **Engine (additive).**
+  - `car_loan` is appended fifth to `MANIFESTS`, so the four existing products keep their positions. The selftest's
+    manifest-order and pricing-mode checks were extended to five products (as v2.1 did for four); the acceptance
+    script's screen list, "10 screens" and "8 demo steps" checks were updated to 11 and 9.
+  - `evaluateCar` reuses `normalizeLoan` + `loanScore`; hard ceilings live in `HARD_CAR` (LTV 80%, 60 months).
+    Besides the spec's rules it records `POL_INCOME_VERIFIED` and `POL_SCORE_REFER`, as the personal loan does.
+  - **Binding on a tie.** When the request equals the 80% LTV maximum, `pickMin` would record `REQUESTED`; the car
+    loan records `LTV_CAP` instead, because the slider's maximum is the LTV cap. RC_LTV_CAP is emitted whenever the
+    request exceeds the LTV maximum; RC_LIMIT_REDUCED only when something other than the LTV cap reduced it.
+  - Every limit candidate is floored to AED 1,000 (the request too, per the spec); trace rows carry their `key` so
+    the UI marks the binding row by key.
+  - **Open Finance works both ways.** With consent, obligations are the larger of AECB and what the accounts show
+    leaving every month (Karim: 19,700 = 19,700, "reconciled"). Free cash flow and POL_INSTALMENT_TO_FCF apply only
+    when spending is seen.
+  - Regular income counts only on the Open Finance path, with ≥ `regularIncomeMinMonths` of history and every
+    receipt on schedule, matching the tenancy, at the expected count (MONTHLY 12, QUARTERLY 4); v2.7's regular
+    income is rental.
+  - `record.openFinanceUplift` is built by a pure re-evaluation with `openFinance:false` (no record, no clock tick);
+    besides the spec's fields it carries `explanation` (the "51.23% … 44.55%" line), `salaryOnlyDbrPct` and the LTV
+    figures. `record.openFinanceFindings` (internal) holds what the accounts showed; `record.request.vehicle` holds
+    the quote. Neither reaches the memo.
+  - New pure API `quoteCar(application)`: the same evaluation and uplift with no record and no tick, consent-bound
+    (AECB required; the Open Finance path only with Open Finance consent). The screen's tenor rows use it.
+  - Token conditions add insurance and the RTA mortgage (naming the lender of record) and the record's down payment;
+    an override approval gets them too.
+  - PARAM_BOUNDS: `regularIncomeMinMonths` [12, 24] (unspecified — 12 months is the evidence the policy rests on);
+    the personal-loan-like bounds otherwise.
+  - Monitoring: `car_loan` is in every product iteration with **no seeded history** — a new pack counts this
+    session's decisions only, so the seeded numbers of the other products are unchanged.
+  - Sample book: 17 hand-written rows (8 approve · 3 refer · 6 decline), each exercising one rule.
+    `regularIncomeCountedPct` 0 shrinks CL-001 and flips CL-002 to a decline; `simulateBook('car_loan')` also returns
+    `amountImpact` (approved amount before/after), since most car-loan policy changes move amounts, not outcomes.
+- **Persona.** a1's `connected.incomeVolatilityPct` is 0: the salary is identical every month and the rent is
+  scheduled. The raw monthly series (45,000 / 72,000) has a stdev/mean of 23.6%; the car evaluation does not read
+  volatility.
+- **Credit memo.** Car memos add `terms.vehicle` (dealer-quote figures), `verification.otherIncome` and
+  `verification.downPaymentSource`, one shared line and one withheld group; other products' memos are unchanged.
+  Documents-path flags (not specified): "Declared other income not counted — not verifiable in an instant decision"
+  and "Own funds — declared, not verified". The privacy scan matches whole numbers, so AED 180,000 never trips
+  18,000.
+- **UI.**
+  - New "Car loan" screen after Personal loan. Tenor rows show each path's amount live from `quoteCar`; nothing is
+    recorded until Decide.
+  - The binding trace sits in the decision panel. The rules (REGULATORY / POLICY) and the NoorScore breakdown moved to
+    a full-width "How Mizan decided" panel below the two columns, so the columns stay balanced. KFS and execution
+    follow.
+  - The uplift bars are CSS only, scaled to the vehicle price with the LTV line at 80%.
+  - The Decision log and the Workbench case file show the v2.4 evidence strip for car decisions, plus the findings.
+  - Monitoring gains a "Decisions by product" table.
+  - The policy console shows `…Pct` regulatory values with a `%` on every pack.
+  - The overview demo step is Step 9 (appended), so existing steps keep their numbers.
+  - The Noor skin `<style>` block is byte-identical; all CSS sits under "Noor additions".

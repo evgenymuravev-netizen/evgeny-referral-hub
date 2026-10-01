@@ -9,6 +9,11 @@
  *                    home-country statements, v2.4) offers more for less — the customer
  *                    picks amount × tenor on an APR curve that falls with tenor
  *   salary_advance — single-repayment advance against the next salary, flat fee
+ *   car_loan       — secured amortising loan against a vehicle mortgage (Addendum
+ *                    v2.7, ../CAR-LOAN-SPEC.md): a new policy pack on the shared
+ *                    layer, not a new engine — it adds one primitive (loan-to-value
+ *                    ≤ 80% of the vehicle's value) and one evidence rule (regular
+ *                    income counts only when verified through Open Finance)
  * Binding spec: ../NOOR-PIVOT.md (overrides ../CONTRACT.md where they conflict;
  * Addendum v2.1 covers the starter-loan upgrade).
  *
@@ -63,6 +68,9 @@
   // carries the same values; the engine takes min(policy, HARD) so even a
   // mis-configured pack can never loosen them.
   const HARD = { dbrCapPct: 50, dbrCapRetireePct: 30, salaryMultipleCap: 20, tenorCapMonths: 48 };
+  // Car loan (v2.7, Reg 29/2011): ≤ 80% of the vehicle's value, tenor ≤ 60 months. No
+  // salary multiple — the loan-to-value cap does that job for a secured car loan.
+  const HARD_CAR = { ltvCapPct: 80, tenorCapMonths: 60 };
   const SPLIT_PLAN_MONTHS = [3, 6, 12];  // the only permitted split terms
   const CASH_FLOW_PROXY_BASE = 640;      // scorecard base on the AECB no-hit cash-flow path
 
@@ -102,7 +110,8 @@
         personal_loan: 'Funds credited to the customer\'s account',
         split: 'Purchase amount credited back — freed cash routed to the customer\'s goal',
         salary_advance: 'Advance credited to the customer\'s account',
-        starter_loan: 'Upgraded loan credited to the customer\'s account'
+        starter_loan: 'Upgraded loan credited to the customer\'s account',
+        car_loan: 'Partner Bank pays the dealer; the car is released with the mortgage registered'
       },
       guard: 'funds must be disbursed to complete the sequence' }
   };
@@ -115,7 +124,10 @@
     { productId: 'starter_loan', nameEn: 'Starter loan', nameAr: 'قرض البداية',
       segment: 'CONSUMER', structure: 'Short amortising loan with an upgrade path', pricingMode: 'TENOR_CURVE_APR' },
     { productId: 'salary_advance', nameEn: 'Salary advance', nameAr: 'سلفة على الراتب',
-      segment: 'CONSUMER', structure: 'Single-repayment advance', pricingMode: 'FLAT_FEE' }
+      segment: 'CONSUMER', structure: 'Single-repayment advance', pricingMode: 'FLAT_FEE' },
+    // Addendum v2.7 — appended last so the four existing products keep their positions.
+    { productId: 'car_loan', nameEn: 'Car loan', nameAr: 'قرض سيارة',
+      segment: 'CONSUMER', structure: 'Secured amortising loan (vehicle mortgage)', pricingMode: 'BANDED_APR' }
   ];
 
   // ---------------------------------------------------------------------------
@@ -176,6 +188,22 @@
         regulatory: { dbrCapPct: 50, aecbCheckRequired: true, tenorCapMonths: 1 },
         params: { pctOfSalary: 80, capAmount: 13500, flatFee: 50, minSalary: 5000,
                   scoreDecline: 600, tokenValidityDays: 7 }
+      },
+      // Car loan (Addendum v2.7). Reuses the personal-loan scorecard, DBR, BANDED_APR
+      // pricing, repayment routing, the 6-step execution and the credit memo; adds the
+      // loan-to-value primitive and the Open Finance regular-income rule.
+      car_loan: {
+        productId: 'car_loan', version: 1,
+        publishedAt: null, publishedBy: 'system (default pack)', approvedBy: 'system',
+        regulatory: { dbrCapPct: 50, dbrCapRetireePct: 30, ltvCapPct: 80, tenorCapMonths: 60, aecbCheckRequired: true, coolingOffDays: 5,
+                      earlySettlementFeeCap: '1% of outstanding or AED 10,000',
+                      security: 'Vehicle mortgage registered with the RTA in favour of the lender' },
+        params: { minSalary: 8000, minAge: 21, maxAge: 65, scoreDecline: 620, scoreRefer: 680, minMonthsInUae: 6, chequeReturnsMax: 1,
+                  minAmount: 20000, productCap: 750000, maxVehicleAgeYears: 5, regularIncomeCountedPct: 75, regularIncomeMinMonths: 12,
+                  instalmentToFcfMaxPct: 50,
+                  // Annual interest rate, reducing balance, by grade band (secured: below the personal loan).
+                  pricingBands: { A: [0.0399, 0.0499], B: [0.0549, 0.0649], C: [0.0749, 0.0899] },
+                  tokenValidityDays: 14 }
       }
     };
     // Platform rules (v2.3) ride on every pack, read-only.
@@ -197,7 +225,12 @@
                       minSalary: [3000, 15000], scoreDecline: [550, 700], tokenValidityDays: [3, 14] },
     starter_loan: { minAmount: [100, 2000], amountStep: [50, 500], instalmentToFcfMaxPct: [10, 80],
                     minIncomeHistoryMonthsEnhanced: [3, 36], minOnTimeStarterRepayments: [1, 6],
-                    tokenValidityDays: [1, 30] }
+                    tokenValidityDays: [1, 30] },
+    car_loan: { minSalary: [4000, 25000], minAge: [18, 25], maxAge: [60, 70],
+                scoreDecline: [550, 720], scoreRefer: [600, 780], minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5],
+                minAmount: [5000, 100000], productCap: [100000, 2000000], maxVehicleAgeYears: [0, 10],
+                regularIncomeCountedPct: [0, 100], regularIncomeMinMonths: [12, 24], instalmentToFcfMaxPct: [10, 80],
+                tokenValidityDays: [3, 30] }
   };
   // Bounds for the starter loan's nested params ({starter}, {tiers.enhanced|base}).
   // APRs are annual decimals; months must be whole numbers.
@@ -260,9 +293,18 @@
       personal_loan: [KFS_CONDITION, repay, 'Credit life & job-loss cover offered (optional)'],
       split: [KFS_CONDITION, repay],
       salary_advance: [KFS_CONDITION, repay, ADVANCE_CONDITION],
-      starter_loan: [KFS_CONDITION, repay, UPGRADE_CHOICE_PENDING]
+      starter_loan: [KFS_CONDITION, repay, UPGRADE_CHOICE_PENDING],
+      // car_loan: the security lines follow in tokenFor (they name the lender and the down payment)
+      car_loan: [KFS_CONDITION, repay]
     };
     return (byProduct[productId] || [KFS_CONDITION, repay]).filter(Boolean);
+  }
+  // Car loan (v2.7): insurance and the RTA mortgage name the lender of record; the
+  // down-payment line carries the figure from the decision record.
+  function carConditions(lenderName, downPayment) {
+    return ['Comprehensive motor insurance with ' + lenderName + ' as loss payee',
+            'Vehicle mortgage registered with the RTA in favour of ' + lenderName,
+            'Down payment of ' + aed(downPayment) + ' paid to the dealer'];
   }
 
   // ---------------------------------------------------------------------------
@@ -1755,11 +1797,389 @@
              effTenor: limit.planMonths, tier: outcome === 'DECLINE' ? null : TIER, upgrade };
   }
 
-  function evaluate(productId, rawApplicant, amount, tenorMonths, pol, consents, statements) {
+  // ---------------------------------------------------------------------------
+  // Car loan (Addendum v2.7, CAR-LOAN-SPEC.md) — a policy pack on the shared layer.
+  //
+  // Reuses normalizeLoan + loanScore (grade from the existing bands), the DBR cap,
+  // BANDED_APR pricing at the mid-band rate, repayment routing, the 6-step execution
+  // and the credit memo. Adds one primitive and one evidence rule:
+  //   loan-to-value   approved ≤ 80% of the vehicle's value (Reg 29/2011); tenor ≤ 60
+  //                   months; no 20× salary multiple (that cap is for personal loans —
+  //                   the loan-to-value cap does that job for a secured car loan)
+  //   regular income  counts toward DBR ONLY with Open Finance consent, and only when
+  //                   the connected accounts show ≥ regularIncomeMinMonths (12) of history
+  //                   and every receipt on schedule, matching the tenancy, with the
+  //                   expected count (MONTHLY 12, QUARTERLY 4); counted at the pack's
+  //                   regularIncomeCountedPct (75%). On the documents path (salary
+  //                   certificate + AECB) declared other income is not counted — it is
+  //                   not verifiable in an instant decision.
+  //   income counted = salary + Σ counted regular income   (Karim: 45,000 + 75% × 9,000 = 51,750)
+  //   obligations    = AECB; with Open Finance, the larger of AECB and what the accounts
+  //                    show leaving every month (Open Finance works both ways)
+  // Limit = min(requested, 80% LTV, DBR-headroom PV, free-cash-flow PV [spending seen],
+  //   product cap), each floored to AED 1,000; PVs at the mid-band rate over the
+  //   effective tenor:
+  //     DBR headroom = dbrCap% × income counted − obligations           (30% retirees)
+  //     FCF budget   = instalmentToFcfMaxPct% × (connected income − spending − obligations)
+  //   A request exactly at the LTV maximum records LTV_CAP as binding (it is the cap
+  //   that bounds the request, as the slider's maximum).
+  // DBR on the record = (obligations + instalment) ÷ income counted, 2 dp; the same
+  // ratio on salary alone is kept (dbrPctSalaryOnly) for the "what Open Finance changed" line.
+  // ---------------------------------------------------------------------------
+  const CAR_RECEIPTS_EXPECTED = { MONTHLY: 12, QUARTERLY: 4, SEMI_ANNUAL: 2, ANNUAL: 1 };
+  const CAR_FREQ_WORD = { MONTHLY: 'monthly', QUARTERLY: 'quarterly', SEMI_ANNUAL: 'half-yearly', ANNUAL: 'annual' };
+  const CAR_INCOME_WORD = { RENTAL: ['Rental income', 'rent'] };
+  const incomeWord = (type) => CAR_INCOME_WORD[type] || ['Regular income', 'regular income'];
+  function carVehicle(v) {
+    if (!v || typeof v !== 'object' || !Number.isFinite(v.priceAed) || v.priceAed <= 0 ||
+        typeof v.condition !== 'string' || !v.condition || !Number.isInteger(v.modelYear)) {
+      throw err('a car loan needs the vehicle quote (price, condition, model year)');
+    }
+    const condition = v.condition.toUpperCase();
+    if (condition !== 'NEW' && condition !== 'USED') throw err('vehicle condition must be NEW or USED (got "' + v.condition + '")');
+    return { category: v.category || null, condition, modelYear: v.modelYear, priceAed: v.priceAed,
+             dealer: v.dealer || null, quoteRef: v.quoteRef || null, validUntil: v.validUntil || null };
+  }
+  // Persona (employment / aecb / bankData / connected / vehicleQuote) or a sampleBook.car_loan row.
+  // The connected block is carried as-is; evaluateCar reads it only on the Open Finance path.
+  function normalizeCar(a) {
+    const p = normalizeLoan(a);
+    const cn = a.connected || null;
+    const accounts = cn && Array.isArray(cn.accounts) ? cn.accounts : [];
+    p.salaryCertificate = a.bankData ? a.bankData.salaryCertificate === true : (a.salaryCertificate !== undefined ? !!a.salaryCertificate : true);
+    p.openFinanceOnRow = a.openFinance === true;      // simulation rows record the consent on the row
+    p.vehicleQuote = a.vehicleQuote || a.vehicle || null;
+    p.car = cn ? {
+      source: cn.source || 'ALTAREQ_TPP', banks: (cn.banks || []).slice(), months: cn.monthsAvailable || 0,
+      income: Number.isFinite(cn.avgMonthlyIncome) ? cn.avgMonthlyIncome : null,
+      spend: Number.isFinite(cn.avgMonthlySpend) ? cn.avgMonthlySpend : null,
+      observedObligations: Number.isFinite(cn.observedObligationsMonthly) ? cn.observedObligationsMonthly : null,
+      observedObligationsLabel: cn.observedObligationsLabel || null,
+      salarySeen: cn.salaryDetected !== undefined ? cn.salaryDetected === true
+                : (accounts.length ? accounts.some(x => x.salaryAccount === true) : !!cn.salaryCredits),
+      salaryCredits: cn.salaryCredits ? clone(cn.salaryCredits) : null,
+      regularIncome: clone(cn.regularIncome || []),
+      accounts: accounts.length,
+      balances: accounts.length ? accounts.reduce((s, x) => s + (Number.isFinite(x.balance) ? x.balance : 0), 0) : null
+    } : null;
+    return p;
+  }
+  function evaluateCar(p, amount, tenorMonths, pol, consents, vehicleIn) {
+    const reg = pol.regulatory, prm = pol.params;
+    const rs = makeRuleSet();
+    const v = carVehicle(vehicleIn || p.vehicleQuote);
+    const cn = p.car;
+    // Open Finance path: the customer's consent (simulation rows carry it on the row) and
+    // a connected block to read. Without it the documents path decides.
+    const ofGranted = consents ? consents.openFinance === true : p.openFinanceOnRow;
+    const ofPath = ofGranted && !!cn && cn.source === 'ALTAREQ_TPP' && cn.months > 0;
+    const connectedSalary = ofPath && p.salaryDetected && cn.salarySeen;
+    const documentsSalary = p.salaryDetected && p.salaryCertificate;
+    const salaryVerified = connectedSalary || documentsSalary;
+
+    // ---- Income counted: salary always; regular income only when verified via Open Finance ----
+    const pct = prm.regularIncomeCountedPct;
+    const streams = ofPath ? cn.regularIncome.map(r => {
+      const expected = CAR_RECEIPTS_EXPECTED[r.frequency] || 12;
+      const receipts = Number.isFinite(r.receipts12m) ? r.receipts12m : 0;
+      const freq = CAR_FREQ_WORD[r.frequency] || 'regular';
+      const why = cn.months < prm.regularIncomeMinMonths
+        ? 'only ' + cn.months + ' months of connected history (needs ' + prm.regularIncomeMinMonths + ')'
+        : (receipts < expected ? receipts + ' of ' + expected + ' ' + freq + ' receipts in 12 months'
+          : (r.onSchedule !== true ? 'receipts not on schedule' : (r.matchesTenancy !== true ? 'receipts do not match the tenancy' : null)));
+      const monthly = Number.isFinite(r.monthlyEquivalent) ? r.monthlyEquivalent : 0;
+      const verified = why === null;
+      return { type: r.type || 'OTHER', label: r.label || null, frequency: r.frequency || null, freq, receipts, expected,
+               amountPerReceipt: Number.isFinite(r.amountPerReceipt) ? r.amountPerReceipt : null, account: r.account || null,
+               monthlyEquivalent: monthly, verified, notCountedBecause: why,
+               countedMonthly: verified ? Math.round(monthly * pct / 100) : 0 };
+    }) : [];
+    const regularVerified = streams.filter(s => s.verified).reduce((x, s) => x + s.monthlyEquivalent, 0);
+    const regularCounted = streams.reduce((x, s) => x + s.countedMonthly, 0);
+    const incomeCounted = p.salaryMonthly + regularCounted;
+
+    // ---- Obligations: AECB; with Open Finance the larger of AECB and what leaves the accounts ----
+    const seenObl = ofPath && cn.observedObligations !== null ? cn.observedObligations : null;
+    const obligations = seenObl !== null ? Math.max(p.obligationsMonthly, seenObl) : p.obligationsMonthly;
+    const reconciled = seenObl === null ? null : seenObl <= p.obligationsMonthly;
+
+    // ---- Tenor ≤ 60 months (Reg 29/2011); over-cap requests are clamped ----
+    const tenorCap = Math.min(reg.tenorCapMonths, HARD_CAR.tenorCapMonths);
+    const effTenor = Math.min(tenorMonths, tenorCap);
+    const clamped = tenorMonths > tenorCap;
+
+    // ---- Scorecard v0 (the personal-loan card): +15 when the salary is seen in connected accounts ----
+    const score = loanScore(p, false, connectedSalary);
+    const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
+
+    // ---- Limit ----
+    const dbrCap = dbrCapFor(reg, p.retiree);
+    const band = gradeToBand(score.grade) || 'C';      // a thin file is priced provisionally at C
+    const bandRange = prm.pricingBands[band];
+    const midRate = (bandRange[0] + bandRange[1]) / 2;
+    const i = midRate / 12;
+    const over = ' · over ' + effTenor + ' months at ' + pctStr(round4(midRate));
+    const headroom = Math.round((dbrCap / 100) * incomeCounted - obligations);
+    const maxByDbr = headroom > 0 ? floor1000(pvAnnuity(headroom, i, effTenor)) : 0;
+    const ltvCapPct = Math.min(reg.ltvCapPct, HARD_CAR.ltvCapPct);
+    const maxByLtv = floor1000((ltvCapPct / 100) * v.priceAed);
+    const fcfSeen = ofPath && cn.income !== null && cn.spend !== null;
+    const fcf = fcfSeen ? Math.round(cn.income - cn.spend - obligations) : null;
+    const fcfBudget = fcfSeen ? Math.max(0, Math.floor((prm.instalmentToFcfMaxPct / 100) * fcf)) : null;
+    const maxByFcf = fcfSeen ? (fcfBudget > 0 ? floor1000(pvAnnuity(fcfBudget, i, effTenor)) : 0) : null;
+    const incomeTxt = regularCounted > 0
+      ? '(salary ' + grp(p.salaryMonthly) + streams.filter(s => s.countedMonthly > 0)
+          .map(s => ' + ' + pct + '% of ' + incomeWord(s.type)[1] + ' ' + grp(s.monthlyEquivalent)).join('') + ')'
+      : '(salary only)';
+    const candidates = [
+      { label: 'Requested amount', value: floor1000(amount), key: 'REQUESTED' },
+      { label: 'Loan-to-value — ' + ltvCapPct + '% of the vehicle value ' + aed(v.priceAed) + ' (Reg 29/2011)', value: maxByLtv, key: 'LTV_CAP' },
+      { label: 'DBR headroom — ' + dbrCap + '% of ' + aed(incomeCounted) + ' ' + incomeTxt + ' − obligations ' + grp(obligations) +
+               (headroom > 0 ? ' = ' + aed(headroom) + '/month' + over : ' — no headroom left') + (p.retiree ? ' (retiree cap)' : ''),
+        value: maxByDbr, key: 'DBR' }
+    ];
+    if (fcfSeen) {
+      candidates.push({ label: 'Free cash flow — ' + prm.instalmentToFcfMaxPct + '% of ' + aed(fcf) + ' (income ' + grp(cn.income) + ' − spending ' +
+                               grp(cn.spend) + ' − obligations ' + grp(obligations) + ')' + (fcfBudget > 0 ? ' = ' + aed(fcfBudget) + '/month' + over : ' — nothing left'),
+                        value: maxByFcf, key: 'FCF' });
+    }
+    candidates.push({ label: 'Product cap', value: prm.productCap, key: 'PRODUCT_CAP' });
+    let { approved, binding } = pickMin(candidates);
+    if (binding === 'REQUESTED' && approved === maxByLtv) binding = 'LTV_CAP';
+    const approvedPre = approved;
+    const instalment = approvedPre > 0 ? round2(annuityPayment(approvedPre, i, effTenor)) : 0;
+    const dbrPct = incomeCounted > 0 ? round2(((obligations + instalment) / incomeCounted) * 100) : 999;
+    const dbrPctSalaryOnly = p.salaryMonthly > 0 ? round2(((obligations + instalment) / p.salaryMonthly) * 100) : 999;
+    const ltvPct = round2((approvedPre / v.priceAed) * 100);
+    const instalmentToFcfPct = fcfSeen && fcf > 0 ? Math.round((instalment / fcf) * 1000) / 10 : null;
+
+    // ---- Rules, in the addendum's order ----
+    rs.add('REG_AECB_CHECK', 'AECB consumer report pulled before credit decision', 'REGULATORY',
+           'PASS', p.aecbHit ? 'HIT' : 'NO_HIT', 'pull required');
+    rs.add('REG_TENOR_CAP', 'Tenor within the car-loan cap (Reg 29/2011)', 'REGULATORY',
+           'PASS', clamped ? tenorMonths + ' → clamped to ' + effTenor : tenorMonths, tenorCap, null);
+    if (clamped) rs.reason('RC_TENOR_CAP');
+    rs.add('REG_LTV_CAP', 'Car loan within ' + ltvCapPct + '% of the vehicle value (Reg 29/2011)', 'REGULATORY', 'PASS',
+           ltvPct + '% (' + aed(approvedPre) + ' of ' + aed(v.priceAed) + ')' + (amount > maxByLtv ? ' — request ' + aed(amount) + ' clamped to ' + aed(maxByLtv) : ''),
+           ltvCapPct + '%', null);
+    if (amount > maxByLtv) rs.reason('RC_LTV_CAP');
+    // Double enforcement: (obligations + instalment) ÷ income counted, never above the cap.
+    const dbrOk = headroom > 0 && dbrPct <= dbrCap;
+    rs.add('REG_DBR_CAP', 'Debt burden ratio incl. the car loan within ' + dbrCap + '% of salary and verified regular income (Reg 29/2011' +
+           (p.retiree ? ', retiree' : '') + ')', 'REGULATORY', dbrOk ? 'PASS' : 'FAIL',
+           dbrPct === 999 ? 'no income' : dbrPct.toFixed(2) + '% — (obligations ' + grp(obligations) + ' + instalment ' + money(instalment).slice(4) +
+             ') ÷ income counted ' + grp(incomeCounted),
+           dbrCap + '%', 'RC_DBR_EXCEEDED');
+    const ageOk = p.age >= prm.minAge && p.age <= prm.maxAge;
+    rs.add('POL_AGE', 'Applicant age within eligible range', 'POLICY',
+           ageOk ? 'PASS' : 'FAIL', p.age, prm.minAge + '–' + prm.maxAge, 'RC_AGE');
+    rs.add('POL_MIN_SALARY', 'Salary at or above product minimum', 'POLICY',
+           p.salaryMonthly >= prm.minSalary ? 'PASS' : 'FAIL', p.salaryMonthly, prm.minSalary, 'RC_SALARY_FLOOR');
+    rs.add('POL_MIN_MONTHS_UAE', 'Minimum UAE residency period', 'POLICY',
+           p.monthsInUae >= prm.minMonthsInUae ? 'PASS' : 'REFER', p.monthsInUae, prm.minMonthsInUae, 'RC_MANUAL_REVIEW');
+    rs.add('POL_INCOME_VERIFIED', 'Salary verified (salary certificate, or connected accounts with Open Finance)', 'POLICY',
+           salaryVerified ? 'PASS' : 'REFER',
+           connectedSalary ? 'verified — connected account' : (documentsSalary ? 'verified — salary certificate' : 'not verified'),
+           'verified', 'RC_INCOME_UNVERIFIED');
+    rs.add('POL_THIN_FILE', 'Credit file depth (thin-file strategy)', 'POLICY',
+           p.aecbHit ? 'PASS' : 'REFER', p.aecbHit ? 'file present' : 'no-hit / thin file', 'AECB hit', 'RC_THIN_FILE');
+    const delinq = p.worstDelinquency || 'NONE';
+    rs.add('POL_DELINQUENCY', 'Delinquency history acceptable', 'POLICY',
+           (delinq === 'DPD90' || delinq === 'WRITEOFF') ? 'FAIL' : (delinq === 'DPD30' ? 'REFER' : 'PASS'),
+           delinq, '≤ DPD30 refers, ≥ DPD90 declines', 'RC_DELINQUENCY');
+    rs.add('POL_CHEQUE_RETURNS', 'Returned cheques within tolerance', 'POLICY',
+           p.chequeReturns12m <= prm.chequeReturnsMax ? 'PASS' : 'FAIL',
+           p.chequeReturns12m, prm.chequeReturnsMax, 'RC_CHEQUE_RETURNS');
+    if (score.points !== null) {
+      const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
+      rs.add('POL_SCORE_CUTOFF', 'Score at or above decline cut-off (grade E auto-fails)', 'POLICY',
+             cutoffOk ? 'PASS' : 'FAIL', score.points + ' (' + (score.grade || '—') + ')', prm.scoreDecline, 'RC_SCORE_LOW');
+      const referOk = score.points >= prm.scoreRefer || overlayNet > 0;
+      rs.add('POL_SCORE_REFER', 'Score above refer line (or strong positive overlays)', 'POLICY',
+             cutoffOk ? (referOk ? 'PASS' : 'REFER') : 'PASS', score.points, prm.scoreRefer, 'RC_MANUAL_REVIEW');
+    } else {
+      rs.add('POL_SCORE_CUTOFF', 'Score at or above decline cut-off', 'POLICY', 'PASS', 'no score (thin file)', prm.scoreDecline, null);
+    }
+    const vehicleAge = Math.max(0, Number(D.TODAY.slice(0, 4)) - v.modelYear);
+    const vehicleAgeOk = v.condition === 'NEW' || vehicleAge <= prm.maxVehicleAgeYears;
+    const quoteOk = !v.validUntil || String(v.validUntil).slice(0, 10) >= D.TODAY;
+    rs.add('POL_VEHICLE', 'Vehicle eligible — new, or used up to ' + prm.maxVehicleAgeYears + ' years old; dealer quote not expired', 'POLICY',
+           vehicleAgeOk && quoteOk ? 'PASS' : 'FAIL',
+           [v.category, v.condition === 'NEW' ? 'new' : 'used', 'model year ' + v.modelYear +
+             (v.condition === 'USED' ? ' (' + vehicleAge + ' year' + (vehicleAge === 1 ? '' : 's') + ' old)' : '')].filter(Boolean).join(' · ') +
+             ' · quote ' + (v.validUntil ? (quoteOk ? 'valid until ' : 'expired ') + String(v.validUntil).slice(0, 10) : 'with no expiry date'),
+           'new, or used ≤ ' + prm.maxVehicleAgeYears + ' years; quote valid', 'RC_VEHICLE_INELIGIBLE');
+    rs.add('POL_MIN_AMOUNT', 'Loan at or above the product minimum', 'POLICY',
+           approvedPre >= prm.minAmount ? 'PASS' : 'FAIL',
+           aed(approvedPre) + (amount < prm.minAmount ? ' (requested ' + aed(amount) + ')' : ''), aed(prm.minAmount), 'RC_BELOW_MIN_AMOUNT');
+    // Informational: never changes the outcome — it says what the income counted is made of.
+    let riResult = 'INFO', riObserved;
+    if (!ofPath) riObserved = 'Declared other income not counted — not verifiable in an instant decision';
+    else if (!streams.length) riObserved = 'No other regular income seen in connected accounts';
+    else {
+      if (regularCounted > 0) riResult = 'PASS';
+      riObserved = streams.map(s => incomeWord(s.type)[0] + (s.verified
+        ? ' verified — ' + s.receipts + ' of ' + s.expected + ' ' + s.freq + ' receipts in 12 months' +
+          (s.type === 'RENTAL' ? ', matches the tenancy' : ', on schedule') + ' — counted at ' + pct + '%'
+        : ' not counted — ' + s.notCountedBecause)).join('; ');
+    }
+    rs.add('POL_REGULAR_INCOME', 'Other regular income counts toward DBR only when verified through Open Finance (informational)', 'POLICY',
+           riResult, riObserved, prm.regularIncomeMinMonths + ' months connected · every receipt on schedule · matches the tenancy · counted at ' + pct + '%', null);
+    if (fcfSeen) {
+      rs.add('POL_INSTALMENT_TO_FCF', 'Instalment within ' + prm.instalmentToFcfMaxPct + '% of free cash flow (spending seen in connected accounts)', 'POLICY',
+             fcf > 0 ? 'PASS' : 'FAIL',
+             fcf > 0 ? money(instalment) + '/month = ' + instalmentToFcfPct + '% of free cash flow ' + aed(fcf) + '/month'
+                     : 'free cash flow ' + aed(fcf) + '/month — nothing left for an instalment',
+             '≤ ' + prm.instalmentToFcfMaxPct + '%', 'RC_FREE_CASH_FLOW');
+    }
+
+    const outcome = outcomeFromRules(rs.rules);
+    if (outcome === 'DECLINE') approved = 0;
+    if (outcome === 'APPROVE') {
+      if (binding === 'DBR' && p.retiree) rs.reason('RC_RETIREE_CAP');
+      // Clamped to the LTV maximum: RC_LTV_CAP says why; any other reduction is affordability.
+      if (approved < floor1000(amount) && binding !== 'LTV_CAP') rs.reason('RC_LIMIT_REDUCED');
+    }
+    const downPayment = approved > 0 ? v.priceAed - approved : null;
+    const ownFundsCover = ofPath && cn.balances !== null && downPayment !== null ? cn.balances >= downPayment : null;
+    const firstStream = streams[0] || null;
+    const features = {
+      verifiedIncome: salaryVerified ? incomeCounted : null,
+      incomeCounted,
+      salaryMonthly: p.salaryMonthly,
+      incomeSource: connectedSalary ? 'ALTAREQ_TPP' : (documentsSalary ? 'DOCUMENTS' : 'UNVERIFIED'),
+      salaryVerifiedViaConnectedAccount: connectedSalary,
+      openFinance: ofPath,
+      connectedMonths: ofPath ? cn.months : null,
+      regularIncomeCategory: firstStream ? firstStream.type : null,
+      regularIncomeVerifiedMonthly: ofPath ? regularVerified : null,
+      regularIncomeCountedMonthly: regularCounted,
+      regularIncomeCountedPct: pct,
+      existingObligations: obligations,
+      aecbObligations: p.obligationsMonthly,
+      observedObligations: seenObl,
+      obligationsReconciled: reconciled,
+      esrPct: p.esrPct,
+      freeCashFlowMonthly: fcf,
+      instalmentToFcfPct,
+      dbrCapApplied: dbrCap, headroomMonthly: headroom, newInstallment: instalment, dbrPct, dbrPctSalaryOnly,
+      effectiveTenor: effTenor, scoreBase: score.base, overlayNet,
+      retiree: p.retiree, thinFile: !p.aecbHit,
+      vehiclePrice: v.priceAed, vehicleCondition: v.condition, vehicleModelYear: v.modelYear, vehicleAgeYears: vehicleAge,
+      ltvCapPct, ltvMaxAmount: maxByLtv, ltvPct: approved > 0 ? ltvPct : 0, downPayment,
+      downPaymentCoveredByOwnFunds: ownFundsCover
+    };
+    const limit = {
+      requested: amount, approved: outcome === 'DECLINE' ? 0 : approved,
+      bindingConstraint: binding,
+      // Keys ride on the trace so a UI can mark the binding row even when two candidates tie.
+      trace: candidates.map(c => ({ label: c.label, value: c.value, key: c.key }))
+    };
+    let pricing = null;
+    if (outcome !== 'DECLINE') {
+      const principal = limit.approved;
+      const inst = annuityPayment(principal, i, effTenor);
+      pricing = { mode: 'BANDED_APR', band, rateMin: bandRange[0], rateMax: bandRange[1],
+                  benchmark: 'EIBOR 3M + margin',
+                  kfs: { principal, tenorMonths: effTenor, rateMid: round4(midRate),
+                         monthlyInstalment: round2(inst),
+                         totalRepayable: round2(inst * effTenor),
+                         totalInterest: round2(inst * effTenor - principal),
+                         earlySettlementFeeCap: reg.earlySettlementFeeCap || null,
+                         coolingOffDays: reg.coolingOffDays || null,
+                         // v2.7 KFS additions — dealer-quote data and the security
+                         vehiclePrice: v.priceAed, downPayment: v.priceAed - principal,
+                         ltvPct: round2((principal / v.priceAed) * 100),
+                         security: reg.security || null,
+                         insurance: 'Comprehensive motor insurance with the lender as loss payee' } };
+    }
+    // What the connected accounts showed — internal (car screen, Decision log); never in the memo.
+    let findings = null;
+    if (ofPath) {
+      findings = [];
+      for (const s of streams) {
+        findings.push({ key: 'regularIncome', label: incomeWord(s.type)[0], status: s.countedMonthly > 0 ? 'PASS' : 'INFO',
+          observation: s.receipts + ' of ' + s.expected + ' ' + s.freq + ' receipts' + (s.amountPerReceipt !== null ? ' of ' + aed(s.amountPerReceipt) : '') +
+                       (s.account ? ' into ' + s.account : '') + (s.verified ? (s.type === 'RENTAL' ? ', on schedule, matches the tenancy' : ', on schedule') : ' — ' + s.notCountedBecause),
+          effect: s.countedMonthly > 0 ? 'Counted at ' + pct + '% → ' + aed(s.countedMonthly) + '/month of income for DBR'
+                : (s.verified ? 'Verified, counted at ' + pct + '%' : 'Not counted') });
+      }
+      const sc = cn.salaryCredits;
+      findings.push({ key: 'salary', label: 'Salary', status: connectedSalary ? 'PASS' : 'INFO',
+        observation: sc ? aed(sc.monthly) + ' every month' + (sc.account ? ' into ' + sc.account : '') + (sc.sameEmployer ? ' — same employer, ' + sc.months + ' months' : '')
+                        : (connectedSalary ? 'Salary credits seen every month' : 'No salary credit seen'),
+        effect: connectedSalary ? 'Salary verified in connected accounts → NoorScore +15' : 'Salary taken from the certificate' });
+      if (seenObl !== null) {
+        findings.push({ key: 'obligations', label: 'Obligations', status: reconciled ? 'PASS' : 'WARN',
+          observation: aed(seenObl) + '/month seen leaving the accounts' + (cn.observedObligationsLabel ? ' (' + cn.observedObligationsLabel.toLowerCase() + ')' : '') +
+                       (seenObl === p.obligationsMonthly ? ' = the AECB figure' : (reconciled ? ' — within the AECB figure' : ' — AECB shows ' + aed(p.obligationsMonthly))),
+          effect: reconciled ? 'Reconciled with AECB — nothing hidden' : 'The higher figure counts in DBR' });
+      }
+      if (ownFundsCover !== null) {
+        findings.push({ key: 'ownFunds', label: 'Source of funds', status: ownFundsCover ? 'PASS' : 'WARN',
+          observation: 'Balances across ' + cn.accounts + ' account' + (cn.accounts === 1 ? '' : 's') + (ownFundsCover ? ' cover' : ' do not cover') + ' the ' + aed(downPayment) + ' down payment',
+          effect: ownFundsCover ? 'Down payment from own funds — verified' : 'Down-payment source to be evidenced before release' });
+      }
+      if (fcfSeen) {
+        findings.push({ key: 'spending', label: 'Spending', status: fcf > 0 ? 'PASS' : 'WARN',
+          observation: '≈ ' + aed(cn.spend) + '/month',
+          effect: fcf > 0 ? 'Instalment ' + money(instalment) + ' = ' + instalmentToFcfPct + '% of free cash flow ' + aed(fcf) + '/month (≤ ' + prm.instalmentToFcfMaxPct + '%)'
+                          : 'No free cash flow left for an instalment' });
+      }
+    }
+    return { profile: p, features, rules: rs.rules, score, limit, pricing,
+             outcome, reasonCodes: rs.reasons, effTenor, car: { vehicle: v, streams, findings } };
+  }
+  // One path of the comparison, as the record and the UI show it.
+  function carRow(e) {
+    const f = e.features, ok = e.outcome !== 'DECLINE' && e.limit.approved > 0;
+    return { outcome: e.outcome, approved: e.outcome === 'DECLINE' ? 0 : e.limit.approved, bindingConstraint: e.limit.bindingConstraint,
+             monthlyInstalment: ok && e.pricing ? e.pricing.kfs.monthlyInstalment : null,
+             downPayment: ok ? f.downPayment : null, dbrPct: f.dbrPct, incomeCounted: f.incomeCounted,
+             ltvPct: ok ? f.ltvPct : null, apr: e.pricing ? e.pricing.kfs.rateMid : null,
+             noorScore: Number.isFinite(e.score.points) ? e.score.points : null, grade: e.score.grade, reasonCodes: e.reasonCodes.slice() };
+  }
+  // What Open Finance was worth: the same application re-evaluated with openFinance:false.
+  // Pure (the evidenceComparison pattern) — nothing stored, no clock tick.
+  function carUplift(applicant, amount, tenorMonths, pol, consents, vehicle, ev) {
+    const docs = evaluate('car_loan', applicant, amount, tenorMonths, pol, Object.assign({}, consents, { openFinance: false }), null, { vehicle });
+    const d = carRow(docs), o = carRow(ev);
+    const f = ev.features;
+    const counted = (ev.car.streams || []).filter(s => s.countedMonthly > 0);
+    const drivers = [];
+    for (const s of counted) drivers.push(incomeWord(s.type)[0] + ' verified — counted at ' + f.regularIncomeCountedPct + '% (' + aed(s.countedMonthly) + '/month)');
+    if (f.salaryVerifiedViaConnectedAccount) drivers.push('Salary verified in connected accounts');
+    if (f.obligationsReconciled === true) drivers.push('Obligations reconciled with AECB (no hidden debt)');
+    else if (f.obligationsReconciled === false) drivers.push('Obligations seen in connected accounts above the AECB figure — the higher one counts');
+    if (f.downPaymentCoveredByOwnFunds === true) drivers.push('Down payment covered by own funds in connected accounts');
+    const upliftAed = o.approved - d.approved;
+    const cap = f.dbrCapApplied;
+    const what = counted.length && counted.every(s => s.type === 'RENTAL') ? 'Verified rent' : 'Verified regular income';
+    let explanation;
+    if (upliftAed > 0 && counted.length && f.dbrPctSalaryOnly > cap) {
+      explanation = 'At ' + aed(o.approved) + ' the DBR on salary alone would be ' + f.dbrPctSalaryOnly.toFixed(2) + '% — over the ' + cap + '% cap. ' + what + ' adds ' +
+                    aed(f.regularIncomeCountedMonthly) + '/month of counted income and brings it to ' + f.dbrPct.toFixed(2) + '%.';
+    } else if (upliftAed > 0) {
+      explanation = 'Open Finance verified the salary in connected accounts: Mizan finances ' + aed(upliftAed) + ' more at a DBR of ' + f.dbrPct.toFixed(2) + '%.';
+    } else if (upliftAed === 0) {
+      explanation = 'Open Finance confirmed the same amount, ' + aed(o.approved) + ' — DBR ' + f.dbrPct.toFixed(2) + '%.';
+    } else {
+      explanation = 'The connected accounts showed more going out than the bureau file — the higher figure counts, so the amount is ' + aed(-upliftAed) + ' lower.';
+    }
+    return { tenorMonths: f.effectiveTenor, documentsOnly: d, openFinance: o,
+             upliftAed,
+             downPaymentSavedAed: d.downPayment !== null && o.downPayment !== null ? d.downPayment - o.downPayment : null,
+             dbrCapPct: cap, salaryOnlyDbrPct: f.dbrPctSalaryOnly, regularIncomeCountedMonthly: f.regularIncomeCountedMonthly,
+             ltvCapPct: f.ltvCapPct, ltvMaxAmount: f.ltvMaxAmount, vehiclePrice: f.vehiclePrice,
+             explanation, drivers };
+  }
+
+  function evaluate(productId, rawApplicant, amount, tenorMonths, pol, consents, statements, opts) {
     if (productId === 'starter_loan') return evaluateUpgrade(normalizeUpgrade(rawApplicant), amount, tenorMonths, pol, consents, statements);
     if (productId === 'split') return evaluateSplit(normalizeSplit(rawApplicant), amount, tenorMonths, pol);
     if (productId === 'personal_loan') return evaluateLoan(normalizeLoan(rawApplicant), amount, tenorMonths, pol, consents, statements);
     if (productId === 'salary_advance') return evaluateAdvance(normalizeLoan(rawApplicant), amount, tenorMonths, pol);
+    if (productId === 'car_loan') return evaluateCar(normalizeCar(rawApplicant), amount, tenorMonths, pol, consents, opts && opts.vehicle);
     throw err('unknown productId "' + productId + '"');
   }
 
@@ -1810,6 +2230,24 @@
                        chequeReturns12m: p.chequeReturns12m, worstDelinquency: p.worstDelinquency }
                    : { score: p.score, esrPct: p.esrPct, tradelines: p.tradelines,
                        obligationsMonthly: p.obligationsMonthly, worstDelinquency: p.worstDelinquency } });
+    // Car loan (v2.7): connected accounts when Open Finance is consented, else the salary certificate.
+    if (productId === 'car_loan') {
+      const f = ev.features, c = p.car;
+      if (f.openFinance) {
+        const streams = (ev.car && ev.car.streams) || [];
+        pulls.push({ source: 'OPEN_FINANCE', status: 'OK', latencyMs: pullLatency(seq, i++), cached: false,
+                     summary: { provider: 'Al Tareq (UAE Open Finance)', banks: c.banks.slice(), monthsAvailable: c.months,
+                                salaryDetected: f.salaryVerifiedViaConnectedAccount, avgSalaryCredit: p.salaryMonthly,
+                                regularIncome: streams.length ? streams.map(s => incomeWord(s.type)[0] + ' · ' + s.freq + ' · ' + s.receipts + ' of ' + s.expected +
+                                  ' receipts · ' + (s.verified ? 'verified' : 'not counted')).join('; ') : 'none seen',
+                                observedObligationsMonthly: c.observedObligations, avgMonthlySpend: c.spend } });
+      } else {
+        pulls.push({ source: 'DOCUMENTS', status: 'OK', latencyMs: pullLatency(seq, i++), cached: false,
+                     summary: { note: 'salary certificate — declared other income is not counted in an instant decision',
+                                salaryDetected: f.incomeSource === 'DOCUMENTS', avgSalaryCredit: p.salaryMonthly } });
+      }
+      return pulls;
+    }
     if (productId === 'split') {
       const pu = p.purchase;
       pulls.push({ source: 'OPEN_FINANCE', status: 'OK', latencyMs: pullLatency(seq, i++), cached: false,
@@ -1855,7 +2293,7 @@
     D = data;
     S = {
       policies: defaultPolicies(),
-      policyHistory: { split: [], personal_loan: [], starter_loan: [], salary_advance: [] },
+      policyHistory: { split: [], personal_loan: [], starter_loan: [], salary_advance: [], car_loan: [] },
       decisions: [],           // newest first via listDecisions()
       byId: Object.create(null),
       seq: 0, clockTicks: 0,
@@ -1885,7 +2323,8 @@
       personal_loan: { base: 14.5, weekend: 0.55, friday: 0.8, A: 0.60, R: 0.18, stp: 0.78 }
     };
     const blank = () => ({ decisions: 0, APPROVE: 0, REFER: 0, DECLINE: 0, stp: 0 });
-    const tot = { split: blank(), personal_loan: blank(), starter_loan: blank(), salary_advance: blank() };
+    // car_loan (v2.7) is a new pack: no seeded history — it counts this session's decisions only.
+    const tot = { split: blank(), personal_loan: blank(), starter_loan: blank(), salary_advance: blank(), car_loan: blank() };
     const daily = [];
     for (let d = 0; d < days; d++) {
       const date = addDaysIso(D.TODAY, -(days - 1 - d));
@@ -1985,7 +2424,7 @@
     S.seeded = { daily, tot, declineReasons, gradeDist, refers, overrides, queue, referAging, vintages };
   }
   // Refer SLAs: split is an in-app instant product; loans allow a working-day review.
-  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, starter_loan: 4, salary_advance: 4 };
+  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, starter_loan: 4, salary_advance: 4, car_loan: 8 };
 
   function manifests() { ensureInit(); return clone(MANIFESTS); }
 
@@ -2193,10 +2632,13 @@
 
   function policyHistory(productId) { ensureInit(); getPolicyRef(productId); return clone(S.policyHistory[productId]); }
 
-  function tokenFor(productId, recId, issuedAt, pol, ev, extra, repayment) {
+  function tokenFor(productId, recId, issuedAt, pol, ev, extra, repayment, lenderName) {
     const conditions = tokenConditions(productId, repayment);
     if (productId === 'personal_loan' && ev && ev.features && ev.features.crossBorder) {
       conditions.push('Remittance-linked repayment schedule');
+    }
+    if (productId === 'car_loan' && ev && ev.features && Number.isFinite(ev.features.downPayment)) {
+      conditions.push.apply(conditions, carConditions(lenderName || lendersList()[0].name, ev.features.downPayment));
     }
     if (extra) conditions.push(extra);
     return { id: 'TKN-' + recId, issuedAt,
@@ -2237,6 +2679,9 @@
     }
     if (!Number.isFinite(amount) || amount <= 0) throw err('application.amount must be a positive number (AED)');
     if (!Number.isFinite(tenorMonths) || tenorMonths <= 0) throw err('application.tenorMonths must be a positive number');
+    // v2.7 — a car loan is decided on the vehicle: the dealer quote is part of the
+    // application (defaults to the applicant's vehicleQuote) and is required.
+    const vehicle = productId === 'car_loan' ? carVehicle(application.vehicle || applicant.vehicleQuote) : null;
 
     // v2.4 — home-country statements: a parseStatements() result (customer upload in a
     // journey, or what an underwriter requested), or the v2.1 consent flag, which
@@ -2265,7 +2710,7 @@
     const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
 
     const pol = getPolicyRef(productId);
-    const ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements);
+    const ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements, vehicle ? { vehicle } : undefined);
 
     S.seq += 1;
     const id = 'MZN-' + String(S.seq).padStart(6, '0');
@@ -2274,7 +2719,8 @@
     const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
     // Repayment collection follows the approved amount (v2.3); refer/decline → null.
     const repayment = ev.outcome === 'APPROVE' && ev.limit.approved > 0 ? repaymentFor(ev.limit.approved) : null;
-    const token = ev.outcome === 'APPROVE' ? tokenFor(productId, id, createdAt, pol, ev, null, repayment) : null;
+    const token = ev.outcome === 'APPROVE'
+      ? tokenFor(productId, id, createdAt, pol, ev, null, repayment, productId === 'car_loan' ? lenderFor(application.lenderId).name : undefined) : null;
 
     const record = {
       id, createdAt, productId, segment: 'CONSUMER',
@@ -2313,6 +2759,17 @@
       supersedes: orig ? orig.id : null,
       supersededBy: null
     };
+    if (productId === 'car_loan') {
+      // DecisionRecord additions for the car loan (Addendum v2.7).
+      record.request.vehicle = clone(vehicle);
+      // What Open Finance was worth — the same application re-evaluated without it (pure:
+      // nothing stored, no clock tick). Null on the documents path: the UI shows a CTA.
+      record.openFinanceUplift = ev.features.openFinance
+        ? carUplift(applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, vehicle, ev) : null;
+      // Internal only (the car screen, the Decision log) — never part of the credit memo.
+      record.openFinanceFindings = ev.car.findings;
+      record.audit[0].detail += ' · ' + (ev.features.openFinance ? 'Open Finance (Al Tareq)' : 'documents only (salary certificate + AECB)');
+    }
     if (productId === 'starter_loan') {
       // DecisionRecord additions for the upgrade (Addendum v2.1).
       record.kind = 'UPGRADE';
@@ -2409,6 +2866,14 @@
     { group: 'Digital-footprint and vendor raw data', reason: 'Never used for credit; dropped at ingestion (PDPL data minimisation)' },
     { group: 'Raw contact details', reason: 'Not needed to book the loan — Noor stays the customer\'s point of contact (PDPL data minimisation)' }
   ];
+  // Car loan (v2.7) memos add these lines; other products' memos are unchanged.
+  const MEMO_SHARED_CAR = [
+    'Vehicle quote — category, condition, model year, price, loan-to-value and down payment (dealer-quote data, not Open Finance)',
+    'Other income as a category and the share counted; the down-payment source as a flag'
+  ];
+  const MEMO_WITHHELD_CAR = [
+    { group: 'Rental income amounts, receipts and the account they land in (only the category and the share counted are shared)', reason: OPEN_FINANCE_REASON }
+  ];
   const MEMO_SFTP_HEADER = ['memo_id', 'noor_ref', 'product', 'outcome', 'amount', 'tenor', 'apr_or_fee', 'monthly_payment',
                             'repayment_method', 'noorscore', 'noorscore_band', 'income_band', 'dbr_band', 'aecb_band',
                             'reason_codes', 'created_at'];
@@ -2473,9 +2938,16 @@
     const base = { repaymentMethod: rep ? rep.method : null, repaymentMethodLabel: rep ? rep.label : null, coolingOffDays: reg.coolingOffDays || 5 };
     if (p.mode === 'BANDED_APR' && p.kfs) {
       const k = p.kfs;
-      return Object.assign({ amount: k.principal, tenorMonths: k.tenorMonths, apr: k.rateMid, aprBand: [p.rateMin, p.rateMax],
-                             monthlyPayment: k.monthlyInstalment, totalRepayable: k.totalRepayable, totalInterest: k.totalInterest,
-                             fees: 0, earlySettlementFeeCap: k.earlySettlementFeeCap || null }, base);
+      const t = Object.assign({ amount: k.principal, tenorMonths: k.tenorMonths, apr: k.rateMid, aprBand: [p.rateMin, p.rateMax],
+                                monthlyPayment: k.monthlyInstalment, totalRepayable: k.totalRepayable, totalInterest: k.totalInterest,
+                                fees: 0, earlySettlementFeeCap: k.earlySettlementFeeCap || null }, base);
+      // v2.7 — the vehicle: dealer-quote data, not Open Finance, so exact figures are fine.
+      if (rec.productId === 'car_loan' && Number.isFinite(k.vehiclePrice)) {
+        const rv = (rec.request && rec.request.vehicle) || {};
+        t.vehicle = { category: rv.category || null, condition: rv.condition || null, modelYear: rv.modelYear || null,
+                      priceAed: k.vehiclePrice, ltvPct: k.ltvPct, downPayment: k.downPayment };
+      }
+      return t;
     }
     if (p.mode === 'MONTHLY_FEE') {
       const plan = (p.plans || []).find(x => x.months === p.selectedMonths) || {};
@@ -2514,6 +2986,11 @@
     if (f.verifiedIncome === null || f.verifiedIncome === undefined) via = 'Not verified';
     else if (rec.productId === 'personal_loan') via = f.incomeSource === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
     else if (rec.productId === 'salary_advance') via = of && a.bankData && a.bankData.source === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
+    else if (rec.productId === 'car_loan') {
+      via = !f.openFinance ? 'Salary certificate'
+        : (f.incomeSource === 'ALTAREQ_TPP' ? viaOf : 'Salary certificate + ' + viaOf) +
+          (f.regularIncomeCountedMonthly > 0 ? ' — salary and ' + incomeWord(f.regularIncomeCategory)[0].toLowerCase() : ' — salary');
+    }
     else via = viaOf;
     const st = rec.homeStatements;
     if (st && st.usable) via += ' + home-country statements (6 months)';
@@ -2533,6 +3010,22 @@
     if (rec.homeStatements && rec.homeStatements.usable) out.push('Home-country statements verified');
     return out;
   }
+  // Car loan (v2.7) flags: other income as a category and the share counted, never the
+  // amounts; the down-payment source as a flag, never the balances.
+  function memoCarFlags(rec) {
+    const f = rec.features || {};
+    const word = incomeWord(f.regularIncomeCategory)[0];
+    let otherIncome;
+    if (!f.openFinance) otherIncome = 'Declared other income not counted — not verifiable in an instant decision';
+    else if (f.regularIncomeCountedMonthly > 0) otherIncome = word + ' verified via Open Finance (' + f.connectedMonths + ' months) — counted at ' + f.regularIncomeCountedPct + '%';
+    else if (f.regularIncomeVerifiedMonthly > 0) otherIncome = word + ' verified via Open Finance — counted at ' + f.regularIncomeCountedPct + '%';
+    else if (f.regularIncomeCategory) otherIncome = word + ' seen in connected accounts — not counted (did not meet the verification rule)';
+    else otherIncome = 'None seen in connected accounts';
+    const downPaymentSource = rec.outcome === 'DECLINE' || !Number.isFinite(f.downPayment) ? null
+      : (f.downPaymentCoveredByOwnFunds === true ? 'Own funds — verified in connected accounts'
+        : (f.openFinance ? 'Own funds — to be evidenced before release' : 'Own funds — declared, not verified'));
+    return { otherIncome, downPaymentSource };
+  }
   const CONSENT_CODES = [['aecb', 'AECB'], ['openFinance', 'ALTAREQ'], ['creditPassport', 'CPASS'], ['homeStatements', 'STMT'], ['shareWithLender', 'LENDER']];
   function creditMemo(decisionId, opts) {
     ensureInit();
@@ -2546,6 +3039,7 @@
     const value = Number.isFinite(sc.points) ? sc.points : null;
     const seq = rec.id.replace(/^MZN-/, '');
     const crossBorder = !!f.crossBorder;
+    const car = rec.productId === 'car_loan';
     return {
       memoId: 'CM-' + rec.id,
       noorRef: rec.id,
@@ -2587,17 +3081,18 @@
           ? aecb.chequeReturns12m + ' returned cheque' + (aecb.chequeReturns12m === 1 ? '' : 's') + ' in 12 months' : 'None',
         homeCountryFile: crossBorder ? 'Home-country credit file used (Credit Passport, consented)' : null
       },
-      verification: {
+      verification: Object.assign({
         identity: 'Verified (UAE PASS)',
         homeStatements: memoStatementsFlag(rec.homeStatements),
         purchaseVerified: rec.productId === 'split'
           ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
           : null
-      },
+      }, car ? memoCarFlags(rec) : {}),
       consents: CONSENT_CODES
         .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
         .map(([k, code]) => ({ type: k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + code })),
-      sharing: { shared: MEMO_SHARED.slice(), withheld: MEMO_WITHHELD.map(w => ({ group: w.group, reason: w.reason })) }
+      sharing: { shared: MEMO_SHARED.concat(car ? MEMO_SHARED_CAR : []),
+                 withheld: MEMO_WITHHELD.concat(car ? MEMO_WITHHELD_CAR : []).map(w => ({ group: w.group, reason: w.reason })) }
     };
   }
   function assertMemo(memo, fn) {
@@ -2814,6 +3309,35 @@
     return round2(annuityPayment(principal, annualRate / 12, months));
   }
 
+  // ---------------------------------------------------------------------------
+  // Car loan — a live quote for the car screen (Addendum v2.7). Pure: the same
+  // evaluation decide() runs, but NO DecisionRecord, no audit entry, no clock tick.
+  // It lets the screen show, per tenor, what the documents path and the Open Finance
+  // path would finance before the customer decides. Consent-bound like decide():
+  // AECB consent is required, and the Open Finance path (and so the uplift) is only
+  // evaluated when the customer has granted Open Finance.
+  // ---------------------------------------------------------------------------
+  function quoteCar(application) {
+    ensureInit();
+    if (!application || typeof application !== 'object') throw err('quoteCar(application) needs {applicant, amount, tenorMonths, consents}');
+    const { applicant, consents } = application;
+    if (!applicant || typeof applicant !== 'object') throw err('application.applicant is required');
+    if (!consents || consents.aecb !== true) {
+      throw err('AECB consent is required before any bureau pull or credit decision (Federal Law 6/2010)');
+    }
+    const amount = application.amount, tenorMonths = application.tenorMonths;
+    if (!Number.isFinite(amount) || amount <= 0) throw err('application.amount must be a positive number (AED)');
+    if (!Number.isFinite(tenorMonths) || tenorMonths <= 0) throw err('application.tenorMonths must be a positive number');
+    const vehicle = carVehicle(application.vehicle || applicant.vehicleQuote);
+    const pol = getPolicyRef('car_loan');
+    const amt = Math.round(amount), ten = Math.round(tenorMonths);
+    const ev = evaluate('car_loan', applicant, amt, ten, pol, consents, null, { vehicle });
+    return { productId: 'car_loan', amount: amt, requestedTenorMonths: ten, tenorMonths: ev.features.effectiveTenor,
+             ltvMaxAmount: ev.features.ltvMaxAmount, openFinance: ev.features.openFinance,
+             row: carRow(ev),
+             openFinanceUplift: ev.features.openFinance ? carUplift(applicant, amt, ten, pol, consents, vehicle, ev) : null };
+  }
+
   // Convenience for simulation — same logic, no side effects, no record stored.
   function rowAmount(row) {
     return row.amount !== undefined ? row.amount : (row.purchaseAmount !== undefined ? row.purchaseAmount : 100000);
@@ -2834,6 +3358,7 @@
 
   function bookFor(productId) {
     if (productId === 'starter_loan') return D.sampleBook.starter_loan;
+    if (productId === 'car_loan') return D.sampleBook.car_loan || [];
     return productId === 'split' ? D.sampleBook.split : D.sampleBook.personal_loan;  // salary_advance reuses the loan book
   }
 
@@ -2857,12 +3382,24 @@
       const d = ev.outcome === 'APPROVE' && ev.upgrade ? ev.upgrade.defaultSelection : null;
       if (d) { acc.n++; acc.apr += d.apr; acc.pi += d.partnerIncome; }
     };
+    // Car loan (v2.7): most policy changes move amounts, not outcomes — sum the approved
+    // amounts and count the approvals that shrink or grow.
+    const isCar = productId === 'car_loan';
+    const amt = { b: 0, a: 0, reduced: 0, raised: 0 };
     for (const row of book) {
       const rq = rowRequest(productId, row);
       const b = evaluate(productId, row, rq[0], rq[1], pol);
       const a = evaluate(productId, row, rq[0], rq[1], candidate);
       before[b.outcome]++; after[a.outcome]++;
       if (isUpgrade) { tally(econ.b, b); tally(econ.a, a); }
+      if (isCar) {
+        if (b.outcome === 'APPROVE') amt.b += b.limit.approved;
+        if (a.outcome === 'APPROVE') amt.a += a.limit.approved;
+        if (b.outcome === 'APPROVE' && a.outcome === 'APPROVE') {
+          if (a.limit.approved < b.limit.approved) amt.reduced++;
+          else if (a.limit.approved > b.limit.approved) amt.raised++;
+        }
+      }
       if (b.outcome !== a.outcome) {
         flipCount++;
         if (flips.length < 20) {
@@ -2878,6 +3415,12 @@
       ', refers ' + before.REFER + ' → ' + after.REFER +
       ', declines ' + before.DECLINE + ' → ' + after.DECLINE +
       ' (' + flipCount + ' outcome flips).';
+    if (isCar) {
+      const amountImpact = { approvedAmountBefore: amt.b, approvedAmountAfter: amt.a, approvalsReduced: amt.reduced, approvalsRaised: amt.raised };
+      return { size: book.length, before, after, flips, amountImpact,
+               summary: summary + ' Approved amount across approvals ' + aed(amt.b) + ' → ' + aed(amt.a) +
+                        ' (' + amt.reduced + ' approval' + (amt.reduced === 1 ? '' : 's') + ' reduced, ' + amt.raised + ' raised).' };
+    }
     if (!isUpgrade) return { size: book.length, before, after, flips, summary };
     const pricingImpact = {
       avgAprBefore: econ.b.n ? round4(econ.b.apr / econ.b.n) : null,
@@ -3103,8 +3646,10 @@
     if (o.outcome === 'APPROVE' && rec.limit.approved > 0) rec.repayment = repaymentFor(rec.limit.approved);
     if (o.outcome === 'APPROVE' && !rec.token && rec.limit.approved > 0) {
       const pol = getPolicyRef(rec.productId);
+      const sw = rec.consents && rec.consents.shareWithLender;
       rec.token = tokenFor(rec.productId, rec.id, at, pol, { features: rec.features },
-                           'Approved by override — ' + o.analyst + ' / ' + o.approver, rec.repayment);
+                           'Approved by override — ' + o.analyst + ' / ' + o.approver, rec.repayment,
+                           rec.productId === 'car_loan' && sw ? lenderFor(sw.lenderId).name : undefined);
     }
     if (o.outcome === 'DECLINE') {
       rec.limit.approved = 0; rec.token = null; rec.pricing = null; rec.repayment = null;
@@ -3142,7 +3687,7 @@
     ensureInit();
     const sd = S.seeded;
     const prod = {};
-    for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance']) prod[pid] = Object.assign({}, sd.tot[pid]);
+    for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance', 'car_loan']) prod[pid] = Object.assign({}, sd.tot[pid]);
     const declineReasons = Object.assign({}, sd.declineReasons);
     const gradeDist = Object.assign({}, sd.gradeDist);
     const daily = clone(sd.daily);
@@ -3209,6 +3754,8 @@
     noorScoreBand, creditMemo, memoApiPayload, memoSftpRow,
     // v2.6 — the customer journey: pre-qualification on connected accounts only
     prequalify, loanInstalment,
+    // v2.7 — car loan: a pure live quote (documents path vs Open Finance path) for the car screen
+    quoteCar,
     lenders: function () { ensureInit(); return clone(lendersList()); },
     init, manifests, execSteps, getPolicy, publishPolicy, policyHistory, policyInvariants,
     decide, decideRaw, simulateBook, drawdownCheck, recordEvent, override,

@@ -96,11 +96,11 @@ const recs = {};
 
 // ---------------------------------------------------------------------------
 group('1. Persona intended outcomes at default policy (r1–r5 personal loan, c1–c5 split)', () => {
-  // Manifests: exactly four consumer products, in order (starter_loan third — Addendum v2.1).
+  // Manifests: five consumer products, in order (starter_loan third — Addendum v2.1; car_loan appended fifth — Addendum v2.7).
   const mans = E.manifests();
-  eq(mans.map(m => m.productId).join(','), 'split,personal_loan,starter_loan,salary_advance', 'manifests are split, personal_loan, starter_loan, salary_advance in order');
+  eq(mans.map(m => m.productId).join(','), 'split,personal_loan,starter_loan,salary_advance,car_loan', 'manifests are split, personal_loan, starter_loan, salary_advance, car_loan in order');
   ok(mans.every(m => m.segment === 'CONSUMER' && m.nameEn && m.nameAr && m.structure && m.pricingMode), 'every manifest is CONSUMER with names, structure, pricingMode');
-  eq(mans.map(m => m.pricingMode).join(','), 'MONTHLY_FEE,BANDED_APR,TENOR_CURVE_APR,FLAT_FEE', 'pricing modes per product');
+  eq(mans.map(m => m.pricingMode).join(','), 'MONTHLY_FEE,BANDED_APR,TENOR_CURVE_APR,FLAT_FEE,BANDED_APR', 'pricing modes per product');
   eq(mans[0].structure, 'Instalment plan (revolving split capacity)', 'split structure string');
   eq(mans[1].structure, 'Amortising loan (reducing balance)', 'personal_loan structure string');
   eq(mans[3].structure, 'Single-repayment advance', 'salary_advance structure string');
@@ -1520,6 +1520,375 @@ group('15. Customer journey (v2.6): persona j1, prequalify() on Open Finance onl
   ok(snap() === snap(), 'two fresh init() runs: identical prequal, decision and memo');
   for (const r of E.listDecisions()) collect(r.reasonCodes);
   ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted so far exists with Arabic');
+});
+
+// ---------------------------------------------------------------------------
+// v2.7 — the a1 memo privacy scan (CAR-LOAN-SPEC.md §4): a recursive walk over every
+// memo leaf and every SFTP cell. Numbers (numeric leaves, and every number inside a
+// string, commas stripped) must not equal a forbidden figure — matched as whole
+// numbers, so AED 180,000 never trips 18,000; words are matched as words.
+const CAR_FORBIDDEN_NUMBERS = [9000, 27000, 6750, 54000, 18000, 16300, 64200, 118500, 236000, 7714, 3302, 5568];
+const CAR_FORBIDDEN_WORDS = ['Mashreq', 'HSBC', 'ADCB', 'transactions'];
+function carPrivacyScan(memo, sftp) {
+  const hits = [];
+  const num = (n, where) => { if (CAR_FORBIDDEN_NUMBERS.includes(Math.round(Math.abs(n) * 100) / 100)) hits.push(where + ' = ' + n); };
+  const str = (s, where) => {
+    for (const w of CAR_FORBIDDEN_WORDS) if (new RegExp('(^|[^A-Za-z])' + w + '($|[^A-Za-z])', 'i').test(s)) hits.push(where + ' names "' + w + '"');
+    for (const tok of s.match(/\d[\d,]*(?:\.\d+)?/g) || []) num(parseFloat(tok.replace(/,/g, '')), where + ' ("' + tok + '")');
+  };
+  (function walk(x, path) {
+    if (x === null || x === undefined) return;
+    if (Array.isArray(x)) { x.forEach((v, i) => walk(v, path + '[' + i + ']')); return; }
+    if (typeof x === 'object') { for (const k of Object.keys(x)) walk(x[k], path + '.' + k); return; }
+    if (typeof x === 'number') num(x, path);
+    else if (typeof x === 'string') str(x, path);
+  })(memo, 'memo');
+  sftp.row.forEach((c, i) => str(c, 'sftp.' + sftp.header[i]));
+  // Belt and braces: the spec's comma forms never appear as whole numbers in the raw text.
+  const raw = JSON.stringify(memo) + '\n' + sftp.row.join(',');
+  for (const t of ['9,000', '27,000', '6,750', '64,200', '118,500', '236,000', '16,300', '18,000', '54,000']) {
+    if (new RegExp('(^|[^\\d,.])' + t.replace(/,/g, ',') + '(?![\\d]|,\\d)').test(raw)) hits.push('raw text has "' + t + '"');
+  }
+  return hits;
+}
+
+// ---------------------------------------------------------------------------
+group('16. Car loan (v2.7): a new policy pack — LTV 80%, 60 months, rental income verified by Open Finance (+AED 30,000)', () => {
+  E.init(D);
+  const C = D.personasCar;
+  ok(Array.isArray(C) && C.length === 1 && C[0].id === 'a1', 'MizanData.personasCar = [a1]');
+  const a1 = C[0], cn = a1.connected, AR = { aecb: true, openFinance: true }, DOCS = { aecb: true, openFinance: false };
+  const meanOf = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+
+  // ---- persona ----
+  ok(a1.name === 'Karim Nassar' && a1.nameAr === 'كريم نصار' && a1.age === 44 && a1.monthsInUae === 132 &&
+     a1.tagline === 'Commercial Director, 11 years in the UAE — buying a family SUV; rents out an apartment',
+     'a1 Karim Nassar (كريم نصار), 44, 132 months in the UAE, tagline');
+  ok(a1.employment.type === 'PRIVATE' && a1.employment.salaryMonthly === 45000 && a1.employment.tenureMonths === 72 && a1.employment.retiree === false &&
+     /Commercial Director/.test(a1.employment.title) && /FMCG/.test(a1.employment.employer), 'a1 employment: Commercial Director at an FMCG distributor, PRIVATE, salary 45,000, 72 months, not a retiree');
+  const ab = a1.aecb;
+  ok(ab.hit === true && ab.score === 790 && ab.esrPct === 44 && ab.obligationsMonthly === 19700 && ab.tradelines === 5 && ab.chequeReturns12m === 0 &&
+     ab.worstDelinquency === 'NONE' && ab.obligationsBreakdown.reduce((s, o) => s + o.monthly, 0) === 19700 &&
+     ab.obligationsBreakdown.map(o => o.label + ' ' + o.monthly).join(',') === 'Home mortgage 17200,Credit cards 2500',
+     'a1 AECB: hit, 790, ESR 44, obligations 19,700 (mortgage 17,200 + cards 2,500), 5 tradelines, no returns, no delinquency');
+  eq(JSON.stringify(a1.bankData), JSON.stringify({ source: 'DOCUMENTS', salaryDetected: true, salaryCertificate: true }), 'a1 bankData: documents path with a salary certificate');
+  ok(cn.source === 'ALTAREQ_TPP' && cn.monthsAvailable === 12 && cn.accounts.length === 3 &&
+     cn.accounts.map(x => x.bank + ' ' + x.mask + ' ' + x.balance).join(',') === 'Mashreq 7714 64200,HSBC 3302 118500,ADCB 5568 236000' &&
+     cn.accounts[0].salaryAccount === true, 'a1 connected: Al Tareq, 12 months, Mashreq ••7714 (salary) 64,200 · HSBC ••3302 118,500 · ADCB ••5568 236,000');
+  ok(cn.avgMonthlyIncome === 54000 && cn.avgMonthlySpend === 18000 && cn.observedObligationsMonthly === 19700 && cn.incomeVolatilityPct <= 5 &&
+     cn.monthlyIncome.length === 12 && cn.monthlySpend.length === 12 && meanOf(cn.monthlyIncome) === 54000 && meanOf(cn.monthlySpend) === 18000,
+     'a1 connected means: income 54,000, spend 18,000, observed obligations 19,700 = AECB; monthly series consistent');
+  const rentMonths = D.monthLabels.filter((m, i) => cn.monthlyIncome[i] === 72000).map(m => m.slice(5)).sort().join(',');
+  ok(rentMonths === '01,04,07,10' && cn.monthlyIncome.every(x => x === 45000 || x === 72000), 'a1 income series: salary 45,000 every month + rent 27,000 in Jan / Apr / Jul / Oct');
+  eq(JSON.stringify(cn.regularIncome), JSON.stringify([{ type: 'RENTAL', label: 'Rent — apartment (tenancy registered with Ejari)', frequency: 'QUARTERLY',
+    amountPerReceipt: 27000, receipts12m: 4, monthlyEquivalent: 9000, onSchedule: true, matchesTenancy: true, account: 'HSBC ••3302' }]), 'a1 regularIncome: rent 27,000 quarterly, 4 of 4, 9,000/month, on schedule, matches the tenancy');
+  const plus14 = new Date(new Date(D.TODAY + 'T00:00:00Z').getTime() + 14 * 86400000).toISOString().slice(0, 10);
+  eq(JSON.stringify(a1.vehicleQuote), JSON.stringify({ category: 'SUV', condition: 'NEW', modelYear: 2026, priceAed: 225000, dealer: 'Partner dealer, Dubai',
+    quoteRef: 'DQ-2026-0418', validUntil: plus14 }), 'a1 vehicleQuote: SUV, new, 2026, AED 225,000, partner dealer, DQ-2026-0418, valid until TODAY+14');
+  ok(a1.defaultRequest.amount === 180000 && a1.defaultRequest.tenorMonths === 60 && 0.8 * a1.vehicleQuote.priceAed === 180000,
+     'a1 default request: AED 180,000 / 60 months — the 80% LTV maximum, a 20% down payment of 45,000');
+
+  // ---- manifest, pack, bounds, SLA ----
+  const man = E.manifests().find(m => m.productId === 'car_loan');
+  eq(JSON.stringify(man), JSON.stringify({ productId: 'car_loan', nameEn: 'Car loan', nameAr: 'قرض سيارة', segment: 'CONSUMER',
+    structure: 'Secured amortising loan (vehicle mortgage)', pricingMode: 'BANDED_APR' }), 'car_loan manifest');
+  const pol = E.getPolicy('car_loan');
+  eq(JSON.stringify(pol.regulatory), JSON.stringify({ dbrCapPct: 50, dbrCapRetireePct: 30, ltvCapPct: 80, tenorCapMonths: 60, aecbCheckRequired: true,
+    coolingOffDays: 5, earlySettlementFeeCap: '1% of outstanding or AED 10,000', security: 'Vehicle mortgage registered with the RTA in favour of the lender' }),
+    'car_loan regulatory primitives (locked): DBR 50/30, LTV 80, 60 months, AECB, 5 days, early-settlement cap, RTA mortgage');
+  eq(JSON.stringify(pol.params), JSON.stringify({ minSalary: 8000, minAge: 21, maxAge: 65, scoreDecline: 620, scoreRefer: 680, minMonthsInUae: 6, chequeReturnsMax: 1,
+    minAmount: 20000, productCap: 750000, maxVehicleAgeYears: 5, regularIncomeCountedPct: 75, regularIncomeMinMonths: 12, instalmentToFcfMaxPct: 50,
+    pricingBands: { A: [0.0399, 0.0499], B: [0.0549, 0.0649], C: [0.0749, 0.0899] }, tokenValidityDays: 14 }), 'car_loan params');
+  ok(pol.platform && pol.platform.repaymentCollection && pol.platform.repaymentCollection.editable === false && pol.platform.repaymentCollection.altareqMaxAmount === 1000,
+     'car_loan pack carries the locked repayment platform rule');
+  ok(E.policyHistory('car_loan').length === 1 && pol.version === 1, 'car_loan pack v1 with a baseline history entry');
+  const meta = { author: 'R. Haddad (Credit Policy)', approver: 'S. Nair (CRO)' };
+  throwsWith(() => E.publishPolicy('car_loan', { ltvCapPct: 90 }, meta), 'locked regulatory primitive', 'publish refuses ltvCapPct (locked)');
+  throwsWith(() => E.publishPolicy('car_loan', { tenorCapMonths: 72 }, meta), 'locked regulatory primitive', 'publish refuses tenorCapMonths (locked)');
+  throwsWith(() => E.publishPolicy('car_loan', { regularIncomeCountedPct: 120 }, meta), 'outside allowed bounds [0, 100]', 'regularIncomeCountedPct bounded [0, 100]');
+  throwsWith(() => E.publishPolicy('car_loan', { maxVehicleAgeYears: 11 }, meta), 'outside allowed bounds [0, 10]', 'maxVehicleAgeYears bounded [0, 10]');
+  throwsWith(() => E.publishPolicy('car_loan', { productCap: 50000 }, meta), 'outside allowed bounds [100000, 2000000]', 'productCap bounded [100000, 2000000]');
+  throwsWith(() => E.publishPolicy('car_loan', { minAmount: 1000 }, meta), 'outside allowed bounds [5000, 100000]', 'minAmount bounded [5000, 100000]');
+  throwsWith(() => E.publishPolicy('car_loan', { instalmentToFcfMaxPct: 90 }, meta), 'outside allowed bounds [10, 80]', 'instalmentToFcfMaxPct bounded [10, 80]');
+  throwsWith(() => E.publishPolicy('car_loan', { altareqMaxAmount: 5000 }, meta), 'platform rule', 'the platform rule is not editable on the car pack');
+  eq(E.getPolicy('car_loan').version, 1, 'refused publishes leave car_loan at v1');
+  const ex = E.execSteps('car_loan');
+  ok(ex.length === 6 && ex.map(s => s.type).join() === E.EXEC_EVENTS.join() &&
+     ex[5].description === 'Partner Bank pays the dealer; the car is released with the mortgage registered' && ex[0].label === 'Offer accepted',
+     'execSteps(car_loan): the same 6 events and labels; DISBURSED reads "Partner Bank pays the dealer; the car is released with the mortgage registered"');
+
+  // ---- both paths, the spec's exact numbers ----
+  const t0 = E.listDecisions().length;
+  const of = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: AR });
+  const dc = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: DOCS });
+  collect(of.reasonCodes); collect(dc.reasonCodes);
+  eq(E.listDecisions().length, t0 + 2, 'two decide() calls → exactly two DecisionRecords (the uplift stores nothing)');
+  eq(new Date(dc.createdAt) - new Date(of.createdAt), 37000, 'one clock tick per decide() — the uplift re-evaluation never ticks the clock');
+  eq(dc.id, 'MZN-' + String(Number(of.id.slice(4)) + 1).padStart(6, '0'), 'decision ids continue without a gap');
+  const k = of.pricing.kfs, kd = dc.pricing.kfs;
+  // Documents only
+  ok(dc.outcome === 'APPROVE' && dc.limit.approved === 150000 && dc.limit.bindingConstraint === 'DBR' && dc.reasonCodes.join() === 'RC_LIMIT_REDUCED',
+     'documents only: APPROVE AED 150,000, DBR binds, RC_LIMIT_REDUCED');
+  ok(dc.features.incomeCounted === 45000 && dc.features.headroomMonthly === 2800 && dc.features.regularIncomeCountedMonthly === 0 && dc.features.openFinance === false,
+     'documents only: income counted 45,000 (salary only), DBR headroom 2,800/month');
+  ok(dc.score.points === 780 && dc.score.grade === 'A' && dc.noorScore.value === 780 && dc.noorScore.band === 'Excellent' && dc.score.base === 790 &&
+     dc.score.overlays.map(o => o.name + ' ' + o.delta).join('|') === 'ESR > 40% -20|Employment tenure ≥ 24m 10',
+     'documents only: NoorScore 780 (790 − 20 ESR + 10 tenure) · A · Excellent');
+  ok(kd.rateMid === 0.0449 && kd.tenorMonths === 60 && kd.monthlyInstalment === 2795.77 && kd.totalRepayable === 167746.25 && kd.totalInterest === 17746.25,
+     'documents only: 4.49% APR (mid A), AED 2,795.77 × 60, total repayable AED 167,746.25');
+  ok(dc.features.dbrPct === 49.99 && kd.downPayment === 75000 && dc.features.downPayment === 75000 && kd.ltvPct === 66.67 && dc.features.instalmentToFcfPct === null,
+     'documents only: DBR 49.99%, down payment AED 75,000, LTV 66.67%, no free-cash-flow share (spending not seen)');
+  // With Open Finance
+  ok(of.outcome === 'APPROVE' && of.limit.approved === 180000 && of.limit.bindingConstraint === 'LTV_CAP' && of.reasonCodes.length === 0,
+     'Open Finance: APPROVE AED 180,000, the 80% LTV maximum (= request) binds, no reduction');
+  ok(of.features.incomeCounted === 51750 && of.features.regularIncomeCountedMonthly === 6750 && of.features.headroomMonthly === 6175 &&
+     of.features.salaryVerifiedViaConnectedAccount === true && of.features.openFinance === true,
+     'Open Finance: income counted 51,750 (45,000 + 75% × 9,000), headroom 6,175/month, salary verified in connected accounts');
+  ok(of.score.points === 795 && of.score.grade === 'A' && of.noorScore.band === 'Excellent' &&
+     of.score.overlays.some(o => o.name === 'Salary verified via connected account' && o.delta === 15), 'Open Finance: NoorScore 795 (+15 salary via connected account) · A · Excellent');
+  ok(k.rateMid === 0.0449 && k.monthlyInstalment === 3354.93 && k.totalRepayable === 201295.5 && k.totalInterest === 21295.5,
+     'Open Finance: 4.49% APR, AED 3,354.93 × 60, total repayable AED 201,295.50');
+  ok(of.features.dbrPct === 44.55 && of.features.dbrPctSalaryOnly === 51.23 && k.downPayment === 45000 && k.ltvPct === 80,
+     'Open Finance: DBR 44.55% (51.23% on salary alone — over the cap), down payment AED 45,000, LTV 80%');
+  ok(of.features.freeCashFlowMonthly === 16300 && of.features.instalmentToFcfPct === 20.6, 'Open Finance: instalment = 20.6% of free cash flow AED 16,300');
+  // Independent arithmetic for both instalments and the DBR headroom PVs
+  const i = 0.0449 / 12, pv = (pmt, n) => pmt * (1 - Math.pow(1 + i, -n)) / i, pay = (P, n) => P * i / (1 - Math.pow(1 + i, -n));
+  ok(Math.floor(pv(2800, 60) / 1000) * 1000 === 150000 && Math.floor(pv(6175, 60) / 1000) * 1000 > 180000 &&
+     Math.round(pay(150000, 60) * 100) / 100 === 2795.77 && Math.round(pay(180000, 60) * 100) / 100 === 3354.93,
+     'independent annuity math: PV(2,800) floors to 150,000; PV(6,175) exceeds 180,000; instalments 2,795.77 / 3,354.93');
+  const trace = (r, key) => r.limit.trace.find(t => t.key === key);
+  ok(trace(of, 'DBR').label.startsWith('DBR headroom — 50% of AED 51,750 (salary 45,000 + 75% of rent 9,000) − obligations 19,700 = AED 6,175/month') &&
+     trace(dc, 'DBR').label.startsWith('DBR headroom — 50% of AED 45,000 (salary only) − obligations 19,700 = AED 2,800/month'),
+     'trace labels in plain words ("DBR headroom — 50% of AED 51,750 (salary 45,000 + 75% of rent 9,000) − obligations 19,700 = AED 6,175/month")');
+  ok(of.limit.trace.map(t => t.key).join() === 'REQUESTED,LTV_CAP,DBR,FCF,PRODUCT_CAP' && dc.limit.trace.map(t => t.key).join() === 'REQUESTED,LTV_CAP,DBR,PRODUCT_CAP' &&
+     trace(of, 'LTV_CAP').value === 180000 && trace(of, 'FCF').value > 180000 && trace(of, 'PRODUCT_CAP').value === 750000 &&
+     of.limit.trace.every(t => t.value % 1000 === 0), 'limit candidates: requested · LTV 80% · DBR PV · FCF PV (spending seen) · product cap, each floored to AED 1,000');
+  const rule = (r, id) => r.rules.find(x => x.id === id) || {};
+  ok(rule(of, 'REG_LTV_CAP').result === 'PASS' && /^80% \(AED 180,000 of AED 225,000\)/.test(rule(of, 'REG_LTV_CAP').observed) &&
+     rule(of, 'REG_LTV_CAP').name === 'Car loan within 80% of the vehicle value (Reg 29/2011)' && rule(dc, 'REG_DBR_CAP').result === 'PASS' && /^49\.99%/.test(rule(dc, 'REG_DBR_CAP').observed),
+     'REG_LTV_CAP "Car loan within 80% of the vehicle value (Reg 29/2011)" = approved ÷ price; REG_DBR_CAP 49.99% on the documents path');
+  ok(rule(of, 'POL_REGULAR_INCOME').observed === 'Rental income verified — 4 of 4 quarterly receipts in 12 months, matches the tenancy — counted at 75%' &&
+     rule(dc, 'POL_REGULAR_INCOME').observed === 'Declared other income not counted — not verifiable in an instant decision' &&
+     ['PASS', 'INFO'].includes(rule(of, 'POL_REGULAR_INCOME').result) && rule(dc, 'POL_REGULAR_INCOME').result === 'INFO',
+     'POL_REGULAR_INCOME (informational): the Open Finance and documents wording');
+  ok(rule(of, 'POL_INSTALMENT_TO_FCF').result === 'PASS' && !dc.rules.some(r => r.id === 'POL_INSTALMENT_TO_FCF'), 'POL_INSTALMENT_TO_FCF only when spending is seen (Open Finance)');
+  const want = ['REG_AECB_CHECK', 'REG_TENOR_CAP', 'REG_LTV_CAP', 'REG_DBR_CAP', 'POL_AGE', 'POL_MIN_SALARY', 'POL_MIN_MONTHS_UAE', 'POL_THIN_FILE', 'POL_DELINQUENCY',
+                'POL_CHEQUE_RETURNS', 'POL_SCORE_CUTOFF', 'POL_VEHICLE', 'POL_MIN_AMOUNT', 'POL_REGULAR_INCOME', 'POL_INSTALMENT_TO_FCF'];
+  ok(want.every(id => of.rules.some(r => r.id === id)) && of.rules.every(r => r.result !== 'FAIL' && r.result !== 'REFER'), 'every rule the addendum names is evaluated; all pass for Karim');
+  ok(of.dataPulls.map(p => p.source).join() === 'AECB_CONSUMER,OPEN_FINANCE' && dc.dataPulls.map(p => p.source).join() === 'AECB_CONSUMER,DOCUMENTS',
+     'data pulls: AECB + connected accounts (Open Finance) vs AECB + salary certificate (documents)');
+
+  // ---- the uplift: pure, deterministic, the spec's object ----
+  const up = of.openFinanceUplift;
+  ok(dc.openFinanceUplift === null, 'without Open Finance, openFinanceUplift is null (the UI shows the CTA)');
+  eq(JSON.stringify(Object.keys(up.documentsOnly).filter(x => ['outcome', 'approved', 'bindingConstraint', 'monthlyInstalment', 'downPayment', 'dbrPct', 'incomeCounted'].includes(x))),
+     JSON.stringify(['outcome', 'approved', 'bindingConstraint', 'monthlyInstalment', 'downPayment', 'dbrPct', 'incomeCounted']), 'uplift rows carry outcome, approved, bindingConstraint, monthlyInstalment, downPayment, dbrPct, incomeCounted');
+  const pick = (r) => [r.outcome, r.approved, r.bindingConstraint, r.monthlyInstalment, r.downPayment, r.dbrPct, r.incomeCounted].join('|');
+  eq(pick(up.documentsOnly), 'APPROVE|150000|DBR|2795.77|75000|49.99|45000', 'uplift.documentsOnly = APPROVE · 150,000 · DBR · 2,795.77 · 75,000 · 49.99% · 45,000');
+  eq(pick(up.openFinance), 'APPROVE|180000|LTV_CAP|3354.93|45000|44.55|51750', 'uplift.openFinance = APPROVE · 180,000 · LTV_CAP · 3,354.93 · 45,000 · 44.55% · 51,750');
+  ok(up.upliftAed === 30000 && up.downPaymentSavedAed === 30000, 'upliftAed 30,000 · downPaymentSavedAed 30,000');
+  eq(JSON.stringify(up.drivers), JSON.stringify(['Rental income verified — counted at 75% (AED 6,750/month)', 'Salary verified in connected accounts',
+    'Obligations reconciled with AECB (no hidden debt)', 'Down payment covered by own funds in connected accounts']), 'uplift drivers (the spec\'s four)');
+  eq(up.explanation, 'At AED 180,000 the DBR on salary alone would be 51.23% — over the 50% cap. Verified rent adds AED 6,750/month of counted income and brings it to 44.55%.',
+     'uplift explanation line (49.99% / 44.55% / 51.23%)');
+  ok(up.salaryOnlyDbrPct === 51.23 && up.regularIncomeCountedMonthly === 6750 && up.ltvMaxAmount === 180000, 'uplift: salary-only DBR 51.23%, 6,750/month counted, LTV maximum 180,000');
+  // re-evaluating the same documents-only application by hand gives the uplift's left column
+  ok(up.documentsOnly.approved === dc.limit.approved && up.documentsOnly.monthlyInstalment === dc.pricing.kfs.monthlyInstalment && up.documentsOnly.dbrPct === dc.features.dbrPct,
+     'uplift.documentsOnly equals a real documents-only decision of the same application');
+  // quoteCar(): pure — no record, no tick, and the same uplift
+  const nBefore = E.listDecisions().length;
+  const q = E.quoteCar({ applicant: a1, amount: 180000, tenorMonths: 60, consents: AR });
+  const q2 = E.quoteCar({ applicant: a1, amount: 180000, tenorMonths: 60, consents: AR });
+  const tick = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: DOCS });
+  eq(E.listDecisions().length, nBefore + 1, 'quoteCar() creates no DecisionRecord');
+  eq(new Date(tick.createdAt) - new Date(dc.createdAt), 37000, 'quoteCar() never advances the engine clock');
+  ok(JSON.stringify(q.openFinanceUplift) === JSON.stringify(up) && JSON.stringify(q) === JSON.stringify(q2), 'quoteCar() returns the record\'s uplift, deterministically');
+  ok(E.quoteCar({ applicant: a1, amount: 180000, tenorMonths: 60, consents: DOCS }).openFinanceUplift === null, 'quoteCar() without Open Finance consent never reads the connected accounts (no uplift)');
+  throwsWith(() => E.quoteCar({ applicant: a1, amount: 180000, tenorMonths: 60, consents: { openFinance: true } }), 'AECB consent', 'quoteCar() without AECB consent throws');
+  // the tenor moves the uplift (36 months: 94,000 → 180,000)
+  const r36 = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 36, consents: AR });
+  const q36 = E.quoteCar({ applicant: a1, amount: 180000, tenorMonths: 36, consents: AR }).openFinanceUplift;
+  ok(r36.openFinanceUplift.documentsOnly.approved === 94000 && r36.openFinanceUplift.openFinance.approved === 180000 && r36.openFinanceUplift.upliftAed === 86000 &&
+     JSON.stringify(q36) === JSON.stringify(r36.openFinanceUplift), '36 months: documents only AED 94,000 → Open Finance AED 180,000 (+86,000), quote = record');
+  ok(Math.floor(pv(2800, 36) / 1000) * 1000 === 94000, 'independent: PV(2,800) over 36 months floors to 94,000');
+  const per = [12, 24, 36, 48, 60].map(n => E.quoteCar({ applicant: a1, amount: 180000, tenorMonths: n, consents: AR }).openFinanceUplift);
+  ok(per.map(u => u.documentsOnly.approved + '>' + u.openFinance.approved).join(' ') === '32000>72000 64000>141000 94000>180000 122000>180000 150000>180000',
+     'per tenor (12/24/36/48/60): 32,000→72,000 · 64,000→141,000 · 94,000→180,000 · 122,000→180,000 · 150,000→180,000');
+  ok(per.every(u => u.openFinance.dbrPct <= 50 && u.documentsOnly.dbrPct <= 50), 'every tenor stays within the 50% DBR cap on both paths');
+
+  // ---- clamps, counterfactuals, gates ----
+  const big = E.decide({ productId: 'car_loan', applicant: a1, amount: 200000, tenorMonths: 60, consents: AR });
+  collect(big.reasonCodes);
+  ok(big.outcome === 'APPROVE' && big.limit.approved === 180000 && big.limit.bindingConstraint === 'LTV_CAP' && big.reasonCodes.join() === 'RC_LTV_CAP' &&
+     rule(big, 'REG_LTV_CAP').result === 'PASS' && /clamped to AED 180,000/.test(rule(big, 'REG_LTV_CAP').observed), 'LTV clamp: request 200,000 → 180,000 + RC_LTV_CAP (REG_LTV_CAP passes, no RC_LIMIT_REDUCED)');
+  const bigDocs = E.decide({ productId: 'car_loan', applicant: a1, amount: 200000, tenorMonths: 60, consents: DOCS });
+  ok(bigDocs.limit.approved === 150000 && bigDocs.reasonCodes.join() === 'RC_LTV_CAP,RC_LIMIT_REDUCED', 'documents only at 200,000: RC_LTV_CAP and RC_LIMIT_REDUCED (DBR binds below the LTV)');
+  const long = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 72, consents: AR });
+  collect(long.reasonCodes);
+  ok(long.pricing.kfs.tenorMonths === 60 && long.features.effectiveTenor === 60 && long.reasonCodes.includes('RC_TENOR_CAP') &&
+     rule(long, 'REG_TENOR_CAP').observed === '72 → clamped to 60' && rule(long, 'REG_TENOR_CAP').threshold === 60 && long.limit.approved === 180000,
+     '60-month clamp: tenor 72 → 60 (RC_TENOR_CAP)');
+  const three = clone(a1); three.connected.regularIncome[0].receipts12m = 3;
+  const r3of4 = E.decide({ productId: 'car_loan', applicant: three, amount: 180000, tenorMonths: 60, consents: AR });
+  ok(r3of4.features.regularIncomeCountedMonthly === 0 && r3of4.features.incomeCounted === 45000 && r3of4.limit.approved === 150000 &&
+     rule(r3of4, 'POL_REGULAR_INCOME').observed === 'Rental income not counted — 3 of 4 quarterly receipts in 12 months' && rule(r3of4, 'POL_REGULAR_INCOME').result === 'INFO' &&
+     r3of4.openFinanceUplift.upliftAed === 0 && !r3of4.openFinanceUplift.drivers.some(d => /Rental/.test(d)) && r3of4.score.points === 795,
+     '3 of 4 quarterly receipts → rent not counted: 150,000 (salary still verified, +15), no uplift');
+  const offSchedule = clone(a1); offSchedule.connected.regularIncome[0].onSchedule = false;
+  const noTenancy = clone(a1); noTenancy.connected.regularIncome[0].matchesTenancy = false;
+  const shortHist = clone(a1); shortHist.connected.monthsAvailable = 9;
+  ok([offSchedule, noTenancy, shortHist].every(x => E.decide({ productId: 'car_loan', applicant: x, amount: 180000, tenorMonths: 60, consents: AR }).features.regularIncomeCountedMonthly === 0),
+     'rent not counted when off schedule, not matching the tenancy, or with under 12 months of connected history');
+  const hidden = clone(a1); hidden.connected.observedObligationsMonthly = 21700;
+  const rh = E.decide({ productId: 'car_loan', applicant: hidden, amount: 180000, tenorMonths: 60, consents: AR });
+  ok(rh.features.existingObligations === 21700 && rh.features.obligationsReconciled === false &&
+     rh.openFinanceUplift.drivers.some(d => /above the AECB figure/.test(d)), 'it works both ways: obligations seen above AECB count (the higher figure)');
+  // regularIncomeCountedPct 0 via a candidate pack (published under 4-eyes) → the OF path drops to the DBR limit
+  const sim0 = E.simulateBook('car_loan', { regularIncomeCountedPct: 0 });
+  const v2 = E.publishPolicy('car_loan', { regularIncomeCountedPct: 0 }, meta);
+  const zero = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: AR });
+  collect(zero.reasonCodes);
+  ok(v2.version === 2 && zero.policyVersion === 2 && zero.limit.approved === 150000 && zero.limit.bindingConstraint === 'DBR' && zero.features.incomeCounted === 45000 &&
+     zero.reasonCodes.join() === 'RC_LIMIT_REDUCED' && zero.openFinanceUplift.upliftAed === 0 && zero.openFinanceUplift.documentsOnly.approved === 150000,
+     'regularIncomeCountedPct 0 (candidate pack v2) → the Open Finance path drops to the DBR limit, AED 150,000 — the same as documents only');
+  ok(/counted at 0%/.test(rule(zero, 'POL_REGULAR_INCOME').observed), 'POL_REGULAR_INCOME reads "counted at 0%" under the candidate pack');
+  ok(E.getDecision(of.id).limit.approved === 180000 && E.getDecision(of.id).policyVersion === 1, 'an existing decision keeps its v1 terms after the publish');
+  E.publishPolicy('car_loan', { regularIncomeCountedPct: 75 }, meta);
+  // AECB consent, vehicle, eligibility
+  throwsWith(() => E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: { openFinance: true } }), 'AECB consent', 'car loan without AECB consent → throws');
+  const noCar = clone(a1); delete noCar.vehicleQuote;
+  throwsWith(() => E.decide({ productId: 'car_loan', applicant: noCar, amount: 180000, tenorMonths: 60, consents: AR }),
+             'a car loan needs the vehicle quote (price, condition, model year)', 'no vehicle quote → throws "a car loan needs the vehicle quote (price, condition, model year)"');
+  throwsWith(() => E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: AR, vehicle: { priceAed: 200000, condition: 'NEW' } }),
+             'vehicle quote', 'a vehicle without a model year → throws');
+  const old = E.decide({ productId: 'car_loan', applicant: a1, amount: 60000, tenorMonths: 48, consents: AR,
+                         vehicle: { category: 'Sedan', condition: 'USED', modelYear: 2019, priceAed: 80000 } });
+  collect(old.reasonCodes);
+  ok(old.outcome === 'DECLINE' && old.reasonCodes.includes('RC_VEHICLE_INELIGIBLE') && rule(old, 'POL_VEHICLE').result === 'FAIL' && /7 years old/.test(rule(old, 'POL_VEHICLE').observed) &&
+     old.limit.approved === 0 && old.token === null && old.repayment === null && old.openFinanceUplift.openFinance.outcome === 'DECLINE',
+     'used vehicle older than 5 years (2019) → DECLINE RC_VEHICLE_INELIGIBLE');
+  const fiveYears = E.decide({ productId: 'car_loan', applicant: a1, amount: 60000, tenorMonths: 48, consents: AR, vehicle: { category: 'Sedan', condition: 'USED', modelYear: 2021, priceAed: 80000 } });
+  ok(fiveYears.outcome === 'APPROVE' && fiveYears.limit.approved === 60000 && fiveYears.request.vehicle.modelYear === 2021, 'a 5-year-old used vehicle (2021) is eligible; application.vehicle overrides the quote');
+  const expired = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: AR, vehicle: Object.assign({}, a1.vehicleQuote, { validUntil: '2026-07-01' }) });
+  ok(expired.outcome === 'DECLINE' && expired.reasonCodes.includes('RC_VEHICLE_INELIGIBLE') && /expired/.test(rule(expired, 'POL_VEHICLE').observed), 'an expired dealer quote → DECLINE RC_VEHICLE_INELIGIBLE');
+  const tiny = E.decide({ productId: 'car_loan', applicant: a1, amount: 15000, tenorMonths: 24, consents: AR });
+  collect(tiny.reasonCodes);
+  ok(tiny.outcome === 'DECLINE' && tiny.reasonCodes.includes('RC_BELOW_MIN_AMOUNT') && rule(tiny, 'POL_MIN_AMOUNT').result === 'FAIL', 'request below AED 20,000 → DECLINE RC_BELOW_MIN_AMOUNT');
+  throwsWith(() => E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: AR, statements: E.parseStatements({ country: 'IN', applicantId: 'r2' }) }),
+             'personal-loan and upgrade decisions only', 'home-country statements are refused on a car loan');
+
+  // ---- repayment, token conditions, execution ----
+  ok(of.repayment && of.repayment.method === 'DIRECT_DEBIT' && dc.repayment.method === 'DIRECT_DEBIT', 'repayment method DIRECT_DEBIT (AED 180,000 / 150,000 > AED 1,000)');
+  eq(JSON.stringify(of.token.conditions), JSON.stringify([KFS_COND, DD_COND, 'Comprehensive motor insurance with Partner Bank as loss payee',
+    'Vehicle mortgage registered with the RTA in favour of Partner Bank', 'Down payment of AED 45,000 paid to the dealer']),
+    'token conditions: KFS, direct debit, insurance (Partner Bank loss payee), RTA mortgage, down payment AED 45,000');
+  ok(dc.token.conditions.includes('Down payment of AED 75,000 paid to the dealer'), 'documents-only token: down payment AED 75,000 (the figure from the record)');
+  ok(of.token.expiresAt.slice(0, 10) === plus14 && !of.token.conditions.some(mentionsSalaryTransfer), 'token valid 14 days; no salary-transfer wording');
+  throwsWith(() => E.recordEvent(of.id, 'DISBURSED'), 'out of sequence', 'car loan: disbursing first throws');
+  for (const t of E.EXEC_EVENTS) E.recordEvent(of.id, t);
+  ok(E.getDecision(of.id).status === 'EXECUTED' && E.execSteps('car_loan', of.id)[3].label === 'Direct debit mandate active' &&
+     E.getDecision(of.id).events[3].method === 'DIRECT_DEBIT', 'car loan: six steps in order → EXECUTED; repayment step "Direct debit mandate active"');
+
+  // ---- the credit memo: allowlist, vehicle, bands, flags, privacy ----
+  const m = E.creditMemo(of.id), sm = E.memoSftpRow(m), md = E.creditMemo(dc.id), smd = E.memoSftpRow(md);
+  eq(Object.keys(m).join(','), MEMO_KEYS.join(','), 'car memo has exactly the allowlisted top-level keys');
+  ok(forbiddenKeys(m).length === 0 && forbiddenKeys(md).length === 0, 'car memos carry no record internals');
+  eq(JSON.stringify(m.terms.vehicle), JSON.stringify({ category: 'SUV', condition: 'NEW', modelYear: 2026, priceAed: 225000, ltvPct: 80, downPayment: 45000 }),
+     'memo terms.vehicle {category, condition, modelYear, priceAed, ltvPct, downPayment} — dealer-quote data');
+  ok(m.terms.amount === 180000 && m.terms.tenorMonths === 60 && m.terms.apr === 0.0449 && m.terms.monthlyPayment === 3354.93 && m.terms.repaymentMethod === 'DIRECT_DEBIT',
+     'memo terms: AED 180,000 · 60 months · 4.49% · AED 3,354.93 · direct debit');
+  ok(m.affordability.incomeBand === 'AED 50,000–60,000 / month' && m.affordability.dbrBand === '35–50%' && m.affordability.freeCashFlowBand === 'AED 5,000+ / month' &&
+     m.affordability.instalmentToCashFlowBand === '< 25%' && /^Open Finance \(Al Tareq\), 12 months/.test(m.affordability.incomeVerifiedVia),
+     'memo bands from income counted: AED 50,000–60,000 / month; DBR 35–50%; FCF 5,000+; instalment share < 25%');
+  ok(md.affordability.incomeBand === 'AED 40,000–50,000 / month' && md.affordability.dbrBand === '35–50%' && md.affordability.freeCashFlowBand === null &&
+     md.affordability.incomeVerifiedVia === 'Salary certificate', 'documents-only memo: income band AED 40,000–50,000, DBR 35–50%, no free-cash-flow band, salary certificate');
+  ok(m.verification.otherIncome === 'Rental income verified via Open Finance (12 months) — counted at 75%' &&
+     m.verification.downPaymentSource === 'Own funds — verified in connected accounts', 'memo flags: otherIncome (category only) and downPaymentSource');
+  ok(md.verification.otherIncome === 'Declared other income not counted — not verifiable in an instant decision' && md.verification.downPaymentSource === 'Own funds — declared, not verified',
+     'documents-only memo flags: other income not counted; down payment declared');
+  ok(m.noorScore.value === 795 && m.noorScore.band === 'Excellent' && m.bureau.aecbScoreBand === '750–799', 'memo NoorScore 795 Excellent, AECB band 750–799');
+  ok(m.sharing.shared.some(s => /^Vehicle quote/.test(s)) && m.sharing.withheld.some(w => /^Rental income amounts, receipts/.test(w.group) && /cannot be passed on/.test(w.reason)),
+     'shared vs withheld: the vehicle quote is shared; rent amounts and receipts are withheld with the Open Finance reason');
+  const plMemo = E.creditMemo(decidePersona('personal_loan', P.r1).id);
+  ok(!plMemo.sharing.shared.some(s => /Vehicle/.test(s)) && plMemo.sharing.withheld.length === 7 && !('otherIncome' in plMemo.verification) &&
+     !('downPaymentSource' in plMemo.verification) && !('vehicle' in plMemo.terms), 'other products\' memos are unchanged (no vehicle, no car flags, the same 7 withheld groups)');
+  ok(sm.row[2] === 'car_loan' && sm.row[5] === '60' && sm.row[4] === '180000' && sm.row[6] === 'APR 4.49%' && sm.row[7] === '3354.93' && sm.row.length === 16 &&
+     sm.header.join(',') === SFTP_HEADER.join(','), 'SFTP: the existing 16 columns; product car_loan, tenor 60');
+  const scanOf = carPrivacyScan(m, sm), scanDc = carPrivacyScan(md, smd);
+  ok(scanOf.length === 0, 'a1 memo + SFTP (Open Finance): no 9,000 / 27,000 / 6,750 / 54,000 / 18,000 / 16,300 / balances / Mashreq / HSBC / ADCB / 7714 / 3302 / 5568 / "transactions"' + (scanOf.length ? ' (' + scanOf.slice(0, 4).join('; ') + ')' : ''));
+  ok(scanDc.length === 0, 'a1 memo + SFTP (documents only): the same privacy scan is clean' + (scanDc.length ? ' (' + scanDc.slice(0, 4).join('; ') + ')' : ''));
+  // the scan itself bites: a planted rent figure, a bank name and "transactions" are all caught, and AED 180,000 is not mistaken for 18,000
+  const planted = clone(m); planted.verification.otherIncome = 'Rent AED 27,000 into HSBC — 4 transactions'; planted.terms.extra = 9000;
+  ok(carPrivacyScan(planted, sm).length >= 4 && carPrivacyScan({ a: 'AED 180,000 and AED 190,000' }, { header: [], row: [] }).length === 0,
+     'the privacy scan catches a planted 27,000 / 9,000 / HSBC / "transactions", and never mistakes AED 180,000 for 18,000');
+  // and the generic v2.5 scan agrees once the dealer-quote block (allowed exact figures) is set aside
+  const noVehicle = clone(m); delete noVehicle.terms.vehicle;
+  const gen = privacyScan(E.getDecision(of.id), noVehicle, sm, { incomeBand: T.income(51750), dbrBand: T.dbr(44.55), freeCashFlowBand: T.fcf(16300),
+    instalmentToCashFlowBand: T.share(20.6), aecbScoreBand: T.aecb(a1.aecb) });
+  ok(gen.length === 0, 'the generic v2.5 recursive scan (raw Open Finance values, bank labels, bands) is also clean' + (gen.length ? ' (' + gen.slice(0, 4).join('; ') + ')' : ''));
+  ok(!/Mashreq|HSBC|ADCB|7714|3302|5568/.test(JSON.stringify(m.verification) + JSON.stringify(m.affordability)) && !('openFinanceUplift' in m) && !('openFinanceFindings' in m),
+     'the uplift and the findings never reach the memo');
+  // the findings exist on the record (internal) and name what the lender never sees
+  const fnd = E.getDecision(of.id).openFinanceFindings;
+  ok(Array.isArray(fnd) && fnd.map(x => x.key).join() === 'regularIncome,salary,obligations,ownFunds,spending' &&
+     /4 of 4 quarterly receipts of AED 27,000 into HSBC ••3302/.test(fnd[0].observation) && /AED 6,750\/month/.test(fnd[0].effect) &&
+     /AED 45,000 every month into Mashreq ••7714/.test(fnd[1].observation) && /= the AECB figure/.test(fnd[2].observation) &&
+     /3 accounts cover the AED 45,000 down payment/.test(fnd[3].observation) && /20\.6% of free cash flow AED 16,300/.test(fnd[4].effect) && dc.openFinanceFindings === null,
+     'record.openFinanceFindings (internal): rent 4 of 4 into HSBC ••3302 → 6,750/month; salary into Mashreq ••7714; obligations = AECB; balances cover the down payment; 20.6% of FCF');
+
+  // ---- reason codes, refer queue, metrics ----
+  for (const c of ['RC_LTV_CAP', 'RC_VEHICLE_INELIGIBLE', 'RC_BELOW_MIN_AMOUNT']) {
+    ok(D.reasonCodes[c] && D.reasonCodes[c].en && ARABIC.test(D.reasonCodes[c].ar), 'new code ' + c + ' has English + Arabic');
+  }
+  eq(D.reasonCodes.RC_LTV_CAP.en, 'The amount is limited to 80% of the vehicle\'s value.', 'RC_LTV_CAP wording');
+  eq(D.reasonCodes.RC_VEHICLE_INELIGIBLE.en, 'The vehicle does not meet the age or quotation requirements.', 'RC_VEHICLE_INELIGIBLE wording');
+  const thin = clone(a1); thin.aecb = { hit: false, score: null, esrPct: null, obligationsMonthly: 0, tradelines: 0, chequeReturns12m: 0, worstDelinquency: 'NONE' };
+  const ref = E.decide({ productId: 'car_loan', applicant: thin, amount: 180000, tenorMonths: 60, consents: DOCS });
+  collect(ref.reasonCodes);
+  const qrow = E.referQueue().find(x => x.id === ref.id);
+  ok(ref.outcome === 'REFER' && ref.reasonCodes.includes('RC_THIN_FILE') && qrow && qrow.productId === 'car_loan' && qrow.slaHoursLeft === 8,
+     'a thin-file car application refers (RC_THIN_FILE) and sits in the queue with the 8-hour SLA');
+  const ovr = E.override(ref.id, { outcome: 'APPROVE', reasonCode: 'RC_MANUAL_REVIEW', analyst: 'A. Farsi', approver: 'S. Nair' });
+  ok(ovr.token && ovr.token.conditions.includes('Vehicle mortgage registered with the RTA in favour of Partner Bank') &&
+     ovr.token.conditions.some(c => /^Down payment of AED [\d,]+ paid to the dealer$/.test(c)) && /Approved by override/.test(ovr.token.conditions[ovr.token.conditions.length - 1]),
+     'an override approval issues the car token conditions too');
+  const mt = E.metrics();
+  const carN = E.listDecisions().filter(r => r.productId === 'car_loan').length;
+  ok(mt.byProduct.car_loan && mt.byProduct.car_loan.decisions === carN && carN > 10, 'metrics byProduct.car_loan counts this session\'s car decisions (' + carN + '; no seeded history for a new pack)');
+  eq(mt.totals.decisions, Object.keys(mt.byProduct).reduce((s, x) => s + mt.byProduct[x].decisions, 0), 'totals = sum of byProduct incl. car_loan');
+
+  // ---- simulation ----
+  const book = D.sampleBook.car_loan;
+  ok(Array.isArray(book) && book.length >= 12 && book.every(r => r.vehicle && Number.isFinite(r.vehicle.priceAed) && ['NEW', 'USED'].includes(r.vehicle.condition) &&
+     Number.isInteger(r.vehicle.modelYear) && Number.isFinite(r.amount) && Number.isFinite(r.tenorMonths)), 'sampleBook.car_loan: ' + book.length + ' rows, each with vehicle {priceAed, condition, modelYear} and amount / tenor');
+  const raw = book.map(r => E.decideRaw('car_loan', r));
+  const mix = ['APPROVE', 'REFER', 'DECLINE'].map(o => raw.filter(x => x.outcome === o).length);
+  ok(mix.every(n => n > 0) && mix.join('/') === '8/3/6', 'the car book mixes approve / refer / decline (' + mix.join('/') + ')');
+  const sim = E.simulateBook('car_loan', {});
+  ok(sim.size === book.length && sim.before.APPROVE === 8 && sim.after.APPROVE === 8 && sim.flips.length === 0 && sim.amountImpact &&
+     sim.amountImpact.approvedAmountBefore === sim.amountImpact.approvedAmountAfter, 'simulateBook(car_loan) runs; the live pack replays to itself');
+  ok(sim0.after.APPROVE === sim0.before.APPROVE - 1 && sim0.flips.length === 1 && sim0.flips[0].id === 'CL-002' && sim0.flips[0].to === 'DECLINE' &&
+     sim0.amountImpact.approvalsReduced === 1 && sim0.amountImpact.approvedAmountAfter < sim0.amountImpact.approvedAmountBefore,
+     'regularIncomeCountedPct 0: CL-002 flips to DECLINE (the rent was the difference) and CL-001 shrinks (' + sim0.amountImpact.approvedAmountBefore + ' → ' + sim0.amountImpact.approvedAmountAfter + ')');
+  throwsWith(() => E.simulateBook('car_loan', { ltvCapPct: 90 }), 'locked regulatory primitive', 'simulate refuses a locked primitive');
+  ok(raw.filter(x => x.outcome === 'APPROVE').every(x => x.dbrPct <= 50), 'every car-book approval stays within the 50% DBR cap');
+
+  // ---- vocabulary + determinism ----
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
+  const carText = JSON.stringify([a1, book, ['RC_LTV_CAP', 'RC_VEHICLE_INELIGIBLE', 'RC_BELOW_MIN_AMOUNT'].map(c => D.reasonCodes[c]), E.getPolicy('car_loan'),
+    E.listDecisions().filter(r => r.productId === 'car_loan'), m, md, E.execSteps('car_loan')]);
+  ok(!banned.test(carText) && !mentionsSalaryTransfer(carText), 'no banned vocabulary or salary-transfer wording anywhere in the car-loan data, records or memos');
+  ok(!/Toyota|Nissan|Lexus|Mercedes|BMW|Audi|Land Cruiser|Patrol|Al-Futtaim|Arabian Automobiles/i.test(JSON.stringify([a1, book])), 'no real car makes, models or dealers');
+  function snap() {
+    E.init(D);
+    const x = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: AR });
+    const y = E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: DOCS });
+    return JSON.stringify([x, y, E.creditMemo(x.id), E.memoSftpRow(E.creditMemo(x.id)), E.quoteCar({ applicant: a1, amount: 180000, tenorMonths: 36, consents: AR }),
+                           E.simulateBook('car_loan', { regularIncomeCountedPct: 0 }), E.metrics().byProduct.car_loan]);
+  }
+  ok(snap() === snap(), 'two fresh init() runs: identical car decisions, uplift, memo, quote, simulation and metrics');
+  for (const r of E.listDecisions()) collect(r.reasonCodes);
+  ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. the car loan) exists with Arabic');
 });
 
 // ---------------------------------------------------------------------------
