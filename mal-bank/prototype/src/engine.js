@@ -6,7 +6,7 @@
  *   personal_loan  — conventional amortising cash loan (reducing-balance APR)
  *   starter_loan   — small entry loan with an upgrade path: after an on-time
  *                    repayment, a re-decision on connected UAE accounts (+ optional
- *                    international statements) offers more for less — the customer
+ *                    home-country statements, v2.4) offers more for less — the customer
  *                    picks amount × tenor on an APR curve that falls with tenor
  *   salary_advance — single-repayment advance against the next salary, flat fee
  * Binding spec: ../NOOR-PIVOT.md (overrides ../CONTRACT.md where they conflict;
@@ -160,7 +160,7 @@
         regulatory: { dbrCapPct: 50, dbrCapRetireePct: 30, aecbCheckRequired: true, coolingOffDays: 5 },
         params: { starter: { amount: 1000, tenorMonths: 1, apr: 0.50 },
                   tiers: {
-                    // UAE connected accounts + international statements
+                    // UAE connected accounts + verified home-country statements (v2.4)
                     enhanced: { maxAmount: 3000, maxTenorMonths: 6, aprAtOneMonth: 0.45, aprAtMaxTenor: 0.35 },
                     // UAE connected accounts only
                     base: { maxAmount: 1500, maxTenorMonths: 3, aprAtOneMonth: 0.48, aprAtMaxTenor: 0.42 }
@@ -1449,7 +1449,7 @@
   // Starter loan → upgrade (Addendum v2.1)
   //
   // Applicant: an upgrade persona (priorLoan + aecb + connected + optional
-  // international block) or a sampleBook.starter_loan row ({starterDpd,
+  // homeStatements block, read only through the v2.4 parser) or a sampleBook.starter_loan row ({starterDpd,
   // connectedMonths, statements, statementMonths, income, spend,
   // aecbObligations, homeObligations}).
   // ---------------------------------------------------------------------------
@@ -1525,7 +1525,8 @@
   //  4. Rules (all recorded): REG_AECB_CHECK, REG_DBR_CAP (at the default option),
   //     POL_STARTER_REPAID_ON_TIME (DPD 0 or DECLINE RC_STARTER_LATE),
   //     POL_CONNECTED_ACCOUNTS, POL_INCOME_HISTORY, POL_FREE_CASH_FLOW,
-  //     POL_INTERNATIONAL_STATEMENTS (informational; sets the tier).
+  //     POL_HOME_STATEMENTS (verified statements set the tier; integrity/name
+  //     failure → REFER to fraud review).
   function evaluateUpgrade(p, amount, tenorMonths, pol, consents, statements) {
     const reg = pol.regulatory, prm = pol.params;
     const rs = makeRuleSet();
@@ -1735,7 +1736,7 @@
     const p = ev.profile;
     // Upgrade re-decision: the prior decision first (the starter loan and how it
     // was repaid), then the AECB file it created, the connected UAE accounts and,
-    // only with consent, the parsed international statements.
+    // when the customer shared them, the parsed home-country statements (v2.4).
     if (productId === 'starter_loan') {
       const pr = p.prior;
       pulls.push({ source: 'PRIOR_DECISION', status: pr.dpd === 0 && pr.repaidAt ? 'REPAID_ON_TIME' : 'REPAID_LATE',
@@ -2170,7 +2171,7 @@
       throw err('Open Finance consent (connected accounts via Al Tareq) is required for split — it underwrites on connected-account cash flow');
     }
     // The starter-loan upgrade re-decides on connected UAE accounts — Open Finance consent is mandatory;
-    // international statements are optional (they decide the tier).
+    // home-country statements are optional (they decide the tier).
     if (productId === 'starter_loan' && consents.openFinance !== true) {
       throw err('Open Finance consent (connected UAE accounts via Al Tareq) is required for the starter-loan upgrade — it re-decides on connected-account cash flow');
     }

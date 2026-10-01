@@ -651,7 +651,7 @@ details.tbl-view table { margin-top:6px; }
   .demo-strip.demo-7 { grid-template-columns:1fr; }
   .parse-panel .pp-head { flex-wrap:wrap; }
   /* the refer queue scrolls sideways inside its own box instead of squeezing seven columns */
-  #wb-queue .tbl { min-width:760px; }
+  #wb-queue .tbl { min-width:940px; }
 }
 
 </style>
@@ -2294,7 +2294,7 @@ var Upgrade = {
           h('span', { class: 'chip ' + (onTime ? 'chip-ok' : 'chip-warn'), text: onTime ? 'Starter repaid on time' : 'Starter repaid ' + pl.dpd + ' days late' }),
           h('span', { class: 'chip', text: 'Income ' + fmtAED(cn.avgMonthlyIncome) + '/mo' }),
           h('span', { class: 'chip', text: (cn.monthsAvailable || 0) + ' mo connected' }),
-          x.bank ? h('span', { class: 'chip acc chip-wrap', text: x.bank + ' · ' + ((corridorUi(x.country) || {}).name || x.country) + ' · 6 mo statements' }) : null)));
+          x.bank ? h('span', { class: 'chip acc chip-wrap', text: x.bank + ' · ' + ((corridorUi(x.country) || {}).name || x.country) + ' · 6\u00a0mo\u00a0statements' }) : null)));
     });
     left.appendChild(h('div', { class: 'panel' }, h('h3', null, 'Customers ', h('span', { class: 'h3-note', text: '(u1–u2, synthetic)' })), pWrap));
     left.appendChild(h('div', { id: 'up-prior', class: 'purchase-card' }, h('div', { class: 'pc-empty', text: 'Pick a customer — Noor shows the starter loan and how it was repaid.' })));
@@ -2416,7 +2416,7 @@ var Upgrade = {
       statementsParsePanel(parsed, { id: 'up-parse-panel', after: function () {
         return h('div', { class: 'btnrow', style: 'margin-top:10px;' },
           h('button', { class: 'btn btn-primary', id: 'up-st-redecide', text: 'Re-decide with statements', onclick: function () { Upgrade.submit(); } }),
-          h('span', { class: 'small muted', text: Upgrade.supersedable() ? 'A new decision that supersedes ' + Upgrade.rec.id : 'Ticks the same consents; statements ride along' }));
+          h('span', { class: 'small muted', text: Upgrade.supersedable() ? 'A new decision that supersedes ' + Upgrade.rec.id : 'Uses the consents ticked above — the statements go with this decision' }));
       } })));
     Upgrade.updateSubmitLabel();
     var pp = $('#up-parse'); if (pp && pp.scrollIntoView && !REDUCED) pp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

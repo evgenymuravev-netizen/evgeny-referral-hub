@@ -565,7 +565,7 @@
   // starter_loan (80 rows): customers who took the AED 1,000 starter loan and
   //   are due a re-decision. ~80% repaid on time (starterDpd 0), the rest late;
   //   most have 3–12 months of connected UAE accounts (~5% only 1–2); ~55%
-  //   share international statements (6–30 months); income lognormal (median
+  //   share home-country statements (6–30 months of credited history); income lognormal (median
   //   ~7.5k), spend 40–102% of income; ~20% carry a small AECB obligation and
   //   ~35% a home-country loan (homeObligations) that is only visible to the
   //   decision when statements are shared.

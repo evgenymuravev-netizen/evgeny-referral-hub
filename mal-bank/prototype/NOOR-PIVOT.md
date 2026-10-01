@@ -659,3 +659,89 @@ Built as specified (selftest 461 checks green, acceptance 225 green). Deviations
 - **Chart.** The addendum asks for APR on a right-hand axis. Both axes start at zero, and the bars
   use the lower ~58% of the plot so the APR line runs above them rather than through the labels.
   A data table backs the chart.
+
+### v2.3 as built
+
+Built as REPAYMENT-SPEC.md specifies (selftest 678 checks green, acceptance 322 green, counted after v2.4).
+Deviations and additions:
+
+- **Platform rule wording.** The locked row on every pack reads "Repayment collection: Al Tareq ≤ AED 1,000 ·
+  direct debit above · no salary transfer required". The spec's "· no salary transfer" was extended so that the
+  only salary-transfer wording anywhere on screen is the allowed phrase. It is exposed as
+  `getPolicy(pid).platform.repaymentCollection` (`{altareqMaxAmount, editable:false, rule}`), and
+  publish/simulate refuse `repaymentCollection`, `altareqMaxAmount` and `repaymentRouting` as a platform rule.
+- **`repaymentFor`** also returns `labelAr` (دفعة متكررة عبر منصة الطارق / تفويض بالخصم المباشر) and `amount`,
+  and it throws on a non-positive amount.
+- **Token conditions.** The method condition sits second, right after the KFS line, on every product, and there
+  is exactly one. Salary advance carries KFS, the method line and "Repaid in one instalment on the next salary
+  date — no salary transfer required", because the rule is shared. Upgrades swap the method line on every
+  `selectUpgradeOption`. An approving override sets `repayment`, and a declining one nulls it. A blocked
+  "split another purchase" returns `repayment: null`.
+- **Sequence.** The `REPAYMENT_SET_UP` event stores `method` and `label`. Once recorded, the event's method
+  wins in `execSteps(productId, decisionId)`, which throws for a decision of another product. Without a decision
+  id the step is the generic "Repayment set up". Guards stay keyed on the expected step, so clearing cooling-off
+  before repayment set-up gets the same "no disbursement until repayment collection is set up" text.
+  The AGREEMENT_SIGNED guard now names repayment set-up.
+- **UI.** On the upgrade, the repayment line sits under the amount slider and follows the amount live, plus a
+  KFS tile. Elsewhere it sits under the outcome banner. The KFS "Repayment method" tile spans the grid row.
+  The prior-loan card shows the AED 1,000 starter "Collected via Al Tareq recurring payment".
+- **Banned terms.** The scan also forbids `salary transfer assignment` and `transfer (your|their) salary to`.
+  The selftest and acceptance additionally fail any "salary transfer" / "salary-transfer" outside "no salary
+  transfer required", so an old engine comment was reworded.
+- Version strings remain `data-2.0` / `engine-2.0`; every change is additive.
+
+### v2.4 as built
+
+Built as STATEMENTS-SPEC.md specifies. Deviations and the choices the spec left open:
+
+- **Enhanced tier on a 6-month window.** v2.1 credited 24 months of statement history (Anita: 5 UAE + 24 =
+  29 ≥ 12). A 6-month window would give 11 and drop her to BASE. Verified statements therefore credit the
+  account's history: months since it opened, from the statement header, **capped at 24**, and only when
+  integrity, name match and 6/6 months pass. Anita's SBI account has been open since Aug 2014, giving 24
+  credited months and 29 in total. Every v2.1 number holds: FCF 3,550, budget 1,775, 3,000 / 6 / 35%,
+  AED 552.27/mo. The cap is a constant (`STATEMENT_EVIDENCE.historyCreditMaxMonths`), not a param.
+- **Personal loan on statements.** AECB no-hit with usable statements gets a proxy base of 640 (grade capped at
+  B) plus overlays: account ≥ 5 years +20, clean conduct +20, buffer ≥ ½ month of income +10, remittances
+  ≥ 85% consistent +15, alongside the existing +15 for salary verified via connected account. The newcomer
+  haircut is 50% − 10 (conduct) − 5 (buffer) − 10 (corroboration), floor 25%. New binding constraint
+  `STATEMENTS_HAIRCUT` and positive reason `RC_STATEMENTS_USED` (EN + MSA). Priya scores 720 (B), and
+  60,000 × 75% = **AED 45,000** against 30,000 on Credit Passport, at DBR 14.7% including the AED 450 EMI.
+  Usable statements' EMIs count in DBR for every applicant. With Credit Passport as well, the larger of the two
+  obligations is counted, not the sum.
+- **Parser.** It is deterministic over seeded monthly rows in local currency (`homeStatements` on r2, u1 and
+  u2). Fixed FX table: INR 0.044, PKR 0.0132, EGP 0.0757 AED. Remittance consistency = mean over UAE salary
+  months of ½ × timing (0–3 days after payday 1, 4–7 days ½) + ½ × amount stability (1 − |x − median| /
+  median). That gives Priya 92%, Anita 95% (5 of 5 UAE months; January predates her move) and Bilal 90%.
+  `parsed` adds `key`/`status` per finding, `complete`, `missingMonths`, `emis`, `evidence` flags,
+  `accountTenureMonths`, `usable` and `reasonCode`. Effects are product-aware when `productId` is passed.
+  An unknown file is an integrity FAIL with nothing else read; the genuine file under the wrong country also
+  FAILs. `parseStatements` takes an optional `months` (1–6) to exercise the incomplete path.
+- **Incomplete upload** keeps `AWAITING_DOCUMENTS` (the customer is asked again; `RC_STATEMENTS_INCOMPLETE` goes
+  to the audit and the parse) rather than moving to `DOCUMENTS_RECEIVED`. An integrity or name failure *is*
+  received, and its re-decision refers to fraud review.
+- **requestDocuments** applies to personal loans and upgrades only (the evaluators that read statements). It
+  requires 6 months, an analyst name and a supported corridor, and stores `documentRequest` with the customer
+  message in EN + AR. The SLA is frozen (`slaPaused`, `slaHoursLeft`) and resumes on upload. Queue rows gain
+  `status`, `slaPaused`, `documentRequest` and `supersedes`. Cases awaiting or holding documents stay in the
+  queue, including an approval below the requested amount.
+- **Supersede.** `decide()` takes `statements` plus an additive `supersedes`: the customer-initiated
+  re-decision, which the upgrade's BASE → ENHANCED uses. It is refused across products or applicants, after
+  any execution event, after an override, when already superseded, or without statements. Superseded records
+  refuse `selectUpgradeOption`, `recordEvent` and `override`. Records add `homeStatements`,
+  `evidenceComparison` (NO_DATA / CREDIT_PASSPORT where the customer has one / HOME_STATEMENTS, computed as
+  pure evaluations), `supersedes`, `supersededBy`, `redecision {supersedes, trigger, original,
+  documentRequest}`, `documentRequest` and `documents`. New statuses: `AWAITING_DOCUMENTS`,
+  `DOCUMENTS_RECEIVED`, `SUPERSEDED`.
+- **v2.1 renames.** `INTERNATIONAL_STATEMENTS` → `HOME_STATEMENTS` (data pull), `POL_INTERNATIONAL_STATEMENTS` →
+  `POL_HOME_STATEMENTS` (rule), consent `internationalStatements` → `homeStatements` (with `source`), feature
+  `internationalMonths` → `homeHistoryMonths`. Persona `international` blocks are removed. The old consent flag
+  still works as an alias: Mizan parses the customer's seeded statements as if they were uploaded.
+  RC_UPGRADE_ENHANCED / RC_UPGRADE_BASE now say "home-country bank statements".
+- **Youssef Hassan** is a summary queue row from `MizanData.seededDocumentCases`. It uses no PRNG draws, so
+  every other seeded figure is unchanged, and it counts in refer aging.
+- **UI.** The parse panel's Skip control stays in place, disabled once there is nothing left to skip (always,
+  under reduced motion). "Philippines — not supported yet" is offered so the corridor refusal can be shown
+  inline. The Workbench stepper keeps the upload and re-decide buttons live, so out-of-order clicks get the
+  engine's refusal inline, as the execution steps do. The overview demo strip has 7 steps (4 + 3). The queue
+  scrolls sideways at phone width. The v2.1 section above still names Ana Reyes; it is historic spec text,
+  while code and UI use Anita Thomas.
