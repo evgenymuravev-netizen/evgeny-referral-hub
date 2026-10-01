@@ -461,3 +461,153 @@ Pay in 6 — 2,150/mo, fee 150, total 12,900, APR 25.28% · Pay in 12 — 1,150/
 APR 26.62%. Note: with a flat fee on the original principal the APR equivalent **rises** as the plan
 lengthens for the same monthly fee rate (selftest group 6 asserts this direction; for the same *total*
 fee the shorter plan has the higher APR).
+
+---
+
+## Addendum v2.1 — Starter loan → upgrade case (binding for this change)
+
+**The story.** A thin-file customer was approved earlier for a small **starter loan: AED 1,000 · 1 month ·
+50% APR** (partner income AED 41.67) and repaid it on time. Noor now re-decides with richer data —
+**connected UAE accounts (Open Finance)** plus **international bank account statements** (home-country
+history) — and offers an **upgrade the customer shapes themselves**: amount **up to AED 3,000**, tenor
+**up to 6 months**, APR **as low as 35%**. All three levers are combined in one offer; the customer picks
+amount and tenor. **The longer the tenor, the lower the APR — and the lending partner still earns more**,
+because interest accrues over more months. This is the lifecycle idea ("decisions become a lifecycle, not
+an event") made concrete: the starter loan's job was to create a repayment record and an AECB file.
+
+### New product manifest `starter_loan`
+
+Add as the THIRD manifest (order: split, personal_loan, starter_loan, salary_advance):
+`{productId:'starter_loan', nameEn:'Starter loan', nameAr:'قرض البداية', segment:'CONSUMER',
+structure:'Short amortising loan with an upgrade path', pricingMode:'TENOR_CURVE_APR'}`.
+Regulatory (locked): dbrCapPct 50, dbrCapRetireePct 30, aecbCheckRequired true, coolingOffDays 5.
+Params (editable, with bounds; validated on publish):
+- `starter`: `{amount:1000, tenorMonths:1, apr:0.50}` (the entry offer; shown for reference)
+- `tiers.enhanced` (UAE connected accounts + international statements): `{maxAmount:3000,
+  maxTenorMonths:6, aprAtOneMonth:0.45, aprAtMaxTenor:0.35}`
+- `tiers.base` (connected UAE accounts only): `{maxAmount:1500, maxTenorMonths:3, aprAtOneMonth:0.48,
+  aprAtMaxTenor:0.42}`
+- `minAmount:500`, `amountStep:100`, `instalmentToFcfMaxPct:50`, `minIncomeHistoryMonthsEnhanced:12`,
+  `minOnTimeStarterRepayments:1`, `tokenValidityDays:7`.
+**APR curve:** linear in tenor, `apr(t) = aprAtOneMonth − (aprAtOneMonth − aprAtMaxTenor) × (t−1)/(maxTenor−1)`
+(enhanced default → 45, 43, 41, 39, 37, 35 %). Monthly payment is standard amortising:
+`P = A·r / (1 − (1+r)^−n)`, `r = apr/12` (n=1 → `A·(1+r)`). **Partner income = total interest =
+P·n − A** (it is also the customer's total cost of credit — label it as both).
+**Publish-time invariants (throw `Mizan: …` with a plain message, surfaced inline in the console):**
+(1) `aprAtMaxTenor ≤ aprAtOneMonth` for each tier ("longer tenor must not cost more");
+(2) **partner-income guarantee** — partner income must be strictly increasing in tenor for every tier
+(check at A = 1; interest is proportional to principal, so it then holds for every amount); message e.g.
+"pricing curve breaks the partner-income guarantee — the 6-month option would earn less than the 5-month
+option"; (3) enhanced tier must be at least as generous as base (maxAmount, maxTenor ≥; aprAtMaxTenor ≤).
+At aprAtMaxTenor 0.10 the guarantee must fail (selftest asserts this).
+
+### Personas `MizanData.personasUpgrade` (u1, u2)
+
+```js
+{ id:'u1', name:'Ana Reyes', nameAr:'آنا رييس', tagline:'Nurse, 5 months in the UAE — repaid her starter loan on time',
+  age:29, residency:'NEW_RESIDENT', monthsInUae:5,
+  employment:{ employer:'Private hospital, Dubai', type:'PRIVATE', retiree:false },
+  priorLoan:{ ref:'MZN-S-0412', productId:'starter_loan', amount:1000, tenorMonths:1, apr:0.50,
+    disbursedAt:'2026-06-01', dueAt:'2026-07-01', repaidAt:'2026-07-01', dpd:0, partnerIncome:41.67 },
+  aecb:{ hit:true, score:null, tradelines:1, worstDelinquency:'NONE', chequeReturns12m:0,
+    obligationsMonthly:0, note:'File created by the starter loan — 1 tradeline, paid on time, no score yet' },
+  connected:{ source:'ALTAREQ_TPP', banks:['ENBD'], monthsAvailable:5, avgMonthlyIncome:9500,
+    avgMonthlySpend:5600, incomeVolatilityPct:4, monthlyIncome:[...12, null for unavailable], monthlySpend:[...] },
+  international:{ country:'Philippines', bank:'BDO Unibank', source:'Statements (24 months, parsed)',
+    monthsAvailable:24, avgMonthlyIncomeAed:6800, incomeVolatilityPct:6, avgBalanceAed:4200,
+    overdrafts12m:0, obligationsMonthlyAed:350 /* home-country personal loan, paid on time */ } }
+```
+u2 **Bilal Ahmed** — similar profile (driver, 7 months in UAE, income 6,500, spend 4,300; Pakistan, HBL,
+18 months statements) but his starter loan was **repaid 14 days late (dpd 14)** → **no upgrade**.
+
+### Upgrade evaluation (route `decide({productId:'starter_loan', …})` to a new evaluator)
+
+Consents: `aecb` (required, throw), `openFinance` (required, throw), `internationalStatements` (optional —
+decides the tier). Data pulls: PRIOR_DECISION (the starter loan + repayment), AECB_CONSUMER (1 tradeline,
+on time), OPEN_FINANCE (UAE accounts), INTERNATIONAL_STATEMENTS (only when consented).
+Features: verifiedIncome (UAE), incomeHistoryMonths (UAE + international when consented → 29 for u1),
+homeCountryObligations (only visible WITH statements → 350), freeCashFlowMonthly = income − spend −
+AECB obligations − homeCountryObligations (u1 enhanced: 9,500 − 5,600 − 350 = 3,550), maxInstalment =
+instalmentToFcfMaxPct% × fcf (1,775), dbr per option.
+Rules (record all): REG_AECB_CHECK, REG_DBR_CAP (per selected option), POL_STARTER_REPAID_ON_TIME
+(dpd 0, else DECLINE RC_STARTER_LATE), POL_CONNECTED_ACCOUNTS, POL_INCOME_HISTORY (enhanced needs ≥
+minIncomeHistoryMonthsEnhanced), POL_FREE_CASH_FLOW, POL_INTERNATIONAL_STATEMENTS (INFO/PASS — sets tier).
+Outcome: APPROVE with `tier:'ENHANCED'|'BASE'` (reason RC_UPGRADE_ENHANCED or RC_UPGRADE_BASE);
+DECLINE for u2 (RC_STARTER_LATE: "Previous loan was repaid late — starter terms continue; upgrade
+can be reviewed after 3 on-time months").
+DecisionRecord additions: `kind:'UPGRADE'`, `priorLoan` (copy), `tier`, `upgrade:{ maxAmount,
+maxTenorMonths, curve:[{months, apr}], starterPartnerIncome:41.67, counterfactual:{ tier, maxAmount,
+maxTenorMonths, aprAtMaxTenor } /* the other tier, so the UI can say what the statements were worth */ },
+`selection:null`, pricing `{mode:'TENOR_CURVE_APR', curve, aprFloor}`, limit
+`{requested, approved:maxAmount, bindingConstraint:'TIER_CAP', capacity:maxAmount, ...}`.
+Default selection = the longest tenor that fits at maxAmount.
+
+### New engine API (additive)
+
+- `quoteUpgrade(decisionId, amount)` → `{ amount, options:[{ months, apr, monthlyPayment, totalRepayable,
+  totalInterest, partnerIncome, partnerIncomeVsStarterX, fits, reason /* when !fits */, dbrPct }] }` for
+  t = 1..maxTenor. Amount clamped/validated to [minAmount, maxAmount] in amountStep. 2-dp money.
+  For u1 at 3,000: 1 month does NOT fit (3,112.50 > 1,775); 2–6 fit.
+- `selectUpgradeOption(decisionId, {amount, months})` → stores `selection {amount, months, apr,
+  monthlyPayment, totalInterest, partnerIncome}` and refreshes token conditions; throws if the option
+  does not fit, if outside the offer, or if OFFER_ACCEPTED was already recorded. Audit-logged.
+- `execSteps('starter_loan')` → the same 5 conventional steps; `recordEvent` works on upgrade records
+  (OFFER_ACCEPTED requires a selection → else throw "choose an option before accepting").
+- `simulateBook('starter_loan', params)`: add a seeded sample book `sampleBook.starter_loan` (~80 starter
+  customers: dpd, connected months, statements yes/no, income, spend, home obligations) and return, in
+  addition to the usual outcome counts/flips, `pricingImpact:{ avgAprBefore, avgAprAfter,
+  partnerIncomeBefore, partnerIncomeAfter }` (sum over approved rows at their default option) so a
+  pricing-only change shows its economic effect.
+- metrics(): `byProduct.starter_loan` (seed a modest history), no other shape change.
+New reason codes (EN + MSA Arabic): RC_UPGRADE_ENHANCED ("Upgraded using your connected UAE accounts and
+verified international bank statements"), RC_UPGRADE_BASE ("Upgraded using your connected UAE accounts —
+add international statements for a larger limit and a lower rate"), RC_STARTER_LATE, RC_OPTION_UNAFFORDABLE
+("This amount and term would take the instalment above what your cash flow supports").
+
+### Selftest additions (keep all 324 existing checks green; update the manifests-count check to 4)
+
+u1 all consents → APPROVE, tier ENHANCED, maxAmount 3000, maxTenor 6, apr(1)=0.45, apr(6)=0.35, APR
+strictly decreasing, partnerIncome strictly increasing with tenor, partnerIncome(6m @3000) > 41.67,
+1-month @3000 not fit, 2–6 fit, default selection 6 months. u1 without statements → tier BASE (1500 / 3
+/ 0.42) and homeCountryObligations not visible. u1 without openFinance → throw. u2 → DECLINE
+RC_STARTER_LATE. selectUpgradeOption: unaffordable → throw; valid → stored; after OFFER_ACCEPTED →
+throw; OFFER_ACCEPTED without selection → throw. publishPolicy: aprAtMaxTenor > aprAtOneMonth → throw;
+aprAtMaxTenor 0.10 → throw (partner-income guarantee); valid change → version bump. quoteUpgrade scales
+linearly with amount. simulateBook('starter_loan', lower aprAtMaxTenor e.g. 0.33) returns pricingImpact
+with avgAprAfter < avgAprBefore. Determinism; every new reason code has non-empty Arabic; banned-term
+regex still clean.
+
+### UI — new screen `data-screen="upgrade"` (8 screens; insert after `loan` in the nav)
+
+Nav label **"Credit upgrade"**, sub "Starter loan → more for less". Screen head eyebrow
+"Credit lifecycle — re-decision on new data", title "From starter loan to upgrade".
+Left column: persona cards u1/u2; **prior-loan card** (Starter loan · AED 1,000 · 1 month · 50% APR ·
+repaid on time 1 Jul 2026 · partner income AED 41.67; u2 shows "repaid 14 days late");
+consents (AECB required; Connect UAE bank accounts required; **International bank statements —
+optional**: "Add your home-country bank statements to unlock a bigger limit and a lower rate");
+"Re-decide" button; animated orchestration timeline (prior decision, AECB file, UAE accounts,
+international statements).
+Right column after decision: outcome banner ("Upgrade approved" / "No upgrade yet"); a **Starter →
+Upgrade comparison strip**: Amount AED 1,000 → up to AED 3,000 · Tenor 1 month → up to 6 months · APR
+50% → from 35%; a **counterfactual callout** ("Without the international statements: up to AED 1,500 · 3
+months · from 42% APR. The statements added 24 months of income history and surfaced a AED 350/mo
+home-country loan."); **amount slider** (minAmount…maxAmount, step 100, default max) + live
+**tenor option rows 1…maxTenor** (reuse the plan-row component and the --brand-fill selected style): each
+row "6 months · 35% APR · AED 552.27/mo · total interest AED 313.62 · partner income ×7.5 vs starter",
+unaffordable rows disabled with the reason; a **chart "Lower APR, more partner income"**: x = tenor
+1…6; bars = partner income at the chosen amount (--s1), line = APR (--s2, right axis), dashed reference
+line at the starter loan's AED 41.67 labelled "Starter loan"; selected tenor highlighted; unaffordable
+tenors faded/hatched; legend + a data-table <details> fallback like the other charts. Then a **KFS
+preview** for the selection (APR, monthly payment, number of payments, total repayable, total interest =
+total cost of credit, 5-business-day cooling-off) with a one-line note: "A longer term lowers the APR and
+the monthly payment but raises the total interest — the KFS shows both." Then **"Accept this option"**
+(selectUpgradeOption) → token + the 5 execution steps (same component as the other journeys; selection
+locks once OFFER_ACCEPTED). Arabic reasons in dir="rtl". u2 shows the decline reason and the starter
+terms that continue.
+Overview: add demo step 6 "Upgrade — Ana (u1): starter AED 1,000 → choose up to AED 3,000 · 6 months ·
+from 35% APR; the longer term earns the partner more at a lower rate", and a topic-map row "Credit upgrade
+→ re-decision on Open Finance + international statements; customer-chosen amount × tenor; APR falls with
+tenor while partner income rises (enforced at publish)". Policy console: add starter_loan with its params
+(tiers editable) and surface the publish invariants inline; simulate shows the pricingImpact numbers
+(avg APR before→after, partner income before→after). Workbench/log/monitoring: product label "Starter
+loan" appears naturally; log replay shows priorLoan, tier, selection.
