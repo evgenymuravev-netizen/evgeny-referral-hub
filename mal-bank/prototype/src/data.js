@@ -561,7 +561,28 @@
       ar: 'لا تستوفي المركبة متطلبات العمر أو عرض السعر.' },
     RC_BELOW_MIN_AMOUNT: {
       en: 'The amount we can offer is below the minimum for this product.',
-      ar: 'المبلغ الذي يمكن تقديمه أقل من الحد الأدنى المطلوب لهذا المنتج.' }
+      ar: 'المبلغ الذي يمكن تقديمه أقل من الحد الأدنى المطلوب لهذا المنتج.' },
+    // --- UAE red flags and early warning (Addendum v2.9) ------------------------------
+    // Customer-safe: each one is a change against the customer's own history, worded
+    // so an analyst can read it to the customer. No values, no places, no services.
+    RC_RED_FLAGS_REVIEW: {
+      en: 'Recent changes in your account activity need a quick review by our team.',
+      ar: 'تحتاج التغييرات الأخيرة في نشاط حسابك إلى مراجعة سريعة من فريقنا.' },
+    RC_RF_CARDS_MAXED: {
+      en: 'Your credit cards are close to their limits, and most of that was used in the last three months.',
+      ar: 'بطاقاتك الائتمانية قريبة من حدودها، وقد استُخدم معظم ذلك خلال الأشهر الثلاثة الماضية.' },
+    RC_RF_REMITTANCE_SURGE: {
+      en: 'Much more of your income went out in international transfers this month than you usually send.',
+      ar: 'خرج هذا الشهر جزء من دخلك في تحويلات دولية أكبر بكثير مما ترسله عادةً.' },
+    RC_RF_TRAVEL_AFTER_DISBURSAL: {
+      en: 'We noticed a travel purchase soon after your loan was paid out. On its own this never changes anything.',
+      ar: 'لاحظنا عملية شراء متعلقة بالسفر بعد صرف قرضك بفترة قصيرة، وهذا وحده لا يغيّر شيئاً على الإطلاق.' },
+    RC_RF_PAYMENTS_STOPPED: {
+      en: 'Your salary arrived later than usual, or a repayment was missed after a run of on-time payments.',
+      ar: 'وصل راتبك متأخراً عن موعده المعتاد، أو فاتتك دفعة بعد سلسلة من الدفعات في مواعيدها.' },
+    RC_RF_BALANCES_DRAINED: {
+      en: 'Your account balances dropped sharply compared with your usual level, after one large outgoing transfer.',
+      ar: 'انخفضت أرصدة حساباتك بشكل حاد مقارنةً بمستواها المعتاد، بعد تحويل صادر كبير واحد.' }
   };
 
   // ---------------------------------------------------------------------------
@@ -590,6 +611,108 @@
       signal: 'Balance depletion velocity high — current account runs dry 9 days before payday',
       signalAr: 'تسارع مرتفع في استنزاف رصيد الحساب الجاري قبل موعد الراتب',
       recommendedAction: 'Same-day nudge: pause flexible budget categories until payday', status: 'OPEN' }
+  ];
+
+  // ---------------------------------------------------------------------------
+  // UAE red flags and early warning — exit-risk watch (Addendum v2.9,
+  // RED-FLAGS-SPEC.md). Signals are changes against the customer's OWN baseline,
+  // read from their consented accounts (Open Finance) and the AECB card file.
+  //
+  // `redFlagData` is the only input the red-flag engine reads:
+  //   baseline — the customer's own history: 6-month share of income sent in
+  //              international transfers, the established salary day, the 3-month
+  //              average balance, card utilisation 3 months ago, the run of
+  //              on-time Noor repayments;
+  //   recent   — the last 30 days: income, international transfers (an amount,
+  //              never where to), airline purchases (amount + days after the loan
+  //              was paid out, never where to), salary lateness, balance now,
+  //              the largest outgoing transfer, a missed Noor collection;
+  //   aecb     — cards, total card limits and balances.
+  // There is deliberately no nationality, destination, religion or service-name
+  // field anywhere in this block — and the engine reads an allowlist anyway.
+  // ---------------------------------------------------------------------------
+  // r6 — personal loan. On the numbers alone: APPROVE AED 40,000 (grade B). With the
+  // red-flag rule (redFlagsAtOrigination on): REFER RC_RED_FLAGS_REVIEW, three flags —
+  // cards 41% → 97% · 89% of income in international transfers vs 22% usual ·
+  // balances −84% after one AED 7,000 transfer out. Never a decline, never a price change.
+  const personaR6 = {
+    id: 'r6', name: 'Marco Ferreira', nameAr: 'ماركو فيريرا',
+    tagline: 'Sales executive, 2 years in the UAE — recent changes in his own accounts',
+    age: 34, residency: 'RESIDENT', monthsInUae: 24,
+    employment: { employer: 'Retail group, Dubai', type: 'PRIVATE',
+                  salaryMonthly: 14000, tenureMonths: 20, retiree: false },
+    aecb: { hit: true, score: 694, esrPct: 15, obligationsMonthly: 2100,
+            tradelines: 3, chequeReturns12m: 0, worstDelinquency: 'NONE',
+            creditPassportAvailable: false },
+    bankData: { source: 'ALTAREQ_TPP', banks: ['RAKBANK'], monthsAvailable: 12,
+                salaryDetected: true, avgSalaryCredit: 14000, salaryCreditDay: 26 },
+    connected: { source: 'ALTAREQ_TPP', banks: ['RAKBANK'], monthsAvailable: 12,
+                 avgMonthlyIncome: 14000, avgMonthlySpend: 6900, incomeVolatilityPct: 0, salaryCreditDay: 26,
+                 // The same salary every month; spending mean 6,900
+                 monthlyIncome: [14000, 14000, 14000, 14000, 14000, 14000, 14000, 14000, 14000, 14000, 14000, 14000],
+                 monthlySpend: [6700, 7100, 6800, 7000, 6600, 7400, 6900, 6800, 7000, 6700, 6900, 6900] },
+    redFlagData: {
+      baseline: { intlTransfersShareOfIncome6m: 0.22, salaryCreditDay: 26, avgBalance3m: 11600,
+                  cardUtilisationPct3mAgo: 41, onTimePaymentsRun: 0 },
+      recent: { incomeAed: 14000, intlTransfersAed: 12400, airlinePurchases: [], salaryLateDays: 0,
+                balanceNowAed: 1850, largestOutboundTransferAed: 7000, missedCollection: false },
+      aecb: { cards: 3, cardLimitTotal: 60000, cardBalanceTotal: 58200 }
+    },
+    defaultRequest: { amount: 40000, tenorMonths: 24 }
+  };
+  personasLoan.push(personaR6);
+
+  // Six funded loans under watch (synthetic). Varied names, no nationality on any row,
+  // no destination on any transfer or trip. Expected at the default early-warning block:
+  //   ML-01 HIGH · EXIT_RISK (travel + transfers 85% vs 20% + balances −91% + salary 10 days late)
+  //   ML-02 MEDIUM (salary 8 days late only → check-in, offer a payment-date move)
+  //   ML-03 MEDIUM (cards 38% → 96% since the loan)
+  //   ML-04 LOW (one AED 1,900 trip 20 days after disbursal — watch, no contact)
+  //   ML-05 NONE (35% of income sent every month = the 6-month baseline — the guardrail)
+  //   ML-06 MEDIUM (transfers 84% of income, 3× the usual 28%)
+  const monitoredLoans = [
+    { id: 'ML-01', customer: 'Daniel Brooks', productId: 'personal_loan', amountAed: 45000, tenorMonths: 36,
+      disbursedAt: addDaysIso(TODAY, -12), contactChannel: 'Phone',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.20, salaryCreditDay: 25, avgBalance3m: 14000, cardUtilisationPct3mAgo: 35, onTimePaymentsRun: 0 },
+        recent: { incomeAed: 16000, intlTransfersAed: 13600, airlinePurchases: [{ daysAfterDisbursal: 9, amountAed: 2450 }],
+                  salaryLateDays: 10, balanceNowAed: 1260, largestOutboundTransferAed: 9500, missedCollection: false },
+        aecb: { cards: 2, cardLimitTotal: 30000, cardBalanceTotal: 11400 } } },
+    { id: 'ML-02', customer: 'Rohan Mehta', productId: 'personal_loan', amountAed: 30000, tenorMonths: 24,
+      disbursedAt: addDaysIso(TODAY, -95), contactChannel: 'In-app message',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.15, salaryCreditDay: 28, avgBalance3m: 6000, cardUtilisationPct3mAgo: 28, onTimePaymentsRun: 3 },
+        recent: { incomeAed: 11000, intlTransfersAed: 1650, airlinePurchases: [], salaryLateDays: 8,
+                  balanceNowAed: 4100, largestOutboundTransferAed: 900, missedCollection: false },
+        aecb: { cards: 2, cardLimitTotal: 20000, cardBalanceTotal: 6000 } } },
+    { id: 'ML-03', customer: 'Sofia Marino', productId: 'split', amountAed: 9000, tenorMonths: 6,
+      disbursedAt: addDaysIso(TODAY, -70), contactChannel: 'In-app message',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.10, salaryCreditDay: 27, avgBalance3m: 9000, cardUtilisationPct3mAgo: 38, onTimePaymentsRun: 2 },
+        recent: { incomeAed: 13000, intlTransfersAed: 1300, airlinePurchases: [], salaryLateDays: 0,
+                  balanceNowAed: 7200, largestOutboundTransferAed: 1500, missedCollection: false },
+        aecb: { cards: 3, cardLimitTotal: 45000, cardBalanceTotal: 43200 } } },
+    { id: 'ML-04', customer: 'Lina Haddad', productId: 'personal_loan', amountAed: 25000, tenorMonths: 24,
+      disbursedAt: addDaysIso(TODAY, -24), contactChannel: 'Email',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.12, salaryCreditDay: 25, avgBalance3m: 8500, cardUtilisationPct3mAgo: 30, onTimePaymentsRun: 0 },
+        recent: { incomeAed: 12000, intlTransfersAed: 1500, airlinePurchases: [{ daysAfterDisbursal: 20, amountAed: 1900 }],
+                  salaryLateDays: 0, balanceNowAed: 6300, largestOutboundTransferAed: 1200, missedCollection: false },
+        aecb: { cards: 2, cardLimitTotal: 25000, cardBalanceTotal: 8000 } } },
+    { id: 'ML-05', customer: 'Elena Petrova', productId: 'car_loan', amountAed: 85000, tenorMonths: 60,
+      disbursedAt: addDaysIso(TODAY, -150), contactChannel: 'In-app message',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.35, salaryCreditDay: 27, avgBalance3m: 10500, cardUtilisationPct3mAgo: 22, onTimePaymentsRun: 5 },
+        recent: { incomeAed: 15000, intlTransfersAed: 5250, airlinePurchases: [], salaryLateDays: 0,
+                  balanceNowAed: 9800, largestOutboundTransferAed: 5250, missedCollection: false },
+        aecb: { cards: 1, cardLimitTotal: 15000, cardBalanceTotal: 3000 } } },
+    { id: 'ML-06', customer: 'Peter Lindqvist', productId: 'personal_loan', amountAed: 35000, tenorMonths: 36,
+      disbursedAt: addDaysIso(TODAY, -45), contactChannel: 'SMS',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.28, salaryCreditDay: 26, avgBalance3m: 7500, cardUtilisationPct3mAgo: 25, onTimePaymentsRun: 1 },
+        recent: { incomeAed: 12500, intlTransfersAed: 10500, airlinePurchases: [], salaryLateDays: 0,
+                  balanceNowAed: 5400, largestOutboundTransferAed: 4000, missedCollection: false },
+        aecb: { cards: 2, cardLimitTotal: 18000, cardBalanceTotal: 5000 } } }
   ];
 
   // ---------------------------------------------------------------------------
@@ -777,6 +900,7 @@
     lenders: lenders,
     reasonCodes: reasonCodes,
     earlyWarning: earlyWarning,
+    monitoredLoans: monitoredLoans,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook() },
     history: { days: 90, seed: 20260719 }
   };

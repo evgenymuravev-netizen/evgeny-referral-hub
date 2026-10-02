@@ -1313,6 +1313,120 @@ details.tbl-view table { margin-top:6px; }
   .car-bar-row .cb-l { grid-column:1 / -1; }
   .car-tenor .pr-right { max-width:55%; }
 }
+/* ---------- v2.9 UAE red flags and early warning — exit-risk watch (tokens only: light + dark follow the skin) ---------- */
+.demo-strip.demo-10 { grid-template-columns:repeat(5,minmax(0,1fr)); }
+@media (max-width:1300px) { .demo-strip.demo-10 { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:1100px) { .demo-strip.demo-10 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:600px) { .demo-strip.demo-10 { grid-template-columns:1fr; } }
+/* Severity chips: HIGH solid, MEDIUM+ outlined, MEDIUM soft, LOW sky, NONE ok — never the brand colour */
+.sev-chip { display:inline-flex; align-items:center; justify-content:center; min-width:64px; font-family:var(--font-label); font-size:11.5px; font-weight:600;
+  letter-spacing:.02em; border-radius:var(--radius-pill); padding:3px 9px; white-space:nowrap; vertical-align:middle; }
+.sev-chip.sev-HIGH { color:var(--panel); background:var(--bad); }
+.sev-chip.sev-MEDIUMp { color:var(--warn); background:var(--warn-soft); box-shadow:0 0 0 1.5px var(--warn) inset; }
+.sev-chip.sev-MEDIUM { color:var(--warn); background:var(--warn-soft); }
+.sev-chip.sev-LOW { color:var(--sky-ink); background:var(--sky-soft); }
+.sev-chip.sev-NONE { color:var(--ok); background:var(--ok-soft); }
+/* Monitoring — the policy line, the four severity tiles, the watch table */
+.rf-policy { display:flex; gap:9px; align-items:flex-start; font-size:13.5px; line-height:1.45; color:var(--ink-2); background:var(--sky-soft);
+  border-radius:var(--radius-md); padding:10px 14px; }
+.rf-policy-ico { flex:0 0 18px; width:18px; height:18px; border-radius:50%; background:var(--sky-ink); color:var(--panel); font-family:var(--font-label);
+  font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; margin-top:1px; }
+.rf-tiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:12px 0; }
+.rf-tile { border:1px solid var(--hairline-soft); border-left:4px solid var(--hairline); border-radius:var(--radius-md); padding:10px 14px; background:var(--panel); min-width:0; }
+.rf-tile.sev-HIGH { border-left-color:var(--bad); }
+.rf-tile.sev-MEDIUM { border-left-color:var(--warn); }
+.rf-tile.sev-LOW { border-left-color:var(--sky); }
+.rf-tile.sev-NONE { border-left-color:var(--ok); }
+.rf-tile-l { font-family:var(--font-label); font-size:12.5px; font-weight:500; color:var(--muted); letter-spacing:.02em; }
+.rf-tile-v { font-family:var(--font-ui); font-size:26px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.2; margin:2px 0; }
+.rf-tile-s { font-size:12px; color:var(--muted); line-height:1.35; }
+.rf-tbl td { vertical-align:middle; }
+.rf-tbl tbody tr.rf-r.open td { background:var(--panel-2); }
+.rf-x { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; margin-right:6px; border:1px solid var(--hairline);
+  border-radius:50%; background:var(--panel); color:var(--muted); cursor:pointer; padding:0; vertical-align:middle; }
+.rf-x:hover { color:var(--ink); border-color:var(--axis); }
+.rf-x:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+.rf-x .rf-x-ico { display:inline-block; font-size:15px; line-height:1; transition:transform var(--dur-fast) var(--ease-out); }
+.rf-x[aria-expanded="true"] .rf-x-ico { transform:rotate(90deg); }
+.rf-flags { display:flex; flex-wrap:wrap; gap:5px; }
+.rf-flag { display:inline-flex; flex-direction:column; gap:1px; border:1px solid var(--hairline); border-radius:var(--radius-sm); padding:4px 8px; background:var(--panel); min-width:0; }
+.rf-flag.rf-med { border-color:var(--warn); }
+.rf-flag.rf-low { border-color:var(--sky); }
+.rf-flag-n { font-family:var(--font-label); font-size:11.5px; font-weight:600; color:var(--ink); }
+.rf-flag-v { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rf-noflag { display:inline-block; font-size:12.5px; line-height:1.4; color:var(--ok); background:var(--ok-soft); border-radius:var(--radius-sm); padding:4px 8px; }
+.rf-pattern { font-family:var(--font-mono); font-size:11px; }
+.rf-act { font-size:12.5px; color:var(--ink-2); }
+.rf-act-SPECIALIST_CALL { color:var(--bad); font-weight:600; }
+.rf-act-NONE, .rf-act-WATCH { color:var(--muted); }
+.rf-tbl tr.rf-detail td { background:var(--panel-2); padding:12px 14px 14px; cursor:default; }
+.rf-detail-in { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:12px 22px; min-width:520px; }
+.rf-d-h { font-family:var(--font-label); font-size:12.5px; font-weight:500; color:var(--brand-ink); margin:0 0 6px; }
+.rf-notes { margin:0 0 8px 16px; padding:0; font-size:12.5px; color:var(--ink-2); line-height:1.45; }
+.rf-notes li { margin-bottom:2px; }
+.rf-lender { display:flex; flex-direction:column; gap:2px; margin-top:8px; padding:8px 10px; border-left:3px solid var(--sky); background:var(--sky-soft);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+.rf-k { font-family:var(--font-label); font-size:11.5px; color:var(--muted); }
+.rf-v { font-size:13px; color:var(--ink); }
+.rf-d-obs { margin:8px 0 0 16px; padding:0; font-size:12.5px; line-height:1.45; color:var(--ink-2); }
+.rf-d-obs li { margin-bottom:3px; }
+.rf-cust-n { font-weight:500; color:var(--ink); }
+.rf-foot { margin-top:10px; line-height:1.5; }
+.rf-foot .rf-link { padding:2px 4px; color:var(--brand-ink); font-size:12.5px; }
+/* "What tripped" — observed vs the customer's own baseline, per flag */
+.rf-trip { margin-top:14px; border:1px solid var(--hairline-soft); border-radius:var(--radius-md); padding:12px 14px; background:var(--panel); }
+.rf-trip-h { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-bottom:6px; }
+.rf-trip-t { font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--ink); }
+.rf-row { padding:9px 0 4px; border-top:1px solid var(--hairline-soft); }
+.rf-row-h { font-size:13.5px; margin-bottom:5px; }
+.rf-cells { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px 14px; margin-bottom:4px; }
+.rf-cell { display:flex; flex-direction:column; gap:1px; min-width:0; }
+.rf-cell .rf-obs { font-weight:600; }
+.rf-guard-co { margin-top:10px; }
+.rf-consent { margin-top:8px; line-height:1.45; }
+/* Workbench — the red-flags panel and the analyst actions */
+.wb-rf { margin:4px 0 14px; padding:14px 16px; border:1px solid var(--warn); border-radius:var(--radius-md); background:var(--panel); }
+.wb-rf .rf-trip { margin-top:6px; }
+.wb-rf-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+.wb-rf-box { border:1px solid var(--hairline-soft); border-radius:var(--radius-md); padding:12px 14px; background:var(--panel-2); min-width:0; }
+.wb-rf-box-h { font-family:var(--font-label); font-size:13px; font-weight:600; color:var(--ink); margin-bottom:8px; }
+.wb-rf-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 10px; margin:8px 0; }
+.wb-rf-form .field { margin:0; min-width:0; }
+.wb-rf-form .wb-rf-wide { grid-column:1 / -1; }
+.wb-rf-form select, .wb-rf-form input, .wb-rf-form textarea { width:100%; max-width:100%; box-sizing:border-box; }
+.wb-rf-asked { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+/* Policy console — the shared block picker, guardrails as locked text */
+.pc-shared { display:inline-flex; align-items:center; flex-wrap:wrap; gap:8px; margin-left:4px; padding-left:12px; border-left:1px solid var(--hairline); }
+.pc-shared-l { font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.rf-guards { display:flex; flex-direction:column; gap:6px; }
+.rf-guard { display:flex; gap:8px; align-items:flex-start; padding:8px 10px; border-radius:var(--radius-sm); background:var(--panel-2); font-size:13px; line-height:1.45; color:var(--ink-2); }
+.rf-guard .lock-ico { flex:0 0 auto; }
+.rf-guard-t { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--ink); }
+@media (max-width:900px) {
+  .wb-rf-actions, .wb-rf-form { grid-template-columns:1fr; }
+  .rf-detail-in { grid-template-columns:1fr; min-width:0; }
+}
+@media (max-width:700px) {
+  .rf-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .rf-cells { grid-template-columns:1fr; }
+  /* The watch table becomes stacked cards at phone width (no sideways scrolling) */
+  .rf-tbl thead { display:none; }
+  .rf-tbl, .rf-tbl tbody { display:block; width:100%; }
+  .rf-tbl tr.rf-r { display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 10px; padding:10px 4px; border-top:1px solid var(--hairline-soft); }
+  .rf-tbl tr.rf-r td { display:block; padding:0; border:0; min-width:0; }
+  .rf-tbl tr.rf-r td.rf-c-sev { grid-row:1; }
+  .rf-tbl tr.rf-r td.rf-cust { grid-row:1; }
+  .rf-tbl tr.rf-r td.rf-c-prod, .rf-tbl tr.rf-r td.rf-c-flags, .rf-tbl tr.rf-r td.rf-c-pat, .rf-tbl tr.rf-r td.rf-c-act { grid-column:1 / -1; }
+  .rf-tbl tr.rf-r td.rf-c-pat.rf-empty { display:none; }
+  .rf-tbl tr.rf-detail { display:block; }
+  .rf-tbl tr.rf-detail td { display:block; padding:10px 8px 12px; border:0; }
+  .rf-tbl tr[hidden] { display:none; }
+  .rf-flag-v { white-space:normal; }
+}
+@media (max-width:600px) {
+  .pc-shared { margin-left:0; padding-left:0; border-left:0; }
+  .wb-rf { padding:12px; }
+}
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -1763,14 +1877,15 @@ var Overview = {
       ['Step 6', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
       ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
       ['Step 8', 'Lender view — the credit memo', 'The credit memo the partner bank receives; Open Finance data never leaves Noor. Compare it with the internal Decision log.', function () { showScreen('lender'); }],
-      ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }]
+      ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }],
+      ['Step 10', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }]
     ];
-    var ds = h('div', { class: 'demo-strip demo-9' });
+    var ds = h('div', { class: 'demo-strip demo-10' });
     demo.forEach(function (d) {
       ds.appendChild(h('button', { class: 'demo-step ds-top', onclick: d[3] },
         h('div', { class: 'd-n', text: d[0] }), h('div', { class: 'd-t', text: d[1] }), h('div', { class: 'd-d', text: d[2] })));
     });
-    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — a nine-step click path' }), ds));
+    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — a ' + (NUM_WORD[demo.length] || demo.length) + '-step click path' }), ds));
 
     var map = [
       ['Overview', 'Positioning · six positions', 'The argument, compressed'],
@@ -1790,7 +1905,9 @@ var Overview = {
       ['Customer journey', 'botim money concept host · Noor web-view · Al Tareq consent · bank approval outside the web-view · prequalify() · decide() · Partner Bank + memo · KFS EN/AR · UAE PASS · repayment · cooling-off', 'The customer’s side end to end on the real engine — connect a bank from botim, then apply; the decision lands in the Decision log and its memo in Lender view'],
       ['Lender view', 'Credit memo · NoorScore + band · affordability bands · verification flags · consent references · UI / API / SFTP', 'Lender view — the credit memo the partner bank receives; Open Finance data never leaves Noor'],
       ['Monitoring', 'STP vs targets · declines · grades · aging · vintages', 'Automation is not buying growth with risk'],
-      ['Monitoring — early warning', 'Day-zero signals from connected accounts', 'Signal-to-action time is the tracked metric']
+      ['Monitoring — early warning', 'Day-zero signals from connected accounts', 'Signal-to-action time is the tracked metric'],
+      ['Monitoring — UAE red flags (exit-risk watch)', 'Own-baseline signals: cards maxed · remittance surge · travel after payout · payments stopped · balances drained · EXIT_RISK pattern · shared early-warning block (4-eyes) · refer-only origination · contact first · lender gets a status flag only',
+        'Red flags — Marco (r6): cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch']
     ];
     var mt = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
       h('th', { text: 'Screen' }), h('th', { text: 'Topics' }), h('th', { text: 'What it proves' }))));
@@ -2670,9 +2787,10 @@ var Loan = {
           h('span', { class: 'chip', text: bd.source === 'ALTAREQ_TPP' ? 'Salary via connected account' : 'Salary via documents' }),
           emp.retiree ? h('span', { class: 'chip', text: 'Retiree' }) : null,
           a.creditPassportAvailable ? h('span', { class: 'chip acc', text: 'Credit Passport' }) : null,
-          p.homeStatements ? h('span', { class: 'chip', text: p.homeStatements.bank + ' statements on request' }) : null)));
+          p.homeStatements ? h('span', { class: 'chip', text: p.homeStatements.bank + ' statements on request' }) : null,
+          p.redFlagData ? h('span', { class: 'chip chip-warn', text: 'Recent account changes · red-flag rule (Open Finance)' }) : null)));
     });
-    left.appendChild(h('div', { class: 'panel' }, h('h3', null, 'Applicants ', h('span', { class: 'h3-note', text: '(r1–r5, synthetic)' })), pWrap));
+    left.appendChild(h('div', { class: 'panel' }, h('h3', null, 'Applicants ', h('span', { class: 'h3-note', text: '(r1–r' + (MD.personasLoan || []).length + ', synthetic)' })), pWrap));
 
     var form = h('div', { class: 'panel', id: 'ln-form' });
     form.appendChild(h('h3', { text: 'Application — amount, tenor, consent' }));
@@ -2774,14 +2892,19 @@ var Loan = {
     var box = clear($('#ln-decision'));
     var panel = h('div', { class: 'panel' });
     panel.appendChild(h('h3', { text: 'Decision' }));
-    panel.appendChild(decisionSummaryPanel(rec, { kfsId: 'ln-kfs', repayId: 'ln-repay',
-      metaLine: (Loan.sel ? Loan.sel.name + ' · ' : '') + fmtAED(rec.request.amount) + ' over ' + rec.request.tenorMonths + ' months' }));
+    var dsp = decisionSummaryPanel(rec, { kfsId: 'ln-kfs', repayId: 'ln-repay',
+      metaLine: (Loan.sel ? Loan.sel.name + ' · ' : '') + fmtAED(rec.request.amount) + ' over ' + rec.request.tenorMonths + ' months' });
+    /* v2.9 — "What tripped" sits right under the outcome banner, so the reason for a red-flag refer reads first */
+    if (rec.redFlags) dsp.insertBefore(RedFlagsUI.tripped(rec.redFlags, { id: 'ln-rf-trip' }), dsp.children[1] || null);
+    panel.appendChild(dsp);
     if (rec.outcome === 'REFER') {
       var cp = Loan.sel && Loan.sel.aecb && Loan.sel.aecb.creditPassportAvailable;
+      var rfRef = rec.redFlags && rec.redFlags.referred;
       panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
         h('div', { class: 'co-title', text: 'Routed to the refer workbench' }),
         h('div', { class: 'co-body' }, 'A structured case with the full pre-assembled file is now in the analyst queue (personal-loan SLA: 8 hours). ',
           cp ? 'Thin file with Credit Passport available: re-submit with the Credit Passport consent ticked for an automated cross-border decision, or let the analyst ask for 6 months of home-country bank statements — Mizan re-decides on them. ' : '',
+          rfRef ? 'Red flags can only refer: the analyst sees what changed against the customer’s own history, can ask the customer, then approves or declines with a written reason — never an automatic decline, never a price change. ' : '',
           h('button', { class: 'btn btn-ghost', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
     }
     box.appendChild(panel);
@@ -3816,6 +3939,294 @@ var Upgrade = {
     box.appendChild(panel);
   }
 };
+/* ================= UAE red flags and early warning — exit-risk watch (Addendum v2.9) =================
+   One namespace for the screens that show red flags: Monitoring (the watch), Personal loan (What tripped),
+   Workbench (the red-flags panel + analyst actions), Policy console (the shared early-warning block),
+   Decision log (replay). Everything comes from the engine; nothing here decides. */
+var RF_NAME = { RF_CARDS_MAXED: 'Cards maxed', RF_REMITTANCE_SURGE: 'Remittance surge', RF_TRAVEL_AFTER_DISBURSAL: 'Travel after payout',
+  RF_PAYMENTS_STOPPED: 'Payments stopped', RF_BALANCES_DRAINED: 'Balances drained' };
+var RF_POLICY_LINE = 'Signals are changes against the customer’s own history. Sending money home at the usual level, or travelling, is never a flag on its own.';
+var RF_SEV_SUB = { HIGH: 'specialist call ≤ 24h · new credit paused', MEDIUM: 'check-in same day (two signals: sooner)', LOW: 'watch · no customer contact', NONE: 'no flag' };
+var RedFlagsUI = {
+  open: {},
+  sevChip: function (label) {
+    var l = label || 'NONE';
+    return h('span', { class: 'sev-chip sev-' + l.replace('+', 'p'), dataset: { sev: l }, text: l });
+  },
+  short: function (f) {
+    var v = f.values || {};
+    if (f.code === 'RF_CARDS_MAXED') return v.utilisationPct3mAgo + '% → ' + Math.round(v.utilisationPct) + '% of limits';
+    if (f.code === 'RF_REMITTANCE_SURGE') return Math.round(v.sharePct) + '% of income vs ' + Math.round(v.baselinePct) + '% usual';
+    if (f.code === 'RF_TRAVEL_AFTER_DISBURSAL') return fmtAED(v.amountAed) + ' · day ' + v.daysAfterDisbursal + ' after payout';
+    if (f.code === 'RF_PAYMENTS_STOPPED') return v.salaryLate ? 'salary ' + v.salaryLateDays + ' days late' : 'missed after ' + v.onTimeRun + ' on time';
+    if (f.code === 'RF_BALANCES_DRAINED') return '−' + Math.round(v.dropPct) + '% vs 3-month average';
+    return f.observed;
+  },
+  flagChip: function (f) {
+    return h('span', { class: 'rf-flag rf-' + (f.severity === 'LOW' ? 'low' : 'med'), dataset: { code: f.code }, title: f.observed + ' — usual: ' + f.baseline },
+      h('span', { class: 'rf-flag-n', text: RF_NAME[f.code] || f.code }), h('span', { class: 'rf-flag-v', text: RedFlagsUI.short(f) }));
+  },
+  actionText: function (a) {
+    if (!a) return '—';
+    if (a.code === 'SPECIALIST_CALL') return 'Specialist call · within ' + a.slaHours + 'h';
+    if (a.code === 'CHECK_IN') return 'Check-in · ' + (a.slaHours <= 4 ? 'sooner, ' : 'same day, ') + a.slaHours + 'h' + (a.channel ? ' · ' + a.channel : '');
+    if (a.code === 'WATCH') return 'Watch · no contact';
+    if (a.code === 'UNDERWRITER_REVIEW') return 'Refer to an underwriter';
+    return 'No action';
+  },
+  consentWhy: function () { try { return ME.getPolicy('earlyWarning').consentWhy || ''; } catch (e) { return ''; } },
+  /* "What tripped": observed vs the customer's own baseline, per flag, with the EN/AR reason */
+  tripped: function (rf, opts) {
+    opts = opts || {};
+    var wrap = h('div', { class: 'rf-trip', id: opts.id || null, dataset: { referred: String(!!rf.referred), ruleOn: String(!!rf.ruleOn), sev: rf.severityLabel || '' } });
+    wrap.appendChild(h('div', { class: 'rf-trip-h' },
+      h('span', { class: 'rf-trip-t', text: opts.title || 'What tripped' }),
+      rf.severityLabel ? RedFlagsUI.sevChip(rf.severityLabel) : null,
+      h('span', { class: 'small muted', text: 'observed vs the customer’s own baseline' })));
+    if (!rf.ruleOn) {
+      wrap.appendChild(h('div', { class: 'small muted', text: 'The red-flag rule is off by policy (earlyWarning.redFlagsAtOrigination = false) — no signal was read for this decision.' }));
+      return wrap;
+    }
+    if (!rf.flags || !rf.flags.length) wrap.appendChild(h('div', { class: 'small', text: rf.noFlagNote || 'No signal fired — nothing changed against the customer’s own history.' }));
+    (rf.flags || []).forEach(function (f) {
+      wrap.appendChild(h('div', { class: 'rf-row', dataset: { code: f.code } },
+        h('div', { class: 'rf-row-h' }, h('strong', { text: RF_NAME[f.code] || f.code }), ' ', h('code', { class: 'small muted', text: f.code }),
+          h('span', { class: 'small muted', text: ' · ' + (f.severity === 'LOW' ? 'LOW alone (watch)' : 'MEDIUM alone') })),
+        h('div', { class: 'rf-cells' },
+          h('div', { class: 'rf-cell' }, h('span', { class: 'rf-k', text: 'Observed' }), h('span', { class: 'rf-v rf-obs', text: f.observed })),
+          h('div', { class: 'rf-cell' }, h('span', { class: 'rf-k', text: 'Usual — own baseline' }), h('span', { class: 'rf-v rf-base', text: f.baseline })),
+          h('div', { class: 'rf-cell' }, h('span', { class: 'rf-k', text: 'Threshold' }), h('span', { class: 'rf-v', text: f.threshold }))),
+        reasonLine(f.reasonCode)));
+    });
+    if (rf.phase === 'ORIGINATION') {
+      wrap.appendChild(h('div', { class: 'callout callout-info rf-guard-co' },
+        h('div', { class: 'co-title', text: 'Refer only — a person decides' }),
+        h('div', { class: 'co-body' }, 'A red flag can only refer the application to an underwriter — never an automatic decline, never a price change. ' +
+          'Travel and repayment signals are read only while a loan is open. Not read: nationality, where money or a trip goes, religion, or any service name.')));
+    }
+    var why = RedFlagsUI.consentWhy();
+    if (why) wrap.appendChild(h('div', { class: 'rf-consent small muted', text: 'Read from the customer’s own accounts under the Al Tareq consent — “' + why + '”' }));
+    return wrap;
+  },
+  /* ---- Monitoring: the exit-risk watch (above the day-zero table) ---- */
+  monitoring: function (m) {
+    var box = $('#mn-rf');
+    if (!box) return;
+    clear(box);
+    var w = m && m.exitRiskWatch;
+    if (!w) {
+      try { var rows0 = ME.earlyWarningScan(); w = { rows: rows0, counts: { HIGH: 0, MEDIUM: 0, LOW: 0, NONE: 0 } }; rows0.forEach(function (r) { w.counts[r.severity]++; }); }
+      catch (e) { box.appendChild(h('div', { class: 'callout callout-error' }, h('code', { text: e && e.message ? e.message : String(e) }))); return; }
+    }
+    var rows = w.rows || [], counts = w.counts || {};
+    box.appendChild(h('h3', null, 'UAE red flags — exit-risk watch ', h('span', { class: 'h3-note', text: '— ' + rows.length + ' funded loans · own-baseline signals from Open Finance + AECB' })));
+    box.appendChild(h('div', { class: 'rf-policy', id: 'rf-policy-line' }, h('span', { class: 'rf-policy-ico', 'aria-hidden': 'true', text: 'i' }), h('span', { text: RF_POLICY_LINE })));
+    var tiles = h('div', { class: 'rf-tiles', id: 'rf-tiles' });
+    ['HIGH', 'MEDIUM', 'LOW', 'NONE'].forEach(function (s) {
+      tiles.appendChild(h('div', { class: 'rf-tile sev-' + s, dataset: { sev: s } },
+        h('div', { class: 'rf-tile-l', text: s }), h('div', { class: 'rf-tile-v', text: String(counts[s] || 0) }), h('div', { class: 'rf-tile-s', text: RF_SEV_SUB[s] })));
+    });
+    box.appendChild(tiles);
+    var t = h('table', { class: 'tbl rf-tbl', id: 'rf-table' }, h('thead', null, h('tr', null,
+      h('th', { text: 'Severity' }), h('th', { text: 'Customer' }), h('th', { text: 'Product' }), h('th', { text: 'Flags — observed vs own baseline' }),
+      h('th', { text: 'Pattern' }), h('th', { text: 'Action · SLA' }))));
+    var tb = h('tbody');
+    rows.forEach(function (r) {
+      var isOpen = !!RedFlagsUI.open[r.loanId];
+      var flagsCell = r.flags.length ? h('div', { class: 'rf-flags' }, r.flags.map(RedFlagsUI.flagChip))
+        : h('span', { class: 'rf-noflag', text: r.noFlagNote || 'No flag' });
+      var toggle = h('button', { class: 'rf-x', type: 'button', id: 'rf-x-' + r.loanId, 'aria-expanded': isOpen ? 'true' : 'false', 'aria-controls': 'rf-d-' + r.loanId,
+        'aria-label': (isOpen ? 'Hide' : 'Show') + ' details for ' + r.loanId, onclick: function (ev) { ev.stopPropagation(); RedFlagsUI.toggle(r.loanId); } },
+        h('span', { class: 'rf-x-ico', 'aria-hidden': 'true', text: '›' }));
+      tb.appendChild(h('tr', { class: 'rowbtn rf-r' + (isOpen ? ' open' : ''), id: 'rf-r-' + r.loanId, dataset: { loan: r.loanId, sev: r.severityLabel },
+        onclick: function () { RedFlagsUI.toggle(r.loanId); } },
+        h('td', { class: 'nowrap rf-c-sev' }, toggle, RedFlagsUI.sevChip(r.severityLabel)),
+        h('td', { class: 'rf-cust' }, h('div', { class: 'rf-cust-n', text: r.customer }), h('div', { class: 'small muted nowrap', text: r.loanId + ' · ' + fmtAED(r.amountAed) }),
+          h('div', { class: 'small muted nowrap', text: 'paid out ' + fmtD(r.disbursedAt) })),
+        h('td', { class: 'rf-c-prod' }, h('span', { class: 'chip prod-chip', text: productLabel(r.productId, true) })),
+        h('td', { class: 'rf-c-flags' }, flagsCell),
+        h('td', { class: 'rf-c-pat' + (r.pattern ? '' : ' rf-empty') }, r.pattern ? h('span', { class: 'chip chip-bad rf-pattern', text: r.pattern }) : h('span', { class: 'muted', text: '—' })),
+        h('td', { class: 'small rf-c-act' }, h('div', { class: 'rf-act rf-act-' + r.action.code, text: RedFlagsUI.actionText(r.action) }))));
+      var notes = h('ul', { class: 'rf-notes' });
+      (r.guardrailNotes || []).forEach(function (n) { notes.appendChild(h('li', { text: n })); });
+      var reasons = h('div', { class: 'rf-reasons' });
+      if (r.flags.length) r.flags.forEach(function (f) { reasons.appendChild(reasonLine(f.reasonCode)); });
+      else reasons.appendChild(h('div', { class: 'small muted', text: 'No reason code — there is nothing to raise with the customer.' }));
+      var detail = h('div', { class: 'rf-detail-in' },
+        h('div', { class: 'rf-d-col' }, h('div', { class: 'rf-d-h', text: 'Guardrails for this row' }), notes,
+          r.action && r.action.offer ? h('div', { class: 'small', text: 'Offer: ' + (r.action.offer === 'PAYMENT_DATE_MOVE' ? 'move the payment date to when the salary lands' : 'a payment-date move or a restructure') + ' — help, not a collections step.' }) : null,
+          r.lenderStatus ? h('div', { class: 'rf-lender', dataset: { lender: 'status' } }, h('span', { class: 'rf-k', text: 'What ' + lenderName() + ' (lender of record) receives' }),
+            h('span', { class: 'rf-v', text: '“' + r.lenderStatus + '” — a status flag only, never the account history or the values.' })) : null),
+        h('div', { class: 'rf-d-col' }, h('div', { class: 'rf-d-h', text: 'Reason codes — what the analyst can read to the customer (EN / AR)' }), reasons,
+          r.flags.length ? h('ul', { class: 'rf-d-obs' }, r.flags.map(function (f) {
+            return h('li', null, h('strong', { text: (RF_NAME[f.code] || f.code) + ': ' }), f.observed, h('span', { class: 'muted', text: ' · usual: ' + f.baseline + ' · threshold: ' + f.threshold }));
+          })) : null));
+      tb.appendChild(h('tr', { class: 'rf-detail', id: 'rf-d-' + r.loanId, hidden: isOpen ? null : 'hidden', dataset: { loan: r.loanId } },
+        h('td', { colspan: '6' }, detail)));
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { class: 'tbl-scroll' }, t));
+    var why = RedFlagsUI.consentWhy();
+    box.appendChild(h('div', { class: 'small muted rf-foot' },
+      'Consent scope: the Al Tareq consent covers monitoring while a loan is open — “' + why + '” ',
+      'Before LIVE an offline disparate-impact test runs across customer groups (labels used only for the test, never as features) — CBUAE AI/ML guidance (Feb 2026), Consumer Protection Regulation (fair treatment, collections conduct), PDPL purpose limitation. ',
+      h('button', { class: 'btn btn-ghost rf-link', type: 'button', id: 'rf-to-policy', text: 'Thresholds in the policy console →', onclick: function () { Policy.pid = 'earlyWarning'; showScreen('policy'); } })));
+  },
+  toggle: function (id) {
+    RedFlagsUI.open[id] = !RedFlagsUI.open[id];
+    var on = RedFlagsUI.open[id];
+    var d = $('#rf-d-' + id), x = $('#rf-x-' + id), r = $('#rf-r-' + id);
+    if (d) { if (on) d.removeAttribute('hidden'); else d.setAttribute('hidden', 'hidden'); }
+    if (x) { x.setAttribute('aria-expanded', on ? 'true' : 'false'); x.setAttribute('aria-label', (on ? 'Hide' : 'Show') + ' details for ' + id); }
+    if (r) r.classList.toggle('open', on);
+  },
+  /* ---- Workbench: the red-flags panel + analyst actions (ask the customer · approve · decline) ---- */
+  workbench: function (rec) {
+    var rf = rec.redFlags;
+    var wrap = h('div', { class: 'wb-rf', id: 'wb-redflags', dataset: { referred: String(!!rf.referred) } });
+    wrap.appendChild(h('h3', null, 'Red flags ', h('span', { class: 'h3-note', text: '— recent changes against the customer’s own history; refer only, a person decides' })));
+    wrap.appendChild(RedFlagsUI.tripped(rf, { id: 'wb-rf-trip' }));
+    var asked = rec.customerQueries || [];
+    if (asked.length) {
+      var al = h('div', { class: 'wb-rf-asked', id: 'wb-rf-asked' });
+      asked.forEach(function (q) {
+        al.appendChild(h('div', { class: 'wb-msg', dataset: { code: q.message.reasonCode } },
+          h('span', { class: 'small muted', text: 'Asked by ' + q.analyst + ' · ' + fmtDT(q.at) + ' · ' + q.channel + (q.note ? ' · note: “' + q.note + '”' : '') }),
+          h('div', { class: 'small', text: q.message.en }), h('div', { class: 'ar small', lang: 'ar', dir: 'rtl', text: q.message.ar })));
+      });
+      wrap.appendChild(al);
+    }
+    var openCase = rec.outcome === 'REFER' && !rec.override && rec.status === 'OPEN' && !rec.supersededBy;
+    if (!openCase) return wrap;
+    var err = h('div', { id: 'wb-rf-err', 'aria-live': 'polite' });
+    function fail(title, e) {
+      clear(err);
+      err.appendChild(h('div', { class: 'callout callout-error', dataset: { refused: 'redflags' } }, h('div', { class: 'co-title', text: title }),
+        h('div', { class: 'co-body' }, h('code', { text: e && e.message ? e.message : String(e) }),
+          h('div', { class: 'small', style: 'margin-top:4px;', text: 'Refused by the engine, not the screen: a red-flag decision is a human review — a written reason and a second approver.' }))));
+    }
+    var analyst = h('input', { type: 'text', id: 'wb-rf-analyst', value: 'A. Farsi (Credit Analyst)', 'aria-label': 'Analyst name' });
+    var channel = h('select', { id: 'wb-rf-channel', 'aria-label': 'Channel' });
+    ['In-app message', 'SMS', 'Email', 'Phone'].forEach(function (c) { channel.appendChild(h('option', { value: c, text: c })); });
+    var note = h('textarea', { id: 'wb-rf-note', rows: '2', 'aria-label': 'Note to the case file', placeholder: 'What you want to understand — e.g. a one-off family expense, or a move abroad?' });
+    var ask = h('div', { class: 'wb-rf-box', id: 'wb-rf-ask-box' },
+      h('div', { class: 'wb-rf-box-h', text: '1 · Ask the customer' }),
+      h('div', { class: 'wb-msg' }, h('span', { class: 'small muted', text: 'Customer message (RC_RED_FLAGS_REVIEW):' }),
+        h('div', { class: 'small', text: rcEn('RC_RED_FLAGS_REVIEW') }), h('div', { class: 'ar small', lang: 'ar', dir: 'rtl', text: rcAr('RC_RED_FLAGS_REVIEW') })),
+      h('div', { class: 'wb-rf-form' },
+        h('div', { class: 'field' }, h('label', { for: 'wb-rf-analyst', text: 'Analyst' }), analyst),
+        h('div', { class: 'field' }, h('label', { for: 'wb-rf-channel', text: 'Channel' }), channel),
+        h('div', { class: 'field wb-rf-wide' }, h('label', { for: 'wb-rf-note', text: 'Note to the case file' }), note)),
+      h('div', { class: 'btnrow' }, h('button', { class: 'btn', id: 'wb-rf-ask', type: 'button', text: 'Ask the customer', onclick: function () {
+        clear(err);
+        try { ME.askCustomer(rec.id, { analyst: analyst.value.trim(), channel: channel.value, note: note.value.trim() }); }
+        catch (e) { fail('Not sent', e); return; }
+        afterEngineMutation();
+      } }), h('span', { class: 'small muted', text: 'Records a note; the case stays open and the SLA keeps running' })));
+    var rc = h('select', { id: 'wb-rf-rc', 'aria-label': 'Reason code' });
+    Object.keys(MD.reasonCodes || {}).forEach(function (c) {
+      var op = h('option', { value: c, text: c + ' — ' + rcEn(c) });
+      if (c === 'RC_MANUAL_REVIEW') op.selected = true;
+      rc.appendChild(op);
+    });
+    var reason = h('textarea', { id: 'wb-rf-reason', rows: '2', 'aria-label': 'Written reason (required)', placeholder: 'Required — why you approve or decline, in your own words' });
+    var approver = h('input', { type: 'text', id: 'wb-rf-approver', placeholder: 'Second approver — must differ', 'aria-label': 'Approver name' });
+    function decide(outcome) {
+      clear(err);
+      try { ME.override(rec.id, { outcome: outcome, reasonCode: rc.value, analyst: analyst.value.trim(), approver: approver.value.trim(), note: reason.value.trim() }); }
+      catch (e) { fail(outcome === 'APPROVE' ? 'Approve refused' : 'Decline refused', e); return; }
+      afterEngineMutation();
+    }
+    var dec = h('div', { class: 'wb-rf-box', id: 'wb-rf-decide-box' },
+      h('div', { class: 'wb-rf-box-h', text: '2 · Decide — through the override, with a written reason (4-eyes)' }),
+      h('div', { class: 'wb-rf-form' },
+        h('div', { class: 'field' }, h('label', { for: 'wb-rf-rc', text: 'Reason code' }), rc),
+        h('div', { class: 'field' }, h('label', { for: 'wb-rf-approver', text: 'Approver (4-eyes)' }), approver),
+        h('div', { class: 'field wb-rf-wide' }, h('label', { for: 'wb-rf-reason', text: 'Written reason — mandatory' }), reason)),
+      h('div', { class: 'btnrow' },
+        h('button', { class: 'btn btn-primary', id: 'wb-rf-approve', type: 'button', text: 'Approve', onclick: function () { decide('APPROVE'); } }),
+        h('button', { class: 'btn', id: 'wb-rf-decline', type: 'button', text: 'Decline', onclick: function () { decide('DECLINE'); } }),
+        h('span', { class: 'small muted', text: 'Approve keeps the original price — a red flag never changes it' })));
+    wrap.appendChild(h('div', { class: 'wb-rf-actions' }, ask, dec));
+    wrap.appendChild(err);
+    return wrap;
+  },
+  /* ---- Policy console: the shared early-warning block ---- */
+  pickerButton: function () {
+    var on = Policy.pid === 'earlyWarning';
+    return h('span', { class: 'pc-shared' }, h('span', { class: 'pc-shared-l', text: 'Shared block' }),
+      h('button', { class: 'btn' + (on ? ' btn-primary' : ''), id: 'pc-pick-earlyWarning', 'aria-pressed': on ? 'true' : 'false', type: 'button',
+        onclick: function () { Policy.load('earlyWarning'); } }, 'Early warning ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: 'الإنذار المبكر' })));
+  },
+  policyReg: function (box) {
+    var p = Policy.policy;
+    box.appendChild(h('h3', null, 'Early warning — guardrails, locked ', h('span', { class: 'h3-note muted', text: '(shown as text; no publish can change them)' })));
+    if (!p) { box.appendChild(h('div', { class: 'callout callout-error', text: 'Early-warning block unavailable from engine.' })); return; }
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-bottom:8px;', text: 'One shared block, read by ' + (p.appliesTo || []).map(function (x) { return x === 'monitoring' ? 'Monitoring' : productLabel(x, true); }).join(', ') +
+      '. Thresholds are edited below (draft → simulate → 4-eyes publish); the guardrails here are the product and never change.' }));
+    var list = h('div', { class: 'rf-guards', id: 'pc-ew-guardrails' });
+    (p.guardrails || []).forEach(function (g) {
+      list.appendChild(h('div', { class: 'rf-guard', dataset: { guard: g.key } }, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }),
+        h('div', null, h('div', { class: 'rf-guard-t', text: g.label }), h('div', { class: 'small', text: g.text }))));
+    });
+    box.appendChild(list);
+    var lad = h('table', { class: 'tbl', id: 'pc-ew-ladder' }, h('thead', null, h('tr', null, h('th', { text: 'Severity' }), h('th', { text: 'Action' }), h('th', { text: 'What happens' }))));
+    var lb = h('tbody');
+    (p.actionLadder || []).forEach(function (a) {
+      lb.appendChild(h('tr', { class: 'lockrow' }, h('td', null, RedFlagsUI.sevChip(a.severity)), h('td', null, h('code', { text: a.code })), h('td', { class: 'small', text: a.text })));
+    });
+    lad.appendChild(lb);
+    box.appendChild(h('div', { class: 'rf-d-h', style: 'margin-top:12px;', text: 'Action ladder — locked' }));
+    box.appendChild(h('div', { class: 'tbl-scroll' }, lad));
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'EXIT_RISK = travel after the payout AND (remittance surge OR drained balances) AND (payments stopped OR cards maxed) → HIGH. Two or more MEDIUM signals → MEDIUM+ (sooner contact).' }));
+  },
+  policyParamsNote: function (box) {
+    var b = $('#pp-remittanceMultipleOfBaseline');
+    var bd = b && b.closest('.field') ? b.closest('.field').querySelector('.bounds') : null;
+    if (bd) bd.textContent = 'engine bounds 1.5× – 5× — never below 1.5×, so the usual level can never become a flag';
+    var sw = $('#pp-redFlagsAtOrigination');
+    if (sw && sw.closest('.field')) sw.closest('.field').appendChild(h('div', { class: 'bounds', text: 'true: POL_RED_FLAGS refers personal-loan, car-loan and split applications on cards maxed, a remittance surge or drained balances — refer only. false: the rule is recorded as INFO and no signal is read.' }));
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-top:4px;', text: 'Not a parameter, by design: nationality, the destination of a transfer or a trip, religion, any service name. The engine refuses them on simulate and publish.' }));
+  },
+  policySim: function (box, result) {
+    box.appendChild(h('h3', { text: 'Simulate before publish — re-scan the monitored loans' }));
+    box.appendChild(h('p', { class: 'small muted', text: 'Runs the draft thresholds over the six monitored loans and decides Marco (r6) both ways (pure: nothing is recorded or published). Try remittance at 90%, or switch the origination rule off.' }));
+    box.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', id: 'pc-sim-run', type: 'button', text: 'Run simulation', onclick: function () {
+      var res;
+      try { res = ME.simulateEarlyWarning(Policy.collectParams()); } catch (e) { res = { error: e && e.message ? e.message : String(e) }; }
+      Policy.renderSim(res);
+    } })));
+    if (!result) return;
+    if (result.error) {
+      box.appendChild(h('div', { class: 'callout callout-error', id: 'pc-sim-err' }, h('div', { class: 'co-title', text: 'Draft rejected by the engine' }),
+        h('div', { class: 'co-body' }, h('code', { text: result.error }))));
+      return;
+    }
+    var t = h('table', { class: 'tbl', id: 'pc-ew-sim' }, h('thead', null, h('tr', null, h('th', { text: 'Severity' }), h('th', { class: 'num', text: 'Live block' }), h('th', { class: 'num', text: 'Draft' }))));
+    var tb = h('tbody');
+    ['HIGH', 'MEDIUM', 'LOW', 'NONE'].forEach(function (s) {
+      tb.appendChild(h('tr', { dataset: { sev: s } }, h('td', null, RedFlagsUI.sevChip(s)), h('td', { class: 'num', text: String(result.before[s]) }), h('td', { class: 'num', text: String(result.after[s]) })));
+    });
+    t.appendChild(tb);
+    box.appendChild(h('div', { id: 'pc-sim-result', style: 'margin-top:10px;' }, h('div', { class: 'tbl-scroll' }, t)));
+    box.appendChild(h('div', { class: 'callout callout-info small', text: result.summary }));
+    if (result.changes.length) {
+      box.appendChild(h('div', { class: 'small', style: 'margin-top:6px;' }, h('strong', { text: 'Rows that change: ' }),
+        result.changes.map(function (c) { return c.loanId + ' ' + c.customer + ' ' + c.from + ' → ' + c.to; }).join(' · ')));
+    }
+    (result.origination || []).forEach(function (o) {
+      box.appendChild(h('div', { class: 'small', style: 'margin-top:6px;', dataset: { origination: o.id } }, h('strong', { text: o.name + ' (' + o.id + '): ' }),
+        o.from + ' → ' + o.to + ' · AED ' + fmtN(o.amountTo) + (o.pricingUnchanged ? ' · price unchanged' : '')));
+    });
+  },
+  /* ---- Overview demo step 10 ---- */
+  demo: function () {
+    showScreen('loan'); Loan.pickById('r6');
+    var a = $('#ln-c-aecb'), o = $('#ln-c-of');
+    if (a) a.checked = true;
+    if (o) o.checked = true;
+  }
+};
 /* ================= Policy console ================= */
 var REG_CITES = {
   dbrCapPct: 'CBUAE Reg 29/2011 (Retail Loans) — DBR ≤ 50% of income, double-enforced by the engine',
@@ -3895,6 +4306,21 @@ var PARAM_META = {
     minSalary: ['Minimum monthly salary (AED)', 3000, 15000, 500],
     scoreDecline: ['AECB score — decline below', 550, 700, 5],
     tokenValidityDays: ['Offer validity (days)', 3, 14, 1]
+  },
+  /* v2.9 — the shared early-warning block (UAE red flags): thresholds only; the guardrails are locked text */
+  earlyWarning: {
+    redFlagsAtOrigination: ['Red-flag rule at origination (refer only)', null, null, null],
+    cardsMaxedUtilisationPct: ['Cards maxed — utilisation across all cards (%)', 75, 100, 1],
+    cardsMaxedMinCards: ['Cards maxed — minimum number of cards', 2, 5, 1],
+    cardsMaxedRisePp: ['Cards maxed — rise vs 3 months ago (percentage points)', 15, 60, 1],
+    remittanceShareOfIncomePct: ['Remittance surge — international transfers as % of income (30 days)', 50, 100, 1],
+    remittanceMultipleOfBaseline: ['Remittance surge — multiple of the customer’s own 6-month share', 1.5, 5, 0.1],
+    travelMinAmountAed: ['Travel after payout — minimum airline purchase (AED, monitoring only)', 500, 5000, 100],
+    travelWindowDays: ['Travel after payout — window after disbursal (days)', 7, 60, 1],
+    salaryLateDays: ['Payments stopped — salary late vs its usual day (days)', 3, 15, 1],
+    onTimeRunMin: ['Payments stopped — on-time run before a missed collection', 2, 6, 1],
+    balanceDropPct: ['Balances drained — drop vs the 3-month average (%)', 50, 95, 1],
+    outboundShareOfAvgBalancePct: ['Balances drained — one transfer out, as % of the average', 25, 90, 1]
   }
 };
 /* Band structures: edited per grade in human units; converted back to engine units on collect */
@@ -3946,6 +4372,7 @@ var Policy = {
         onclick: function () { Policy.load(m.productId); } },
         (m.nameEn || m.productId) + ' ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: m.nameAr || '' })));
     });
+    pk.appendChild(RedFlagsUI.pickerButton());   /* v2.9 — the shared early-warning block */
   },
   load: function (pid) {
     Policy.pid = pid;
@@ -3956,6 +4383,7 @@ var Policy = {
   },
   renderReg: function () {
     var box = clear($('#pc-reg'));
+    if (Policy.pid === 'earlyWarning') { RedFlagsUI.policyReg(box); return; }   /* v2.9 shared block: guardrails as locked text */
     box.appendChild(h('h3', null, 'Regulatory primitives — locked ', h('span', { class: 'h3-note muted', text: '(engine double-enforces; packs reference, never edit)' })));
     if (!Policy.policy) { box.appendChild(h('div', { class: 'callout callout-error', text: 'Policy unavailable from engine.' })); return; }
     var t = h('table', { class: 'tbl' });
@@ -4037,6 +4465,7 @@ var Policy = {
       wrap.appendChild(fld);
     });
     box.appendChild(wrap);
+    if (Policy.pid === 'earlyWarning') RedFlagsUI.policyParamsNote(box);   /* v2.9 */
     Policy.renderInvariants();
   },
   /* Starter loan: the entry offer and the two upgrade tiers, edited field by field (APRs in %) */
@@ -4165,6 +4594,7 @@ var Policy = {
   },
   renderSim: function (result) {
     var box = clear($('#pc-sim'));
+    if (Policy.pid === 'earlyWarning') { RedFlagsUI.policySim(box, result); return; }   /* v2.9 shared block */
     box.appendChild(h('h3', { text: 'Simulate before publish — replay the synthetic book' }));
     var sb = MD.sampleBook || {};
     var n = Policy.pid === 'split' ? (sb.split || []).length + ' split' : (Policy.pid === 'starter_loan' ? (sb.starter_loan || []).length + ' starter-loan'
@@ -4424,7 +4854,7 @@ var Workbench = {
           h('td', { class: 'num small', text: when }),
           h('td', { class: 'num' }, h('strong', { class: slaCls, text: slaTxt, title: paused ? 'Refer SLA paused while Noor waits for the customer’s documents' : null }),
             paused && isNum(sla) ? h('span', { class: 'small muted sla-left', text: ' ' + Number(sla).toFixed(1) + 'h left' }) : null),
-          h('td', { class: 'small', text: rcEn(top) })));
+          h('td', { class: 'small', dataset: { reason: top }, text: top === 'RC_RED_FLAGS_REVIEW' ? 'Red flags — review' : rcEn(top) })));
       });
       t.appendChild(tb);
       box.appendChild(h('div', { class: 'tbl-scroll' }, t));
@@ -4463,11 +4893,13 @@ var Workbench = {
     var nrec = null;
     if (rec.supersededBy) { try { nrec = ME.getDecision(rec.supersededBy); } catch (e) {} }
     if (nrec) panel.appendChild(Workbench.redecidedBlock(rec, nrec));
-    if (Workbench.stmtApplies(rec)) panel.appendChild(Workbench.statementsPanel(rec));
+    var rfCase = !!(rec.redFlags && rec.redFlags.referred);   /* v2.9 — a red-flag referral gets its own panel and actions */
+    if (rfCase) panel.appendChild(RedFlagsUI.workbench(rec));
+    if (!rfCase && Workbench.stmtApplies(rec)) panel.appendChild(Workbench.statementsPanel(rec));
     panel.appendChild(h('h3', { style: 'margin-top:14px;', text: 'Pre-assembled file' }));
     panel.appendChild(caseFile(rec));
 
-    if (!rec.override && rec.outcome === 'REFER' && rec.status === 'OPEN' && !rec.supersededBy) {
+    if (!rfCase && !rec.override && rec.outcome === 'REFER' && rec.status === 'OPEN' && !rec.supersededBy) {
       var of = h('div', { style: 'margin-top:14px;border-top:1px solid var(--hairline);padding-top:12px;' });
       of.appendChild(h('h3', { text: 'Override — reason-coded, 4-eyes' }));
       var outcomeSel = h('select', { id: 'ov-outcome', 'aria-label': 'Override outcome' },
@@ -4759,6 +5191,7 @@ var LogScreen = {
     if (rec.redecision && rec.evidenceComparison) {
       panel.appendChild(h('div', { style: 'margin:0 0 12px;' }, h('h3', { text: 'What the evidence was worth — same application, each path' }), evidenceStrip(rec, { id: 'lg-evidence' })));
     }
+    if (rec.redFlags) panel.appendChild(h('div', { style: 'margin:0 0 12px;' }, RedFlagsUI.tripped(rec.redFlags, { id: 'lg-rf-trip', title: 'Red flags read at origination (internal)' })));   /* v2.9 */
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
@@ -5983,9 +6416,10 @@ var Monitoring = {
   build: function () {
     var root = clear($('#scr-monitoring'));
     root.appendChild(screenHead('The platform proves it is working', 'Monitoring & governance',
-      'Decision health over the seeded 90-day window plus everything decided this session: STP per product against targets, decline reasons, grades, refer aging, vintage first-payment default and day-zero early warning.'));
+      'Decision health over the seeded 90-day window plus everything decided this session: STP per product against targets, decline reasons, grades, refer aging, vintage first-payment default, the UAE red-flags exit-risk watch and day-zero early warning.'));
     root.appendChild(h('div', { class: 'tiles', id: 'mn-tiles' }));
     root.appendChild(h('div', { class: 'stack' },
+      h('div', { class: 'panel', id: 'mn-rf' }),   /* v2.9 — UAE red flags, exit-risk watch (above the day-zero table) */
       h('div', { class: 'panel', id: 'mn-ew' }),
       h('div', { class: 'panel', id: 'mn-products' }),
       h('div', { class: 'panel', id: 'mn-daily' }),
@@ -6002,6 +6436,7 @@ var Monitoring = {
     try { m = ME.metrics(); } catch (e) {}
     if (!m) { clear($('#mn-tiles')).appendChild(h('div', { class: 'callout callout-error', text: 'metrics() unavailable.' })); return; }
     Monitoring.tiles(m);
+    RedFlagsUI.monitoring(m);
     Monitoring.earlyWarning(m);
     Monitoring.products(m);
     Monitoring.daily(m);

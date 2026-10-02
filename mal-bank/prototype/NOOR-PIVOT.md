@@ -908,3 +908,110 @@ deviations:
   - The policy console shows `…Pct` regulatory values with a `%` on every pack.
   - The overview demo step is Step 9 (appended), so existing steps keep their numbers.
   - The Noor skin `<style>` block is byte-identical; all CSS sits under "Noor additions".
+
+### As built — v2.9
+
+Built as RED-FLAGS-SPEC.md specifies (selftest 1276 green; acceptance 593 green, 11 screens). The engine's arithmetic
+agrees with the spec exactly, so no synthetic input was adjusted to make an outcome hold:
+
+- **r6 Marco Ferreira:** with the rule on, REFER with `RC_RED_FLAGS_REVIEW` only. The flags are RF_CARDS_MAXED
+  (41% → 97%), RF_REMITTANCE_SURGE (88.6%, shown as 89%, vs 22% usual, 4.0×) and RF_BALANCES_DRAINED (−84.1%,
+  one AED 7,000 transfer = 60% of the AED 11,600 average).
+- **r6 with `redFlagsAtOrigination: false`:** APPROVE AED 40,000, NoorScore 709 (694 + 15), grade B, binding REQUESTED,
+  AED 1,827.21 × 24, DBR 28.1%.
+- **Pricing:** identical either way.
+- **Monitoring:** ML-01 HIGH · EXIT_RISK, ML-02 / ML-03 / ML-06 MEDIUM, ML-04 LOW, ML-05 NONE.
+
+Decisions and deviations:
+
+- **Engine (additive).**
+  - New pure API `redFlags(subject, {phase, params?})`.
+    - It reads an explicit allowlist out of `subject.redFlagData` and nothing else.
+    - The selftest proves it two ways. A clone carrying country, nationality and destination fields gives an
+      identical result. A recording proxy shows that only allowlisted keys are read.
+    - A draft `params` is bounds-checked like a publish.
+  - New pure API `earlyWarningScan()`, sorted HIGH → MEDIUM+ → MEDIUM → LOW → NONE, then by loan id.
+  - New pure API `simulateEarlyWarning(draft)`: the monitored book, plus every loan persona with `redFlagData` decided
+    both ways.
+  - New API `askCustomer(decisionId, {analyst, note, channel})`.
+  - New exports `RED_FLAG_CODES` and `RED_FLAG_ORIGINATION_CODES`.
+- **Additions to existing outputs.**
+  - `metrics().exitRiskWatch` holds `{counts, rows}`.
+  - `referQueue()` rows add `redFlags` (signal codes) and `customerAsked`.
+- **Shared block.** It lives in the policy store as `earlyWarning`, so `getPolicy`, `publishPolicy` (4-eyes) and
+  `policyHistory` accept it.
+  - It carries `kind: 'SHARED_BLOCK'`, the ten guardrails and the action ladder as locked text, and the v2.8 Al Tareq
+    "why" line (`consentWhy`).
+  - Publish refuses any guardrail key. It also refuses any unknown key ("nationality … can never be a parameter").
+  - `simulateBook` is not used for the block; the console calls `simulateEarlyWarning`.
+- **Bounds chosen** (the spec gave none):
+  - utilisation 75–100% · cards 2–5 · rise 15–60 pp;
+  - remittance share 50–100% · **multiple 1.5–5×** (below 1.5× the usual level could fire; the selftest shows a
+    customer sending 90% of income, equal to their baseline, stays NONE at the loosest legal setting);
+  - travel AED 500–5,000 within 7–60 days · salary 3–15 days late · on-time run 2–6;
+  - balance drop 50–95% · outbound share 25–90%.
+  - Counts and days must be whole numbers.
+- **Origination.**
+  - The gate opens only for personal loan, car loan and split, and only when the applicant has `redFlagData` **and**
+    Open Finance consent.
+    - It hooks into each evaluator just before the outcome (`redFlagRule`), so a REFER keeps the evaluator's own
+      reason-code logic.
+    - Without consent nothing is read: r6 without Open Finance is APPROVE.
+  - The salary advance and the starter loan are out of scope.
+  - Origination reads only the three referring signals. Travel and payments-stopped are **monitoring-only**: the spec
+    says so for travel, and before disbursal there is no Noor collection to miss.
+  - With the rule off, POL_RED_FLAGS is recorded as INFO and no signal is read.
+  - `POL_RED_FLAGS` can only be REFER, PASS or INFO. A decline only ever comes from another rule (tested with r6 at
+    DPD90).
+  - The record carries:
+    - `features.redFlagSignals`, `redFlagSeverity` and `redFlagsAtOrigination`;
+    - `record.redFlags` (internal);
+    - a `RED_FLAGS_READ` audit entry.
+- **Severity.**
+  - "MEDIUM+" is `severity: 'MEDIUM'` with `escalated: true` and `severityLabel: 'MEDIUM+'`. The tiles count it as
+    MEDIUM.
+  - Check-in SLAs (unspecified): MEDIUM 8 hours, the same working day; MEDIUM+ 4 hours. HIGH is a specialist call
+    within 24 hours.
+  - The check-in offers a payment-date move when the salary is late, otherwise a date move or a restructure.
+  - A remittance surge needs a 6-month baseline to fire.
+- **Workbench (stricter than the spec).**
+  - Overriding a red-flag referral also requires a written note, enforced by the engine on top of the reason code and
+    4-eyes.
+  - `askCustomer` records the note and a customer message: RC_RED_FLAGS_REVIEW in EN + AR, plus each flag's
+    explanation. The case stays open.
+- **Data.**
+  - r6 is appended with `personasLoan.push` in a new v2.9 block.
+  - Chosen values: ESR 15%, salary day 26, bank label RAKBANK, a flat 14,000 income series, and a spending series with
+    mean 6,900.
+  - Card counts and balances live in `redFlagData.aecb`, and `cardUtilisationPct3mAgo` sits in `redFlagData.baseline`
+    (the §1 schema). The persona's `aecb` block keeps the standard shape.
+  - `MizanData.monitoredLoans` holds six loans with varied names, no nationality and no destinations. Each has a
+    `contactChannel` (the customer's chosen channel).
+  - The six reason codes are appended at the end of the reason-code object.
+  - The seeded `earlyWarning` table is kept.
+- **Unchanged outcomes.** The selftest fingerprints every existing persona path (r1–r5, r2 with Credit Passport,
+  c1–c5, u1/u2 with and without statements, j1, a1 on both paths, the salary advance) against the v2.7 engine.
+  Mutation tests (9 of 9) confirm the new checks bite.
+- **Privacy.** r6's memo and SFTP row, as REFER and after an override approval, contain none of 12,400 · 1,850 · 7,000
+  · 58,200 · 60,000, no "airline" and no signal. They carry the outcome and RC_RED_FLAGS_REVIEW only. The lender
+  status flag appears in the Monitoring detail for HIGH rows; memos are unchanged.
+- **UI.**
+  - **Monitoring.** A new "UAE red flags — exit-risk watch" panel sits above the day-zero table, with the policy line,
+    four severity tiles and six expandable rows. A row expands to show:
+    - the guardrail notes;
+    - each reason code in EN + AR;
+    - observed / usual / threshold for each flag;
+    - for HIGH, what Partner Bank receives.
+
+    At phone width the table becomes stacked cards.
+  - **Personal loan.** r6 is selectable. "What tripped" sits right under the outcome banner.
+  - **Workbench.** The queue says "Red flags — review". The case has a Red flags panel with "Ask the customer" and
+    Approve / Decline (override with a mandatory written reason). It replaces the statements panel and the generic
+    override form for that case.
+  - **Decision log.** The replay shows the red flags.
+  - **Policy console.** A "Shared block · Early warning" button sits beside the product packs: guardrails and ladder
+    locked, thresholds editable, its own simulation.
+  - **Overview.** Step 10 is appended (the strip is now `demo-10`, ten steps), and a topic-map row is added.
+- **Acceptance.** One existing check changed: the demo-strip count went from 9 to 10.
+- **Merging with v2.8.** v2.8's personal-loan free-cash-flow rule should leave r6's APPROVE path intact: free cash
+  flow is AED 5,000 and the instalment is 36.5% of it.

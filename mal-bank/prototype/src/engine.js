@@ -230,7 +230,14 @@
                 scoreDecline: [550, 720], scoreRefer: [600, 780], minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5],
                 minAmount: [5000, 100000], productCap: [100000, 2000000], maxVehicleAgeYears: [0, 10],
                 regularIncomeCountedPct: [0, 100], regularIncomeMinMonths: [12, 24], instalmentToFcfMaxPct: [10, 80],
-                tokenValidityDays: [3, 30] }
+                tokenValidityDays: [3, 30] },
+    // v2.9 — the shared early-warning block (UAE red flags). The remittance multiple can never
+    // go below 1.5×, so sending money home at the usual level can never become a flag.
+    earlyWarning: { cardsMaxedUtilisationPct: [75, 100], cardsMaxedMinCards: [2, 5], cardsMaxedRisePp: [15, 60],
+                    remittanceShareOfIncomePct: [50, 100], remittanceMultipleOfBaseline: [1.5, 5],
+                    travelMinAmountAed: [500, 5000], travelWindowDays: [7, 60],
+                    salaryLateDays: [3, 15], onTimeRunMin: [2, 6],
+                    balanceDropPct: [50, 95], outboundShareOfAvgBalancePct: [25, 90] }
   };
   // Bounds for the starter loan's nested params ({starter}, {tiers.enhanced|base}).
   // APRs are annual decimals; months must be whole numbers.
@@ -1210,6 +1217,7 @@
     rs.add('REG_SALARY_MULTIPLE', 'Loan within ' + salaryMultiple + '× salary (Reg 29/2011)', 'REGULATORY',
            approved <= maxBySalary ? 'PASS' : 'FAIL', approved, maxBySalary, 'RC_DBR_EXCEEDED');
 
+    redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
     const outcome = outcomeFromRules(rs.rules);
     if (outcome === 'DECLINE') approved = 0;
 
@@ -1483,6 +1491,7 @@
     rs.add('REG_DBR_CAP', 'Debt burden ratio incl. new instalment within ' + dbrCap + '% cap (Reg 29/2011' + (p.retiree ? ', retiree' : '') + ')',
            'REGULATORY', dbrOk ? 'PASS' : 'FAIL', dbrPct + '%', dbrCap + '%', 'RC_DBR_EXCEEDED');
 
+    redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
     const outcome = outcomeFromRules(rs.rules);
     if (outcome !== 'DECLINE' && cashFlowPath) rs.reason('RC_CASH_FLOW_UNDERWRITTEN');
     if (outcome === 'APPROVE') {
@@ -2033,6 +2042,7 @@
              '≤ ' + prm.instalmentToFcfMaxPct + '%', 'RC_FREE_CASH_FLOW');
     }
 
+    redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
     const outcome = outcomeFromRules(rs.rules);
     if (outcome === 'DECLINE') approved = 0;
     if (outcome === 'APPROVE') {
@@ -2176,10 +2186,13 @@
 
   function evaluate(productId, rawApplicant, amount, tenorMonths, pol, consents, statements, opts) {
     if (productId === 'starter_loan') return evaluateUpgrade(normalizeUpgrade(rawApplicant), amount, tenorMonths, pol, consents, statements);
-    if (productId === 'split') return evaluateSplit(normalizeSplit(rawApplicant), amount, tenorMonths, pol);
-    if (productId === 'personal_loan') return evaluateLoan(normalizeLoan(rawApplicant), amount, tenorMonths, pol, consents, statements);
+    // v2.9 — split, personal loan and car loan carry the red-flag gate (see gateRedFlags):
+    // a no-op for every applicant without redFlagData, so existing outcomes are unchanged.
+    const ew = opts && opts.earlyWarningParams;
+    if (productId === 'split') return attachRedFlags(evaluateSplit(gateRedFlags(normalizeSplit(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol));
+    if (productId === 'personal_loan') return attachRedFlags(evaluateLoan(gateRedFlags(normalizeLoan(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, statements));
     if (productId === 'salary_advance') return evaluateAdvance(normalizeLoan(rawApplicant), amount, tenorMonths, pol);
-    if (productId === 'car_loan') return evaluateCar(normalizeCar(rawApplicant), amount, tenorMonths, pol, consents, opts && opts.vehicle);
+    if (productId === 'car_loan') return attachRedFlags(evaluateCar(gateRedFlags(normalizeCar(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, opts && opts.vehicle));
     throw err('unknown productId "' + productId + '"');
   }
 
@@ -2300,6 +2313,9 @@
       splitDraws: Object.create(null),   // decisionId -> [{amount, months, monthlyPayment, at}]
       seeded: null
     };
+    // v2.9 — the shared early-warning block sits beside the product packs (same 4-eyes publish + history).
+    S.policies[EW_BLOCK_ID] = defaultEarlyWarningBlock();
+    S.policyHistory[EW_BLOCK_ID] = [];
     for (const pid of Object.keys(S.policies)) {
       const pol = S.policies[pid];
       pol.publishedAt = D.TODAY + 'T08:00:00.000Z';
@@ -2504,6 +2520,7 @@
   // enforced, cross-field rules, and (starter loan) the publish-time invariants.
   // Returns the normalised params (complete nested objects for the starter loan).
   function validateParams(productId, rawParams, opts) {
+    if (productId === EW_BLOCK_ID) return validateEarlyWarningParams(rawParams);   // v2.9 shared block
     const pol = getPolicyRef(productId);
     if (!rawParams || typeof rawParams !== 'object' || Array.isArray(rawParams)) throw err('params must be an object');
     const params = normalizeParams(productId, rawParams);
@@ -2759,6 +2776,16 @@
       supersedes: orig ? orig.id : null,
       supersededBy: null
     };
+    if (ev.redFlags) {
+      // v2.9 — what the red-flag rule read (internal: the Decision log and the Workbench).
+      // Never part of the credit memo: the lender sees the outcome and RC_RED_FLAGS_REVIEW only.
+      record.redFlags = ev.redFlags;
+      record.audit.push({ at: createdAt, actor: 'engine', action: 'RED_FLAGS_READ',
+                          detail: ev.redFlags.ruleOn
+                            ? (ev.redFlags.flags.length ? ev.redFlags.flags.map(f => f.code).join(' · ') : 'no signal') +
+                              ' · against the customer’s own history · ' + (ev.redFlags.referred ? 'REFER to an underwriter (never a decline or a price change)' : 'no referral')
+                            : 'rule off by policy (earlyWarning.redFlagsAtOrigination = false)' });
+    }
     if (productId === 'car_loan') {
       // DecisionRecord additions for the car loan (Addendum v2.7).
       record.request.vehicle = clone(vehicle);
@@ -3338,6 +3365,398 @@
              openFinanceUplift: ev.features.openFinance ? carUplift(applicant, amt, ten, pol, consents, vehicle, ev) : null };
   }
 
+  // ---------------------------------------------------------------------------
+  // UAE red flags and early warning — exit-risk watch (Addendum v2.9,
+  // ../RED-FLAGS-SPEC.md). About 88% of UAE residents are expatriates, so a borrower
+  // leaving the country with the debt is a real credit risk; Open Finance shows the
+  // behaviour that precedes it in the customer's own accounts, day zero.
+  //
+  // Guardrails — they ARE the product:
+  //  - Signals are changes against the customer's OWN baseline, never attributes of
+  //    who the customer is. The engine reads an allowlist of fields from
+  //    subject.redFlagData (rfInputs) and nothing else: no nationality, no
+  //    destination country of a transfer or trip, no religion, no service name.
+  //  - Sending money home at the usual level is never a flag: only a surge against
+  //    the customer's own 6-month share (the multiple can never be set below 1.5×).
+  //  - Travel alone is never actioned (LOW = watch, no contact); it counts only in
+  //    combination (the EXIT_RISK pattern), and only while a loan is open.
+  //  - Origination: POL_RED_FLAGS can only REFER to an underwriter — never an
+  //    automatic decline, never a price change.
+  //  - Monitoring: actions start with contacting the customer; no default, legal
+  //    step or account action follows from signals alone.
+  //  - The lender of record gets at most a status flag, never values or account history.
+  // Thresholds are params on a shared policy block (`earlyWarning`), published under
+  // 4-eyes like every pack; the guardrails ride on the block as locked text.
+  // ---------------------------------------------------------------------------
+  const EW_BLOCK_ID = 'earlyWarning';
+  const RF_CODES = ['RF_CARDS_MAXED', 'RF_REMITTANCE_SURGE', 'RF_TRAVEL_AFTER_DISBURSAL', 'RF_PAYMENTS_STOPPED', 'RF_BALANCES_DRAINED'];
+  // The three signals POL_RED_FLAGS refers on. Travel and repayment signals need an open loan.
+  const RF_ORIGINATION = ['RF_CARDS_MAXED', 'RF_REMITTANCE_SURGE', 'RF_BALANCES_DRAINED'];
+  const RF_SEVERITY = { RF_CARDS_MAXED: 'MEDIUM', RF_REMITTANCE_SURGE: 'MEDIUM', RF_TRAVEL_AFTER_DISBURSAL: 'LOW',
+                        RF_PAYMENTS_STOPPED: 'MEDIUM', RF_BALANCES_DRAINED: 'MEDIUM' };
+  const RF_PRODUCTS = ['personal_loan', 'car_loan', 'split'];
+  const EW_RANK = { HIGH: 0, 'MEDIUM+': 1, MEDIUM: 2, LOW: 3, NONE: 4 };
+  const EW_LENDER_STATUS = 'Early warning: elevated — Noor is in contact with the customer';
+  const EW_PAUSED = ['Split capacity', 'Limit increases', 'Upgrade offers'];
+  // The Al Tareq consent "why" line (BOTIM-V28-SPEC §8) — monitoring sits inside this scope.
+  const EW_CONSENT_WHY = 'To work out what you can afford — and, while you have a loan with Noor, to spot early if repayments might become hard for you.';
+  const EW_INT_KEYS = ['cardsMaxedMinCards', 'travelWindowDays', 'salaryLateDays', 'onTimeRunMin'];
+  const EW_GUARDRAILS = [
+    { key: 'ownBaseline', label: 'Own history only',
+      text: 'Signals are changes against the customer’s own history — never attributes of who the customer is.' },
+    { key: 'neverInputs', label: 'Never inputs',
+      text: 'Nationality, the destination country of a transfer or a trip, religion and service names are never inputs. Mizan sees “international transfer” and “airline purchase”, nothing about where.' },
+    { key: 'usualLevel', label: 'Usual level is never a flag',
+      text: 'Sending money home at the customer’s usual level is never a flag — only a surge against their own 6-month share. The multiple cannot be set below 1.5×.' },
+    { key: 'travelAlone', label: 'Travel alone is never actioned',
+      text: 'People fly home for holidays. Travel only counts in combination; on its own it is a watch, with no contact.' },
+    { key: 'originationReferOnly', label: 'Origination: refer only',
+      text: 'A red flag can only refer an application to an underwriter — never an automatic decline, never a price change.' },
+    { key: 'contactFirst', label: 'Monitoring: contact first',
+      text: 'Actions start with contacting the customer. No automatic default, legal step or account action follows from signals alone.' },
+    { key: 'reasonCodes', label: 'Explainable',
+      text: 'Every flag has a reason code in English and Arabic and a plain explanation the analyst can read to the customer.' },
+    { key: 'consentScope', label: 'Consent scope',
+      text: 'The Al Tareq consent covers monitoring while a loan is open: “' + EW_CONSENT_WHY + '”' },
+    { key: 'governance', label: 'Governance before LIVE',
+      text: 'An offline disparate-impact test across customer groups runs before LIVE (group labels are used only for the test, never as features). CBUAE AI/ML guidance (Feb 2026) · Consumer Protection Regulation (fair treatment, collections conduct) · PDPL purpose limitation.' },
+    { key: 'lenderStatusOnly', label: 'Lender of record: a status flag only',
+      text: 'Partner Bank receives at most “' + EW_LENDER_STATUS + '” — never the account history or the signals’ values.' }
+  ];
+  const EW_LADDER = [
+    { severity: 'NONE', code: 'NONE', text: 'No action.' },
+    { severity: 'LOW', code: 'WATCH', text: 'Watch — no customer contact.' },
+    { severity: 'MEDIUM', code: 'CHECK_IN', text: 'Same-day check-in on the customer’s chosen channel, offering a payment-date move or a restructure (8 hours; two or more signals: 4 hours).' },
+    { severity: 'HIGH', code: 'SPECIALIST_CALL', text: 'Specialist call within 24 hours. New credit paused (split capacity, limit increases, upgrade offers). The lender of record gets a status flag only. No default or legal step.' }
+  ];
+  function defaultEarlyWarningBlock() {
+    return {
+      blockId: EW_BLOCK_ID, kind: 'SHARED_BLOCK', productId: null,
+      nameEn: 'Early warning — UAE red flags', nameAr: 'الإنذار المبكر — مؤشرات المخاطر',
+      appliesTo: ['personal_loan', 'car_loan', 'split', 'monitoring'],
+      version: 1, publishedAt: null, publishedBy: 'system (default block)', approvedBy: 'system',
+      guardrails: clone(EW_GUARDRAILS),     // locked — shown as text, never editable
+      actionLadder: clone(EW_LADDER),       // locked
+      consentWhy: EW_CONSENT_WHY,
+      params: { redFlagsAtOrigination: true,
+                cardsMaxedUtilisationPct: 90, cardsMaxedMinCards: 2, cardsMaxedRisePp: 30,
+                remittanceShareOfIncomePct: 80, remittanceMultipleOfBaseline: 2,
+                travelMinAmountAed: 1000, travelWindowDays: 30,
+                salaryLateDays: 7, onTimeRunMin: 3,
+                balanceDropPct: 80, outboundShareOfAvgBalancePct: 50 }
+    };
+  }
+  function validateEarlyWarningParams(raw) {
+    const pol = getPolicyRef(EW_BLOCK_ID);
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw err('params must be an object');
+    const bounds = PARAM_BOUNDS[EW_BLOCK_ID];
+    for (const key of Object.keys(raw)) {
+      if (key === 'guardrails' || key === 'actionLadder' || EW_GUARDRAILS.some(g => g.key === key)) {
+        throw err('"' + key + '" is a locked guardrail of the early-warning block — shown as text, never editable');
+      }
+      if (!(key in pol.params)) {
+        throw err('unknown parameter "' + key + '" for the early-warning block — signals read only the customer’s own history; nationality, destination, religion or a service name can never be a parameter');
+      }
+      const v = raw[key];
+      if (key === 'redFlagsAtOrigination') {
+        if (typeof v !== 'boolean') throw err('redFlagsAtOrigination must be true or false');
+        continue;
+      }
+      if (!Number.isFinite(v)) throw err('parameter "' + key + '" must be a number');
+      if (EW_INT_KEYS.includes(key) && !Number.isInteger(v)) throw err('parameter "' + key + '" must be a whole number');
+      const bd = bounds[key];
+      if (v < bd[0] || v > bd[1]) {
+        throw err('parameter "' + key + '"=' + v + ' outside allowed bounds [' + bd[0] + ', ' + bd[1] + ']' +
+                  (key === 'remittanceMultipleOfBaseline' && v < bd[0] ? ' — closer to 1× would flag sending money home at the usual level' : ''));
+      }
+    }
+    return clone(raw);
+  }
+
+  // The ONLY fields the red-flag engine reads — an explicit allowlist out of
+  // subject.redFlagData. Anything else on the subject (name, residency, a country
+  // or nationality field, a destination on a transfer) is never touched.
+  function rfNum(x) { return typeof x === 'number' && Number.isFinite(x) ? x : null; }
+  function rfInputs(subject) {
+    const rf = subject && typeof subject === 'object' ? subject.redFlagData : null;
+    if (!rf || typeof rf !== 'object') throw err('redFlags(subject) needs subject.redFlagData {baseline, recent, aecb}');
+    const b = rf.baseline || {}, r = rf.recent || {}, a = rf.aecb || {};
+    const trips = Array.isArray(r.airlinePurchases) ? r.airlinePurchases : [];
+    return {
+      baseline: { intlShare6m: rfNum(b.intlTransfersShareOfIncome6m), salaryCreditDay: rfNum(b.salaryCreditDay),
+                  avgBalance3m: rfNum(b.avgBalance3m), cardUtil3mAgo: rfNum(b.cardUtilisationPct3mAgo),
+                  onTimeRun: rfNum(b.onTimePaymentsRun) },
+      recent: { income: rfNum(r.incomeAed), intl: rfNum(r.intlTransfersAed),
+                trips: trips.map(t => ({ days: t ? rfNum(t.daysAfterDisbursal) : null, amount: t ? rfNum(t.amountAed) : null })),
+                salaryLateDays: rfNum(r.salaryLateDays), balanceNow: rfNum(r.balanceNowAed),
+                largestOut: rfNum(r.largestOutboundTransferAed), missedCollection: r.missedCollection === true },
+      aecb: { cards: rfNum(a.cards), limit: rfNum(a.cardLimitTotal), balance: rfNum(a.cardBalanceTotal) }
+    };
+  }
+  const RF_EPS = 1e-9;
+  const rf1 = (x) => x === null ? null : Math.round(x * 10) / 10;
+  const rfAed = (x) => aed(Math.round(x));
+  function rfFlag(code, fired, observed, baseline, threshold, values) {
+    const rc = D.reasonCodes['RC_' + code] || {};
+    return { code, fired, severity: RF_SEVERITY[code], reasonCode: 'RC_' + code, observed, baseline, threshold, values,
+             en: rc.en || '', ar: rc.ar || '' };
+  }
+  // One check per signal — the comparisons the policy console describes (≥ at the threshold).
+  function rfChecks(x, prm, phase) {
+    const out = [];
+    // RF_CARDS_MAXED — utilisation ≥ 90% across ≥ 2 cards AND up ≥ 30 pp vs 3 months ago.
+    {
+      const util = x.aecb.limit > 0 && x.aecb.balance !== null ? x.aecb.balance / x.aecb.limit * 100 : null;
+      const was = x.baseline.cardUtil3mAgo;
+      const rise = util !== null && was !== null ? util - was : null;
+      const fired = util !== null && rise !== null && (x.aecb.cards || 0) >= prm.cardsMaxedMinCards &&
+                    util >= prm.cardsMaxedUtilisationPct - RF_EPS && rise >= prm.cardsMaxedRisePp - RF_EPS;
+      out.push(rfFlag('RF_CARDS_MAXED', fired,
+        util === null ? 'no card file' : Math.round(util) + '% of card limits used · ' + (x.aecb.cards || 0) + ' card' + (x.aecb.cards === 1 ? '' : 's'),
+        was === null ? 'no 3-month history' : was + '% three months ago',
+        '≥ ' + prm.cardsMaxedUtilisationPct + '% across ≥ ' + prm.cardsMaxedMinCards + ' cards, up ≥ ' + prm.cardsMaxedRisePp + ' pp',
+        { utilisationPct: rf1(util), utilisationPct3mAgo: was, risePp: rf1(rise), cards: x.aecb.cards }));
+    }
+    // RF_REMITTANCE_SURGE — 30-day international transfers ≥ 80% of income AND ≥ 2× the customer's own 6-month share.
+    {
+      const share = x.recent.income > 0 && x.recent.intl !== null ? x.recent.intl / x.recent.income : null;
+      const base = x.baseline.intlShare6m;
+      const fired = share !== null && base !== null && share * 100 >= prm.remittanceShareOfIncomePct - RF_EPS &&
+                    share >= prm.remittanceMultipleOfBaseline * base - RF_EPS;
+      out.push(rfFlag('RF_REMITTANCE_SURGE', fired,
+        share === null ? 'no income seen' : Math.round(share * 100) + '% of income in international transfers (30 days)',
+        base === null ? 'no 6-month baseline' : Math.round(base * 100) + '% usual (own 6-month share)',
+        '≥ ' + prm.remittanceShareOfIncomePct + '% of income and ≥ ' + prm.remittanceMultipleOfBaseline + '× the usual share',
+        { sharePct: share === null ? null : rf1(share * 100), baselinePct: base === null ? null : rf1(base * 100),
+          multiple: share !== null && base > 0 ? rf1(share / base) : null }));
+    }
+    // RF_TRAVEL_AFTER_DISBURSAL — monitoring only: an airline purchase ≥ AED 1,000 within 30 days after disbursal.
+    if (phase === 'MONITORING') {
+      const hits = x.recent.trips.filter(t => t.days !== null && t.days >= 0 && t.days <= prm.travelWindowDays &&
+                                              t.amount !== null && t.amount >= prm.travelMinAmountAed - RF_EPS);
+      const t0 = hits[0] || null;
+      out.push(rfFlag('RF_TRAVEL_AFTER_DISBURSAL', !!t0,
+        t0 ? 'Airline purchase ' + rfAed(t0.amount) + ', ' + t0.days + ' days after the loan was paid out' : 'no airline purchase in the window',
+        'travel alone is never actioned',
+        '≥ ' + aed(prm.travelMinAmountAed) + ' within ' + prm.travelWindowDays + ' days after disbursal',
+        { amountAed: t0 ? t0.amount : null, daysAfterDisbursal: t0 ? t0.days : null, purchases: hits.length }));
+    }
+    // RF_PAYMENTS_STOPPED — monitoring only: salary ≥ 7 days late vs its established day, or a missed
+    // collection after a run of ≥ 3 on time.
+    if (phase === 'MONITORING') {
+      const late = x.recent.salaryLateDays, run = x.baseline.onTimeRun;
+      const lateFired = late !== null && late >= prm.salaryLateDays - RF_EPS;
+      const missFired = x.recent.missedCollection && run !== null && run >= prm.onTimeRunMin;
+      const obs = [];
+      if (late !== null && late > 0) obs.push('Salary ' + late + ' day' + (late === 1 ? '' : 's') + ' late');
+      if (x.recent.missedCollection) obs.push('missed collection after ' + (run || 0) + ' on time');
+      out.push(rfFlag('RF_PAYMENTS_STOPPED', lateFired || missFired,
+        obs.length ? obs.join(' · ') : 'salary on time · no missed collection',
+        (x.baseline.salaryCreditDay !== null ? 'salary usually lands on day ' + x.baseline.salaryCreditDay : 'established salary day') +
+          (run !== null ? ' · ' + run + ' on-time repayment' + (run === 1 ? '' : 's') + ' in a row' : ''),
+        '≥ ' + prm.salaryLateDays + ' days late, or a missed collection after ≥ ' + prm.onTimeRunMin + ' on time',
+        { salaryLateDays: late, missedCollection: x.recent.missedCollection, onTimeRun: run, salaryLate: lateFired, missedAfterRun: missFired }));
+    }
+    // RF_BALANCES_DRAINED — balances down ≥ 80% vs the 3-month average AND one outgoing transfer ≥ 50% of that average.
+    {
+      const avg = x.baseline.avgBalance3m, now = x.recent.balanceNow, outT = x.recent.largestOut;
+      const drop = avg > 0 && now !== null ? (avg - now) / avg : null;
+      const fired = drop !== null && outT !== null && drop * 100 >= prm.balanceDropPct - RF_EPS &&
+                    outT >= prm.outboundShareOfAvgBalancePct / 100 * avg - RF_EPS;
+      out.push(rfFlag('RF_BALANCES_DRAINED', fired,
+        drop === null ? 'no balance history' : 'Balances ' + rfAed(now) + ' (' + (drop >= 0 ? '−' : '+') + Math.round(Math.abs(drop) * 100) + '%)' +
+          (outT !== null ? ' · largest transfer out ' + rfAed(outT) : ''),
+        avg === null ? 'no 3-month average' : rfAed(avg) + ' average (3 months)',
+        'down ≥ ' + prm.balanceDropPct + '% and one transfer out ≥ ' + prm.outboundShareOfAvgBalancePct + '% of the average',
+        { balanceNowAed: now, avgBalance3mAed: avg, dropPct: drop === null ? null : rf1(drop * 100), largestOutboundAed: outT,
+          outboundShareOfAvgPct: avg > 0 && outT !== null ? rf1(outT / avg * 100) : null }));
+    }
+    return out;
+  }
+  function rfAction(phase, severity, escalated, flags) {
+    if (phase === 'ORIGINATION') {
+      return flags.some(f => RF_ORIGINATION.includes(f.code))
+        ? { code: 'UNDERWRITER_REVIEW', en: 'Refer to an underwriter — a person reviews the case. Never an automatic decline, never a price change.', slaHours: null }
+        : { code: 'NONE', en: 'No action — nothing changed against the customer’s own history.', slaHours: null };
+    }
+    if (severity === 'HIGH') {
+      return { code: 'SPECIALIST_CALL', en: 'Specialist call within 24 hours. New credit paused; the lender of record gets a status flag only; no default or legal step.',
+               slaHours: 24, pausesNewCredit: EW_PAUSED.slice(), lenderStatus: EW_LENDER_STATUS };
+    }
+    if (severity === 'MEDIUM') {
+      const salaryLate = flags.some(f => f.code === 'RF_PAYMENTS_STOPPED' && f.values.salaryLate);
+      const offer = salaryLate ? 'PAYMENT_DATE_MOVE' : 'PAYMENT_DATE_MOVE_OR_RESTRUCTURE';
+      const offerText = salaryLate ? 'offer to move the payment date to when the salary lands' : 'offer a payment-date move or a restructure';
+      return escalated
+        ? { code: 'CHECK_IN', en: 'Check-in sooner (two or more signals) on the customer’s chosen channel — ' + offerText + '.', slaHours: 4, offer }
+        : { code: 'CHECK_IN', en: 'Same-day check-in on the customer’s chosen channel — ' + offerText + '.', slaHours: 8, offer };
+    }
+    if (severity === 'LOW') return { code: 'WATCH', en: 'Watch — no customer contact. Travel alone is never actioned.', slaHours: null };
+    return { code: 'NONE', en: 'No action — nothing changed against the customer’s own history.', slaHours: null };
+  }
+  // Pure: the same subject and params always give the same result; no clock tick, no state.
+  function redFlagsWith(subject, phase, prm) {
+    const x = rfInputs(subject);
+    const checks = rfChecks(x, prm, phase);
+    const flags = checks.filter(c => c.fired);
+    const has = (c) => flags.some(f => f.code === c);
+    let severity = 'NONE', pattern = null, escalated = false;
+    if (phase === 'MONITORING' && has('RF_TRAVEL_AFTER_DISBURSAL') && (has('RF_REMITTANCE_SURGE') || has('RF_BALANCES_DRAINED')) &&
+        (has('RF_PAYMENTS_STOPPED') || has('RF_CARDS_MAXED'))) {
+      severity = 'HIGH'; pattern = 'EXIT_RISK';
+    } else {
+      const medium = flags.filter(f => f.severity === 'MEDIUM').length;
+      if (medium >= 2) { severity = 'MEDIUM'; escalated = true; }
+      else if (medium === 1) severity = 'MEDIUM';
+      else if (flags.length) severity = 'LOW';
+    }
+    const severityLabel = escalated ? 'MEDIUM+' : severity;
+    const notes = ['Compared with the customer’s own history only. Not read: nationality, where money or a trip goes, religion, or any service name.'];
+    const remit = checks.find(c => c.code === 'RF_REMITTANCE_SURGE');
+    let noFlagNote = null;
+    if (remit && !remit.fired && remit.values.sharePct > 0 && remit.values.baselinePct !== null) {
+      const t = 'sending money home at the usual level (' + Math.round(remit.values.sharePct) + '%, baseline ' + Math.round(remit.values.baselinePct) + '%)';
+      notes.push('Not a flag: ' + t + '.');
+      if (!flags.length) noFlagNote = 'No flag — ' + t;
+    }
+    if (phase === 'ORIGINATION') {
+      notes.push('A red flag can only refer to an underwriter — never an automatic decline, never a price change.');
+      notes.push('Travel and repayment signals are read only while a loan is open.');
+    } else {
+      if (severity === 'LOW' && has('RF_TRAVEL_AFTER_DISBURSAL')) notes.push('Travel alone is never actioned — watch only, no customer contact.');
+      if (severity === 'MEDIUM') notes.push('The check-in offers help (a payment-date move or a restructure); it is not a collections step.');
+      if (severity === 'HIGH') notes.push('New credit paused (split capacity, limit increases, upgrade offers). The lender of record gets a status flag only. No default or legal step.');
+      notes.push('Actions start with contacting the customer — no default, legal step or account action follows from signals alone.');
+    }
+    return { phase, severity, severityLabel, escalated, pattern,
+             flags, checks,
+             notEvaluated: phase === 'ORIGINATION' ? ['RF_TRAVEL_AFTER_DISBURSAL', 'RF_PAYMENTS_STOPPED'] : [],
+             action: rfAction(phase, severity, escalated, flags),
+             guardrailNotes: notes, noFlagNote,
+             lenderStatus: phase === 'MONITORING' && severity === 'HIGH' ? EW_LENDER_STATUS : null };
+  }
+  function ewParamsFor(override) {
+    const live = getPolicyRef(EW_BLOCK_ID).params;
+    return override ? Object.assign({}, live, validateEarlyWarningParams(override)) : live;
+  }
+  // Public: redFlags(subject, {phase:'ORIGINATION'|'MONITORING', params?}) — params (a draft) are
+  // bounds-checked like a publish, so no caller can set a threshold the console could not.
+  function redFlags(subject, opts) {
+    ensureInit();
+    const phase = (opts && opts.phase) || 'MONITORING';
+    if (phase !== 'ORIGINATION' && phase !== 'MONITORING') throw err('redFlags phase must be ORIGINATION or MONITORING');
+    return redFlagsWith(subject, phase, ewParamsFor(opts && opts.params));
+  }
+  // Origination gate: only for split / personal loan / car loan, only when the applicant carries
+  // redFlagData AND granted Open Finance consent (the signals come from their own accounts).
+  function gateRedFlags(p, raw, consents, productId, ewOverride) {
+    if (!RF_PRODUCTS.includes(productId) || !raw || !raw.redFlagData || !consents || consents.openFinance !== true) return p;
+    const prm = ewParamsFor(ewOverride);
+    p.redFlagGate = prm.redFlagsAtOrigination ? { on: true, result: redFlagsWith(raw, 'ORIGINATION', prm) } : { on: false, result: null };
+    return p;
+  }
+  function redFlagRule(rs, p) {
+    const g = p && p.redFlagGate;
+    if (!g) return;
+    const name = 'Red flags — recent changes against the customer’s own history (refer only: never a decline, never a price change)';
+    const threshold = 'refers on ' + RF_ORIGINATION.join(' · ');
+    if (!g.on) {
+      rs.add('POL_RED_FLAGS', name, 'POLICY', 'INFO', 'off by policy (earlyWarning.redFlagsAtOrigination = false)', threshold, null);
+      return;
+    }
+    const fired = g.result.flags.filter(f => RF_ORIGINATION.includes(f.code)).map(f => f.code);
+    rs.add('POL_RED_FLAGS', name, 'POLICY', fired.length ? 'REFER' : 'PASS',
+           fired.length ? fired.join(' · ') : 'no signal fired', threshold, 'RC_RED_FLAGS_REVIEW');
+  }
+  // The signal codes sit on the record as features; the full result rides on ev.redFlags.
+  function attachRedFlags(ev) {
+    const g = ev && ev.profile && ev.profile.redFlagGate;
+    if (!g) return ev;
+    ev.features.redFlagsAtOrigination = g.on;
+    if (g.on) {
+      const referred = g.result.flags.some(f => RF_ORIGINATION.includes(f.code));
+      ev.features.redFlagSignals = g.result.flags.map(f => f.code);
+      ev.features.redFlagSeverity = g.result.severityLabel;
+      ev.redFlags = Object.assign({ ruleOn: true, referred }, g.result);
+    } else {
+      ev.redFlags = { ruleOn: false, referred: false, phase: 'ORIGINATION', severity: null, severityLabel: null, escalated: false, pattern: null,
+                      flags: [], checks: [], notEvaluated: RF_CODES.slice(), action: null,
+                      guardrailNotes: ['The red-flag rule is off by policy — signals were not read for this decision.'],
+                      noFlagNote: null, lenderStatus: null };
+    }
+    return ev;
+  }
+  function ewCounts(rows) {
+    const c = { HIGH: 0, MEDIUM: 0, LOW: 0, NONE: 0 };
+    for (const r of rows) c[r.severity]++;
+    return c;
+  }
+  // Pure + deterministic: one row per monitored loan, sorted HIGH → MEDIUM+ → MEDIUM → LOW → NONE (then by loan id).
+  function earlyWarningScan(opts) {
+    ensureInit();
+    const prm = ewParamsFor(opts && opts.params);
+    const rows = (D.monitoredLoans || []).map(l => {
+      const r = redFlagsWith(l, 'MONITORING', prm);
+      const action = Object.assign({ channel: r.action.code === 'CHECK_IN' ? (l.contactChannel || 'In-app message')
+                                            : (r.action.code === 'SPECIALIST_CALL' ? 'Phone — specialist' : null) }, r.action);
+      return { loanId: l.id, customer: l.customer, productId: l.productId, amountAed: l.amountAed, tenorMonths: l.tenorMonths || null,
+               disbursedAt: l.disbursedAt, severity: r.severity, severityLabel: r.severityLabel, escalated: r.escalated, pattern: r.pattern,
+               flags: r.flags, checks: r.checks, action, guardrailNotes: r.guardrailNotes, noFlagNote: r.noFlagNote, lenderStatus: r.lenderStatus };
+    });
+    return rows.sort((a, b) => (EW_RANK[a.severityLabel] - EW_RANK[b.severityLabel]) || (a.loanId < b.loanId ? -1 : a.loanId > b.loanId ? 1 : 0));
+  }
+  // Simulate a draft early-warning block before publishing: the monitored book, and every loan
+  // persona that carries redFlagData decided with the live block and with the draft (pure).
+  function simulateEarlyWarning(draftParams) {
+    ensureInit();
+    const params = validateEarlyWarningParams(draftParams || {});
+    const cand = Object.assign({}, getPolicyRef(EW_BLOCK_ID).params, params);
+    const before = earlyWarningScan(), after = earlyWarningScan({ params: cand });
+    const changes = after.filter(a => {
+      const b = before.find(x => x.loanId === a.loanId);
+      return b.severityLabel !== a.severityLabel || b.flags.map(f => f.code).join() !== a.flags.map(f => f.code).join();
+    }).map(a => {
+      const b = before.find(x => x.loanId === a.loanId);
+      return { loanId: a.loanId, customer: a.customer, from: b.severityLabel, to: a.severityLabel,
+               flagsFrom: b.flags.map(f => f.code), flagsTo: a.flags.map(f => f.code) };
+    });
+    const pol = getPolicyRef('personal_loan');
+    const consents = { aecb: true, openFinance: true };
+    const origination = (D.personasLoan || []).filter(p => p.redFlagData).map(p => {
+      const rq = p.defaultRequest || { amount: 10000, tenorMonths: 12 };
+      const b = evaluate('personal_loan', p, rq.amount, rq.tenorMonths, pol, consents, null);
+      const a = evaluate('personal_loan', p, rq.amount, rq.tenorMonths, pol, consents, null, { earlyWarningParams: cand });
+      return { id: p.id, name: p.name, from: b.outcome, to: a.outcome, amountFrom: b.limit.approved, amountTo: a.limit.approved,
+               pricingUnchanged: JSON.stringify(b.pricing) === JSON.stringify(a.pricing) };
+    });
+    const cb = ewCounts(before), ca = ewCounts(after);
+    return { before: cb, after: ca, changes, origination,
+             summary: 'Scanned ' + after.length + ' monitored loans vs early-warning block v' + getPolicyRef(EW_BLOCK_ID).version +
+                      ': HIGH ' + cb.HIGH + ' → ' + ca.HIGH + ', MEDIUM ' + cb.MEDIUM + ' → ' + ca.MEDIUM + ', LOW ' + cb.LOW + ' → ' + ca.LOW +
+                      ', NONE ' + cb.NONE + ' → ' + ca.NONE + ' (' + changes.length + ' row' + (changes.length === 1 ? '' : 's') + ' changed).' };
+  }
+  // The analyst asks the customer (Workbench): a note on the record and a customer message in
+  // English + Arabic from the reason code — RC_RED_FLAGS_REVIEW on a red-flag referral. The
+  // case stays open; the refer SLA keeps running.
+  function askCustomer(decisionId, req) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    if (rec.outcome !== 'REFER' || rec.override) throw err('askCustomer applies only to open REFER decisions');
+    if (rec.supersededBy) throw err(decisionId + ' was superseded by ' + rec.supersededBy + ' — work on the newer decision');
+    if (!req || typeof req.analyst !== 'string' || !req.analyst.trim()) throw err('askCustomer requires the analyst’s name');
+    const rf = rec.redFlags && rec.redFlags.referred ? rec.redFlags : null;
+    const code = rf ? 'RC_RED_FLAGS_REVIEW' : (rec.reasonCodes[0] || 'RC_MANUAL_REVIEW');
+    const rc = D.reasonCodes[code] || { en: code, ar: '' };
+    const at = nowIso();
+    const q = { at, analyst: req.analyst.trim(), channel: (typeof req.channel === 'string' && req.channel.trim()) || 'In-app message',
+                note: typeof req.note === 'string' ? req.note.trim() : '',
+                message: { reasonCode: code, en: rc.en, ar: rc.ar },
+                explanations: rf ? rf.flags.map(f => ({ code: f.reasonCode, en: f.en, ar: f.ar })) : [] };
+    rec.customerQueries = (rec.customerQueries || []).concat([q]);
+    rec.audit.push({ at, actor: q.analyst, action: 'CUSTOMER_ASKED', detail: code + ' · ' + q.channel + (q.note ? ' · ' + q.note : '') });
+    return rec;
+  }
+
   // Convenience for simulation — same logic, no side effects, no record stored.
   function rowAmount(row) {
     return row.amount !== undefined ? row.amount : (row.purchaseAmount !== undefined ? row.purchaseAmount : 100000);
@@ -3637,6 +4056,10 @@
     if (o.analyst.trim().toLowerCase() === o.approver.trim().toLowerCase()) {
       throw err('4-eyes violation — override analyst and approver must be different people');
     }
+    // v2.9 — a red-flag referral is a human review: approve or decline, the analyst writes down why.
+    if (rec.redFlags && rec.redFlags.referred && !(typeof o.note === 'string' && o.note.trim())) {
+      throw err('a red-flag referral needs the analyst’s written reason (note) — approve or decline, it is a human review');
+    }
     const at = nowIso();
     rec.override = { outcome: o.outcome, reasonCode: o.reasonCode, analyst: o.analyst,
                      approver: o.approver, note: o.note || '', at };
@@ -3678,7 +4101,10 @@
                  waitingHours: 0, slaHoursLeft: dr ? dr.slaHoursLeftAtPause : sla, seeded: false,
                  status: r.status, slaPaused: r.status === 'AWAITING_DOCUMENTS',
                  documentRequest: dr ? { country: dr.country, countryName: dr.countryName, analyst: dr.analyst, requestedAt: dr.requestedAt } : null,
-                 supersedes: r.supersedes || null };
+                 supersedes: r.supersedes || null,
+                 // v2.9 — red-flag referrals carry their signal codes; askCustomer() notes are counted
+                 redFlags: r.redFlags && r.redFlags.referred ? r.redFlags.flags.map(f => f.code) : null,
+                 customerAsked: (r.customerQueries || []).length };
       });
     return open.concat(clone(S.seeded.queue));
   }
@@ -3737,7 +4163,9 @@
       overrideRatePct: pct1(overrides, refers),
       vintages: clone(S.seeded.vintages),
       // Day-zero early-warning signals — seeded, deterministic, consumer only.
-      earlyWarning: clone(D.earlyWarning || [])
+      earlyWarning: clone(D.earlyWarning || []),
+      // v2.9 — UAE red flags, exit-risk watch over MizanData.monitoredLoans (pure scan, live block)
+      exitRiskWatch: (() => { const rows = earlyWarningScan(); return { counts: ewCounts(rows), rows }; })()
     };
   }
 
@@ -3760,7 +4188,10 @@
     init, manifests, execSteps, getPolicy, publishPolicy, policyHistory, policyInvariants,
     decide, decideRaw, simulateBook, drawdownCheck, recordEvent, override,
     quoteUpgrade, selectUpgradeOption,
-    listDecisions, getDecision, referQueue, metrics
+    listDecisions, getDecision, referQueue, metrics,
+    // v2.9 — UAE red flags and early warning (exit-risk watch)
+    RED_FLAG_CODES: RF_CODES.slice(), RED_FLAG_ORIGINATION_CODES: RF_ORIGINATION.slice(),
+    redFlags, earlyWarningScan, simulateEarlyWarning, askCustomer
   };
 
   globalThis.MizanEngine = MizanEngine;
