@@ -3,7 +3,9 @@
  * Addendum v2.1, starter loan → upgrade; group 12 = v2.3 repayment collection
  * (REPAYMENT-SPEC.md); group 13 = v2.4 home-country statements (STATEMENTS-SPEC.md);
  * group 14 = v2.5 NoorScore + the lender's credit memo (LENDER-VIEW-SPEC.md); group 15 =
- * v2.6 customer journey: prequalify() and persona j1 (JOURNEY-SPEC.md))
+ * v2.6 customer journey: prequalify() and persona j1 (JOURNEY-SPEC.md); group 16 = v2.7 car loan
+ * (CAR-LOAN-SPEC.md); group 17 = v2.8 digital footprint, the personal-loan FCF rule and contact
+ * preferences (BOTIM-V28-SPEC.md))
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -1482,7 +1484,7 @@ group('15. Customer journey (v2.6): persona j1, prequalify() on Open Finance onl
   ok(pq.maxByTermMonths[12] <= dbrMax, 'pre-qualification never promises more than the engine allows: 12-month cap AED ' + pq.maxByTermMonths[12] + ' ≤ the engine’s DBR maximum AED ' + dbrMax);
   ok(pq.indicativeMin <= rec.limit.approved && rec.limit.approved <= pq.maxByTermMonths[12], 'the approved AED 15,000 is inside the pre-qualified range and within the 12-month cap');
   eq(rec.repayment && rec.repayment.method, 'DIRECT_DEBIT', 'j1 at AED 15,000 → repayment DIRECT_DEBIT');
-  ok(rec.features.freeCashFlowMonthly === 3700 && rec.features.instalmentToFcfPct > 25 && rec.features.dbrPct < 20, 'j1 features: free cash flow 3,700 (informational), DBR < 20%');
+  ok(rec.features.freeCashFlowMonthly === 3700 && rec.features.instalmentToFcfPct > 25 && rec.features.dbrPct < 20, 'j1 features: free cash flow 3,700 (a policy rule since v2.8), DBR < 20%');
   const small = E.decide({ productId: 'personal_loan', applicant: j, amount: 1000, tenorMonths: 12, consents: { aecb: true, openFinance: true } });
   ok(small.outcome === 'APPROVE' && small.limit.approved === 1000 && small.repayment.method === 'ALTAREQ', 'j1 at AED 1,000 → APPROVE, repayment ALTAREQ (no product minimum, no clamp needed)');
   const big = E.decide({ productId: 'personal_loan', applicant: j, amount: 110000, tenorMonths: 6, consents: { aecb: true, openFinance: true } });
@@ -1892,6 +1894,236 @@ group('16. Car loan (v2.7): a new policy pack — LTV 80%, 60 months, rental inc
 });
 
 // ---------------------------------------------------------------------------
+// v2.8 — botim placement, digital footprint, contact consent, personal-loan free-cash-flow rule
+// (BOTIM-V28-SPEC.md §4, §5, §6, §9).
+group('17. Addendum v2.8: assessFootprint, the personal-loan FCF rule, contact preferences — never in the memo', () => {
+  E.init(D);
+  const j = D.personasJourney[0];
+  const OF = { aecb: true, openFinance: true };
+  const decideJ = (amount, months, extra) => E.decide({ productId: 'personal_loan', applicant: j, amount, tenorMonths: months, consents: Object.assign({}, OF, extra || {}) });
+  const fpBase = j.footprint;
+  const fpWith = (patch) => Object.assign(clone(fpBase), patch);
+
+  // ---- data ----
+  ok(j.aecb.cardLimitTotal === 12000 && j.aecb.cardBalanceTotal === 7440 && j.aecb.cards === 1 && j.aecb.activeLoans === 0 &&
+     Math.round(j.aecb.cardBalanceTotal / j.aecb.cardLimitTotal * 100) === 62, 'j1 card totals: limit 12,000, balance 7,440 → 62% used; 1 card, no loans');
+  ok(fpBase.vendorScore === 731 && fpBase.emailAgeYearsMin === 7 && fpBase.nameMatchSources === 2 && fpBase.phoneOnMessenger === true &&
+     fpBase.velocity.emailSeenByLenders === 1 && fpBase.breaches.count === 1 && fpBase.breaches.includesCredentialStuffingCompilation === false,
+     'j1.footprint: vendor 731, email 7 years, 2 name sources, phone on a messenger, 1 lender, 1 breach, no stuffing compilation');
+  ok(!/gender|\bmale\b|female|photo|lifestyle|gambl/i.test(JSON.stringify(fpBase)) && !('services' in fpBase) && !('email' in fpBase) && !('phone' in fpBase),
+     'j1.footprint is minimised: no gender, photos, lifestyle traits, service names or raw contact details');
+
+  // ---- assessFootprint (pure) ----
+  const before = E.listDecisions().length;
+  const t0 = E.decide({ productId: 'personal_loan', applicant: P.r1, amount: P.r1.defaultRequest.amount, tenorMonths: P.r1.defaultRequest.tenorMonths, consents: OF });
+  const fa = E.assessFootprint(fpBase, { aecb: j.aecb });
+  const t1 = E.decide({ productId: 'personal_loan', applicant: P.r1, amount: P.r1.defaultRequest.amount, tenorMonths: P.r1.defaultRequest.tenorMonths, consents: OF });
+  eq(E.listDecisions().length, before + 2, 'assessFootprint() creates no DecisionRecord');
+  eq(new Date(t1.createdAt) - new Date(t0.createdAt), 37000, 'assessFootprint() never advances the engine clock');
+  ok(fa.identity.confidence === 'HIGH' && fa.identity.signals.length === 4 && fa.identity.signals.every(s => s.pass), 'j1: identity HIGH — all four signals pass');
+  ok(fa.security.atoRisk === 'NORMAL' && fa.security.action === 'Standard sign-in', 'j1: account-takeover risk NORMAL — standard sign-in');
+  ok(fa.creditOverlay.eligible === false && fa.creditOverlay.aecbFile === 'FILE' && fa.creditOverlay.applied === false && fa.creditOverlay.mode === 'SHADOW' &&
+     fa.creditOverlay.points === 10 && fa.creditOverlay.cap === 20 && fa.creditOverlay.eligibleWhen === 'thin or no-hit AECB file' && /Not eligible/.test(fa.creditOverlay.status),
+     'j1: overlay not eligible (AECB file present) — +10 computed for vendor 731, SHADOW, not applied');
+  ok(JSON.stringify(fa.reasonCodes) === '["RC_FOOTPRINT_IDENTITY"]', 'j1 assessment reason codes: RC_FOOTPRINT_IDENTITY only');
+  const exItems = fa.excluded.map(x => x.item).join(' | ');
+  ok(['Gender', 'Lifestyle traits', 'Individual service names', 'Breach source names', 'Photos', 'Raw contact details'].every(w => exItems.includes(w)) &&
+     fa.excluded.every(x => x.reason && /PDPL|CBUAE/.test(x.reason)), 'excluded list: gender, lifestyle traits, service names, breach sources, photos, raw contact details — each with its reason');
+  ok(JSON.stringify(E.assessFootprint(fpBase, { aecb: j.aecb })) === JSON.stringify(fa), 'assessFootprint() is deterministic');
+  eq(E.assessFootprint(fpBase).creditOverlay.eligible, null, 'without the AECB context, eligibility is left open (eligibleWhen stays stated)');
+  eq(E.assessFootprint(fpWith({ nameMatchSources: 1, phoneOnMessenger: false })).identity.confidence, 'MEDIUM', 'identity MEDIUM on 2 of 4 signals');
+  eq(E.assessFootprint(fpWith({ emailAgeYearsMin: 1, nameMatchSources: 1, phoneOnMessenger: false })).identity.confidence, 'LOW', 'identity LOW on 1 of 4 signals');
+  eq(E.assessFootprint(fpWith({ velocity: { emailSeenByLenders: 3 } })).identity.confidence, 'MEDIUM', 'email seen by 3 lenders: no longer HIGH');
+  ok(E.assessFootprint(fpWith({ breaches: { count: 3, includesCredentialStuffingCompilation: false } })).security.atoRisk === 'ELEVATED' &&
+     E.assessFootprint(fpWith({ breaches: { count: 1, includesCredentialStuffingCompilation: true } })).security.atoRisk === 'ELEVATED' &&
+     E.assessFootprint(fpWith({ breaches: { count: 2, includesCredentialStuffingCompilation: false } })).security.atoRisk === 'NORMAL',
+     'ATO ELEVATED on ≥ 3 breaches or a credential-stuffing compilation; 2 breaches stay NORMAL');
+  ok(E.assessFootprint(fpWith({ vendorScore: 300 }), { aecbFile: 'NO_HIT' }).creditOverlay.points === 0 &&
+     E.assessFootprint(fpWith({ vendorScore: 699 }), { aecbFile: 'NO_HIT' }).creditOverlay.points === 0 &&
+     E.assessFootprint(fpWith({ vendorScore: 850 }), { aecbFile: 'NO_HIT' }).creditOverlay.points === 20 &&
+     E.assessFootprint(fpWith({ vendorScore: 850 }), { aecbFile: 'NO_HIT', cap: 15 }).creditOverlay.points === 15 &&
+     E.assessFootprint(fpWith({ vendorScore: 850 }), { aecbFile: 'NO_HIT', cap: 0 }).creditOverlay.points === 0,
+     'overlay positive-only: 300 → 0, 699 → 0, 850 → +20, capped by policy (15 → 15, 0 → 0)');
+  ok(E.assessFootprint(fpBase, { aecbFile: 'THIN' }).creditOverlay.eligible === true && E.assessFootprint(fpBase, { aecb: null }).creditOverlay.eligible === true &&
+     E.assessFootprint(fpBase, { aecbFile: 'NO_HIT', mode: 'LIVE' }).creditOverlay.applied === true &&
+     E.assessFootprint(fpBase, { aecbFile: 'NO_HIT', mode: 'SHADOW' }).creditOverlay.applied === false, 'eligible on a thin or no-hit file; applied only in LIVE mode');
+  throwsWith(() => E.assessFootprint(null), 'digital-footprint object', 'assessFootprint(null) throws');
+  throwsWith(() => E.assessFootprint({ emailAgeYearsMin: 3 }), 'vendorScore', 'assessFootprint without a vendor score throws');
+
+  // ---- decide(): the footprint pull only with consent; Ravi unchanged either way ----
+  const recNo = decideJ(15000, 12);
+  const recYes = decideJ(15000, 12, { digitalFootprint: true });
+  const recDecl = decideJ(15000, 12, { digitalFootprint: false });
+  const idFlagNo = E.creditMemo(recNo.id).verification.identity, idFlagDecl = E.creditMemo(recDecl.id).verification.identity;
+  ok(!recNo.dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT') && !recDecl.dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'),
+     'no footprint consent (not asked, or declined) → no DIGITAL_FOOTPRINT pull');
+  const fpPull = recYes.dataPulls.find(p => p.source === 'DIGITAL_FOOTPRINT');
+  ok(!!fpPull && fpPull.summary.identity === 'HIGH' && fpPull.summary.atoRisk === 'NORMAL' && /not eligible/.test(fpPull.summary.overlay), 'with consent → a DIGITAL_FOOTPRINT pull (identity HIGH, ATO NORMAL, overlay not eligible)');
+  ok(recYes.features.footprintIdentity === 'HIGH' && recYes.features.footprintAtoRisk === 'NORMAL' && recYes.features.footprintVendorScore === 731 &&
+     !('footprintIdentity' in recNo.features), 'features.footprintIdentity / footprintAtoRisk / footprintVendorScore recorded only with consent');
+  const pif = recYes.rules.find(r => r.id === 'POL_IDENTITY_FOOTPRINT');
+  ok(!!pif && pif.result === 'PASS' && pif.category === 'POLICY' && !recNo.rules.some(r => r.id === 'POL_IDENTITY_FOOTPRINT'), 'rule POL_IDENTITY_FOOTPRINT: PASS when HIGH (only with consent)');
+  ok(recYes.consents.digitalFootprint.granted === true && recDecl.consents.digitalFootprint.granted === false && !('digitalFootprint' in recNo.consents),
+     'the footprint consent is recorded when asked (granted or declined)');
+  const same = (a, b) => a.outcome === b.outcome && a.score.points === b.score.points && a.score.grade === b.score.grade && a.limit.approved === b.limit.approved &&
+    a.limit.bindingConstraint === b.limit.bindingConstraint && JSON.stringify(a.pricing) === JSON.stringify(b.pricing) && JSON.stringify(a.reasonCodes) === JSON.stringify(b.reasonCodes) &&
+    JSON.stringify(a.token.conditions) === JSON.stringify(b.token.conditions);
+  ok(same(recNo, recYes) && same(recNo, recDecl) && recYes.score.points === 737 && recYes.score.grade === 'B' && recYes.limit.approved === 15000 &&
+     recYes.pricing.kfs.monthlyInstalment === 1311.7, 'Ravi unchanged with and without footprint consent: 737 · B · AED 15,000 · AED 1,311.70/mo, same reasons and conditions');
+  ok(!('footprintOverlay' in recYes.score) && !recYes.score.overlays.some(o => /footprint/i.test(o.name)), 'no overlay on Ravi’s score (AECB file present)');
+  ok(!E.decide({ productId: 'personal_loan', applicant: P.r1, amount: P.r1.defaultRequest.amount, tenorMonths: P.r1.defaultRequest.tenorMonths,
+                 consents: Object.assign({}, OF, { digitalFootprint: true }) }).dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'),
+     'consent without a footprint on the applicant (r1) → no pull');
+  const carFp = Object.assign(clone(D.personasCar[0]), { footprint: clone(fpBase) });
+  ok(!E.decide({ productId: 'car_loan', applicant: carFp, amount: 180000, tenorMonths: 60, consents: Object.assign({}, OF, { digitalFootprint: true }) })
+       .dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'), 'a pack without the overlay params (car loan) never pulls the footprint');
+  // ATO ELEVATED: step-up condition + RC_STEP_UP_AUTH, informational only
+  const jAto = Object.assign(clone(j), { footprint: fpWith({ breaches: { count: 4, includesCredentialStuffingCompilation: true } }) });
+  const recAto = E.decide({ productId: 'personal_loan', applicant: jAto, amount: 15000, tenorMonths: 12, consents: Object.assign({}, OF, { digitalFootprint: true }) });
+  collect(recAto.reasonCodes);
+  ok(recAto.outcome === recNo.outcome && recAto.limit.approved === recNo.limit.approved && JSON.stringify(recAto.pricing) === JSON.stringify(recNo.pricing) &&
+     recAto.score.points === recNo.score.points, 'ATO ELEVATED changes neither the outcome, the amount, the score nor the price');
+  ok(recAto.token.conditions.includes('Step-up sign-in (UAE PASS) before disbursement') && recAto.reasonCodes.includes('RC_STEP_UP_AUTH') &&
+     recAto.token.conditions.length === recNo.token.conditions.length + 1, 'ATO ELEVATED → token condition "Step-up sign-in (UAE PASS) before disbursement" + RC_STEP_UP_AUTH');
+  ok(['RC_FOOTPRINT_IDENTITY', 'RC_FOOTPRINT_OVERLAY', 'RC_STEP_UP_AUTH'].every(c => D.reasonCodes[c] && D.reasonCodes[c].en && ARABIC.test(D.reasonCodes[c].ar)),
+     'reason codes RC_FOOTPRINT_IDENTITY, RC_FOOTPRINT_OVERLAY, RC_STEP_UP_AUTH exist in EN + Arabic');
+
+  // ---- the thin-file overlay: SHADOW by default, LIVE only by a 4-eyes publish ----
+  ['split', 'starter_loan', 'personal_loan'].forEach(pid => {
+    const prm = E.getPolicy(pid).params;
+    ok(prm.footprintOverlayMode === 'SHADOW' && prm.footprintOverlayCap === 20, pid + ': footprintOverlayMode SHADOW, footprintOverlayCap 20 by default');
+    throwsWith(() => E.simulateBook(pid, { footprintOverlayCap: 31 }), 'outside allowed bounds', pid + ': footprintOverlayCap above 30 is refused');
+    throwsWith(() => E.simulateBook(pid, { footprintOverlayMode: 'ON' }), 'SHADOW or LIVE', pid + ': footprintOverlayMode must be SHADOW or LIVE');
+  });
+  ok(!('footprintOverlayMode' in E.getPolicy('car_loan').params) && !('footprintOverlayMode' in E.getPolicy('salary_advance').params), 'car loan and salary advance packs carry no overlay params');
+  const c4fp = Object.assign(clone(P.c4), { footprint: { vendorScore: 742, emailAgeYearsMin: 6, nameMatchSources: 2, phoneOnMessenger: true,
+                                                         velocity: { emailSeenByLenders: 1 }, breaches: { count: 1, includesCredentialStuffingCompilation: false } } });
+  const splitReq = (cons) => E.decide({ productId: 'split', applicant: c4fp, amount: P.c4.defaultRequest.amount, tenorMonths: P.c4.defaultRequest.tenorMonths, consents: cons });
+  const c4None = splitReq(OF), c4Shadow = splitReq(Object.assign({}, OF, { digitalFootprint: true }));
+  ok(c4Shadow.outcome === c4None.outcome && c4Shadow.score.points === c4None.score.points && c4Shadow.score.grade === 'C' &&
+     JSON.stringify(c4Shadow.pricing) === JSON.stringify(c4None.pricing) && c4Shadow.score.footprintOverlay.delta === 10 && c4Shadow.score.footprintOverlay.applied === false,
+     'c4 (AECB no-hit) in SHADOW: +10 recorded, not applied — grade C and price unchanged');
+  throwsWith(() => E.publishPolicy('split', { footprintOverlayMode: 'LIVE' }, { author: 'risk.lead', approver: 'Risk.Lead' }), '4-eyes', 'switching the overlay LIVE needs a different approver');
+  E.publishPolicy('split', { footprintOverlayMode: 'LIVE' }, { author: 'risk.lead', approver: 'cro' });
+  const c4Live = splitReq(Object.assign({}, OF, { digitalFootprint: true }));
+  collect(c4Live.reasonCodes);
+  ok(c4Live.score.points === c4None.score.points + 10 && c4Live.score.grade === 'B' && c4Live.score.footprintOverlay.applied === true &&
+     c4Live.reasonCodes.includes('RC_FOOTPRINT_OVERLAY') && c4Live.pricing.monthlyFeeRate < c4None.pricing.monthlyFeeRate,
+     'c4 LIVE: +10 applied → grade B, a lower monthly fee rate, RC_FOOTPRINT_OVERLAY');
+  ok(splitReq(OF).score.points === c4None.score.points, 'LIVE without the footprint consent: no overlay — declining is never held against the customer');
+  E.init(D);
+
+  // ---- personal-loan free-cash-flow rule (closes open question 7) ----
+  const pl = E.getPolicy('personal_loan');
+  eq(pl.params.instalmentToFcfMaxPct, 50, 'personal_loan.instalmentToFcfMaxPct = 50 by default');
+  throwsWith(() => E.simulateBook('personal_loan', { instalmentToFcfMaxPct: 85 }), 'outside allowed bounds', 'instalmentToFcfMaxPct above 80 is refused');
+  throwsWith(() => E.simulateBook('personal_loan', { instalmentToFcfMaxPct: 5 }), 'outside allowed bounds', 'instalmentToFcfMaxPct below 10 is refused');
+  for (const id of ['r1', 'r2', 'r3', 'r4', 'r5']) {
+    const p = P[id];
+    const r = E.decide({ productId: 'personal_loan', applicant: p, amount: p.defaultRequest.amount, tenorMonths: p.defaultRequest.tenorMonths, consents: OF });
+    ok(!r.rules.some(x => x.id === 'POL_INSTALMENT_TO_FCF') && !r.limit.trace.some(t => /Free cash flow/.test(t.label)) && r.features.freeCashFlowMonthly === null,
+       id + ': no spending data → the FCF rule never runs (no rule, no limit candidate)');
+  }
+  const simLo = E.simulateBook('personal_loan', { instalmentToFcfMaxPct: 10 }), simHi = E.simulateBook('personal_loan', { instalmentToFcfMaxPct: 80 });
+  ok(JSON.stringify(simLo.candidate) === JSON.stringify(simHi.candidate) && JSON.stringify(simLo.candidate) === JSON.stringify(simLo.current),
+     'the personal-loan sample book has no spending data: instalmentToFcfMaxPct 10 vs 80 changes no outcome');
+  const iMid = 0.0899 / 12, pvMid = (pmt, n) => pmt * (1 - Math.pow(1 + iMid, -n)) / iMid;
+  const pq = E.prequalify(j, OF);
+  const want = { 6: 10000, 12: 21000, 24: 40000 };
+  [6, 12, 24].forEach(n => {
+    const capMid = Math.floor(pvMid(1850, n) / 1000) * 1000;
+    const r = decideJ(500000, n);
+    const fcfRow = r.limit.trace.find(t => /^Free cash flow — 50% of AED 3,700\/month/.test(t.label));
+    ok(capMid === want[n] && !!fcfRow && fcfRow.value === want[n] && r.limit.approved === want[n] && r.limit.bindingConstraint === 'FCF',
+       'Ravi ' + n + ' months: FCF cap at mid-rate 8.99% = AED ' + want[n].toLocaleString('en-US') + ' (50% of 3,700 = 1,850/mo), FCF binds');
+    eq(pq.maxByTermMonths[n], want[n], 'the prequalify() cap for ' + n + ' months equals the decide() FCF cap');
+    ok(pq.maxByTermMonths[n] <= r.limit.approved, 'pre-qualification never promises more than decide() allows — ' + n + ' months');
+    const atCap = decideJ(pq.maxByTermMonths[n], n);
+    ok(atCap.outcome === 'APPROVE' && atCap.limit.approved === pq.maxByTermMonths[n] && !atCap.reasonCodes.includes('RC_LIMIT_REDUCED') &&
+       atCap.pricing.kfs.monthlyInstalment <= 1850, n + ' months: applying for the pre-qualified cap is approved in full (instalment ≤ AED 1,850)');
+  });
+  const big = decideJ(110000, 6);
+  collect(big.reasonCodes);
+  const bigFcf = big.rules.find(r => r.id === 'POL_INSTALMENT_TO_FCF');
+  ok(big.outcome === 'APPROVE' && big.limit.approved === 10000 && big.limit.bindingConstraint === 'FCF' && big.reasonCodes.includes('RC_LIMIT_REDUCED') &&
+     !!bigFcf && bigFcf.result === 'PASS', '110,000 / 6 months → reduced to AED 10,000 with FCF binding (was the DBR-only AED 29,000)');
+  ok(big.limit.trace.find(t => /DBR headroom/.test(t.label)).value === 29000, 'the DBR headroom alone would have allowed AED 29,000 over 6 months');
+  const std = decideJ(15000, 12);
+  const stdFcf = std.rules.find(r => r.id === 'POL_INSTALMENT_TO_FCF');
+  ok(std.outcome === 'APPROVE' && std.score.points === 737 && std.score.grade === 'B' && std.limit.approved === 15000 && std.limit.bindingConstraint === 'REQUESTED' &&
+     std.pricing.kfs.monthlyInstalment === 1311.7 && !!stdFcf && stdFcf.result === 'PASS' && /35\.5% of free cash flow AED 3,700\/month/.test(stdFcf.observed),
+     '15,000 / 12 unchanged: APPROVE · 737 · AED 1,311.70 — POL_INSTALMENT_TO_FCF PASS at 35.5% of free cash flow');
+  eq(std.features.freeCashFlowMonthly, 3700, 'features.freeCashFlowMonthly = 3,700 — now read by a rule, no longer informational');
+  const noOf = E.decide({ productId: 'personal_loan', applicant: j, amount: 110000, tenorMonths: 6, consents: { aecb: true, openFinance: false } });
+  ok(!noOf.rules.some(r => r.id === 'POL_INSTALMENT_TO_FCF') && noOf.limit.bindingConstraint === 'DBR_HEADROOM' && noOf.limit.approved === 29000,
+     'without Open Finance consent spending is not seen: no FCF rule, DBR binds (AED 29,000)');
+  const broke = Object.assign(clone(j), { connected: Object.assign(clone(j.connected), { avgMonthlySpend: 11500 }) });
+  const brokeRec = E.decide({ productId: 'personal_loan', applicant: broke, amount: 15000, tenorMonths: 12, consents: OF });
+  collect(brokeRec.reasonCodes);
+  ok(brokeRec.outcome === 'DECLINE' && brokeRec.reasonCodes.includes('RC_FREE_CASH_FLOW') && brokeRec.rules.find(r => r.id === 'POL_INSTALMENT_TO_FCF').result === 'FAIL',
+     'nothing left after spending (FCF −400/month) → DECLINE with RC_FREE_CASH_FLOW');
+  E.publishPolicy('personal_loan', { instalmentToFcfMaxPct: 40 }, { author: 'risk.lead', approver: 'cro' });
+  const tighter = decideJ(500000, 12);
+  ok(tighter.limit.approved === Math.floor(pvMid(1480, 12) / 1000) * 1000 && tighter.limit.approved < 21000 && tighter.limit.bindingConstraint === 'FCF',
+     'instalmentToFcfMaxPct is a live policy lever: 40% → AED ' + tighter.limit.approved.toLocaleString('en-US') + ' over 12 months');
+  E.init(D);
+
+  // ---- contact preferences: a consent with a reference, never in the memo or the SFTP row ----
+  const COMMS = { service: ['PUSH', 'SMS', 'EMAIL'], marketing: ['WHATSAPP'] };
+  const n0 = E.listDecisions().length;
+  throwsWith(() => decideJ(15000, 12, { communications: { service: [], marketing: [] } }), 'at least one channel', 'no service channel → refused');
+  throwsWith(() => decideJ(15000, 12, { communications: { service: ['FAX'], marketing: [] } }), 'unknown contact channel', 'an unknown channel → refused');
+  throwsWith(() => decideJ(15000, 12, { communications: ['SMS'] }), 'service', 'communications must be {service, marketing}');
+  eq(E.listDecisions().length, n0, 'refused contact preferences create no record');
+  const rc = decideJ(15000, 12, { digitalFootprint: true, communications: COMMS });
+  const cc = rc.consents.communications;
+  ok(!!cc && cc.granted === true && /^CNS-\d{6}-COMMS$/.test(cc.reference) && cc.reference === 'CNS-' + rc.id.slice(4) + '-COMMS' &&
+     JSON.stringify(cc.service) === '["EMAIL","SMS","PUSH"]' && JSON.stringify(cc.marketing) === '["WHATSAPP"]' && !!cc.at,
+     'consents.communications recorded as a consent with a reference (service EMAIL · SMS · PUSH; marketing WhatsApp)');
+  ok(!('communications' in recNo.consents), 'no contact preferences passed → none recorded');
+  ok(same(rc, recNo), 'contact preferences change nothing about the decision');
+  const memo = E.creditMemo(rc.id), sftp = E.memoSftpRow(memo);
+  eq(memo.verification.identity, 'Verified (UAE PASS) · digital footprint: high confidence', 'memo identity flag: "Verified (UAE PASS) · digital footprint: high confidence"');
+  eq(idFlagNo, 'Verified (UAE PASS)', 'without footprint consent the identity flag is unchanged');
+  eq(idFlagDecl, 'Verified (UAE PASS)', 'a declined footprint check leaves the identity flag unchanged');
+  ok(memo.sharing.withheld.length === 7 && memo.sharing.withheld.some(w => w.group === 'Contact details and preferences' && /PDPL/.test(w.reason)) &&
+     memo.sharing.withheld.some(w => /^Digital-footprint and vendor raw data/.test(w.group)), 'withheld list names "Contact details and preferences" (and the vendor raw data)');
+  ok(memo.consents.map(c => c.type).join(',') === 'aecb,openFinance,shareWithLender' && !memo.consents.some(c => /COMMS|FOOT/.test(c.reference)),
+     'memo consent references: AECB, Al Tareq, lender only — no contact or footprint consent');
+  const memoBody = JSON.stringify(Object.assign({}, memo, { sharing: null }));
+  const email = j.contact.email;
+  ok(JSON.stringify(rc.applicantSnapshot).includes(email), 'the internal record holds the email (so the scan below is meaningful)');
+  const leaks = [email, 'example.com', '@', 'WHATSAPP', 'WhatsApp', 'SMS', 'PUSH', 'EMAIL', 'marketing', 'communications', 'COMMS', 'vendor', 'breach', 'messenger',
+                 'emailAge', 'nameMatch', 'velocity', 'footprintVendorScore', 'footprintAtoRisk', 'atoRisk', 'NORMAL', 'r•••••']
+    .filter(w => memoBody.toLowerCase().includes(w.toLowerCase()) || sftp.row.join(',').toLowerCase().includes(w.toLowerCase()));
+  ok(leaks.length === 0, 'memo + SFTP row: no email, channels, contact preferences or vendor fields' + (leaks.length ? ' (found: ' + leaks.join(', ') + ')' : ''));
+  const nums = [];
+  (function walk(x) { if (x === null || x === undefined) return; if (Array.isArray(x)) return x.forEach(walk); if (typeof x === 'object') return Object.keys(x).forEach(k => walk(x[k]));
+    if (typeof x === 'number') nums.push(x); else if (typeof x === 'string') (x.match(/\d[\d,]*(?:\.\d+)?/g) || []).forEach(t => nums.push(parseFloat(t.replace(/,/g, '')))); })(memo);
+  sftp.row.forEach(c => (c.match(/\d[\d,]*(?:\.\d+)?/g) || []).forEach(t => nums.push(parseFloat(t.replace(/,/g, '')))));
+  ok(!nums.includes(731) && !nums.includes(7440), 'memo + SFTP row: the vendor score (731) and the card balance (7,440) never appear');
+  ok(forbiddenKeys(memo).length === 0 && !/footprint(Identity|AtoRisk|VendorScore)|digitalFootprint|communications|contact/.test(JSON.stringify(Object.keys(memo))),
+     'memo keys stay on the allowlist');
+  const hits = privacyScan(rc, memo, sftp, { incomeBand: T.income(12000), dbrBand: T.dbr(rc.features.dbrPct), freeCashFlowBand: T.fcf(3700),
+    instalmentToCashFlowBand: T.share(rc.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) });
+  ok(hits.length === 0, 'j1 memo with footprint + contact consents: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
+
+  // ---- vocabulary + determinism ----
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
+  const v28Text = JSON.stringify([fa, rc, memo, recAto, D.reasonCodes.RC_FOOTPRINT_IDENTITY, D.reasonCodes.RC_FOOTPRINT_OVERLAY, D.reasonCodes.RC_STEP_UP_AUTH,
+                                  E.getPolicy('personal_loan'), big, std]);
+  ok(!banned.test(v28Text) && !mentionsSalaryTransfer(v28Text), 'no banned vocabulary or salary-transfer wording in the v2.8 assessments, records, memos or reason codes');
+  function snap() {
+    E.init(D);
+    const a = decideJ(15000, 12, { digitalFootprint: true, communications: COMMS });
+    const b = decideJ(110000, 6);
+    return JSON.stringify([E.assessFootprint(fpBase, { aecb: j.aecb }), a, b, E.creditMemo(a.id), E.memoSftpRow(E.creditMemo(a.id)), E.prequalify(j, OF)]);
+  }
+  ok(snap() === snap(), 'two fresh init() runs: identical assessment, decisions, memo and SFTP row');
+  for (const r of E.listDecisions()) collect(r.reasonCodes);
+  ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. v2.8) exists with Arabic');
+});
+
 // v2.9 — every existing persona outcome, fingerprinted from the v2.7 engine (before the red-flag
 // rule existed): outcome · approved · grade · points · binding · reasons · instalment/fee/APR · DBR.
 const V27_FINGERPRINTS = {
@@ -1923,7 +2155,7 @@ function fingerprint(rec) {
           rec.limit.bindingConstraint, rec.reasonCodes.join('|'), price === undefined ? null : price, rec.features.dbrPct === undefined ? null : rec.features.dbrPct].join(' ');
 }
 
-group('17. UAE red flags and early warning (v2.9): own-baseline signals, refer-only origination, exit-risk watch', () => {
+group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-only origination, exit-risk watch', () => {
   E.init(D);
   const ALL = { aecb: true, openFinance: true };
   const byId = (list, id) => D[list].find(p => p.id === id);

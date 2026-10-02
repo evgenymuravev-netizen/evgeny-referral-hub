@@ -1427,6 +1427,115 @@ details.tbl-view table { margin-top:6px; }
   .pc-shared { margin-left:0; padding-left:0; border-left:0; }
   .wb-rf { padding:12px; }
 }
+/* ---------- v2.8 botim placement — Noor embeds ("by noor"), A/B entry, email + contact consent, Noor-rendered insights, PWA (tokens only) ---------- */
+/* Every Noor surface inside botim is a Noor embed served from noor.finance; each carries a small corner label */
+.noor-embed { position:relative; }
+.by-noor { position:absolute; top:7px; right:9px; z-index:1; pointer-events:none; white-space:nowrap; font-family:var(--font-label); font-size:9.5px; line-height:14px; font-weight:500;
+  letter-spacing:.02em; color:rgba(255,255,255,.9); background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.24); border-radius:var(--radius-pill); padding:0 6px; }
+.by-noor-sm { top:-6px; right:0; font-size:8.5px; line-height:12px; padding:0 4px; background:var(--bm-card-2); border-color:var(--bm-line); }
+/* Main-page banner (Max's request) — Noor brand style, above Connected accounts */
+.bm-banner { width:100%; text-align:left; border:0; cursor:pointer; border-radius:18px; padding:11px 14px 12px 16px; background:var(--brand-card); color:#fff; font:inherit;
+  display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto auto; column-gap:12px; row-gap:2px; align-items:center; }
+.bm-banner-logo { width:54px; background:var(--brand); grid-column:1; grid-row:1; margin-bottom:3px; }
+.bm-banner-t { grid-column:1; grid-row:2; font-family:var(--font-display); font-weight:800; font-size:18px; line-height:23px; letter-spacing:-.01em; }
+.bm-banner-s { grid-column:1 / -1; grid-row:3; font-size:12.5px; line-height:17px; color:rgba(255,255,255,.86); }
+.bm-banner-go { grid-column:2; grid-row:2; width:30px; height:30px; border-radius:50%; background:#fff; color:#000; display:inline-flex; align-items:center; justify-content:center; }
+.bm-banner-go .ji { width:14px; height:14px; }
+/* Five round action buttons — the fifth is Noor (the Noor icon mask); fits at 390px */
+.bm-acts.bm-acts-5 { grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+.bm-act-noor { border:0; background:none; padding:0; margin:0; cursor:pointer; font:inherit; color:inherit; }
+.bm-act-noorb { background:var(--brand-card); box-shadow:0 0 0 1px rgba(255,255,255,.14) inset; }
+.bm-act-noorb .noor-icon { width:19px; vertical-align:0; display:block; }
+.bm-act-noor:focus-visible .bm-act-b { outline:2px solid var(--focus-ring); outline-offset:2px; }
+/* Connected-account tiles as a Noor embed */
+.bm-acct-embed { flex:0 0 auto; display:flex; gap:10px; padding:16px 5px 5px; border-radius:20px; border:1px dashed rgba(255,255,255,.2); }
+.bm-acct-embed .by-noor { top:0; right:8px; }
+.bm-accts:has(.bm-acct-embed) { align-items:flex-end; }
+/* Noor insights carousel (after connecting) / the single connect card (before) */
+.bm-ins-wrap { display:flex; flex-direction:column; align-items:center; gap:9px; }
+.bm-ins-row { display:flex; gap:10px; width:calc(100% + 36px); margin:0 -18px; padding:0 18px 2px; overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding:0 18px; scrollbar-width:none; }
+.bm-ins-row::-webkit-scrollbar { display:none; }
+.bm-ins-card { width:100%; flex:0 0 84%; scroll-snap-align:start; border-radius:18px; padding:11px 16px 12px; display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+  background:var(--brand-card); color:#fff; }
+.bm-ins-wrap > .bm-ins-card { flex:none; }
+.bm-ins-card .bm-ins-tag { color:var(--brand-fill); }
+.bm-ins-card-t { font-weight:600; font-size:15.5px; line-height:20px; text-wrap:pretty; }
+.bm-ins-card-s { font-size:12.5px; line-height:17px; color:rgba(255,255,255,.84); }
+.bm-ins-cta { margin-top:2px; border:0; cursor:pointer; background:#fff; color:#000; border-radius:var(--radius-pill); padding:6px 13px; display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--font-display); font-weight:700; font-size:13px; }
+.bm-ins-cta .ji { width:13px; height:13px; }
+/* Credit tab: the Noor card, the funded card and (variant A) the Loans list carry the corner label */
+.bm-noor .bm-noor-top { padding-right:56px; }
+.bm-loan.noor-embed .bm-loan-top { padding-right:56px; }
+.bm-loans { background:var(--bm-card); border-radius:18px; padding:2px 14px 6px; display:flex; flex-direction:column; }
+.bm-loan-row { display:flex; align-items:center; gap:12px; width:100%; padding:13px 0; border:0; border-bottom:1px solid var(--bm-line); background:none; color:var(--bm-ink); text-align:left; font:inherit; }
+.bm-loan-row:last-child { border-bottom:0; }
+.bm-loan-ico { flex:0 0 36px; width:36px; height:36px; border-radius:50%; background:var(--bm-card-2); display:inline-flex; align-items:center; justify-content:center; font-family:var(--font-label); font-size:12px; color:var(--bm-muted); }
+.bm-loan-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.bm-loan-n { font-weight:600; font-size:15px; line-height:20px; }
+.bm-loan-d { font-size:12.5px; line-height:17px; color:var(--bm-muted); }
+.bm-chev { flex:0 0 16px; width:16px; height:16px; color:var(--bm-muted); }
+.bm-loans-noor { cursor:pointer; width:calc(100% + 16px); margin:6px -8px 2px; padding:20px 10px 14px; border-radius:14px; background:var(--brand-card); border-bottom:0; }
+.bm-loans-noor .bm-loan-ico { background:rgba(255,255,255,.12); }
+.bm-loans-noor .bm-loan-ico .noor-icon { width:18px; vertical-align:0; display:block; }
+.bm-loans-noor .bm-loan-d, .bm-loans-noor .bm-chev { color:rgba(255,255,255,.86); }
+/* Insights tab: what comes from the connected accounts is a Noor embed */
+.bm-ins-embed { display:flex; flex-direction:column; gap:12px; border:1px dashed rgba(255,255,255,.2); border-radius:18px; padding:22px 12px 12px; }
+.bm-ins-embed .by-noor { top:5px; }
+/* Phone: email + digital-footprint consent (3·1), contact preferences (3·2) */
+.ph-opt-tag { display:inline-block; vertical-align:2px; margin-left:4px; font-family:var(--font-label); font-weight:500; font-size:11.5px; line-height:16px; color:var(--muted);
+  border:1px solid var(--ph-line); border-radius:var(--radius-pill); padding:0 8px; }
+.ph-fp .ph-fp-purpose { margin-top:6px; color:var(--faint); }
+.ph-comms { gap:4px; padding:14px 16px 12px; }
+.ph-group-h { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; }
+.ph-group-t { font-family:var(--font-display); font-weight:700; font-size:16.5px; line-height:22px; color:var(--ink); }
+.ph-chans { display:flex; flex-direction:column; }
+.ph-chan { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; padding:6px 0; border-top:1px solid var(--ph-line); cursor:pointer; }
+.ph-chan-n { font-size:16px; color:var(--ink); }
+.ph-chan input { appearance:none; -webkit-appearance:none; flex:0 0 46px; width:46px; height:28px; margin:0; border-radius:var(--radius-pill); background:var(--ph-line); position:relative; cursor:pointer;
+  transition:background var(--dur-fast) var(--ease-out); }
+.ph-chan input::after { content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25);
+  transition:transform var(--dur-fast) var(--ease-out); }
+.ph-chan input:checked { background:var(--brand-fill); }
+.ph-chan input:checked::after { transform:translateX(18px); }
+.ph-chan input:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+.ph-comms-n { font-size:13px; line-height:19px; margin-top:4px; }
+/* Variant A: affordability check */
+#jr-afford > .ph-okico { align-self:flex-start; width:56px; height:56px; }
+#jr-afford > .ph-okico .ji { width:28px; height:28px; }
+/* Step 16: the PWA card */
+.ph-pwa { width:100%; text-align:left; gap:8px; margin-top:6px; }
+.ph-pwa-ico { width:40px; height:40px; border-radius:12px; background:var(--brand-card); display:inline-flex; align-items:center; justify-content:center; }
+.ph-pwa-ico .noor-icon { width:20px; vertical-align:0; display:block; }
+.ph-pwa-t { font-family:var(--font-display); font-weight:700; font-size:16.5px; line-height:22px; color:var(--ink); text-wrap:balance; }
+.ph-pwa .ph-btn-sm { align-self:flex-start; }
+.ph-pwa .ph-note { padding:10px 12px; font-size:13.5px; line-height:19px; }
+/* Behind the scenes: Noor's position, the footprint chips */
+.jr-position { margin-top:12px; }
+.jr-position .co-body { display:flex; flex-direction:column; gap:6px; }
+.jr-position-l { margin:0; padding-left:20px; display:flex; flex-direction:column; gap:3px; }
+.jr-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.jr-chip { font-family:var(--font-label); font-size:12px; line-height:18px; border-radius:var(--radius-pill); padding:2px 10px; background:var(--panel); border:1px solid var(--hairline); color:var(--ink-2); }
+.jr-chip.ok { background:var(--ok-soft); border-color:transparent; color:var(--ok); }
+.jr-chip.warn, .jr-chip.shadow { background:var(--warn-soft); border-color:transparent; color:var(--warn); }
+/* The Experiment panel */
+.jr-exp-seg { display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 8px; }
+.jr-exp-seg .btn { font-size:13.5px; }
+.jr-exp-note { margin-bottom:12px; }
+.jr-exp-kv { font-size:13px; }
+.jr-exp-kv dd { line-height:1.5; }
+.jr-exp-n { font-family:var(--font-display); font-weight:800; font-size:20px; color:var(--ink); font-variant-numeric:tabular-nums; }
+.jr-block { display:block; margin-top:2px; }
+.jr-exp-sub { margin-top:14px; }
+.jr-exp-tbl td, .jr-exp-tbl th { font-size:12.5px; }
+.jr-exp-tbl tr.jr-exp-cur td { font-weight:600; color:var(--ink); }
+/* Step list: v2.8 sub-steps sit indented under their step */
+.jr-step.jr-substep { padding-left:22px; }
+.jr-step.jr-substep .jr-n { font-size:10px; }
+@media (max-width:600px) {
+  .jr-exp-kv { grid-template-columns:minmax(0,1fr); gap:2px; }
+  .jr-exp-kv dd { margin-bottom:6px; }
+}
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -1559,7 +1668,8 @@ var PULL_LABEL = {
   DOCUMENTS: 'Salary certificate / statement upload + parsing',
   CREDIT_PASSPORT: 'Credit Passport — home-country bureau (AECB × Nova Credit)',
   PRIOR_DECISION: 'Prior decision — the starter loan and how it was repaid',
-  HOME_STATEMENTS: 'Home-country bank statements — parsed: integrity, name match, conduct, EMIs, buffer, remittances'
+  HOME_STATEMENTS: 'Home-country bank statements — parsed: integrity, name match, conduct, EMIs, buffer, remittances',
+  DIGITAL_FOOTPRINT: 'Digital footprint (consented, optional) — identity and account security; the thin-file overlay in shadow'
 };
 var EXEC_WHY = 'Why it matters: the customer accepts the offer, reads the Key Facts Statement in Arabic and English, e-signs via UAE PASS, sets up repayment collection from their own account (Al Tareq or direct debit — no salary transfer required) and gets the cooling-off period before any money moves (CBUAE Consumer Protection Regulation 8/2020 and Standards). An approval is not a loan.';
 /* Execution steps always come from the engine; with a decision id the repayment step carries that decision's method */
@@ -1956,6 +2066,8 @@ function pullsTimeline(rec, opts) {
     (c.openFinance && c.openFinance.granted ? ' · Open Finance consent active (Al Tareq)' : '') +
     (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport consent active (home-country bureau)' : '') +
     (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'requested by the underwriter' : 'uploaded by the customer') + ')' : '') +
+    (c.digitalFootprint && c.digitalFootprint.granted ? ' · Digital-footprint check consented (optional)' : '') +
+    (c.communications ? ' · Contact preferences recorded (' + c.communications.reference + ')' : '') +
     (rec.kind === 'UPGRADE' && !(c.homeStatements && c.homeStatements.granted) ? ' · Home-country statements not shared (optional)' : ''), lat: null });
   (rec.dataPulls || []).forEach(function (p) {
     steps.push({ title: PULL_LABEL[p.source] || p.source, sum: pullSummary(p), lat: p.latencyMs });
@@ -4260,6 +4372,8 @@ var PARAM_META = {
     scoreRefer: ['Score — refer below (must be ≥ decline cut-off)', 550, 760, 5],
     chequeReturnsMax: ['Max cheque returns (12m)', 0, 5, 1],
     productCap: ['Product cap per purchase (AED)', 5000, 200000, 1000],
+    footprintOverlayMode: ['Digital-footprint thin-file overlay — SHADOW logs it, LIVE applies it', null, null, null],
+    footprintOverlayCap: ['Digital-footprint overlay cap (points, positive-only)', 0, 30, 5],
     tokenValidityDays: ['Offer validity (days)', 1, 30, 1]
   },
   personal_loan: {
@@ -4273,6 +4387,9 @@ var PARAM_META = {
     minMonthsInUae: ['Minimum months in UAE', 0, 24, 1],
     chequeReturnsMax: ['Max cheque returns (12m)', 0, 5, 1],
     productCap: ['Product cap (AED)', 100000, 2000000, 50000],
+    instalmentToFcfMaxPct: ['Max instalment as % of free cash flow (when spending is seen)', 10, 80, 5],
+    footprintOverlayMode: ['Digital-footprint thin-file overlay — SHADOW logs it, LIVE applies it', null, null, null],
+    footprintOverlayCap: ['Digital-footprint overlay cap (points, positive-only)', 0, 30, 5],
     tokenValidityDays: ['Offer validity (days)', 3, 30, 1]
   },
   starter_loan: {
@@ -4281,6 +4398,8 @@ var PARAM_META = {
     instalmentToFcfMaxPct: ['Max instalment as % of free cash flow', 10, 80, 5],
     minIncomeHistoryMonthsEnhanced: ['Income history for the enhanced tier (months, UAE + home-country account history)', 3, 36, 1],
     minOnTimeStarterRepayments: ['On-time starter repayments required', 1, 6, 1],
+    footprintOverlayMode: ['Digital-footprint thin-file overlay — SHADOW logs it, LIVE applies it', null, null, null],
+    footprintOverlayCap: ['Digital-footprint overlay cap (points, positive-only)', 0, 30, 5],
     tokenValidityDays: ['Offer validity (days)', 1, 30, 1]
   },
   car_loan: {
@@ -4445,11 +4564,13 @@ var Policy = {
       var meta = metaP[k] || [k, null, null, null];
       var fld = h('div', { class: 'field' });
       fld.appendChild(h('label', { for: 'pp-' + k }, meta[0] + ' ', h('code', { class: 'small muted', text: k })));
-      if (k === 'thinFileAction') {
+      if (k === 'thinFileAction' || k === 'footprintOverlayMode') {
         var sel = h('select', { id: 'pp-' + k, dataset: { pkey: k, ptype: 'str' } });
-        ['REFER', 'DECLINE'].forEach(function (o) { var op = h('option', { value: o, text: o }); if (o === v) op.selected = true; sel.appendChild(op); });
+        (k === 'thinFileAction' ? ['REFER', 'DECLINE'] : ['SHADOW', 'LIVE']).forEach(function (o) { var op = h('option', { value: o, text: o }); if (o === v) op.selected = true; sel.appendChild(op); });
         sel.addEventListener('change', function () { Policy.markChanged(k, sel.value); });
         fld.appendChild(sel);
+        /* v2.8 — the overlay goes LIVE only after back-testing on starter-loan outcomes and a bias test */
+        if (k === 'footprintOverlayMode') fld.appendChild(h('div', { class: 'bounds', text: 'LIVE only after back-testing on Noor’s starter-loan outcomes and a bias test — thin or no-hit AECB files only; it can never lower a score.' }));
       } else if (typeof v === 'boolean') {
         var selB = h('select', { id: 'pp-' + k, dataset: { pkey: k, ptype: 'bool' } });
         ['true', 'false'].forEach(function (o) { var op = h('option', { value: o, text: o }); if (String(v) === o) op.selected = true; selB.appendChild(op); });
@@ -5177,7 +5298,10 @@ var LogScreen = {
       h('dt', { text: 'Policy / engine version' }), h('dd', null, h('code', { text: 'policy v' + rec.policyVersion + ' · ' + (rec.engineVersion || '') })),
       h('dt', { text: 'Status' }), h('dd', null, h('span', { class: 'chip acc', text: rec.status || '—' })),
       h('dt', { text: 'Consents' }), h('dd', { class: 'small', text: 'AECB ' + (c.aecb && c.aecb.granted ? 'granted ' + fmtDT(c.aecb.at) : '—') + ' · Open Finance ' + (c.openFinance && c.openFinance.granted ? 'granted' : 'not granted') + (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport granted' : '') +
-        (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'underwriter request' : 'customer upload') + ')' : '') }),
+        (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'underwriter request' : 'customer upload') + ')' : '') +
+        /* v2.8 — internal record only: neither reaches the credit memo */
+        (c.digitalFootprint ? ' · Digital footprint ' + (c.digitalFootprint.granted ? 'granted' : 'declined') : '') +
+        (c.communications ? ' · Contact preferences ' + c.communications.reference + ' (service ' + c.communications.service.join(', ') + (c.communications.marketing.length ? '; marketing ' + c.communications.marketing.join(', ') : '; no marketing') + ')' : '') }),
       rec.supersedes ? h('dt', { text: 'Supersedes' }) : null,
       rec.supersedes ? h('dd', { id: 'lg-supersedes' }, h('button', { class: 'btn btn-ghost linkbtn', text: 'supersedes ' + rec.supersedes, onclick: function () { LogScreen.select(rec.supersedes); } }),
         h('span', { class: 'small muted', text: ' — ' + (rec.redecision && rec.redecision.trigger === 'UNDERWRITER_REQUEST' ? 'statements requested by ' + ((rec.redecision.documentRequest || {}).analyst || 'the underwriter') : 'statements uploaded by the customer') +
@@ -5512,34 +5636,97 @@ var JR_HOST = {
   spending: [['Rent & bills', 2950], ['Groceries', 1330], ['Sending home', 1110], ['Transport', 815], ['Dining', 670], ['Other', 525]]
 };
 var JR_BANKS = [['ENBD', 'EN'], ['FAB', 'FA'], ['ADCB', 'AD'], ['Mashreq', 'MQ'], ['RAKBANK', 'RK'], ['Other bank', '··']];
-var JR_STEPS = [
-  { n: 0, entry: 1, title: 'botim money — Connected accounts' },
-  { n: 1, entry: 1, title: 'Noor opens inside botim (web-view)' },
-  { n: 2, entry: 1, title: 'Create your account' },
-  { n: 3, entry: 1, title: 'Enter the code' },
-  { n: 4, entry: 1, title: 'Connect your bank accounts — Al Tareq' },
-  { n: 5, entry: 1, title: 'Approve in your bank — leaves the web-view' },
-  { n: 6, entry: 1, title: 'Back in botim — the new account tiles' },
-  { n: 7, entry: 2, title: 'Credit → pre-qualified', engine: 'prequalify()' },
-  { n: 8, entry: 2, title: 'Choose your loan' },
-  { n: 9, entry: 2, title: 'Final checks — AECB consent, UAE PASS', engine: 'decide()' },
-  { n: 10, entry: 2, title: 'Your offer' },
-  { n: 11, entry: 2, title: 'Partner Bank confirms', engine: 'creditMemo()' },
-  { n: 12, entry: 2, title: 'Key Facts Statement — EN · AR', exec: [0, 1] },
-  { n: 13, entry: 2, title: 'Sign with UAE PASS', exec: [2] },
-  { n: 14, entry: 2, title: 'Set up repayments', exec: [3] },
-  { n: 15, entry: 2, title: 'Cooling-off', exec: [4] },
-  { n: 16, entry: 2, title: 'Done — back in botim', exec: [5] }
+/* v2.8 — each experiment variant renders its own path through the shared steps. Top-level numbers 0–16 are the
+   shared steps; the v2.8 additions are sub-steps (3·1 email, 3·2 contact preferences; variant A's 8·1 and 8·2). */
+var JR_ONBOARD = [
+  { n: 1, title: 'Noor opens inside botim (web-view)' },
+  { n: 2, title: 'Create your account' },
+  { n: 3, title: 'Enter the code' },
+  { n: 3, sub: 1, title: 'Your email — optional digital-footprint check', engine: 'assessFootprint()' },
+  { n: 3, sub: 2, title: 'How should we contact you?' },
+  { n: 4, title: 'Connect your bank accounts — Al Tareq' },
+  { n: 5, title: 'Approve in your bank — leaves the web-view' }
 ];
-function jrFresh() {
-  return { step: 0, sub: 0, reached: 0, dir: 1, intent: null, account: false, connected: false, newTiles: false, hostTab: 'pay',
+var JR_LOAN_STEPS = [
+  { n: 9, title: 'Final checks — AECB consent, UAE PASS', engine: 'decide()' },
+  { n: 10, title: 'Your offer' },
+  { n: 11, title: 'Partner Bank confirms', engine: 'creditMemo()' },
+  { n: 12, title: 'Key Facts Statement — EN · AR', exec: [0, 1] },
+  { n: 13, title: 'Sign with UAE PASS', exec: [2] },
+  { n: 14, title: 'Set up repayments', exec: [3] },
+  { n: 15, title: 'Cooling-off', exec: [4] },
+  { n: 16, title: 'Done — back in botim · Noor on your home screen', exec: [5] }
+];
+function jrInGroup(g, list) { return list.map(function (s) { return Object.assign({ group: g }, s); }); }
+var JR_PATHS = {
+  B: [{ n: 0, group: 1, title: 'botim money — main page (banner · Noor icon)' }]
+    .concat(jrInGroup(1, JR_ONBOARD))
+    .concat([{ n: 6, group: 1, title: 'Back in botim — tiles and insights (Noor embeds)' },
+             { n: 7, group: 2, title: 'Credit → pre-qualified', engine: 'prequalify()' },
+             { n: 8, group: 2, title: 'Choose your loan' }])
+    .concat(jrInGroup(2, JR_LOAN_STEPS)),
+  A: [{ n: 0, group: 1, title: 'botim money — main page (banner · Noor icon)' },
+      { n: 7, group: 1, title: 'Credit → Loans (botim) → the Noor tile' },
+      { n: 8, sub: 1, group: 1, title: 'How much do you need?' }]
+    .concat(jrInGroup(1, JR_ONBOARD))
+    .concat([{ n: 6, group: 1, title: 'Back in Noor — accounts connected' },
+             { n: 8, sub: 2, group: 2, title: 'Affordability check', engine: 'prequalify() caps' }])
+    .concat(jrInGroup(2, JR_LOAN_STEPS))
+};
+var JR_GROUPS = {
+  B: [[1, 'Entry 1 — connect a bank', 'Connected accounts → Add another +'], [2, 'Entry 2 — see what you can get', 'Credit, the banner or the Noor icon → How much can you borrow?']],
+  A: [[1, 'Variant A — from the Loans screen', 'Credit → Loans → Noor tile → amount first, then account and bank'], [2, 'Affordability check → the loan', 'prequalify() caps for the chosen term, then decide()']]
+};
+var JR_VARIANTS = { A: 'From the Loans screen', B: 'See what you can get' };
+var JR_CHANNELS = [['EMAIL', 'Email'], ['SMS', 'SMS'], ['WHATSAPP', 'WhatsApp'], ['PUSH', 'Push notifications']];
+/* The experiment: 2.0% → 2.5% funded, 80% power, two-sided α 0.05 */
+var JR_EXP = { p1: 0.020, p2: 0.025, alpha: 0.05, power: 0.80 };
+function jrFresh(variant) {
+  return { variant: variant || 'B', step: 0, sub: 0, reachedIdx: 0, dir: 1, intent: null, account: false, phoneOk: false, connected: false, newTiles: false, hostTab: 'pay',
            otp: '', otpErr: false, otpLeft: 24, banks: { ENBD: true, FAB: true }, bankDeclined: false,
-           pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
-           recId: null, applyErr: null, eventErr: null, kfsLang: 'en', kfsSheet: false, waive: false, memoSent: null,
-           calls: [], botim: [] };
+           emailEdit: false, emailOther: '', emailErr: null, emailCode: '', emailCodeErr: false, emailOk: false, emailDone: false,
+           footprint: false, fpa: null,
+           comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
+           commsTouched: false, commsDone: false,
+           insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
+           recId: null, applyErr: null, eventErr: null, kfsLang: 'en', kfsSheet: false, waive: false, memoSent: null, pwaOpen: false,
+           calls: [], botim: [], logged: {} };
 }
 function jrMonths(n) { return n + ' month' + (n === 1 ? '' : 's'); }
 function jrDayNth(d) { var s = ['th', 'st', 'nd', 'rd'], v = d % 100; return d + (s[(v - 20) % 10] || s[v] || s[0]); }
+/* The email botim shares is only ever shown masked: first letter, "•••••@•••" and the top-level domain (r•••••@•••.com) */
+function jrMaskEmail(e) {
+  var m = String(e || '').match(/^([^@\s])[^@\s]*@[^@\s]+?(\.[A-Za-z]{2,})$/);
+  return m ? m[1] + '•••••@•••' + m[2].toLowerCase() : '•••••@•••';
+}
+function jrPath() { return JR_PATHS[(Journey.S && Journey.S.variant) || 'B'] || JR_PATHS.B; }
+/* Where (step, sub) sits on the variant's path: an exact sub-step entry wins, else the step's own entry */
+function jrIdx(step, sub) {
+  var path = jrPath(), i;
+  for (i = 0; i < path.length; i++) if (path[i].n === step && path[i].sub !== undefined && path[i].sub === sub) return i;
+  for (i = 0; i < path.length; i++) if (path[i].n === step && path[i].sub === undefined) return i;
+  for (i = 0; i < path.length; i++) if (path[i].n === step) return i;
+  return 0;
+}
+/* Inverse standard normal (Acklam's rational approximation, |error| < 1.2e-9) */
+function jrNormInv(p) {
+  var a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  var b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+  var c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  var d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+  var lo = 0.02425, q, r;
+  if (p < lo) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+  if (p > 1 - lo) { q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+  q = p - 0.5; r = q * q;
+  return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+}
+/* Users per arm to tell p1 from p2: the standard two-proportion formula
+   n = (z(1−α/2)·√(2·p̄(1−p̄)) + z(1−β)·√(p1(1−p1) + p2(1−p2)))² / (p2 − p1)² */
+function jrSampleSize(p1, p2, alpha, power) {
+  var za = jrNormInv(1 - alpha / 2), zb = jrNormInv(power), pbar = (p1 + p2) / 2;
+  var num = za * Math.sqrt(2 * pbar * (1 - pbar)) + zb * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2));
+  return { n: Math.ceil(num * num / Math.pow(p2 - p1, 2)), za: za, zb: zb };
+}
 /* First instalment date: the day after the salary credit, next month */
 function jrFirstDue() {
   var p = Journey.persona, day = ((p.bankData && p.bankData.salaryCreditDay) || 27) + 1;
@@ -5549,31 +5736,46 @@ function jrFirstDue() {
 }
 var Journey = {
   S: null, persona: null, timer: null, otpTimer: null,
+  /* v2.8 — the A/B test: the variant survives restarts; the event log is this session's, across journeys */
+  variant: 'B', eventLog: [], run: 0,
   build: function () {
     Journey.persona = (MD.personasJourney || [])[0] || null;
     var root = clear($('#scr-journey'));
     root.appendChild(screenHead('Botim user → Noor web-view → Partner Bank', 'Customer journey',
-      'Ravi Kumar (j1) connects his bank from botim money, then applies for a personal loan — on the real Mizan engine, so the decision lands in the Decision log and its credit memo in Lender view.'));
+      'Ravi Kumar (j1) meets Noor inside botim money — a banner, the Noor icon and Noor-rendered insights — connects his bank and applies for a personal loan, on the real Mizan engine: the decision lands in the Decision log and its credit memo in Lender view. Switch the entry experiment (A / B) in the Experiment panel.'));
     if (!Journey.persona) { root.appendChild(h('div', { class: 'panel', text: 'Journey persona j1 is missing from MizanData.personasJourney.' })); return; }
     root.appendChild(h('div', { class: 'jr-grid' },
       h('div', { class: 'jr-phone-col' },
         h('div', { class: 'ph-stage', id: 'jr-stage' }, h('div', { class: 'phone', id: 'jr-phone' }, h('div', { class: 'ph-screen', id: 'jr-screen', 'aria-live': 'polite' })))),
-      h('div', { class: 'jr-side stack' }, h('div', { class: 'panel', id: 'jr-behind' }), h('div', { class: 'panel', id: 'jr-steps' }))));
-    Journey.S = jrFresh();
+      h('div', { class: 'jr-side stack' }, h('div', { class: 'panel', id: 'jr-behind' }), h('div', { class: 'panel', id: 'jr-exp' }), h('div', { class: 'panel', id: 'jr-steps' }))));
+    Journey.run = 1;
+    Journey.S = jrFresh(Journey.variant);
     Journey.render();
     window.addEventListener('resize', function () { Journey.fit(); });
   },
   restart: function () {
     Journey.clearTimers();
-    Journey.S = jrFresh();
+    Journey.run += 1;
+    Journey.S = jrFresh(Journey.variant);
     Journey.render();
+  },
+  /* Switching the experiment variant restarts the journey (the session's event log is kept) */
+  setVariant: function (v) {
+    if (!JR_PATHS[v]) return;
+    Journey.variant = v;
+    Journey.restart();
   },
   clearTimers: function () {
     if (Journey.timer) { clearTimeout(Journey.timer); Journey.timer = null; }
     if (Journey.otpTimer) { clearInterval(Journey.otpTimer); Journey.otpTimer = null; }
   },
   log: function (call, result) { Journey.S.calls.push({ call: call, result: result }); },
-  botim: function (key, text) { var S = Journey.S; if (!S.botim.some(function (b) { return b.key === key; })) S.botim.push({ key: key, text: text }); },
+  /* What botim receives: events only, each with the variant — never data. Logged once per journey. */
+  emit: function (name) {
+    var S = Journey.S;
+    if (!S.botim.some(function (b) { return b.key === name; })) S.botim.push({ key: name, text: name + ' · variant ' + S.variant });
+    if (!S.logged[name]) { S.logged[name] = true; Journey.eventLog.push({ name: name, variant: S.variant, run: Journey.run }); }
+  },
   rec: function () { try { return Journey.S.recId ? ME.getDecision(Journey.S.recId) : null; } catch (e) { return null; } },
   /* Transient screens advance on their own (instant under reduced motion) */
   autoNext: function () {
@@ -5592,32 +5794,45 @@ var Journey = {
     S.eventErr = null;
     S.dir = dir !== undefined ? dir : ((step > S.step || (step === S.step && sub >= S.sub)) ? 1 : -1);
     S.step = step; S.sub = sub;
-    if (step > S.reached) S.reached = step;
+    var i = jrIdx(step, sub);
+    if (i > S.reachedIdx) S.reachedIdx = i;
     var auto = Journey.autoNext();
     if (auto && REDUCED) { Journey.go(auto[0], auto[1], S.dir); return; }
     Journey.enter();
     Journey.render();
     if (auto) Journey.timer = setTimeout(function () { Journey.timer = null; Journey.go(auto[0], auto[1], 1); }, auto[2]);
   },
-  /* Side effects of arriving on a screen — engine calls and what botim is told */
+  /* Side effects of arriving on a screen — engine calls and the events botim gets */
   enter: function () {
     var S = Journey.S, p = Journey.persona;
-    if (S.step === 1) Journey.botim('started', 'journey_started');
+    if (S.step === 1) Journey.emit('journey_started');
     if (S.step === 6) {
       if (!S.connected) S.newTiles = true;
       S.connected = true;
-      Journey.botim('connected', 'accounts_connected — 2 display tiles (bank, masked number, balance)');
+      Journey.emit('accounts_connected');
+      /* the Noor insights read the connected accounts; the NoorScore estimate comes from prequalify() (pure: no record, no AECB pull) */
+      if (!S.insights) {
+        try {
+          var est = ME.prequalify(p, { openFinance: true });
+          S.insights = { band: est.noorScoreEstimateBand };
+          Journey.log('prequalify(j1, {openFinance:true})', 'Noor insights · NoorScore estimate ' + est.noorScoreEstimateBand + ' · no record, no AECB pull');
+        } catch (err) { S.insights = { band: null, err: err && err.message ? err.message : String(err) }; }
+      }
     }
     if (S.step === 7 && S.sub === 0) S.hostTab = 'credit';
-    if (S.step === 7 && S.sub === 3 && !S.pq) {
+    var pqStep = (S.step === 7 && S.sub === 3) || (S.step === 8 && S.sub === 2);
+    if (pqStep && !S.pq) {
       try {
         S.pq = ME.prequalify(p, { openFinance: true });
         S.pqErr = null;
-        Journey.log('prequalify(j1, {openFinance:true})', fmtAED(S.pq.indicativeMin) + ' – ' + fmtAED(S.pq.indicativeMax) + ' · NoorScore estimate ' + S.pq.noorScoreEstimateBand + ' · no record, no AECB pull');
-        Journey.botim('prequalified', 'prequalified');
-        if (S.amount > S.pq.indicativeMax) S.amount = S.pq.indicativeMax;
+        Journey.log('prequalify(j1, {openFinance:true})', S.step === 8
+          ? 'affordability check · caps 6 → ' + fmtAED(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtAED(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtAED(S.pq.maxByTermMonths[24]) + ' · no record, no AECB pull'
+          : fmtAED(S.pq.indicativeMin) + ' – ' + fmtAED(S.pq.indicativeMax) + ' · NoorScore estimate ' + S.pq.noorScoreEstimateBand + ' · no record, no AECB pull');
+        /* variant B shows the approvable amount first, so the slider starts inside it; variant A keeps the customer's ask for the check */
+        if (S.step === 7 && S.amount > S.pq.indicativeMax) S.amount = S.pq.indicativeMax;
       } catch (err) { S.pqErr = err && err.message ? err.message : String(err); }
     }
+    if (pqStep && S.pq) Journey.emit('prequalified');
     if (S.step === 11 && S.sub === 1 && S.recId && S.memoSent !== S.recId) {
       try { var m = ME.creditMemo(S.recId, { lenderId: 'partner-bank' }); S.memoSent = S.recId; Journey.log('creditMemo(' + S.recId + ')', m.memoId + ' → ' + m.lenderName + ' (UI · API · SFTP)'); } catch (e) {}
     }
@@ -5625,7 +5840,7 @@ var Journey = {
       var r = Journey.rec();
       if (r && !r.events.some(function (e) { return e.type === 'DISBURSED'; })) Journey.record(['DISBURSED']);
       r = Journey.rec();
-      if (r && r.status === 'EXECUTED') Journey.botim('funded', 'funded');
+      if (r && r.status === 'EXECUTED') Journey.emit('funded');
     }
     if (S.step === 16 && S.sub === 1) S.hostTab = 'credit';
   },
@@ -5650,13 +5865,20 @@ var Journey = {
     return true;
   },
   exec: function (types, next) { if (Journey.record(types)) Journey.go(next, 0, 1); else Journey.render(); },
+  /* The contact preferences as the engine takes them: { service:[…], marketing:[…] } */
+  commsConsent: function () {
+    var c = Journey.S.comms, pick = function (g) { return JR_CHANNELS.map(function (x) { return x[0]; }).filter(function (k) { return !!c[g][k]; }); };
+    return { service: pick('service'), marketing: pick('marketing') };
+  },
   apply: function () {
     var S = Journey.S, p = Journey.persona, rec;
     S.applyErr = null;
-    var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true}})';
+    var comms = Journey.commsConsent();
+    var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true, digitalFootprint:' + !!S.footprint +
+      ', communications:{service:[' + comms.service.join(',') + '], marketing:[' + comms.marketing.join(',') + ']}}})';
     try {
       rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months,
-                        consents: { aecb: !!S.aecb, openFinance: true }, lenderId: 'partner-bank' });
+                        consents: { aecb: !!S.aecb, openFinance: true, digitalFootprint: !!S.footprint, communications: comms }, lenderId: 'partner-bank' });
     } catch (err) {
       /* Expected: no AECB consent → the engine refuses. Shown in the phone, calmly. */
       S.applyErr = err && err.message ? err.message : String(err);
@@ -5664,8 +5886,9 @@ var Journey = {
       Journey.render();
       return;
     }
-    S.recId = rec.id; S.reached = 9; S.kfsLang = 'en'; S.kfsSheet = false; S.waive = false; S.eventErr = null;
+    S.recId = rec.id; S.reachedIdx = jrIdx(9, 0); S.kfsLang = 'en'; S.kfsSheet = false; S.waive = false; S.eventErr = null; S.pwaOpen = false;
     S.botim = S.botim.filter(function (b) { return b.key !== 'funded'; });
+    Journey.emit('applied');
     Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : ''));
     afterEngineMutation();
     Journey.go(9, 1, 1);
@@ -5673,22 +5896,56 @@ var Journey = {
   closeWebview: function () { Journey.S.hostTab = 'pay'; Journey.go(Journey.S.connected ? 6 : 0, Journey.S.connected ? 1 : 0, -1); },
   hostTab: function (t) {
     var S = Journey.S;
+    var onHome = S.step === 0 || (S.step === 6 && S.sub === 1);
+    /* variant A: botim's Credit tab is the Loans screen — the entry of the test */
+    if (t === 'credit' && S.variant === 'A' && onHome) { Journey.go(7, 0, 1); return; }
     if (t === 'credit' && S.connected && (S.step === 6 || S.step === 0)) { Journey.go(7, 0, 1); return; }
     S.hostTab = t;
     Journey.render();
   },
-  /* botim money → "Add another +": entry 1 */
+  /* Onboarding picks up where it stopped: hand-off → account → code → email → contact → banks */
+  resumeOnboarding: function () {
+    var S = Journey.S;
+    if (!S.account) { Journey.go(1, 0, 1); return; }
+    if (!S.phoneOk) { Journey.go(3, 0, 1); return; }
+    if (!S.emailDone) { Journey.go(3, 1, 1); return; }
+    if (!S.commsDone) { Journey.go(3, 2, 1); return; }
+    Journey.go(4, 0, 1);
+  },
+  /* botim money → "Add another +": entry 1 (both variants) */
   addAccount: function () {
     var S = Journey.S;
     if (!S.intent) S.intent = 'connect';
-    Journey.go(S.account ? 4 : 1, 0, 1);
+    Journey.resumeOnboarding();
   },
-  /* botim money → Credit → "How much can you borrow?": entry 2 (asks to connect first when nothing is connected) */
+  /* Variant B: Credit → "How much can you borrow?" (asks to connect first when nothing is connected) */
   creditCta: function () {
     var S = Journey.S;
-    if (!S.connected) { S.intent = 'loan'; Journey.go(S.account ? 4 : 1, 0, 1); return; }
+    if (!S.connected) { S.intent = 'loan'; Journey.resumeOnboarding(); return; }
     Journey.go(7, 1, 1);
   },
+  /* The banner, the Noor icon, the Credit-tab card and the credit insight: the active variant's credit entry */
+  entry: function () {
+    var S = Journey.S;
+    Journey.emit('click');
+    if (S.variant === 'A') { S.hostTab = 'credit'; Journey.go(7, 0, 1); return; }
+    Journey.creditCta();
+  },
+  /* Variant A: the Noor tile on botim's Loans screen → "How much do you need?" */
+  loansNoor: function () {
+    var S = Journey.S;
+    Journey.emit('click');
+    S.intent = 'loan';
+    Journey.go(8, 1, 1);
+  },
+  /* Variant A: amount first, then the account and the bank, then the affordability check */
+  needNext: function () {
+    var S = Journey.S;
+    S.intent = 'loan';
+    if (!S.connected) { Journey.resumeOnboarding(); return; }
+    Journey.go(8, 2, 1);
+  },
+  changeLoan: function () { Journey.go(8, Journey.S.variant === 'A' ? 1 : 0, -1); },
   fit: function () {
     var stage = $('#jr-stage'), phone = $('#jr-phone');
     if (!stage || !phone) return;
@@ -5707,23 +5964,24 @@ var Journey = {
     clear(scr);
     var v = Journey.view();
     scr.className = 'ph-screen ph-' + v.kind;
-    scr.dataset.step = String(S.step); scr.dataset.sub = String(S.sub); scr.dataset.kind = v.kind;
+    scr.dataset.step = String(S.step); scr.dataset.sub = String(S.sub); scr.dataset.kind = v.kind; scr.dataset.variant = S.variant;
     scr.appendChild(h('div', { class: 'ph-status' },
       h('span', { class: 'ph-time' }, '9:41', v.kind === 'bank' ? h('span', { class: 'ph-backlink', text: '◂ botim' }) : null),
       h('span', { class: 'ph-island', 'aria-hidden': 'true' }), jrStatusIcons()));
     v.node.classList.add('ph-view', S.dir < 0 ? 'ph-in-back' : 'ph-in-fwd');
     scr.appendChild(v.node);
     scr.appendChild(h('div', { class: 'ph-homebar', 'aria-hidden': 'true' }));
-    if (S.step === 3 && !Journey.otpTimer && S.otpLeft > 0) {
+    if (S.step === 3 && S.sub === 0 && !Journey.otpTimer && S.otpLeft > 0) {
       Journey.otpTimer = setInterval(function () {
         var el = $('#jr-resend');
-        if (Journey.S.step !== 3 || !el) { clearInterval(Journey.otpTimer); Journey.otpTimer = null; return; }
+        if (Journey.S.step !== 3 || Journey.S.sub !== 0 || !el) { clearInterval(Journey.otpTimer); Journey.otpTimer = null; return; }
         Journey.S.otpLeft = Math.max(0, Journey.S.otpLeft - 1);
         el.textContent = Journey.S.otpLeft > 0 ? 'Resend code in 0:' + String(Journey.S.otpLeft).padStart(2, '0') : 'Resend code';
         if (!Journey.S.otpLeft) { clearInterval(Journey.otpTimer); Journey.otpTimer = null; }
       }, 1000);
     }
     Journey.renderBehind();
+    Journey.renderExperiment();
     Journey.renderSteps();
     Journey.fit();
   },
@@ -5742,11 +6000,16 @@ var Journey = {
     return h('button', { class: 'ph-btn' + (opts.secondary ? ' ph-btn-2' : '') + (opts.ghost ? ' ph-btn-ghost' : ''), type: 'button', id: id || null,
       disabled: opts.disabled ? 'disabled' : null, onclick: fn }, text);
   },
+  /* v2.8 — the corner label every Noor embed inside botim carries */
+  byNoor: function (small) { return h('span', { class: 'by-noor' + (small ? ' by-noor-sm' : ''), title: 'Served by noor finance (noor.finance) inside botim', text: 'by noor' }); },
   connectFirst: function () {
-    return Journey.S.intent === 'loan'
+    var S = Journey.S;
+    if (S.intent !== 'loan') return null;
+    return S.variant === 'A'
       ? h('div', { class: 'ph-note ph-note-info', id: 'jr-connect-first' }, jrSvg(JR_ICON.shield, 'ph-note-ico'),
-          h('span', null, h('strong', { text: 'First, connect your bank accounts. ' }), 'Noor works out what you can borrow from them — it takes a minute.'))
-      : null;
+          h('span', null, h('strong', { text: 'Next: your Noor account and your bank accounts. ' }), 'Noor checks that ' + fmtAED(S.amount) + ' over ' + jrMonths(S.months) + ' fits your budget — it takes a minute.'))
+      : h('div', { class: 'ph-note ph-note-info', id: 'jr-connect-first' }, jrSvg(JR_ICON.shield, 'ph-note-ico'),
+          h('span', null, h('strong', { text: 'First, connect your bank accounts. ' }), 'Noor works out what you can borrow from them — it takes a minute.'));
   },
   mono: function (txt, cls) { return h('span', { class: 'ph-mono' + (cls ? ' ' + cls : ''), 'aria-hidden': 'true', text: txt }); },
   /* ---------- the host app: botim money (concept) ---------- */
@@ -5778,11 +6041,65 @@ var Journey = {
     root.appendChild(nav);
     return root;
   },
+  /* The Noor insights, from data and engine calls only: card totals and the repayment seen leaving the accounts,
+     spending and what is left from 12 months of connected accounts, the NoorScore estimate from prequalify() */
+  insightData: function () {
+    var S = Journey.S, p = Journey.persona, ae = p.aecb || {}, cn = p.connected || {};
+    var repay = cn.observedObligationsMonthly || 0, spend = cn.avgMonthlySpend, left = cn.avgMonthlyIncome - spend - repay;
+    var util = ae.cardLimitTotal ? Math.round(ae.cardBalanceTotal / ae.cardLimitTotal * 100) : null;
+    var cards = ae.cards || 0, loans = ae.activeLoans || 0;
+    return { util: util, repay: repay, spend: spend, left: left, cards: cards, loans: loans, band: (S.insights || {}).band || null,
+             cardText: 'Your credit cards are ' + util + '% used — ' + fmtAED(repay) + ' a month in repayments',
+             budgetText: 'You spend about ' + fmtAED(spend) + ' a month — about ' + fmtAED(left) + ' left after bills',
+             creditText: cards + ' credit card' + (cards === 1 ? '' : 's') + ' · ' + (loans ? loans + ' loan' + (loans === 1 ? '' : 's') : 'no loans') +
+                         ' · NoorScore estimate ' + ((S.insights || {}).band || '—') };
+  },
+  hostInsightsCarousel: function (body) {
+    var S = Journey.S;
+    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Insights for you' }),
+      h('span', { class: 'bm-link bm-link-static', text: 'Powered by noor' })));
+    if (!S.connected) {
+      body.appendChild(h('div', { class: 'bm-ins-wrap' },
+        h('div', { class: 'bm-ins-card noor-embed', id: 'bm-ins-connect', dataset: { embed: 'insight', insight: 'connect' } }, Journey.byNoor(),
+          h('span', { class: 'bm-ins-tag', text: 'noor' }),
+          h('span', { class: 'bm-ins-card-t', text: 'Connect your bank accounts — securely, through Noor' }),
+          h('span', { class: 'bm-ins-card-s', text: 'Your budget, your cards and what you could borrow — in one place.' }),
+          h('button', { class: 'bm-ins-cta', type: 'button', id: 'bm-ins-connect-cta', onclick: function () { Journey.emit('click'); Journey.addAccount(); } }, 'Connect', jrSvg(JR_ICON.arrowR)))));
+      return;
+    }
+    var d = Journey.insightData(), A = S.variant === 'A';
+    var card = function (key, tag, text, cta, id, fn, data) {
+      return h('div', { class: 'bm-ins-card noor-embed', id: 'bm-ins-' + key, dataset: Object.assign({ embed: 'insight', insight: key }, data) }, Journey.byNoor(),
+        h('span', { class: 'bm-ins-tag', text: tag }),
+        h('span', { class: 'bm-ins-card-t', text: text }),
+        h('button', { class: 'bm-ins-cta', type: 'button', id: id, onclick: fn }, cta, jrSvg(JR_ICON.arrowR)));
+    };
+    var row = h('div', { class: 'bm-ins-row', id: 'bm-insights', role: 'list', 'aria-label': 'Insights from Noor' },
+      card('card', 'Cards', d.cardText, 'See your options', 'bm-ins-card-cta', function () {
+        Journey.emit('click');
+        if (A) { S.hostTab = 'credit'; Journey.go(7, 0, 1); } else Journey.go(7, 3, 1);
+      }, { util: String(d.util), repay: String(d.repay) }),
+      card('budget', 'Budget', d.budgetText, 'See your budget', 'bm-ins-budget-cta', function () { Journey.emit('click'); Journey.go(7, 2, 1); },
+        { spend: String(d.spend), left: String(d.left) }),
+      card('credit', 'Credit', d.creditText, 'How much could you borrow?', 'bm-ins-credit-cta', function () { Journey.entry(); },
+        { cards: String(d.cards), loans: String(d.loans), band: String(d.band || '') }));
+    body.appendChild(h('div', { class: 'bm-ins-wrap' }, row,
+      h('div', { class: 'bm-dots', 'aria-hidden': 'true' }, [0, 1, 2].map(function (i) { return h('span', { class: i === 0 ? 'on' : '' }); }))));
+  },
   hostPay: function (body, accts) {
     var S = Journey.S;
     if (S.newTiles && S.step === 6) {
-      body.appendChild(h('div', { class: 'bm-toast', id: 'bm-toast' }, jrSvg(JR_ICON.check, 'bm-toast-ico', '2'), 'ENBD and FAB connected through Noor'));
+      /* botim learns only that accounts were connected — no bank names, numbers or balances */
+      body.appendChild(h('div', { class: 'bm-toast', id: 'bm-toast' }, jrSvg(JR_ICON.check, 'bm-toast-ico', '2'), 'Accounts connected through Noor'));
     }
+    /* v2.8 — Max's banner: a Noor embed above Connected accounts, in Noor's brand style */
+    body.appendChild(h('button', { class: 'bm-banner noor-embed', type: 'button', id: 'bm-banner', dataset: { embed: 'banner' }, onclick: function () { Journey.entry(); } },
+      Journey.byNoor(),
+      h('span', { class: 'noor-logo bm-banner-logo', role: 'img', 'aria-label': 'noor finance' }),
+      h('span', { class: 'bm-banner-t', text: 'How much could you borrow?' }),
+      h('span', { class: 'bm-banner-s', text: 'Check in 2 minutes — no impact on your credit score' }),
+      h('span', { class: 'bm-banner-go', 'aria-hidden': 'true' }, jrSvg(JR_ICON.arrowR, null, '1.9'))));
+    Journey.emit('impression');
     body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Connected accounts' }),
       h('button', { class: 'bm-link', type: 'button', id: 'bm-add-account', onclick: function () { Journey.addAccount(); } }, 'Add another', jrSvg(JR_ICON.plus, 'bm-link-ico'))));
     var strip = h('div', { class: 'bm-accts', id: 'bm-accts' });
@@ -5793,22 +6110,24 @@ var Journey = {
         h('span', { class: 'bm-mask', text: (bank === 'wallet' ? 'Wallet' : bank) + ' ••••' + mask }));
     }
     strip.appendChild(tile(JR_HOST.wallet.mono, JR_HOST.wallet.balance, JR_HOST.wallet.mask, 'wallet', false, 'wallet'));
-    if (S.connected) accts.forEach(function (a) { strip.appendChild(tile(a.bank.slice(0, 2), a.balance, a.mask, a.bank, S.newTiles && S.step === 6)); });
-    else strip.appendChild(h('button', { class: 'bm-acct bm-acct-add', type: 'button', id: 'bm-add-tile', onclick: function () { Journey.addAccount(); } },
+    if (S.connected) {
+      /* v2.8 — the connected-account tiles are a Noor embed: Noor shows its customer their own data; botim gets no tile data */
+      var emb = h('div', { class: 'bm-acct-embed noor-embed', id: 'bm-noor-tiles', dataset: { embed: 'tiles' } }, Journey.byNoor());
+      accts.forEach(function (a) { emb.appendChild(tile(a.bank.slice(0, 2), a.balance, a.mask, a.bank, S.newTiles && S.step === 6)); });
+      strip.appendChild(emb);
+    } else strip.appendChild(h('button', { class: 'bm-acct bm-acct-add', type: 'button', id: 'bm-add-tile', onclick: function () { Journey.addAccount(); } },
       jrSvg(JR_ICON.plus, 'bm-add-ico'), h('span', { text: 'Connect a bank' })));
     body.appendChild(strip);
-    var acts = h('div', { class: 'bm-acts', 'aria-hidden': 'true' });
+    var acts = h('div', { class: 'bm-acts bm-acts-5' });
     [['Send', JR_ICON.send], ['Request', JR_ICON.request], ['Add funds', JR_ICON.plus], ['Withdraw', JR_ICON.arrowR]].forEach(function (a) {
-      acts.appendChild(h('span', { class: 'bm-act' }, h('span', { class: 'bm-act-b' }, jrSvg(a[1], null, '1.9')), h('span', { class: 'bm-act-l', text: a[0] })));
+      acts.appendChild(h('span', { class: 'bm-act', 'aria-hidden': 'true' }, h('span', { class: 'bm-act-b' }, jrSvg(a[1], null, '1.9')), h('span', { class: 'bm-act-l', text: a[0] })));
     });
+    /* v2.8 — a fifth round action button, "Noor" (the Noor icon mask), a Noor embed like the banner */
+    acts.appendChild(h('button', { class: 'bm-act bm-act-noor noor-embed', type: 'button', id: 'bm-noor-icon', dataset: { embed: 'icon' }, 'aria-label': 'Noor — how much could you borrow?',
+      onclick: function () { Journey.entry(); } },
+      h('span', { class: 'bm-act-b bm-act-noorb' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' })), h('span', { class: 'bm-act-l', text: 'Noor' }), Journey.byNoor(true)));
     body.appendChild(acts);
-    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Insights for you' }), h('span', { class: 'bm-link bm-link-static' }, 'See all', jrSvg(JR_ICON.arrowR, 'bm-link-ico'))));
-    body.appendChild(h('div', { class: 'bm-carousel' },
-      h('div', { class: 'bm-insight' },
-        h('span', { class: 'bm-ins-tag', text: S.connected ? 'Big transactions detected' : 'Tip' }),
-        h('span', { class: 'bm-ins-t', text: S.connected ? '3 transactions available for installments' : 'See all your money in one place' }),
-        h('span', { class: 'bm-ins-s', text: S.connected ? 'Turn recent big purchases into easy monthly instalments' : 'Connect your bank accounts — securely, through Noor' })),
-      h('div', { class: 'bm-dots', 'aria-hidden': 'true' }, [0, 1, 2, 3, 4].map(function (i) { return h('span', { class: i === 1 ? 'on' : '' }); }))));
+    Journey.hostInsightsCarousel(body);
     body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'To do' })));
     body.appendChild(h('div', { class: 'bm-todo', 'aria-hidden': 'true' }, h('span', { class: 'bm-todo-ico' }, jrSvg(JR_ICON.card)),
       h('span', { class: 'bm-todo-t', text: 'Order your physical card — pay offline too' }), h('span', { class: 'bm-todo-b', text: 'Order' })));
@@ -5821,36 +6140,58 @@ var Journey = {
     var S = Journey.S, r = Journey.rec();
     var funded = !!(r && r.status === 'EXECUTED' && S.botim.some(function (b) { return b.key === 'funded'; }));
     if (funded) {
-      body.appendChild(h('div', { class: 'bm-loan', id: 'bm-loan-card' },
+      body.appendChild(h('div', { class: 'bm-loan noor-embed', id: 'bm-loan-card', dataset: { embed: 'credit-card' } }, Journey.byNoor(),
         h('span', { class: 'bm-loan-top' }, h('span', { class: 'bm-loan-k', text: 'Personal loan' }), h('span', { class: 'bm-active', text: 'Active' })),
         h('span', { class: 'bm-loan-t', text: 'Loan funded · managed in Noor' }),
         h('span', { class: 'bm-loan-s', text: 'Lender: Partner Bank · arranged by noor finance' }),
         h('span', { class: 'bm-link bm-link-static' }, 'Open in Noor', jrSvg(JR_ICON.arrowR, 'bm-link-ico'))));
     }
+    if (S.variant === 'A') {
+      /* Variant A — a generic Loans list in the host (not botim's real product UI): a neutral partner row and the Noor tile */
+      body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Loans' })));
+      body.appendChild(h('div', { class: 'bm-loans', id: 'bm-loans' },
+        h('div', { class: 'bm-loan-row', 'aria-hidden': 'true' }, h('span', { class: 'bm-loan-ico', text: 'CL' }),
+          h('span', { class: 'bm-loan-main' }, h('span', { class: 'bm-loan-n', text: 'Cash loan · current partner' }), h('span', { class: 'bm-loan-d', text: 'Offered in botim today' })),
+          jrSvg(JR_ICON.arrowR, 'bm-chev')),
+        h('button', { class: 'bm-loan-row bm-loans-noor noor-embed', type: 'button', id: 'bm-loans-noor', dataset: { embed: 'loans-tile' }, onclick: function () { Journey.loansNoor(); } },
+          Journey.byNoor(),
+          h('span', { class: 'bm-loan-ico' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' })),
+          h('span', { class: 'bm-loan-main' }, h('span', { class: 'bm-loan-n', text: 'Personal loan · noor finance' }), h('span', { class: 'bm-loan-d', text: 'AED 1,000–50,000 · Apply in minutes' })),
+          jrSvg(JR_ICON.arrowR, 'bm-chev'))));
+      Journey.emit('impression');
+      body.appendChild(h('div', { class: 'bm-muted', text: 'Loans in botim money come from partners. The Noor tile is served by noor finance; botim never sees your bank data or credit decision.' }));
+      return;
+    }
     body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: funded ? 'More from Noor' : 'Credit' })));
-    body.appendChild(h('button', { class: 'bm-noor', type: 'button', id: 'bm-credit-cta', onclick: function () { Journey.creditCta(); } },
-      h('span', { class: 'bm-noor-top' }, h('span', { class: 'noor-logo bm-noor-logo', role: 'img', 'aria-label': 'noor finance' }), h('span', { class: 'bm-noor-badge', text: 'Partner' })),
+    body.appendChild(h('button', { class: 'bm-noor noor-embed', type: 'button', id: 'bm-credit-cta', dataset: { embed: 'credit-card' }, onclick: function () { Journey.entry(); } },
+      Journey.byNoor(),
+      h('span', { class: 'bm-noor-top' }, h('span', { class: 'noor-logo bm-noor-logo', role: 'img', 'aria-label': 'noor finance' })),
       h('span', { class: 'bm-noor-t', text: 'How much can you borrow?' }),
       h('span', { class: 'bm-noor-s', text: 'Check in 2 minutes — no impact on your credit score' }),
       h('span', { class: 'bm-noor-go' }, 'Check now', jrSvg(JR_ICON.arrowR))));
+    Journey.emit('impression');
     body.appendChild(h('div', { class: 'bm-muted', text: 'Credit in botim money is arranged by noor finance; the lender is a licensed bank. botim never sees your bank data or credit decision.' }));
   },
   hostInsights: function (body, accts) {
     var S = Journey.S;
-    var total = JR_HOST.wallet.balance + (S.connected ? accts.reduce(function (s, a) { return s + a.balance; }, 0) : 0);
     body.appendChild(h('div', { class: 'bm-total' },
-      h('span', { class: 'bm-total-v', text: fmtMoney(total) }),
-      S.connected ? h('span', { class: 'bm-health' }, jrSvg(JR_ICON.spark, 'bm-health-ico', '1.4'), 'Fin health is good') : null));
-    body.appendChild(h('div', { class: 'bm-total-l', text: 'Total across your accounts' }));
+      h('span', { class: 'bm-total-v', text: fmtMoney(JR_HOST.wallet.balance) })));
+    body.appendChild(h('div', { class: 'bm-total-l', text: 'botim wallet' }));
     if (!S.connected) {
       body.appendChild(h('div', { class: 'bm-card-muted' }, 'Connect your bank accounts to see how long your money lasts and where it goes.',
         h('button', { class: 'bm-link', type: 'button', onclick: function () { Journey.addAccount(); } }, 'Add another', jrSvg(JR_ICON.plus, 'bm-link-ico'))));
       return;
     }
+    /* v2.8 — everything read from the connected accounts is shown by Noor itself, as an embed */
+    var total = accts.reduce(function (s, a) { return s + a.balance; }, 0);
     var spend = (Journey.persona.connected || {}).avgMonthlySpend || 7400;
-    body.appendChild(h('div', { class: 'bm-enough' }, h('span', { class: 'bm-enough-t', text: 'Enough ~' + Math.round(total / spend) + ' months' }),
+    var emb = h('div', { class: 'bm-ins-embed noor-embed', id: 'bm-noor-money', dataset: { embed: 'insights-tab' } }, Journey.byNoor());
+    emb.appendChild(h('div', { class: 'bm-total' }, h('span', { class: 'bm-total-v', text: fmtMoney(total) }),
+      h('span', { class: 'bm-health' }, jrSvg(JR_ICON.spark, 'bm-health-ico', '1.4'), 'Fin health is good')));
+    emb.appendChild(h('div', { class: 'bm-total-l', text: 'Your connected bank accounts' }));
+    emb.appendChild(h('div', { class: 'bm-enough' }, h('span', { class: 'bm-enough-t', text: 'Enough ~' + Math.round(total / spend) + ' months' }),
       h('span', { class: 'bm-enough-s', text: 'With your average of ' + fmtAED(spend) + ' spending' })));
-    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Spending' }), h('span', { class: 'bm-link bm-link-static', text: 'Monthly average' })));
+    emb.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Spending' }), h('span', { class: 'bm-link bm-link-static', text: 'Monthly average' })));
     var bar = h('div', { class: 'bm-mixbar', 'aria-hidden': 'true' });
     var list = h('div', { class: 'bm-mix' });
     JR_HOST.spending.forEach(function (c, i) {
@@ -5859,7 +6200,8 @@ var Journey = {
       list.appendChild(h('div', { class: 'bm-mix-r' }, h('span', { class: 'bm-dot s' + i }), h('span', { class: 'bm-mix-k', text: c[0] }),
         h('span', { class: 'bm-mix-v', text: fmtAED(c[1]) }), h('span', { class: 'bm-mix-p', text: pct + '%' })));
     });
-    body.appendChild(bar); body.appendChild(list);
+    emb.appendChild(bar); emb.appendChild(list);
+    body.appendChild(emb);
   },
   /* Read-only teaser (optional in v2.6): botim AI offers to split recent card purchases in chat. Needs a
      1-month "repay next month" plan that the engine does not have — nothing here calls Mizan, no prices are shown. */
@@ -5895,10 +6237,11 @@ var Journey = {
         h('div', { class: 'ph-sheet', id: 'jr-handoff' },
           Journey.connectFirst(),
           h('div', { class: 'ph-sheet-t', text: 'Continue with your botim details?' }),
-          h('p', { class: 'ph-p', text: 'Botim will share your name and mobile number with Noor to get you started' }),
+          h('p', { class: 'ph-p', text: 'Botim will share your name, mobile number and email with Noor to get you started' }),
           h('div', { class: 'ph-list' },
             h('div', { class: 'ph-li' }, h('span', { class: 'ph-li-k', text: 'Name' }), h('span', { class: 'ph-li-v', text: p.name })),
-            h('div', { class: 'ph-li' }, h('span', { class: 'ph-li-k', text: 'Mobile' }), h('span', { class: 'ph-li-v', text: phone }))),
+            h('div', { class: 'ph-li' }, h('span', { class: 'ph-li-k', text: 'Mobile' }), h('span', { class: 'ph-li-v', text: phone })),
+            h('div', { class: 'ph-li' }, h('span', { class: 'ph-li-k', text: 'Email' }), h('span', { class: 'ph-li-v', id: 'jr-handoff-email', text: jrMaskEmail((p.contact || {}).email) }))),
           h('div', { class: 'ph-small', text: 'Nothing else is shared — Noor never sees your botim chats, calls or wallet.' }),
           B('Continue', function () { Journey.go(2, 0, 1); }, 'jr-cta'),
           B('Not now', function () { Journey.closeWebview(); }, 'jr-cta-2', { ghost: true }))), null, 'wv-splashmode') };
@@ -5913,6 +6256,8 @@ var Journey = {
         h('div', null, h('p', { class: 'ph-legal' }, 'By continuing you agree to ', h('span', { class: 'ph-u', text: 'Privacy policy' }), ' and ', h('span', { class: 'ph-u', text: 'Terms of Use' })),
           B('Continue', function () { Journey.S.account = true; Journey.go(3, 0, 1); }, 'jr-cta'))) };
     }
+    if (st === 3 && sub === 1) return { kind: 'webview', node: Journey.emailView() };
+    if (st === 3 && sub === 2) return { kind: 'webview', node: Journey.contactView() };
     if (st === 3) {
       var cells = h('div', { class: 'ph-otp', id: 'jr-otp', role: 'group', 'aria-label': '6-digit code' });
       for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.otp[i] ? ' on' : (i === S.otp.length ? ' cur' : '')), text: S.otp[i] || '' }));
@@ -5925,7 +6270,7 @@ var Journey = {
         h('div', null,
           S.otp.length < 6 ? h('button', { class: 'ph-autofill', type: 'button', id: 'jr-otp-fill', onclick: function () { Journey.S.otp = '482915'; Journey.S.otpErr = false; Journey.render(); } },
             h('span', { class: 'ph-af-k', text: 'From Messages' }), h('span', { class: 'ph-af-v', text: '482 915' })) : null,
-          B('Verify', function () { if (Journey.S.otp.length < 6) { Journey.S.otpErr = true; Journey.render(); return; } Journey.go(4, 0, 1); }, 'jr-cta'))) };
+          B('Verify', function () { if (Journey.S.otp.length < 6) { Journey.S.otpErr = true; Journey.render(); return; } Journey.S.phoneOk = true; Journey.go(3, 1, 1); }, 'jr-cta'))) };
     }
     if (st === 4 && sub === 0) {
       var list = h('div', { class: 'ph-banks', role: 'group', 'aria-label': 'Choose your banks' });
@@ -5951,9 +6296,9 @@ var Journey = {
         h('h2', { class: 'ph-h2', text: 'Your Al Tareq consent' }),
         h('div', { class: 'ph-card ph-consent', id: 'jr-altareq' },
           h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'What Noor will read' }), h('span', { class: 'ph-ci-v', text: 'Accounts, balances and 12 months of transactions' })),
-          h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'Why' }), h('span', { class: 'ph-ci-v', text: 'To work out what you can afford' })),
+          h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'Why' }), h('span', { class: 'ph-ci-v', id: 'jr-altareq-why', text: 'To work out what you can afford — and, while you have a loan with Noor, to spot early if repayments might become hard for you' })),
           h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'How long' }), h('span', { class: 'ph-ci-v', text: '12 months, or until you cancel' })),
-          h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'Where you’ll see it' }), h('span', { class: 'ph-ci-v', text: 'In Noor — and as account tiles and insights in botim money' })),
+          h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'Where you’ll see it' }), h('span', { class: 'ph-ci-v', id: 'jr-altareq-where', text: 'In Noor — including Noor views inside botim' })),
           h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'Banks' }), h('span', { class: 'ph-ci-v', text: picked.join(' · ') }))),
         h('p', { class: 'ph-small' }, jrSvg(JR_ICON.shield, 'ph-inline-ico'), 'Read-only — Noor can’t move your money. Cancel anytime in your Al Tareq dashboard.')),
         B('Continue to your bank', function () { Journey.S.bankDeclined = false; Journey.go(5, 0, 1); }, 'jr-cta')) };
@@ -5993,7 +6338,8 @@ var Journey = {
         h('div', { class: 'ph-card ph-acctlist' }, ac.map(function (a) {
           return h('div', { class: 'ph-acct' }, Journey.mono(a.bank.slice(0, 2)), h('span', { class: 'ph-acct-n', text: a.bank + ' ' + a.type.toLowerCase() }), h('span', { class: 'ph-acct-m', text: '••••' + a.mask })); })),
         h('p', { class: 'ph-small', text: 'Your bank returned you to Botim and Noor picked up where you left off.' })),
-        loan ? B('See what you could borrow', function () { Journey.go(7, 1, 1); }, 'jr-cta') : B('Done', function () { Journey.go(6, 1, 1); }, 'jr-cta')) };
+        loan ? (S.variant === 'A' ? B('Check it fits my budget', function () { Journey.go(8, 2, 1); }, 'jr-cta') : B('See what you could borrow', function () { Journey.go(7, 1, 1); }, 'jr-cta'))
+             : B('Done', function () { Journey.go(6, 1, 1); }, 'jr-cta')) };
     }
     if (st === 7 && sub === 1) {
       return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-center ph-loading' }, h('span', { class: 'ph-spin', 'aria-hidden': 'true' }),
@@ -6017,7 +6363,8 @@ var Journey = {
           h('div', { class: 'ph-mini-s', text: (cn.observedObligationsLabel || 'Credit-card repayment') + ', every month' }),
           h('div', { class: 'ph-mini-r ph-mini-sep' }, h('span', { class: 'ph-mini-k', text: 'Left after spending and repayments' }),
             h('span', { class: 'ph-mini-v', text: '≈ ' + fmtAED(cn.avgMonthlyIncome - cn.avgMonthlySpend - (cn.observedObligationsMonthly || 0)) + ' / month' })))),
-        B('See what you could borrow', function () { Journey.go(7, 3, 1); }, 'jr-cta')) };
+        S.variant === 'A' ? B('Apply for a personal loan', function () { Journey.S.intent = 'loan'; Journey.go(8, 1, 1); }, 'jr-cta')
+                          : B('See what you could borrow', function () { Journey.go(7, 3, 1); }, 'jr-cta')) };
     }
     if (st === 7 && sub === 3) {
       var pq = S.pq;
@@ -6033,6 +6380,8 @@ var Journey = {
         h('p', { class: 'ph-small ph-muted', text: 'Indicative for ' + pq.validForDays + ' days.' })),
         B('Choose your loan', function () { Journey.go(8, 0, 1); }, 'jr-cta')) };
     }
+    if (st === 8 && sub === 1) return { kind: 'webview', node: Journey.needView() };
+    if (st === 8 && sub === 2) return { kind: 'webview', node: Journey.affordView() };
     if (st === 8) return { kind: 'webview', node: Journey.chooseView() };
     if (st === 9 && sub === 0) return { kind: 'webview', node: Journey.checksView() };
     if (st === 9 && sub === 1) {
@@ -6061,6 +6410,155 @@ var Journey = {
   inlineEngineError: function (msg, title) {
     return msg ? h('div', { class: 'ph-note ph-note-err', id: 'jr-engine-err', role: 'alert' }, h('span', null, h('strong', { text: title || 'That step isn’t available yet. ' }),
       h('span', { class: 'ph-small ph-block ph-mono-msg', text: msg }))) : null;
+  },
+  /* v2.8 — sub-step 3·1: the email botim shared, verified by Noor; then an optional, separate digital-footprint consent */
+  emailView: function () {
+    var S = Journey.S, p = Journey.persona, B = Journey.btn;
+    var shared = (p.contact || {}).email || '';
+    var masked = S.emailEdit ? (S.emailOther ? jrMaskEmail(S.emailOther) : 'your new email') : jrMaskEmail(shared);
+    var field;
+    if (!S.emailEdit) {
+      field = h('div', { class: 'ph-field' }, h('span', { class: 'ph-field-l', text: 'Email' }),
+        h('span', { class: 'ph-input', id: 'jr-email-field' }, h('span', { class: 'ph-input-v', id: 'jr-email-v', text: jrMaskEmail(shared) }),
+          h('span', { class: 'ph-tag ph-tag-sm', text: 'shared by botim' })),
+        S.emailOk ? null : h('button', { class: 'ph-textlink', type: 'button', id: 'jr-email-other', onclick: function () {
+          S.emailEdit = true; S.emailOk = false; S.emailCode = ''; S.emailCodeErr = false; S.emailErr = null; Journey.render(); } }, 'Use a different email'));
+    } else {
+      var inp = h('input', { class: 'ph-text', type: 'email', id: 'jr-email-input', value: S.emailOther, placeholder: 'Your email address', autocomplete: 'email',
+        'aria-label': 'Your email', disabled: S.emailOk ? 'disabled' : null, oninput: function (ev) { S.emailOther = ev.target.value; S.emailErr = null; } });
+      field = h('div', { class: 'ph-field' }, h('label', { class: 'ph-field-l', for: 'jr-email-input', text: 'Email' }), inp,
+        S.emailErr ? h('p', { class: 'ph-err', id: 'jr-email-err', text: S.emailErr }) : null,
+        S.emailOk ? null : h('button', { class: 'ph-textlink', type: 'button', id: 'jr-email-shared', onclick: function () {
+          S.emailEdit = false; S.emailErr = null; S.emailCode = ''; S.emailCodeErr = false; Journey.render(); } }, 'Use the email botim shared'));
+    }
+    var verify = function () {
+      if (S.emailEdit && !/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(S.emailOther || '')) { S.emailErr = 'Enter a valid email address.'; Journey.render(); return; }
+      if (S.emailCode.length < 6) { S.emailCodeErr = true; Journey.render(); return; }
+      S.emailOk = true; S.emailCodeErr = false;
+      if (!S.commsTouched) S.comms.service.EMAIL = true;   /* Email joins the defaults once it is verified */
+      Journey.render();
+    };
+    if (!S.emailOk) {
+      var cells = h('div', { class: 'ph-otp', id: 'jr-email-otp', role: 'group', 'aria-label': '6-digit email code' });
+      for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.emailCode[i] ? ' on' : (i === S.emailCode.length ? ' cur' : '')), text: S.emailCode[i] || '' }));
+      return Journey.wv(h('div', { id: 'jr-email' },
+        h('h2', { class: 'ph-h1', text: 'Your email' }),
+        h('p', { class: 'ph-small', text: 'For your Key Facts, statements and receipts.' }),
+        field,
+        h('p', { class: 'ph-label', id: 'jr-email-sent', text: 'Enter the 6-digit code we sent to ' + masked }),
+        cells,
+        S.emailCodeErr ? h('p', { class: 'ph-err', text: 'Enter the 6-digit code we sent to your email.' }) : null),
+        h('div', null,
+          S.emailCode.length < 6 ? h('button', { class: 'ph-autofill', type: 'button', id: 'jr-email-fill', onclick: function () { S.emailCode = '739204'; S.emailCodeErr = false; Journey.render(); } },
+            h('span', { class: 'ph-af-k', text: 'From Mail' }), h('span', { class: 'ph-af-v', text: '739 204' })) : null,
+          B('Verify email', verify, 'jr-cta')));
+    }
+    var fp = h('input', { type: 'checkbox', id: 'jr-fp', onchange: function (ev) {
+      S.footprint = ev.target.checked;
+      if (S.footprint) {
+        try {
+          var prm = ME.getPolicy('personal_loan').params;
+          S.fpa = ME.assessFootprint(p.footprint, { mode: prm.footprintOverlayMode, cap: prm.footprintOverlayCap });
+          Journey.log('assessFootprint(j1.footprint)', 'identity ' + S.fpa.identity.confidence + ' · ATO risk ' + S.fpa.security.atoRisk + ' · overlay +' + S.fpa.creditOverlay.points +
+            ' (' + S.fpa.creditOverlay.mode.toLowerCase() + ', thin or no-hit file only) · pure, no record');
+        } catch (err) { S.fpa = null; }
+      } else S.fpa = null;
+      Journey.render();
+    } });
+    fp.checked = !!S.footprint;
+    return Journey.wv(h('div', { id: 'jr-email', dataset: { verified: 'true' } },
+      h('h2', { class: 'ph-h1', text: 'Your email' }),
+      field,
+      h('div', { class: 'ph-note ph-note-ok', id: 'jr-email-ok' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'Email verified · ' + masked })),
+      h('label', { class: 'ph-card ph-check ph-fp', for: 'jr-fp', id: 'jr-fp-box' }, fp,
+        h('span', null,
+          h('span', { class: 'ph-check-t' }, 'Digital footprint check ', h('span', { class: 'ph-opt-tag', text: 'Optional' })),
+          h('span', { class: 'ph-check-s', text: 'We check your email and phone with a digital-footprint provider to confirm it’s you and protect your account. Declining never affects your application.' }),
+          h('span', { class: 'ph-check-s ph-fp-purpose', text: 'Used for identity and account security — and, only if Noor switches it on later, to help when you have little credit history.' })))),
+      B('Continue', function () { S.emailDone = true; Journey.go(3, 2, 1); }, 'jr-cta'));
+  },
+  /* v2.8 — sub-step 3·2: contact preferences; at least one channel for the account and the loan */
+  contactView: function () {
+    var S = Journey.S, B = Journey.btn;
+    var group = function (key, title, tag, note, id) {
+      var list = h('div', { class: 'ph-chans' });
+      JR_CHANNELS.forEach(function (ch) {
+        var cb = h('input', { type: 'checkbox', role: 'switch', id: 'jr-' + (key === 'service' ? 'svc' : 'mkt') + '-' + ch[0], dataset: { group: key, channel: ch[0] },
+          onchange: function (ev) { S.comms[key][ch[0]] = ev.target.checked; S.commsTouched = true; Journey.render(); } });
+        cb.checked = !!S.comms[key][ch[0]];
+        list.appendChild(h('label', { class: 'ph-chan', for: cb.id }, h('span', { class: 'ph-chan-n', text: ch[1] }), cb));
+      });
+      return h('div', { class: 'ph-card ph-comms', id: id },
+        h('div', { class: 'ph-group-h' }, h('span', { class: 'ph-group-t', text: title }), h('span', { class: 'ph-opt-tag', text: tag })),
+        list, h('p', { class: 'ph-small ph-comms-n', text: note }));
+    };
+    var none = !JR_CHANNELS.some(function (ch) { return S.comms.service[ch[0]]; });
+    return Journey.wv(h('div', { id: 'jr-contact' },
+      h('h2', { class: 'ph-h1', text: 'How should we contact you?' }),
+      group('service', 'About your account and loan', 'Required', 'Some messages are required by law — like your Key Facts and payment reminders. We send them on the channels you choose.', 'jr-comms-service'),
+      none ? h('div', { class: 'ph-note ph-note-err', id: 'jr-comms-err', role: 'alert' }, h('span', null, h('strong', { text: 'Choose at least one channel. ' }), 'We need one way to reach you about your account and loan.')) : null,
+      group('marketing', 'Offers and news', 'Optional', 'Change this anytime in Settings. We never share your contact details with botim or the lender.', 'jr-comms-mkt')),
+      B('Continue', function () { if (none) return; S.commsDone = true; S.account = true; Journey.go(4, 0, 1); }, 'jr-cta', { disabled: none }));
+  },
+  /* v2.8 — variant A, sub-step 8·1: the customer names an amount first (no pre-qualification yet) */
+  needView: function () {
+    var S = Journey.S, B = Journey.btn;
+    var bands = ((ME.getPolicy('personal_loan') || {}).params || {}).pricingBands || { A: [0.0599], B: [0.0799, 0.0999] };
+    var mid = Math.round((bands.B[0] + bands.B[1]) / 2 * 10000) / 10000;
+    if (S.amount < 1000) S.amount = 1000;
+    if (S.amount > 50000) S.amount = 50000;
+    var amt = h('input', { type: 'range', id: 'jr-need-amount', min: '1000', max: '50000', step: '1000', value: String(S.amount), 'aria-label': 'How much do you need, in AED' });
+    var amtV = h('div', { class: 'ph-amount', id: 'jr-need-v', text: fmtAED(S.amount) });
+    var rows = h('div', { class: 'ph-terms', role: 'radiogroup', 'aria-label': 'Loan term' });
+    var wrap = h('div', { id: 'jr-need', dataset: { amount: String(S.amount), months: String(S.months) } });
+    function paint() {
+      amt.value = String(S.amount); amtV.textContent = fmtAED(S.amount);
+      wrap.dataset.amount = String(S.amount); wrap.dataset.months = String(S.months);
+      clear(rows);
+      [6, 12, 24].forEach(function (m) {
+        var on = S.months === m, pay = ME.loanInstalment(S.amount, m, mid), cap = S.pq && S.pq.maxByTermMonths ? S.pq.maxByTermMonths[m] : null;
+        rows.appendChild(h('button', { class: 'ph-row ph-term' + (on ? ' sel' : ''), type: 'button', role: 'radio', id: 'jr-need-term-' + m, 'aria-checked': on ? 'true' : 'false',
+          dataset: { months: String(m), pay: String(pay) }, onclick: function () { S.months = m; paint(); } },
+          h('span', { class: 'ph-term-l' }, h('span', { class: 'ph-pill-o', text: jrMonths(m) }),
+            cap !== null ? h('span', { class: 'ph-term-cap', text: 'fits up to ' + fmtAED(cap) }) : null),
+          h('span', { class: 'ph-term-r' }, h('span', { class: 'ph-term-pay', text: 'about ' + fmtMoney(pay) + '/mo' }), h('span', { class: 'ph-term-apr', text: 'from ' + fmtRate(bands.A[0]) + ' APR' }))));
+      });
+    }
+    amt.addEventListener('input', function () { S.amount = Number(amt.value); paint(); });
+    paint();
+    wrap.appendChild(h('span', { class: 'ph-tag', text: 'Personal loan · noor finance' }));
+    wrap.appendChild(h('h2', { class: 'ph-h1', text: 'How much do you need?' }));
+    wrap.appendChild(amtV);
+    wrap.appendChild(h('div', { class: 'ph-slider' }, amt, h('div', { class: 'ph-slider-l' }, h('span', { text: 'AED 1,000' }), h('span', { text: 'AED 50,000' }))));
+    wrap.appendChild(rows);
+    wrap.appendChild(h('div', { class: 'ph-foot ph-foot-l', text: 'Indicative at ' + fmtRate(mid) + ' — your offer confirms the rate' }));
+    wrap.appendChild(h('p', { class: 'ph-small', text: S.connected ? 'We’ll check it against your connected accounts next — no credit check yet.'
+      : 'Next: a Noor account and your bank accounts, so we can check it fits your budget. No credit check yet.' }));
+    return Journey.wv(wrap, B('Continue', function () { Journey.needNext(); }, 'jr-cta'));
+  },
+  /* v2.8 — variant A, sub-step 8·2: the affordability check on the real prequalify() caps for the chosen term */
+  affordView: function () {
+    var S = Journey.S, B = Journey.btn, pq = S.pq;
+    if (!pq) return Journey.wv(h('div', { class: 'ph-center' }, h('h2', { class: 'ph-h1', text: 'We couldn’t check right now' }), h('p', { class: 'ph-small', text: S.pqErr || '' })), null);
+    var cap = (pq.maxByTermMonths || {})[S.months] || 0, fits = S.amount <= cap;
+    var budget = pq.assumptions && pq.assumptions.instalmentBudgetMonthly;
+    var box = h('div', { id: 'jr-afford', dataset: { fits: String(fits), cap: String(cap), amount: String(S.amount), months: String(S.months) } });
+    if (fits) {
+      box.appendChild(h('span', { class: 'ph-okico', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.2')));
+      box.appendChild(h('h2', { class: 'ph-hero', id: 'jr-afford-head', text: 'Good news — ' + fmtAED(S.amount) + ' over ' + jrMonths(S.months) + ' fits your budget' }));
+      box.appendChild(h('p', { class: 'ph-p', text: 'Checked against your connected accounts. Next, the final checks — your exact offer is confirmed after a credit check.' }));
+    } else {
+      box.appendChild(h('h2', { class: 'ph-h1', id: 'jr-afford-head', text: 'Based on your accounts, over ' + jrMonths(S.months) + ' you can borrow up to ' + fmtAED(cap) }));
+      box.appendChild(h('p', { class: 'ph-p', text: 'You asked for ' + fmtAED(S.amount) + '. We keep the monthly payment within half of what’s left after your spending' +
+        (budget ? ' (about ' + fmtAED(budget) + ' a month)' : '') + ' — a longer term lets you borrow more.' }));
+    }
+    box.appendChild(h('div', { class: 'ph-card ph-okline' }, h('span', { class: 'ph-okico ph-okico-sm', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.4')),
+      h('span', null, h('strong', { text: 'Checking this didn’t affect your credit score' }), h('span', { class: 'ph-small ph-block', text: 'Worked out from your connected accounts only.' }))));
+    return Journey.wv(box, fits
+      ? B('Continue to final checks', function () { Journey.go(9, 0, 1); }, 'jr-cta')
+      : h('div', null,
+          B('Borrow ' + fmtAED(cap) + ' instead', function () { S.amount = cap; Journey.go(9, 0, 1); }, 'jr-afford-accept'),
+          B('Change the term', function () { Journey.go(8, 1, -1); }, 'jr-afford-term', { ghost: true })));
   },
   chooseView: function () {
     var S = Journey.S, pq = S.pq, B = Journey.btn;
@@ -6117,7 +6615,8 @@ var Journey = {
       h('label', { class: 'ph-card ph-check' + (S.applyErr ? ' ph-check-err' : ''), for: 'jr-aecb' }, cb,
         h('span', null, h('span', { class: 'ph-check-t', text: 'Check my credit report (AECB)' }), h('span', { class: 'ph-check-s', text: 'Required by law before any loan — Federal Law 6/2010' }))),
       S.applyErr ? h('div', { class: 'ph-note ph-note-err', id: 'jr-apply-err', role: 'alert' },
-        h('span', null, h('strong', { text: 'We need your OK for the credit check. ' }), 'Tick the box above and confirm again.',
+        h('span', null, /AECB/.test(S.applyErr) ? h('strong', { text: 'We need your OK for the credit check. ' }) : h('strong', { text: 'We couldn’t apply yet. ' }),
+          /AECB/.test(S.applyErr) ? 'Tick the box above and confirm again.' : 'Check your contact choices, then confirm again.',
           h('span', { class: 'ph-small ph-block ph-mono-msg', text: S.applyErr }))) : null,
       h('div', { class: 'ph-card ph-lender', id: 'jr-lender-line' },
         h('span', { class: 'ph-lender-t', text: 'Noor arranges your loan with Partner Bank, the lender. We share your application result — never your bank data' }),
@@ -6126,7 +6625,7 @@ var Journey = {
   },
   offerView: function () {
     var S = Journey.S, B = Journey.btn, r = Journey.rec();
-    if (!r) return Journey.wv(h('div', { class: 'ph-center' }, h('h2', { class: 'ph-h1', text: 'No application yet' })), B('Choose your loan', function () { Journey.go(8, 0, -1); }, 'jr-cta'));
+    if (!r) return Journey.wv(h('div', { class: 'ph-center' }, h('h2', { class: 'ph-h1', text: 'No application yet' })), B('Choose your loan', function () { Journey.changeLoan(); }, 'jr-cta'));
     var reasons = h('div', { class: 'ph-reasons' }, (r.reasonCodes || []).map(function (c) {
       return h('div', { class: 'ph-reason', dataset: { code: c } }, h('span', { class: 'ph-reason-en', text: rcEn(c) }), h('span', { class: 'ar ph-reason-ar', lang: 'ar', dir: 'rtl', text: rcAr(c) }));
     }));
@@ -6135,7 +6634,7 @@ var Journey = {
         h('h2', { class: 'ph-h1', text: r.outcome === 'REFER' ? 'We need a closer look' : 'We can’t offer this loan right now' }),
         h('p', { class: 'ph-p', text: r.outcome === 'REFER' ? 'A Noor credit analyst will review your application — usually within a working day. Here’s why:' : 'Here’s why — and Noor keeps helping with your budget in the meantime:' }),
         reasons),
-        h('div', null, B('Change my loan', function () { Journey.go(8, 0, -1); }, 'jr-cta'), B('Back to botim', function () { Journey.closeWebview(); }, 'jr-cta-2', { ghost: true })));
+        h('div', null, B('Change my loan', function () { Journey.changeLoan(); }, 'jr-cta'), B('Back to botim', function () { Journey.closeWebview(); }, 'jr-cta-2', { ghost: true })));
     }
     var k = r.pricing.kfs, reduced = r.limit.approved < r.request.amount, tok = r.token || {};
     return Journey.wv(h('div', { id: 'jr-offer', dataset: { outcome: r.outcome, id: r.id, amount: String(r.limit.approved), months: String(k.tenorMonths), apr: String(k.rateMid),
@@ -6157,7 +6656,7 @@ var Journey = {
           h('button', { class: 'wv-x', type: 'button', id: 'jr-kfs-close', 'aria-label': 'Close the Key Facts Statement', onclick: function () { S.kfsSheet = false; Journey.render(); } }, jrSvg(JR_ICON.close, null, '1.8'))),
         Journey.kfsDoc(r, 'en'), h('p', { class: 'ph-small ph-muted', text: 'You’ll read it in Arabic or English and acknowledge it before you sign.' }))) : null),
       h('div', null, B(reduced ? 'Accept ' + fmtAED(r.limit.approved) : 'Accept offer', function () { Journey.go(11, 0, 1); }, 'jr-cta'),
-        reduced ? B('Change my loan', function () { Journey.go(8, 0, -1); }, 'jr-cta-2', { ghost: true }) : null));
+        reduced ? B('Change my loan', function () { Journey.changeLoan(); }, 'jr-cta-2', { ghost: true }) : null));
   },
   kfsDoc: function (r, lang) {
     var k = r.pricing.kfs, rep = r.repayment || {};
@@ -6256,75 +6755,131 @@ var Journey = {
       h('h2', { class: 'ph-hero', id: 'jr-done-head', text: ok ? fmtAED(r.limit.approved) + ' is on its way from Partner Bank' : 'Almost there' }),
       h('p', { class: 'ph-p', text: ok ? 'It reaches your ENBD account today. First instalment ' + fmtMoney(k.monthlyInstalment) + ' on ' + fmtLongDate(due.iso) + '.' : '' }),
       h('p', { class: 'ph-small', text: 'Manage your loan in Noor — statements, early settlement and help.' }),
-      Journey.inlineEngineError(S.eventErr)),
+      Journey.inlineEngineError(S.eventErr),
+      /* v2.8 — the PWA: a second, Noor-owned servicing channel (installing needs the phone's browser) */
+      ok ? h('div', { class: 'ph-card ph-pwa', id: 'jr-pwa' },
+        h('span', { class: 'ph-pwa-ico', 'aria-hidden': 'true' }, h('span', { class: 'noor-icon' })),
+        h('span', { class: 'ph-pwa-t', text: 'Get Noor on your home screen — manage repayments without opening botim' }),
+        S.pwaOpen
+          ? h('span', { class: 'ph-note ph-note-ok', id: 'jr-pwa-opened' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'),
+              h('span', { text: 'Opened noor.finance in your browser (simulated). Tap Share → Add to Home Screen.' }))
+          : h('button', { class: 'ph-btn-sm', type: 'button', id: 'jr-pwa-open', onclick: function () { S.pwaOpen = true; Journey.render(); } }, 'Open noor.finance in your browser'),
+        h('span', { class: 'ph-small', text: 'Simulated in this prototype.' })) : null),
       B('Back to botim', function () { Journey.go(16, 1, 1); }, 'jr-cta'));
   },
   /* ---------- "Behind the scenes" ---------- */
   behind: function () {
-    var S = Journey.S, st = S.step, sub = S.sub, r = Journey.rec();
+    var S = Journey.S, st = S.step, sub = S.sub, r = Journey.rec(), A = S.variant === 'A';
     var link = function (txt, id, fn) { return h('button', { class: 'btn btn-ghost linkbtn jr-link', type: 'button', id: id, text: txt, onclick: fn }); };
+    var caps = S.pq && S.pq.maxByTermMonths ? '6 → ' + fmtN(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtN(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtN(S.pq.maxByTermMonths[24]) : '6 → 10,000 · 12 → 21,000 · 24 → 40,000';
     var B = {
-      0: ['botim markets — Noor connects and decides', [
-          'botim money shows a Connected accounts strip. “Add another +” opens Noor in a web-view: Noor holds the Open Finance (Al Tareq) consent and does the connecting.',
-          'botim never receives bank detail or credit data. It gets journey status — started, accounts connected, pre-qualified, funded — for attribution, plus the display tiles the customer agrees to see in botim money (bank, masked number, balance).',
-          'Two entries: connect a bank here (entry 1), then Credit → “How much can you borrow?” (entry 2). Applying before connecting sends the customer to connect first.']],
+      0: ['botim hosts — Noor renders', [
+          'Every Noor surface inside botim is a Noor embed served from noor.finance in a sandboxed web-view: the banner and the Noor icon on this page, the Insights cards, the account tiles, the Credit-tab card' + (A ? ' and the Loans tile' : '') + '. Each carries a small “by noor” label.',
+          'botim’s own code never receives Open Finance or credit data — events only: impression, click, journey_started, accounts_connected, prequalified, applied, funded, each carrying the experiment variant.',
+          'Entries: Connected accounts → “Add another +” connects a bank (entry 1); the banner, the Noor icon or Credit → ' + (A ? 'Loans → the Noor tile' : '“How much can you borrow?”') + ' starts a loan (variant ' + S.variant + ').']],
       1: ['Noor opens inside botim — a web-view', [
-          'Identity hand-off only: name and mobile number, with the customer’s OK. Noor creates its own account.',
+          'Identity hand-off only: name, mobile number and email, with the customer’s OK. Noor creates its own account.',
           'Noor runs on its own domain (noor.finance) with its own session — botim can’t read the page, and Noor can’t read botim.',
-          S.intent === 'loan' ? 'The customer tapped “How much can you borrow?” before connecting a bank, so Noor asks them to connect first — pre-qualification is worked out from the accounts.' : 'Entry 1: the customer tapped “Add another +” in Connected accounts.']],
+          S.intent === 'loan' ? (A ? 'Variant A: the customer named an amount first; Noor needs an account and the bank accounts to check it fits.' : 'The customer asked “How much can you borrow?” before connecting a bank, so Noor asks them to connect first — pre-qualification is worked out from the accounts.')
+            : 'Entry 1: the customer tapped “Add another +” in Connected accounts.']],
       2: ['Noor’s own account', ['The number comes from the hand-off; the customer confirms it and accepts Noor’s Terms and Privacy policy — Noor is responsible for the data that follows.']],
-      3: ['Noor verifies the number itself', ['A one-time code from Noor: the host’s hand-off is a convenience, not proof of identity. UAE PASS comes later, for signing.']],
+      3: sub === 1 ? ['Your email — and an optional digital-footprint check', [
+            'botim shared the email at hand-off; Noor confirms it with its own 6-digit code before using it. The customer can use a different one.',
+            'The footprint check is a separate, optional consent (email + phone → a RiskSeal-style provider): identity and account security — thin-file scoring only if credit risk switches it on. Declining never affects the application.',
+            'Never used for credit here: Ravi has an AECB file; on a thin file the overlay runs in shadow until back-tested.',
+            'Never used at all: gender, lifestyle traits, service names, breach sources (PDPL minimisation).']]
+        : (sub === 2 ? ['How should we contact you? — a consent of its own', [
+            'CBUAE consumer-protection rules: marketing only with prior consent and an easy opt-out; WhatsApp needs explicit opt-in under the platform’s policy; service messages follow the channels the customer picked.',
+            'Stored with the application as consents.communications — a consent with its own reference. Not in the credit memo (data minimisation): the lender sees “Contact details and preferences” on the withheld list.',
+            'botim gets none of it — no email, no channels.']]
+        : ['Noor verifies the number itself', ['A one-time code from Noor: the host’s hand-off is a convenience, not proof of identity. UAE PASS comes later, for signing.']]),
       4: ['Al Tareq — UAE Open Finance consent', [
           'Al Tareq is the CBUAE’s Open Finance platform; Noor is the licensed third party that holds this consent.',
-          'The consent is specific: what (accounts, balances, 12 months of transactions), why (affordability), how long (12 months or until cancelled), where it shows (Noor, and tiles and insights in botim money).',
+          'The consent is specific: what (accounts, balances, 12 months of transactions), why (what the customer can afford — and, while a loan with Noor is open, spotting early if repayments might become hard), how long (12 months or until cancelled), and where it shows: in Noor — including Noor views inside botim.',
           'Read-only: Noor can’t move money with it, and the customer can cancel any time in the Al Tareq dashboard.']],
       5: ['The bank approval must leave the web-view', [
           'OAuth 2.0 for native apps (RFC 8252) and the FAPI 2.0 security profile behind UAE Open Finance require an external browser or the bank’s own app — never an embedded web-view, which could read or imitate the bank’s login.',
           'The bank’s app opens, the customer approves with Face ID, and the return deep link brings them back into botim; the Noor web-view resumes where it left off. Noor never sees bank credentials.',
           'In production each bank approves its own accounts — two short hops for ENBD and FAB.'], 'insight'],
-      6: ['Back in botim — new account tiles', [
+      6: ['Back in botim — the tiles are a Noor embed', [
           'The return deep link reopened botim and the Noor web-view confirmed the connection.',
-          'The new tiles show bank, masked number and balance only — display data under the consent scope the customer approved. Income, spending patterns and anything credit-related stay in Noor.',
-          'Next — entry 2: Credit → “How much can you borrow?”']],
-      7: sub === 0 ? ['Entry 2 — Credit in botim money', ['botim’s Credit tab carries Noor’s card. Tapping it reopens the Noor web-view; the accounts are already connected, so no new consent is needed.']]
+          'The account tiles and the Insights cards are rendered by Noor inside botim (noor.finance, sandboxed). botim gets accounts_connected as an event — never the tiles, balances or insights.',
+          'The insights use the connected accounts and the NoorScore estimate from prequalify() — no AECB inquiry, no decision record.',
+          A ? 'Next — variant A: the affordability check for the amount the customer asked for.' : 'Next — entry 2: Credit, the banner or the Noor icon → “How much can you borrow?”']],
+      7: sub === 0 ? (A ? ['Variant A — botim’s Loans screen', [
+            'botim’s Credit tab shows a generic Loans list: a neutral row for the current partner’s cash loan and the Noor tile, a Noor embed. Nothing here copies botim’s real product UI.',
+            'Tapping the Noor tile opens the Noor web-view at “How much do you need?” — amount first, no pre-qualification yet.']]
+          : ['Entry 2 — Credit in botim money', ['botim’s Credit tab carries Noor’s card (a Noor embed). Tapping it reopens the Noor web-view; the accounts are already connected, so no new consent is needed.']])
         : (sub < 3 ? ['Noor reads the connected accounts', ['Mizan reads 12 months across the 2 accounts: salary credits, spending and the repayments already going out (a AED 900 credit-card payment). This data stays in Noor.']]
         : ['prequalify() — Open Finance only', [
             'No AECB inquiry and no decision record: indicative only, so it can’t affect the credit score.',
             'Two affordability tests, the stricter wins: the CBUAE DBR cap (50% of income − repayments already going out = AED 5,100/month) and Noor’s cash-flow budget (50% of what’s left after spending and repayments: AED 3,700 → AED 1,850/month). Here the cash-flow budget binds — the DBR cap alone would have said “up to AED 110,000”, a payment Ravi’s budget can’t carry.',
-            'Max = that budget over 24 months at the top of band B (9.99%), capped at 20× salary and the product cap; each term gets its own cap (6 → 10,000 · 12 → 21,000 · 24 → 40,000); min = 25% of max.']]),
-      8: ['The application, before any decision', [
-          'Indicative payments use the band the NoorScore estimate points to (B) at its mid-rate — the rate Mizan prices a grade-B loan at.',
-          'Each term has its own cap from the cash-flow budget: 6 months up to AED 10,000, 12 up to AED 21,000, 24 up to AED 40,000. Picking a shorter term lowers the maximum, and the slider can’t go past it.',
-          'Repayment follows the amount: Al Tareq recurring payment up to AED 1,000, direct debit above — no salary transfer required.',
-          'Still no decision: nothing is decided until the customer confirms in the next step.']],
+            'Max = that budget over 24 months at the top of band B (9.99%), capped at 20× salary and the product cap; each term gets its own cap (' + caps + '); min = 25% of max.',
+            'decide() applies the same rule since v2.8 (POL_INSTALMENT_TO_FCF), so pre-qualification never promises more than the engine approves.']]),
+      8: sub === 1 ? ['Variant A — the customer names an amount first', [
+            'botim’s Loans list carries a Noor tile (a Noor embed); tapping it opens the Noor web-view at “How much do you need?” — AED 1,000–50,000 over 6, 12 or 24 months.',
+            'No pre-qualification yet: the amount comes from the customer, not from their accounts. The affordability check runs once the bank is connected.',
+            'Indicative payments use the personal-loan band B mid-rate; the offer confirms the rate.']]
+        : (sub === 2 ? ['Affordability check — the real prequalify() caps', [
+            'prequalify() reads the connected accounts only (no AECB inquiry, no decision record) and caps each term: ' + caps + '.',
+            'Fits → straight to the final checks. Doesn’t fit → offer the cap for that term, or change the term.',
+            'decide() applies the same free-cash-flow rule (POL_INSTALMENT_TO_FCF, at the mid-band rate), so the amount accepted here is what the engine approves.']]
+        : ['The application, before any decision', [
+            'Indicative payments use the band the NoorScore estimate points to (B) at its mid-rate — the rate Mizan prices a grade-B loan at.',
+            'Each term has its own cap from the cash-flow budget: ' + caps + '. Picking a shorter term lowers the maximum, and the slider can’t go past it.',
+            'Repayment follows the amount: Al Tareq recurring payment up to AED 1,000, direct debit above — no salary transfer required.',
+            'Still no decision: nothing is decided until the customer confirms in the next step.']]),
       9: ['decide() — the real Mizan engine', [
           'AECB consent is required by law before any loan (Federal Law 6/2010). Without it the engine refuses — try confirming with the box unticked.',
-          'Applying also records consent “share with lender”: Partner Bank gets the application result, never the bank data.',
-          'UAE PASS confirms identity; decide() then pulls AECB, verifies the salary through Open Finance, runs the policy pack, NoorScore and the DBR limit, and prices the loan.']],
+          'Applying also records consent “share with lender”: Partner Bank gets the application result, never the bank data. The contact preferences' + (S.footprint ? ' and the digital-footprint consent' : '') + ' are recorded too — and stay with Noor.',
+          'UAE PASS confirms identity; decide() then pulls AECB, verifies the salary through Open Finance, runs the policy pack — including the free-cash-flow rule — NoorScore and the limit, and prices the loan.']],
       10: ['The offer is the decision record', [
           'Every figure on this screen is read from ' + (S.recId || 'the decision record') + ': amount, term, APR (mid of band B), instalment and total repayable — the record the Decision log replays.',
           'An approval is not a loan: offer → KFS → e-sign → repayment set-up → cooling-off → disbursement, enforced in order by the engine.']],
       11: ['Mizan sends Partner Bank the credit memo', [
           'Partner Bank is the lender of record: it books, funds and collects. Noor arranges and decides.',
-          'The memo carries outcome, terms, NoorScore and band, affordability bands, verification flags and consent references — built from an allowlist. Nothing from Open Finance leaves Noor.']],
+          'The memo carries outcome, terms, NoorScore and band, affordability bands, verification flags and consent references — built from an allowlist. Nothing from Open Finance leaves Noor; nor do the email, the contact preferences or any vendor footprint field.']],
       12: ['Key Facts Statement, in Arabic and English', ['CBUAE consumer protection: the KFS comes before any signature, in both languages.', '“I’ve read the Key Facts” records the first two execution steps.']],
       13: ['E-signature via UAE PASS', ['The loan agreement with Partner Bank, signed with the customer’s UAE PASS (simulated here).']],
       14: ['Repayment collection — one platform rule', ['Above AED 1,000: a direct debit mandate in favour of Partner Bank on the customer’s own account. AED 1,000 or less: an Al Tareq recurring payment approved in the bank app. No salary transfer required.',
           'Repayment set-up must happen before cooling-off can clear — the engine refuses otherwise.']],
       15: ['Cooling-off — CBUAE Consumer Protection Regulation 8/2020', ['Five business days to change your mind, or a written waiver. Nothing is paid out before it clears.']],
       16: ['Disbursed — botim learns only “funded”', ['Partner Bank credits the loan; the record is EXECUTED and its memo shows the new status.',
-          'botim money’s Credit tab shows “Loan funded · managed in Noor” — no amount, no terms.']]
+          'botim money’s Credit tab shows “Loan funded · managed in Noor” (a Noor embed) — no amount, no terms.']]
     };
     var b = B[st] || B[0];
-    if (S.chat && (st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 1))) {
+    var hostView = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 1);
+    if (S.chat && hostView) {
       b = ['Next: split in chat — a read-only teaser', ['botim AI could offer to split recent card purchases right in the chat.',
         'It needs a 1-month “repay next month” plan. The engine’s split product allows Pay in 3, 6 or 12 only, so nothing here calls Mizan and no price is shown — the plan would go through the policy console with 4-eyes first.']];
     }
-    var wrap = h('div', { class: 'jr-bts' + (b[2] === 'insight' ? ' jr-insight' : ''), dataset: { step: String(st) } });
+    var wrap = h('div', { class: 'jr-bts' + (b[2] === 'insight' ? ' jr-insight' : ''), dataset: { step: String(st), sub: String(sub) } });
     wrap.appendChild(h('div', { class: 'jr-bts-t', text: b[0] }));
     var ul = h('ul', { class: 'jr-bts-l' }); b[1].forEach(function (x) { ul.appendChild(h('li', { text: x })); }); wrap.appendChild(ul);
-    if (st === 5) wrap.appendChild(h('div', { class: 'callout callout-warn jr-risk', id: 'jr-build-risk' }, h('div', { class: 'co-title', text: 'Build risk to agree with Botim' }),
-      h('div', { class: 'co-body', text: 'App-to-app redirect out of the web-view and a registered return URL (universal link / app link) back into botim — prove both on iOS and Android early.' })));
+    if (hostView && !S.chat) {
+      /* v2.8 §1 — why showing the data inside botim is Noor showing its own customer their own data, not onward sharing */
+      wrap.appendChild(h('div', { class: 'callout callout-info jr-position', id: 'jr-embed-position' },
+        h('div', { class: 'co-title', text: 'Noor’s position — confirm with counsel and the Nebras design rules' }),
+        h('div', { class: 'co-body' }, h('span', { text: 'Showing the data inside botim is lawful when:' }),
+          h('ol', { class: 'jr-position-l' },
+            h('li', { text: 'the embed runs on Noor’s own origin (noor.finance);' }),
+            h('li', { text: 'no JavaScript bridge hands data to the host app;' }),
+            h('li', { text: 'no host analytics SDK runs inside the embed;' }),
+            h('li', { text: 'botim gets events only;' }),
+            h('li', { text: 'the Al Tareq consent names where the data is shown: “in Noor — including Noor views inside botim”.' })),
+          h('span', { text: 'Under those conditions it is Noor showing its own customer their own data on a Noor-controlled surface, not onward sharing.' }))));
+    }
+    if (st === 3 && sub === 1) {
+      var fa = S.fpa;
+      wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-fp-out' },
+        h('div', { class: 'jr-engine-h' }, h('code', { text: 'assessFootprint(j1.footprint)' }), h('span', { class: 'small muted', text: fa ? ' · pure — no record' : ' · not run' })),
+        fa ? h('div', { class: 'jr-chips', id: 'jr-fp-chips' },
+              h('span', { class: 'jr-chip ok', dataset: { chip: 'identity' }, text: 'Identity ' + fa.identity.confidence }),
+              h('span', { class: 'jr-chip' + (fa.security.atoRisk === 'NORMAL' ? ' ok' : ' warn'), dataset: { chip: 'ato' }, text: 'ATO risk ' + fa.security.atoRisk + ' → ' + fa.security.action.toLowerCase() }),
+              h('span', { class: 'jr-chip shadow', dataset: { chip: 'overlay' }, text: 'Overlay +' + fa.creditOverlay.points + ' · ' + fa.creditOverlay.mode.toLowerCase() + ' · ' + fa.creditOverlay.eligibleWhen + ' only' }),
+              h('span', { class: 'jr-chip', dataset: { chip: 'excluded' }, text: fa.excluded.length + ' item types dropped at ingestion' }))
+           : h('div', { class: 'small muted', text: 'Not run — the customer hasn’t agreed. Declining never affects the application.' })));
+    }
     if (st === 7 && sub === 3 && S.pq) {
       var pq = S.pq;
       wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-pq-out' },
@@ -6335,6 +6890,8 @@ var Journey = {
           h('dt', { text: 'Note' }), h('dd', { text: pq.note })),
         h('ul', { class: 'jr-basis' }, pq.basis.map(function (x) { return h('li', { text: x }); }))));
     }
+    if (st === 5) wrap.appendChild(h('div', { class: 'callout callout-warn jr-risk', id: 'jr-build-risk' }, h('div', { class: 'co-title', text: 'Build risk to agree with Botim' }),
+      h('div', { class: 'co-body', text: 'App-to-app redirect out of the web-view and a registered return URL (universal link / app link) back into botim — prove both on iOS and Android early.' })));
     if (r && st >= 9 && st <= 10 && !(st === 9 && sub === 0 && !S.recId)) {
       wrap.appendChild(h('div', { class: 'jr-engine' }, h('div', { class: 'jr-engine-h' }, h('code', { text: r.id }), ' ', outcomeChip(r.outcome),
         r.score && isNum(r.score.points) ? h('span', { class: 'small muted', text: ' NoorScore ' + r.score.points + ' · grade ' + r.score.grade }) : null),
@@ -6351,55 +6908,107 @@ var Journey = {
       steps.forEach(function (s) { ol.appendChild(h('li', { class: done[s.type] ? 'done' : '', dataset: { type: s.type } }, h('span', { class: 'jr-exec-l', text: s.label }), h('span', { class: 'jr-exec-t', text: done[s.type] ? fmtDT(done[s.type]).slice(11) : '' }))); });
       wrap.appendChild(h('div', { class: 'jr-engine' }, h('div', { class: 'jr-engine-h' }, h('code', { text: 'recordEvent(' + r.id + ', …)' }), h('span', { class: 'small muted', text: ' · status ' + r.status })), ol));
     }
+    if (st === 16 && sub === 0) {
+      wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-pwa-why' }, h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Noor on the home screen — a PWA' })),
+        h('ul', { class: 'jr-bts-l' },
+          h('li', { text: 'In-app web-views (iOS WKWebView, Android WebView) can’t install a PWA: there is no install prompt. Installing needs the phone’s browser.' }),
+          h('li', { text: 'The PWA is a second, Noor-owned servicing channel: repayments, statements, the Al Tareq consent dashboard link. It isn’t tied to botim’s release cycle.' }),
+          h('li', { text: 'iOS web push needs iOS 16.4+ and a Home Screen install.' }))));
+    }
     return wrap;
   },
   renderBehind: function () {
     var box = clear($('#jr-behind')), S = Journey.S;
-    box.appendChild(h('h3', null, 'Behind the scenes ', h('span', { class: 'h3-note', text: '— step ' + S.step + ' of 16' })));
+    var e = jrPath()[jrIdx(S.step, S.sub)] || { n: S.step };
+    box.appendChild(h('h3', null, 'Behind the scenes ', h('span', { class: 'h3-note', text: '— step ' + e.n + (e.sub ? '·' + e.sub : '') + ' of 16 · variant ' + S.variant })));
     box.appendChild(Journey.behind());
     var calls = h('div', { class: 'jr-calls', id: 'jr-calls' });
-    if (!S.calls.length) calls.appendChild(h('div', { class: 'small muted', text: 'No engine calls yet — pre-qualification is the first.' }));
+    if (!S.calls.length) calls.appendChild(h('div', { class: 'small muted', text: 'No engine calls yet — they start once the accounts are connected.' }));
     S.calls.slice(-6).forEach(function (c) { calls.appendChild(h('div', { class: 'jr-call' }, h('code', { text: c.call }), h('span', { class: 'jr-call-r', text: '→ ' + c.result }))); });
     var bot = h('div', { class: 'jr-botim', id: 'jr-botim' });
     if (!S.botim.length) bot.appendChild(h('span', { class: 'small muted', text: 'Nothing yet.' }));
-    S.botim.forEach(function (b) { bot.appendChild(h('code', { class: 'jr-ev', dataset: { ev: b.key }, text: b.text })); });
+    S.botim.forEach(function (b) { bot.appendChild(h('code', { class: 'jr-ev', dataset: { ev: b.key, variant: S.variant }, text: b.text })); });
     box.appendChild(h('div', { class: 'jr-two' },
       h('div', null, h('div', { class: 'jr-sub-t', text: 'Mizan calls (this journey)' }), calls),
-      h('div', null, h('div', { class: 'jr-sub-t', text: 'What botim receives' }), bot)));
-    box.appendChild(h('div', { class: 'jr-foot', id: 'jr-footnote', text: 'Host-app screens are illustrative, not Botim’s actual interface — a concept of botim money drawn from neutral components, with no Botim logo or artwork.' }));
+      h('div', null, h('div', { class: 'jr-sub-t', text: 'What botim receives — events only, each with the variant' }), bot)));
+    box.appendChild(h('div', { class: 'jr-foot', id: 'jr-footnote', text: 'Host-app screens are illustrative, not Botim’s actual interface — a concept of botim money drawn from neutral components, with no Botim logo or artwork. Every “by noor” surface is a Noor embed.' }));
+  },
+  /* v2.8 §3 — the A/B test of the credit entry: the switch, the design and this session's counters from the event log */
+  renderExperiment: function () {
+    var box = $('#jr-exp');
+    if (!box) return;
+    clear(box);
+    var S = Journey.S;
+    box.appendChild(h('h3', null, 'Experiment ', h('span', { class: 'h3-note', text: '— the credit entry, A / B' })));
+    var seg = h('div', { class: 'jr-exp-seg', role: 'radiogroup', 'aria-label': 'Experiment variant' });
+    ['A', 'B'].forEach(function (v) {
+      seg.appendChild(h('button', { class: 'btn' + (S.variant === v ? ' btn-primary' : ''), type: 'button', role: 'radio', id: 'jr-var-' + v,
+        'aria-checked': S.variant === v ? 'true' : 'false', onclick: function () { if (Journey.S.variant !== v) Journey.setVariant(v); } },
+        v + ' · ' + JR_VARIANTS[v]));
+    });
+    box.appendChild(seg);
+    box.appendChild(h('div', { class: 'small muted jr-exp-note', text: 'B is today’s flow and the default. Switching restarts the journey; the counters below keep this session’s events.' }));
+    var ss = jrSampleSize(JR_EXP.p1, JR_EXP.p2, JR_EXP.alpha, JR_EXP.power);
+    box.appendChild(h('dl', { class: 'kv jr-exp-kv', id: 'jr-exp-design' },
+      h('dt', { text: 'Hypothesis' }), h('dd', { text: 'Showing the approvable amount first (B) turns more botim users into funded loans and cuts reduced offers, compared with applying from the Loans screen (A).' }),
+      h('dt', { text: 'Randomisation' }), h('dd', { text: '50/50 on a hashed botim user id, sticky per user. Noor assigns the variant; botim’s events carry it.' }),
+      h('dt', { text: 'Primary metric' }), h('dd', { text: 'Funded loans per 1,000 entry impressions.' }),
+      h('dt', { text: 'Secondary' }), h('dd', { text: 'Start → apply, apply → funded, the reduced-offer rate, time to fund.' }),
+      h('dt', { text: 'Guardrails' }), h('dd', { text: 'Decline rate, 30+ DPD at month 3, complaints.' }),
+      h('dt', { text: 'Sample size' }), h('dd', null,
+        h('span', { class: 'jr-exp-n', id: 'jr-exp-n', dataset: { n: String(ss.n) }, text: '≈ ' + fmtN(ss.n) }), ' entry users per arm',
+        h('span', { class: 'small muted jr-block', text: 'To detect ' + (JR_EXP.p1 * 100).toFixed(1) + '% → ' + (JR_EXP.p2 * 100).toFixed(1) + '% funded at ' + Math.round(JR_EXP.power * 100) +
+          '% power, two-sided α ' + JR_EXP.alpha + ' — two-proportion formula, z = ' + ss.za.toFixed(3) + ' and ' + ss.zb.toFixed(3) + '.' }))));
+    var cols = [['impression', 'Impressions'], ['journey_started', 'Starts'], ['accounts_connected', 'Connects'], ['applied', 'Applications'], ['funded', 'Fundings']];
+    var count = function (v, name) { return Journey.eventLog.filter(function (e) { return e.variant === v && e.name === name; }).length; };
+    var thead = h('tr', null, h('th', { text: 'Variant' }), cols.map(function (c) { return h('th', { class: 'num', text: c[1] }); }));
+    var tbody = h('tbody');
+    ['A', 'B'].forEach(function (v) {
+      tbody.appendChild(h('tr', { dataset: { variant: v }, class: S.variant === v ? 'jr-exp-cur' : '' }, h('td', { text: v + (S.variant === v ? ' · now' : '') }),
+        cols.map(function (c) { return h('td', { class: 'num', dataset: { k: c[0] }, text: String(count(v, c[0])) }); })));
+    });
+    box.appendChild(h('div', { class: 'jr-sub-t jr-exp-sub', text: 'This session, from the event log' }));
+    box.appendChild(h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl jr-exp-tbl', id: 'jr-exp-counts' }, h('thead', null, thead), tbody)));
   },
   renderSteps: function () {
     var box = clear($('#jr-steps')), S = Journey.S, r = Journey.rec();
-    box.appendChild(h('h3', { class: 'jr-steps-h' }, h('span', null, 'Steps ', h('span', { class: 'h3-note', text: '— tap any step you have reached' })),
+    box.appendChild(h('h3', { class: 'jr-steps-h' }, h('span', null, 'Steps ', h('span', { class: 'h3-note', text: '— variant ' + S.variant + ' · tap any step you have reached' })),
       h('button', { class: 'btn', type: 'button', id: 'jr-restart', text: 'Restart journey', onclick: function () { Journey.restart(); } })));
     var ex = r ? execStepsFor('personal_loan', r.id) : execStepsFor('personal_loan');
     var done = {}; if (r) (r.events || []).forEach(function (e) { done[e.type] = true; });
-    var list = h('div', { class: 'jr-steplist' });
-    [[1, 'Entry 1 — connect a bank', 'Connected accounts → Add another +'], [2, 'Entry 2 — apply for a loan', 'Credit → How much can you borrow?']].forEach(function (g) {
+    var path = jrPath(), curIdx = jrIdx(S.step, S.sub);
+    var list = h('div', { class: 'jr-steplist', dataset: { variant: S.variant } });
+    (JR_GROUPS[S.variant] || JR_GROUPS.B).forEach(function (g) {
       var col = h('div', { class: 'jr-col' });
       list.appendChild(col);
       col.appendChild(h('div', { class: 'jr-group' }, h('span', { class: 'jr-group-t', text: g[1] }), h('span', { class: 'jr-group-s', text: g[2] })));
-      JR_STEPS.filter(function (s) { return s.entry === g[0]; }).forEach(function (s) {
-        var reached = s.n <= S.reached, cur = s.n === S.step;
-        var tag = s.exec ? s.exec.map(function (i) { return ex[i] ? ex[i].label : ''; }).join(' · ') : (s.engine || '');
-        var execDone = s.exec && s.exec.every(function (i) { return ex[i] && done[ex[i].type]; });
-        col.appendChild(h('button', { class: 'jr-step' + (cur ? ' cur' : '') + (reached ? ' reached' : ''), type: 'button', dataset: { step: String(s.n) },
-          disabled: reached ? null : 'disabled', 'aria-current': cur ? 'step' : null, onclick: function () { Journey.jump(s.n); } },
-          h('span', { class: 'jr-n', text: execDone ? '✓' : String(s.n) }),
+      path.forEach(function (s, i) {
+        if (s.group !== g[0]) return;
+        var reached = i <= S.reachedIdx, cur = i === curIdx;
+        var tag = s.exec ? s.exec.map(function (k) { return ex[k] ? ex[k].label : ''; }).join(' · ') : (s.engine || '');
+        var execDone = s.exec && s.exec.every(function (k) { return ex[k] && done[ex[k].type]; });
+        var ds = { step: String(s.n), idx: String(i) };
+        if (s.sub !== undefined) ds.sub = String(s.sub);
+        col.appendChild(h('button', { class: 'jr-step' + (cur ? ' cur' : '') + (reached ? ' reached' : '') + (s.sub !== undefined ? ' jr-substep' : ''), type: 'button', dataset: ds,
+          disabled: reached ? null : 'disabled', 'aria-current': cur ? 'step' : null, onclick: function () { Journey.jump(i); } },
+          h('span', { class: 'jr-n', text: execDone ? '✓' : String(s.n) + (s.sub !== undefined ? '·' + s.sub : '') }),
           h('span', { class: 'jr-st' }, h('span', { class: 'jr-st-t', text: s.title }), tag ? h('span', { class: 'jr-st-e' + (s.exec ? ' exec' : ''), text: tag }) : null)));
       });
     });
     box.appendChild(list);
   },
-  jump: function (n) {
-    var S = Journey.S;
-    if (n > S.reached) return;
-    var sub = 0;
-    if (n === 6) sub = 1;
-    if (n === 7) sub = S.pq ? 3 : 0;
-    if (n === 11) sub = 1;
-    if (n === 4 && S.connected) sub = 0;
+  /* Jump back to a reached entry of the variant's path */
+  jump: function (i) {
+    var S = Journey.S, e = jrPath()[i];
+    if (!e || i > S.reachedIdx) return;
+    var n = e.n, sub = e.sub !== undefined ? e.sub : 0;
+    if (e.sub === undefined) {
+      if (n === 6) sub = S.variant === 'A' ? 0 : 1;
+      if (n === 7) sub = S.variant === 'A' ? 0 : (S.pq ? 3 : 0);
+      if (n === 11) sub = 1;
+    }
     if (n >= 10 && !S.recId) return;
+    if (n === 8 && sub === 2 && !S.connected) return;
     Journey.go(n, sub);
   }
 };

@@ -770,7 +770,8 @@ choices the spec left open:
   contains the word "transactions", which the spec's own privacy scan forbids.
 - **Free cash flow on personal loans.** Personal-loan records add `freeCashFlowMonthly` and `instalmentToFcfPct`,
   informational only, when connected accounts show spending and Open Finance is consented. No rule reads them.
-  Without them the memo says "Not assessed for this product".
+  Without them the memo says "Not assessed for this product". *(v2.8: no longer informational — the
+  `POL_INSTALMENT_TO_FCF` rule and the `FCF` limit candidate read them; see "As built — v2.8".)*
 - **Bands.** DBR 50% falls in "35–50%". Instalment share bands: < 25%, 25–50%, > 50%.
 - **Privacy scan.** Every leaf of the memo and every SFTP cell is scanned. Band fields are instead asserted equal
   to an independently computed band, because a band boundary can equal a raw monthly value (c3's 15,000 element
@@ -809,7 +810,8 @@ Built as JOURNEY-SPEC.md specifies, revised by the orchestrator's update from th
   - Finishing returns to the Credit tab with "Loan funded · managed in Noor", with no amount.
 - **What botim receives.** Journey status, plus display tiles: bank, masked number and balance, and the Insights
   mix. The Al Tareq consent states this ("Where you'll see it: in Noor — and as account tiles and insights in botim
-  money"). Credit data, the decision and the memo never reach botim.
+  money"). Credit data, the decision and the memo never reach botim. *(Superseded in v2.8: botim receives events
+  only; the tiles and insights are Noor embeds, and the consent reads "in Noor — including Noor views inside botim".)*
 - **Pre-qualification range — capped by free cash flow (supersedes the spec's DBR-only formula).**
   - The spec's formula (DBR headroom only) gave j1 AED 44,000–110,000: a AED 5,100/month instalment for a customer
     whose spending leaves AED 3,700/month. Within the CBUAE cap, but not what his budget can carry, and the wrong
@@ -825,7 +827,8 @@ Built as JOURNEY-SPEC.md specifies, revised by the orchestrator's update from th
   - The reduced-offer screen (RC_LIMIT_REDUCED) is no longer reachable through the slider; acceptance drives it by
     bypassing the UI, which tests the engine as the safety net.
   - Still open: `decide()` for the personal loan keeps free cash flow informational (the DBR cap is the only
-    affordability rule). Promoting it to a policy rule is a policy-pack change, not made here.
+    affordability rule). Promoting it to a policy rule is a policy-pack change, not made here. *(Closed in v2.8:
+    `instalmentToFcfMaxPct` on the personal-loan pack and rule `POL_INSTALMENT_TO_FCF`.)*
   - The slider runs from AED 1,000. The personal loan has no product minimum, so AED 1,000 decides and routes to
     Al Tareq without clamping.
 - **Engine additions.** `prequalify()` also returns `indicativePricing` (the estimated band B) and `assumptions`.
@@ -908,6 +911,87 @@ deviations:
   - The policy console shows `…Pct` regulatory values with a `%` on every pack.
   - The overview demo step is Step 9 (appended), so existing steps keep their numbers.
   - The Noor skin `<style>` block is byte-identical; all CSS sits under "Noor additions".
+
+### As built — v2.8
+
+Built as BOTIM-V28-SPEC.md specifies (selftest 1217 green, of which the 1123 earlier checks; acceptance 634 green, 11
+screens). Every existing persona outcome and number holds except the one the spec changes: Ravi's 110,000 / 6 months is
+now reduced to **AED 10,000** (FCF binds; the DBR headroom alone allowed AED 29,000). Decisions and deviations:
+
+- **Engine (additive).**
+  - Personal loan: `instalmentToFcfMaxPct: 50` (bounds [10, 80]) and rule `POL_INSTALMENT_TO_FCF`. It runs only when
+    connected accounts show spending and Open Finance is consented. The `FCF` limit candidate (PV of 50% × FCF at the
+    mid-band rate over the effective tenor, floored to 1,000) sits right after the DBR headroom, so a tie keeps the
+    earlier key. `features.freeCashFlowMonthly` is no longer informational. The rule FAILs (→ DECLINE,
+    `RC_FREE_CASH_FLOW`) only when no amount fits. Ravi: 6 → 10,000 · 12 → 21,000 · 24 → 40,000 at 8.99%, equal to the
+    `prequalify()` caps at 9.99%. 15,000 / 12 is unchanged (APPROVE, 737, AED 1,311.70; the rule passes at 35.5%).
+    r1–r5 and the sample books have no spending data, so the rule never runs for them. Only cross-product runs of
+    personas that carry spending change (the split persona c3 run through the personal loan now declines on free cash
+    flow); no screen or test makes those runs.
+  - `assessFootprint(fp, opts)` is pure and exported. `opts` (`aecb` or `aecbFile`, `mode`, `cap`) is an addition:
+    without the AECB context, eligibility stays `null` and `eligibleWhen` is stated. MEDIUM means 2 or 3 of the 4
+    identity signals. `reasonCodes` lists RC_FOOTPRINT_IDENTITY (HIGH), RC_STEP_UP_AUTH (ELEVATED) and
+    RC_FOOTPRINT_OVERLAY (applied). The three codes are in the data with Arabic.
+  - `decide()` handles the footprint only when three things hold: `consents.digitalFootprint === true`, the applicant
+    has a footprint, and the pack carries `footprintOverlayMode` (split, starter_loan, personal_loan).
+    - The DIGITAL_FOOTPRINT pull, the three features and `POL_IDENTITY_FOOTPRINT` are added after the evaluation. The
+      rule is PASS on HIGH and INFO otherwise, so it is never a decline reason.
+    - RC_FOOTPRINT_IDENTITY is not added to the decision's reasons, because those explain outcomes.
+    - ELEVATED adds the step-up token condition and RC_STEP_UP_AUTH.
+    - On a thin or no-hit file, `score.footprintOverlay` records `{delta, applied, mode}` outside `score.overlays`. In
+      LIVE the evaluation re-runs with the overlay in the scorecard (personal loan, split). The upgrade has no scorecard,
+      so there it is recorded as not applied.
+    - The selftest drives c4 with a test-only footprint: SHADOW leaves grade C unchanged; LIVE adds +10 → grade B and a
+      lower fee rate.
+    - `footprintReference` and the footprint screen are untouched.
+  - `consents.communications = {service, marketing}` over EMAIL / SMS / WHATSAPP / PUSH is validated before anything
+    is recorded: at least one service channel, and unknown channels are refused. It is stored as
+    `consents.communications {granted, at, reference 'CNS-<seq>-COMMS', service, marketing, basis}`.
+    `consents.digitalFootprint` is stored whenever the customer was asked, granted or declined. Records from the other
+    journeys keep their earlier shape.
+  - Credit memo: with consent, the identity flag reads "Verified (UAE PASS) · digital footprint: high confidence".
+    The withheld group "Raw contact details" became **"Contact details and preferences"**: one group instead of two
+    overlapping ones, so the other products keep 7 withheld groups and that existing check is unchanged.
+    `CONSENT_CODES`, the memo's allowlist, is unchanged, so neither new consent reaches the memo or the SFTP row.
+  - j1 data adds `aecb.cards 1`, `activeLoans 0`, `cardLimitTotal 12000`, `cardBalanceTotal 7440`, a synthetic
+    `contact.email` (reserved example domain, only ever shown masked) and the spec's `footprint`.
+- **Journey UI.**
+  - Every Noor surface in botim is a `.noor-embed` with a "by noor" corner label: the banner, the fifth round "Noor"
+    action button (Noor icon mask), the Insights cards, the account tiles, the Credit-tab card, the funded card, variant
+    A's Loans tile and the connected part of the Insights tab. The host toast no longer names banks. The "Noor's
+    position" callout shows in Behind the scenes on every host screen.
+  - What botim receives: events only — impression, click, journey_started, accounts_connected, prequalified, applied,
+    funded. Each carries "· variant X" and is sent once per journey. A session event log, kept across restarts and
+    variant switches, feeds the Experiment counters (impressions, starts, connects, applications, fundings per variant).
+  - Insights: card utilisation comes from j1's card totals, and the AED 900 repayment from the connected accounts.
+    Spending and "left after bills" come from the connected accounts. The NoorScore estimate comes from one pure
+    `prequalify()` call made on connecting. In production the card limits would come from the card accounts connected
+    through Al Tareq; there is no AECB inquiry.
+  - Experiment: a panel between Behind the scenes and Steps. The page computes the sample size with the two-proportion
+    formula and an inverse-normal approximation: **13,809 per arm** (z 1.960 / 0.842).
+  - Paths:
+    - Variant B is today's flow plus 3·1 and 3·2.
+    - Variant A runs 0 → 7 (Loans) → 8·1 "How much do you need?" → 1–6 → 8·2 affordability check → 9–16, and its step
+      list renders in that order. "Change my loan" returns to 8·1.
+    - Reached steps are tracked by position on the variant's path.
+    - In A, the budget insight leads to 8·1, the card insight to the Loans tile, and jumping to step 6 opens the
+      "accounts connected" screen.
+  - Email (3·1): the email is verified with its own demo code, and "Use a different email" validates the address. The
+    footprint box is unticked by default. Ticking it runs `assessFootprint()` without AECB context, because Noor has
+    not pulled the bureau yet, and shows the chips.
+  - Contact (3·2): Email joins the service defaults once verified. With no service channel the CTA is disabled and an
+    inline message shows.
+  - Step 16: the PWA card with a simulated "Open noor.finance in your browser", and the three bullets behind it.
+  - Policy console: `instalmentToFcfMaxPct` on the personal loan; `footprintOverlayMode` (a SHADOW / LIVE select) and
+    `footprintOverlayCap` on split, starter loan and personal loan. The Decision log replays the new consents and pull.
+- **Tests.**
+  - The selftest adds group 17 (94 checks). Only one existing message changed: "free cash flow 3,700 (informational)"
+    became "a policy rule since v2.8".
+  - Acceptance adds a variant-A section, a dark-theme section, v2.8 checks within the B walk, policy-console checks and a
+    byte-identity check of the Noor skin `<style>` block.
+  - Existing acceptance checks changed only where the behaviour changed: the step-1 hand-off copy (now with the email),
+    the "botim receives" message (events only), and the animated and 390px click sequences (they now pass 3·1 and 3·2).
+- The Noor skin `<style>` block is byte-identical; all v2.8 CSS sits at the end of "Noor additions".
 
 ### As built — v2.9
 

@@ -50,6 +50,17 @@
  *  - Starter-loan upgrade: a longer tenor must never cost a higher APR, and the
  *    lending partner's income (= total interest) must rise strictly with tenor —
  *    the PARTNER-INCOME GUARANTEE, enforced as a policy invariant at publish.
+ *  - Personal loan, free cash flow (Addendum v2.8, ../BOTIM-V28-SPEC.md §4): when
+ *    connected accounts show spending and Open Finance is consented, the instalment
+ *    must fit instalmentToFcfMaxPct% of free cash flow (income − spending −
+ *    obligations) — a limit candidate next to the DBR headroom, so pre-qualification
+ *    never promises more than decide() allows.
+ *  - Digital footprint (v2.8, FOOTPRINT-SPEC.md engine): a separate, optional consent.
+ *    Identity and account security only; the thin-file credit overlay is
+ *    positive-only, capped, and runs in SHADOW (computed, never applied) until
+ *    credit risk switches it LIVE with 4-eyes. Declining is never a decline reason.
+ *  - Contact preferences (v2.8): recorded as a consent with a reference; never in
+ *    the credit memo (data minimisation).
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -147,6 +158,8 @@
                   scoreDecline: 600, scoreRefer: 650, chequeReturnsMax: 1, productCap: 50000,
                   splitCapacityMultiple: { A: 3.0, B: 2.0, C: 1.0 },
                   monthlyFeeRate: { A: 0.0125, B: 0.0175, C: 0.0225 },
+                  // v2.8 — digital-footprint thin-file overlay: SHADOW (logged, not applied) until LIVE
+                  footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20,
                   tokenValidityDays: 7 }
       },
       personal_loan: {
@@ -160,6 +173,10 @@
                   minMonthsInUae: 6, chequeReturnsMax: 1, productCap: 500000,
                   // Annual interest rate, reducing balance, by grade band.
                   pricingBands: { A: [0.0599, 0.0699], B: [0.0799, 0.0999], C: [0.1199, 0.1499] },
+                  // v2.8 — the instalment fits this share of free cash flow when spending is seen
+                  instalmentToFcfMaxPct: 50,
+                  // v2.8 — digital-footprint thin-file overlay: SHADOW (logged, not applied) until LIVE
+                  footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20,
                   tokenValidityDays: 14 }
       },
       // Starter loan → upgrade (Addendum v2.1). `starter` is the entry offer (for
@@ -178,7 +195,10 @@
                     base: { maxAmount: 1500, maxTenorMonths: 3, aprAtOneMonth: 0.48, aprAtMaxTenor: 0.42 }
                   },
                   minAmount: 500, amountStep: 100, instalmentToFcfMaxPct: 50,
-                  minIncomeHistoryMonthsEnhanced: 12, minOnTimeStarterRepayments: 1, tokenValidityDays: 7 }
+                  minIncomeHistoryMonthsEnhanced: 12, minOnTimeStarterRepayments: 1,
+                  // v2.8 — digital-footprint thin-file overlay: SHADOW (logged, not applied) until LIVE
+                  footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20,
+                  tokenValidityDays: 7 }
       },
       salary_advance: {
         productId: 'salary_advance', version: 1,
@@ -216,16 +236,17 @@
     split: { minMonthlyIncome: [3000, 20000], minConnectedMonths: [1, 12], purchaseLookbackDays: [14, 120],
              minFreeCashFlow: [0, 10000], instalmentToFcfMaxPct: [10, 80], maxIncomeVolatilityPct: [15, 80],
              scoreDecline: [500, 700], scoreRefer: [550, 760], chequeReturnsMax: [0, 5],
-             productCap: [5000, 200000], tokenValidityDays: [1, 30] },
+             productCap: [5000, 200000], footprintOverlayCap: [0, 30], tokenValidityDays: [1, 30] },
     personal_loan: { minSalary: [4000, 25000], minAge: [18, 25], maxAge: [60, 70],
                      scoreDecline: [550, 720], scoreRefer: [600, 780], maxEsrPct: [30, 90],
                      minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5], productCap: [100000, 2000000],
+                     instalmentToFcfMaxPct: [10, 80], footprintOverlayCap: [0, 30],
                      tokenValidityDays: [3, 30] },
     salary_advance: { pctOfSalary: [50, 90], capAmount: [5000, 25000], flatFee: [25, 300],
                       minSalary: [3000, 15000], scoreDecline: [550, 700], tokenValidityDays: [3, 14] },
     starter_loan: { minAmount: [100, 2000], amountStep: [50, 500], instalmentToFcfMaxPct: [10, 80],
                     minIncomeHistoryMonthsEnhanced: [3, 36], minOnTimeStarterRepayments: [1, 6],
-                    tokenValidityDays: [1, 30] },
+                    footprintOverlayCap: [0, 30], tokenValidityDays: [1, 30] },
     car_loan: { minSalary: [4000, 25000], minAge: [18, 25], maxAge: [60, 70],
                 scoreDecline: [550, 720], scoreRefer: [600, 780], minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5],
                 minAmount: [5000, 100000], productCap: [100000, 2000000], maxVehicleAgeYears: [0, 10],
@@ -973,7 +994,7 @@
   // Personal loan / salary advance — scorecard v0 (CONTRACT §2.2), with the
   // connected-account salary verification overlay (+15) replacing the v1
   // in-house payroll overlay.
-  function loanScore(p, crossBorder, connectedSalary, st) {
+  function loanScore(p, crossBorder, connectedSalary, st, fpOverlay) {
     // Cross-border path: consented home-bureau score is the base, with a flat
     // conservatism overlay; grade capped at B. Verified home-country statements
     // (v2.4) on an AECB no-hit: proxy base 640 plus evidence overlays, grade capped at B.
@@ -998,6 +1019,8 @@
     if (p.chequeReturns12m >= 1) overlays.push({ name: 'Returned cheques (12m)', delta: -30 });
     if (connectedSalary) overlays.push({ name: 'Salary verified via connected account', delta: 15 });
     if (p.tenureMonths >= 24) overlays.push({ name: 'Employment tenure ≥ 24m', delta: 10 });
+    // v2.8 — the digital-footprint overlay, only when decide() applies it (LIVE mode, thin / no-hit file).
+    if (fpOverlay && fpOverlay.delta > 0) overlays.push({ name: fpOverlay.name, delta: fpOverlay.delta });
     const points = base + overlays.reduce((s, o) => s + o.delta, 0);
     let grade = pointsToGrade(points);
     if ((crossBorder || stPath) && grade === 'A') grade = 'B';
@@ -1011,7 +1034,7 @@
   // capped at B there). Overlays read the connected-account cash flow. With the
   // current overlays the proxy path tops out at 640 + 20 + 15 + 10 = 685 (B), so
   // the B cap is a backstop should overlays ever be re-weighted.
-  function splitScore(p, fcf, cashFlowPath) {
+  function splitScore(p, fcf, cashFlowPath, fpOverlay) {
     const sc = SCORECARDS.split;
     let base = null, basis = 'NONE';
     if (p.aecbHit && p.score !== null && p.score !== undefined) { base = p.score; basis = 'AECB'; }
@@ -1027,10 +1050,102 @@
     if (p.incomeVolatilityPct >= 40) overlays.push({ name: 'Income volatility ≥ 40%', delta: -25 });
     if (p.connectedMonths >= 12) overlays.push({ name: 'Connected history ≥ 12 months', delta: 10 });
     if (p.chequeReturns12m >= 1) overlays.push({ name: 'Returned cheques (12m)', delta: -30 });
+    // v2.8 — the digital-footprint overlay, only when decide() applies it (LIVE mode, thin / no-hit file).
+    if (fpOverlay && fpOverlay.delta > 0) overlays.push({ name: fpOverlay.name, delta: fpOverlay.delta });
     const points = base + overlays.reduce((s, o) => s + o.delta, 0);
     let grade = pointsToGrade(points);
     if (cashFlowPath && grade === 'A') grade = 'B';
     return { model: sc.model, version: sc.version, basis, base, overlays, points, grade };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Digital footprint (FOOTPRINT-SPEC.md §Engine; built in Addendum v2.8) — pure.
+  // A separate, optional consent: email + phone → a RiskSeal-style vendor report,
+  // minimised at ingestion. Three lanes that never mix:
+  //   identity — HIGH when all four signals pass (email ≥ 5 years old, name matched
+  //              in ≥ 2 sources, phone active on a messenger, email seen by ≤ 2
+  //              lenders recently); MEDIUM on 2 or 3; else LOW.
+  //   security — account-takeover risk ELEVATED on ≥ 3 breaches or any credential-
+  //              stuffing compilation → step-up sign-in (UAE PASS) before
+  //              disbursement. Being breached is not the customer's fault: it never
+  //              touches the outcome, the price or the limit.
+  //   credit   — only on a thin or no-hit AECB file: vendor score ≥ 800 → +20,
+  //              700–799 → +10, below → 0 (positive-only; no footprint is neutral),
+  //              capped by policy footprintOverlayCap. SHADOW = computed and logged,
+  //              never added to the score; LIVE = applied (a 4-eyes publish).
+  // Items the vendor sends that Mizan never uses are dropped and listed with why.
+  // ---------------------------------------------------------------------------
+  const FOOTPRINT_MODES = ['SHADOW', 'LIVE'];
+  const FOOTPRINT_DEFAULT_CAP = 20;
+  const FOOTPRINT_STEP_UP = 'Step-up sign-in (UAE PASS) before disbursement';
+  const FOOTPRINT_SCOPE = 'Identity, account security and — only when switched live — thin-file scoring. Declining never affects the application.';
+  const FOOTPRINT_EXCLUDED = [
+    { item: 'Gender', reason: 'A protected characteristic — never an input to identity, security or credit (PDPL; CBUAE fair treatment)' },
+    { item: 'Lifestyle traits (social media, travel, "tech-savvy", solvency or gambling labels)', reason: 'Opaque vendor proxies the customer cannot be told about (CBUAE AI/ML guidance, Feb 2026)' },
+    { item: 'Individual service names', reason: 'They can reveal nationality, religion, family status or health (PDPL purpose limitation)' },
+    { item: 'Breach source names', reason: 'Only the breach count and the credential-stuffing flag are needed for account security (PDPL minimisation)' },
+    { item: 'Photos, map reviews and locations', reason: 'Not needed for identity, security or credit (PDPL minimisation)' },
+    { item: 'Raw contact details', reason: 'The email and phone are lookup keys only — never kept with the result (PDPL minimisation)' }
+  ];
+  // The AECB file as the overlay sees it: FILE (hit with a score), THIN (hit, no score yet) or NO_HIT.
+  function footprintFileKind(hit, score) {
+    if (!hit) return 'NO_HIT';
+    return Number.isFinite(score) ? 'FILE' : 'THIN';
+  }
+  function assessFootprint(fp, opts) {
+    if (!fp || typeof fp !== 'object' || Array.isArray(fp)) throw err('assessFootprint(fp) needs a digital-footprint object');
+    if (!Number.isFinite(fp.vendorScore)) throw err('assessFootprint(fp) needs fp.vendorScore');
+    const o = opts || {};
+    const vel = fp.velocity || {}, br = fp.breaches || {};
+    const age = Number.isFinite(fp.emailAgeYearsMin) ? fp.emailAgeYearsMin : 0;
+    const names = Number.isFinite(fp.nameMatchSources) ? fp.nameMatchSources : 0;
+    const seen = Number.isFinite(vel.emailSeenByLenders) ? vel.emailSeenByLenders : 0;
+    const idSignals = [
+      { name: 'Email in use for 5+ years', value: age + (age === 1 ? ' year' : ' years'), pass: age >= 5 },
+      { name: 'Name matched in 2+ sources', value: names + (names === 1 ? ' source' : ' sources'), pass: names >= 2 },
+      { name: 'Phone active on a messenger', value: fp.phoneOnMessenger === true ? 'yes' : 'no', pass: fp.phoneOnMessenger === true },
+      { name: 'Email seen by 2 or fewer lenders recently', value: String(seen), pass: seen <= 2 }
+    ];
+    const passed = idSignals.filter(s => s.pass).length;
+    const confidence = passed === 4 ? 'HIGH' : (passed >= 2 ? 'MEDIUM' : 'LOW');
+    const breaches = Number.isFinite(br.count) ? br.count : 0;
+    const stuffing = br.includesCredentialStuffingCompilation === true;
+    const atoRisk = breaches >= 3 || stuffing ? 'ELEVATED' : 'NORMAL';
+    const secSignals = [
+      { name: 'Fewer than 3 data breaches', value: String(breaches), pass: breaches < 3 },
+      { name: 'Not in a credential-stuffing compilation', value: stuffing ? 'found' : 'not found', pass: !stuffing }
+    ];
+    // Credit overlay: positive-only, capped; eligibility needs the AECB file (opts.aecbFile, or opts.aecb).
+    const raw = fp.vendorScore >= 800 ? 20 : (fp.vendorScore >= 700 ? 10 : 0);
+    const cap = Number.isFinite(o.cap) ? Math.max(0, o.cap) : FOOTPRINT_DEFAULT_CAP;
+    const points = Math.max(0, Math.min(raw, cap));
+    const mode = FOOTPRINT_MODES.includes(o.mode) ? o.mode : 'SHADOW';
+    let file = null;
+    if (o.aecbFile) file = o.aecbFile;
+    else if (o.aecb !== undefined) file = o.aecb ? footprintFileKind(o.aecb.hit === true, o.aecb.score) : 'NO_HIT';
+    const eligible = file === null ? null : file !== 'FILE';
+    const applied = eligible === true && mode === 'LIVE' && points > 0;
+    const reasonCodes = [];
+    if (confidence === 'HIGH') reasonCodes.push('RC_FOOTPRINT_IDENTITY');
+    if (atoRisk === 'ELEVATED') reasonCodes.push('RC_STEP_UP_AUTH');
+    if (applied) reasonCodes.push('RC_FOOTPRINT_OVERLAY');
+    return {
+      identity: { confidence, signals: idSignals,
+                  effect: confidence === 'HIGH' ? 'Identity confirmed — no extra document check' : 'Standard identity checks apply' },
+      security: { atoRisk, action: atoRisk === 'ELEVATED' ? FOOTPRINT_STEP_UP : 'Standard sign-in', signals: secSignals,
+                  effect: 'Account security only — never the outcome, the price or the limit' },
+      creditOverlay: {
+        eligibleWhen: 'thin or no-hit AECB file', eligible, aecbFile: file, points, cap, mode, applied,
+        basis: 'Vendor score ' + fp.vendorScore + ' → +' + raw + (raw > cap ? ' (capped at +' + cap + ')' : '') +
+               ' · positive-only (≥ 800 → +20, 700–799 → +10, below → 0) · no footprint is neutral',
+        status: eligible === false ? 'Not eligible — the AECB file carries the credit decision'
+              : (eligible === true ? (applied ? 'Applied (LIVE)' : (mode === 'LIVE' ? 'Nothing to add' : 'Shadow — computed and logged, not applied'))
+                                   : 'Eligible only on a thin or no-hit AECB file')
+      },
+      excluded: FOOTPRINT_EXCLUDED.map(x => ({ item: x.item, reason: x.reason })),
+      scope: FOOTPRINT_SCOPE,
+      reasonCodes
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -1060,7 +1175,7 @@
   // ---------------------------------------------------------------------------
   // Personal loan evaluation (formerly the v1 retail product)
   // ---------------------------------------------------------------------------
-  function evaluateLoan(p, amount, tenorMonths, pol, consents, statements) {
+  function evaluateLoan(p, amount, tenorMonths, pol, consents, statements, extra) {
     const reg = pol.regulatory, prm = pol.params;
     const rs = makeRuleSet();
     // Home-country statements (v2.4): usable = integrity PASS + name match + 6 of 6
@@ -1148,7 +1263,7 @@
     }
 
     // Scorecard v0
-    const score = loanScore(p, crossBorder, connectedSalary, statementsPath ? st : null);
+    const score = loanScore(p, crossBorder, connectedSalary, statementsPath ? st : null, extra && extra.footprintOverlay);
     const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
     if (score.points !== null) {
       const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
@@ -1174,13 +1289,28 @@
     const midRate = (bandRange[0] + bandRange[1]) / 2;
     const maxByDbr = headroomMonthly > 0 ? floor1000(pvAnnuity(headroomMonthly, midRate / 12, effTenor)) : 0;
     const maxBySalary = salaryMultiple * p.salaryMonthly;
+    // Free cash flow (v2.8 — a policy rule, no longer informational): only when connected
+    // accounts show spending and the customer consented to Open Finance. FCF = income −
+    // spending − obligations; the instalment must fit instalmentToFcfMaxPct% of it, so the
+    // cap is that budget's PV at the mid-band rate over the effective tenor, floored to 1,000.
+    // Without spending data (r1–r5, the sample book) nothing here runs.
+    const fcfSeen = connectedSalary && Number.isFinite(p.spendMonthly);
+    const freeCashFlowMonthly = fcfSeen ? Math.round(p.salaryMonthly - p.spendMonthly - obligations) : null;
+    const fcfBudget = fcfSeen ? Math.max(0, Math.floor((prm.instalmentToFcfMaxPct / 100) * freeCashFlowMonthly)) : null;
+    const maxByFcf = fcfSeen ? (fcfBudget > 0 ? floor1000(pvAnnuity(fcfBudget, midRate / 12, effTenor)) : 0) : null;
     const candidates = [
       { label: 'Requested amount', value: amount, key: 'REQUESTED' },
       { label: 'DBR headroom @ ' + dbrCap + '% cap (annuity PV at ' + (midRate * 100).toFixed(2) + '% p.a., ' + effTenor + 'm)',
-        value: maxByDbr, key: p.retiree ? 'RETIREE_CAP' : 'DBR_HEADROOM' },
-      { label: salaryMultiple + '× salary (Reg 29/2011)', value: maxBySalary, key: 'SALARY_MULTIPLE' },
-      { label: 'Product cap', value: prm.productCap, key: 'PRODUCT_CAP' }
+        value: maxByDbr, key: p.retiree ? 'RETIREE_CAP' : 'DBR_HEADROOM' }
     ];
+    if (fcfSeen) {
+      candidates.push({ label: 'Free cash flow — ' + prm.instalmentToFcfMaxPct + '% of ' + aed(freeCashFlowMonthly) + '/month (income ' + grp(p.salaryMonthly) +
+                               ' − spending ' + grp(p.spendMonthly) + ' − obligations ' + grp(obligations) + ')' +
+                               (fcfBudget > 0 ? ' = ' + aed(fcfBudget) + '/month (annuity PV at ' + (midRate * 100).toFixed(2) + '% p.a., ' + effTenor + 'm)' : ' — nothing left'),
+                        value: maxByFcf, key: 'FCF' });
+    }
+    candidates.push({ label: salaryMultiple + '× salary (Reg 29/2011)', value: maxBySalary, key: 'SALARY_MULTIPLE' },
+                    { label: 'Product cap', value: prm.productCap, key: 'PRODUCT_CAP' });
     let { approved, binding } = pickMin(candidates);
 
     // Newcomer haircut. Verified home-country statements (v2.4) prove conduct,
@@ -1216,6 +1346,16 @@
            'REGULATORY', dbrOk ? 'PASS' : 'FAIL', dbrPct + '%', dbrCap + '%', 'RC_DBR_EXCEEDED');
     rs.add('REG_SALARY_MULTIPLE', 'Loan within ' + salaryMultiple + '× salary (Reg 29/2011)', 'REGULATORY',
            approved <= maxBySalary ? 'PASS' : 'FAIL', approved, maxBySalary, 'RC_DBR_EXCEEDED');
+    // POLICY — instalment-to-free-cash-flow (v2.8). FAIL only when no amount fits the budget.
+    if (fcfSeen) {
+      const share = freeCashFlowMonthly > 0 ? Math.round((newInstallment / freeCashFlowMonthly) * 1000) / 10 : null;
+      rs.add('POL_INSTALMENT_TO_FCF', 'Instalment within ' + prm.instalmentToFcfMaxPct + '% of free cash flow (spending seen in connected accounts)', 'POLICY',
+             maxByFcf > 0 ? 'PASS' : 'FAIL',
+             maxByFcf > 0 ? (approved > 0 ? aed(newInstallment) + '/month = ' + share + '% of free cash flow ' + aed(freeCashFlowMonthly) + '/month'
+                                          : 'no instalment — nothing approved')
+                          : 'free cash flow ' + aed(freeCashFlowMonthly) + '/month — not enough left for an instalment',
+             '≤ ' + prm.instalmentToFcfMaxPct + '%', 'RC_FREE_CASH_FLOW');
+    }
 
     redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
     const outcome = outcomeFromRules(rs.rules);
@@ -1229,10 +1369,9 @@
       if (approved < amount) rs.reason('RC_LIMIT_REDUCED');
     }
 
-    // Free cash flow (v2.5, informational — no rule reads it): only when connected
-    // accounts show spending and the customer consented to Open Finance.
-    const fcfSeen = connectedSalary && Number.isFinite(p.spendMonthly);
-    const freeCashFlowMonthly = fcfSeen ? Math.round(p.salaryMonthly - p.spendMonthly - obligations) : null;
+    // Free cash flow (v2.5 recorded it; v2.8 made it a rule — POL_INSTALMENT_TO_FCF and the
+    // FCF limit candidate above): only when connected accounts show spending and the
+    // customer consented to Open Finance.
     const features = {
       verifiedIncome: p.salaryDetected ? p.salaryMonthly : null,
       incomeSource: connectedSalary ? 'ALTAREQ_TPP' : (p.salaryDetected ? 'DOCUMENTS' : 'UNVERIFIED'),
@@ -1360,7 +1499,7 @@
   //  FCF-affordable principal, DBR-affordable principal on the chosen plan), so
   //  approved === min(trace values) always holds.
   // ---------------------------------------------------------------------------
-  function evaluateSplit(p, amount, tenorMonths, pol) {
+  function evaluateSplit(p, amount, tenorMonths, pol, extra) {
     const reg = pol.regulatory, prm = pol.params;
     const rs = makeRuleSet();
     const terms = splitTerms(reg);
@@ -1403,7 +1542,7 @@
            'AECB hit, or ≥ ' + prm.minConnectedMonths + ' connected months', 'RC_THIN_FILE');
 
     // Scorecard (cash-flow overlays)
-    const score = splitScore(p, fcf, cashFlowPath);
+    const score = splitScore(p, fcf, cashFlowPath, extra && extra.footprintOverlay);
     const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
 
     const delinq = p.worstDelinquency || 'NONE';
@@ -2188,9 +2327,10 @@
     if (productId === 'starter_loan') return evaluateUpgrade(normalizeUpgrade(rawApplicant), amount, tenorMonths, pol, consents, statements);
     // v2.9 — split, personal loan and car loan carry the red-flag gate (see gateRedFlags):
     // a no-op for every applicant without redFlagData, so existing outcomes are unchanged.
+    // v2.8 — opts also carries the digital-footprint context into split and personal loan.
     const ew = opts && opts.earlyWarningParams;
-    if (productId === 'split') return attachRedFlags(evaluateSplit(gateRedFlags(normalizeSplit(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol));
-    if (productId === 'personal_loan') return attachRedFlags(evaluateLoan(gateRedFlags(normalizeLoan(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, statements));
+    if (productId === 'split') return attachRedFlags(evaluateSplit(gateRedFlags(normalizeSplit(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, opts));
+    if (productId === 'personal_loan') return attachRedFlags(evaluateLoan(gateRedFlags(normalizeLoan(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, statements, opts));
     if (productId === 'salary_advance') return evaluateAdvance(normalizeLoan(rawApplicant), amount, tenorMonths, pol);
     if (productId === 'car_loan') return attachRedFlags(evaluateCar(gateRedFlags(normalizeCar(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, opts && opts.vehicle));
     throw err('unknown productId "' + productId + '"');
@@ -2552,6 +2692,9 @@
         if (!(v.A <= v.B && v.B <= v.C)) throw err('monthlyFeeRate must be risk-ordered: A ≤ B ≤ C');
       } else if (key === 'thinFileAction') {
         if (v !== 'REFER' && v !== 'DECLINE') throw err('thinFileAction must be REFER or DECLINE');
+      } else if (key === 'footprintOverlayMode') {
+        // v2.8 — the thin-file overlay goes LIVE only by a 4-eyes publish, after back-testing and a bias test.
+        if (!FOOTPRINT_MODES.includes(v)) throw err('footprintOverlayMode must be SHADOW or LIVE');
       } else if (productId === 'starter_loan' && key === 'starter') {
         checkNested('starter', v, STARTER_BOUNDS);
       } else if (productId === 'starter_loan' && key === 'tiers') {
@@ -2663,6 +2806,23 @@
              conditions };
   }
 
+  // v2.8 — contact preferences: { service:[…], marketing:[…] } over four channels. Service
+  // messages (Key Facts, payment reminders) need at least one channel; marketing is opt-in.
+  const COMMS_CHANNELS = ['EMAIL', 'SMS', 'WHATSAPP', 'PUSH'];
+  const COMMS_BASIS = 'Service messages on the channels the customer chose; marketing only with prior consent and an easy opt-out ' +
+                      '(CBUAE consumer protection); WhatsApp by explicit opt-in. Kept by Noor — never shared with botim or the lender.';
+  function normalizeCommunications(c) {
+    if (c === undefined || c === null) return null;
+    if (typeof c !== 'object' || Array.isArray(c) || !Array.isArray(c.service) || !Array.isArray(c.marketing)) {
+      throw err('consents.communications must be {service:[…], marketing:[…]}');
+    }
+    const bad = c.service.concat(c.marketing).filter(x => !COMMS_CHANNELS.includes(x));
+    if (bad.length) throw err('unknown contact channel "' + bad[0] + '" — channels are ' + COMMS_CHANNELS.join(', '));
+    if (!c.service.length) throw err('choose at least one channel for messages about your account and loan — some (Key Facts, payment reminders) are required by law');
+    const pick = (list) => COMMS_CHANNELS.filter(ch => list.includes(ch));
+    return { service: pick(c.service), marketing: pick(c.marketing) };
+  }
+
   // `internal` (not part of the public contract) carries redecide()'s trigger.
   function decide(application, internal) {
     ensureInit();
@@ -2725,19 +2885,62 @@
       checkSupersedable(orig, productId, applicant, statements);
     }
     const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
+    // v2.8 — contact preferences: validated before anything is pulled or recorded.
+    const comms = normalizeCommunications(consents.communications);
 
     const pol = getPolicyRef(productId);
-    const ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements, vehicle ? { vehicle } : undefined);
+    let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements, vehicle ? { vehicle } : undefined);
+
+    // v2.8 — digital footprint: only with its own consent, only when the applicant has a
+    // footprint, only on the packs that carry the overlay params (split, personal loan,
+    // starter loan). Identity and security never change the outcome; the thin-file overlay
+    // is applied only in LIVE mode (SHADOW records it), so default decisions are unchanged.
+    let fpa = null, fpOverlay = null;
+    if (consents.digitalFootprint === true && applicant.footprint && pol.params.footprintOverlayMode !== undefined) {
+      fpa = assessFootprint(applicant.footprint, { aecbFile: footprintFileKind(ev.profile.aecbHit, ev.profile.score),
+                                                   mode: pol.params.footprintOverlayMode, cap: pol.params.footprintOverlayCap });
+      const co = fpa.creditOverlay;
+      if (co.eligible) {
+        const scored = Number.isFinite(ev.score.points) && (productId === 'personal_loan' || productId === 'split');
+        fpOverlay = { name: 'Digital footprint (vendor score ' + applicant.footprint.vendorScore + ')', delta: co.points,
+                      applied: co.applied && scored, mode: co.mode,
+                      note: co.applied && !scored ? 'Not applied — no scorecard on this decision' : co.status };
+        if (fpOverlay.applied) {
+          ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
+                        { footprintOverlay: { name: fpOverlay.name, delta: fpOverlay.delta } });
+        }
+      }
+    }
 
     S.seq += 1;
     const id = 'MZN-' + String(S.seq).padStart(6, '0');
     const createdAt = nowIso();
     const consentAt = createdAt;
     const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
+    if (fpa) {
+      ev.features.footprintIdentity = fpa.identity.confidence;
+      ev.features.footprintAtoRisk = fpa.security.atoRisk;
+      ev.features.footprintVendorScore = applicant.footprint.vendorScore;
+      pulls.push({ source: 'DIGITAL_FOOTPRINT', status: 'OK', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
+                   summary: { provider: 'Digital-footprint provider (RiskSeal-style) — email + phone', identity: fpa.identity.confidence,
+                              atoRisk: fpa.security.atoRisk, vendorScore: applicant.footprint.vendorScore,
+                              overlay: fpOverlay ? (fpOverlay.applied ? '+' + fpOverlay.delta + ' applied (LIVE)' : '+' + fpOverlay.delta + ' ' + (fpOverlay.mode === 'LIVE' ? '— ' + fpOverlay.note : 'shadow — not applied'))
+                                                 : 'not eligible — AECB file present',
+                              droppedAtIngestion: fpa.excluded.length + ' item types' } });
+      ev.rules.push({ id: 'POL_IDENTITY_FOOTPRINT', name: 'Identity confirmed by the digital-footprint check (consented; never a decline reason)', category: 'POLICY',
+                      result: fpa.identity.confidence === 'HIGH' ? 'PASS' : 'INFO',
+                      observed: fpa.identity.confidence + ' — ' + fpa.identity.signals.filter(s => s.pass).length + ' of 4 signals' +
+                                ' · account-takeover risk ' + fpa.security.atoRisk,
+                      threshold: 'HIGH = all 4 signals (email 5+ years, name in 2+ sources, phone on a messenger, ≤ 2 lenders)' });
+      if (fpa.security.atoRisk === 'ELEVATED' && ev.outcome !== 'DECLINE' && !ev.reasonCodes.includes('RC_STEP_UP_AUTH')) ev.reasonCodes.push('RC_STEP_UP_AUTH');
+      if (fpOverlay && fpOverlay.applied && ev.outcome !== 'DECLINE' && !ev.reasonCodes.includes('RC_FOOTPRINT_OVERLAY')) ev.reasonCodes.push('RC_FOOTPRINT_OVERLAY');
+      if (fpOverlay) ev.score.footprintOverlay = { name: fpOverlay.name, delta: fpOverlay.delta, applied: fpOverlay.applied, mode: fpOverlay.mode, note: fpOverlay.note };
+    }
     // Repayment collection follows the approved amount (v2.3); refer/decline → null.
     const repayment = ev.outcome === 'APPROVE' && ev.limit.approved > 0 ? repaymentFor(ev.limit.approved) : null;
+    const stepUp = fpa && fpa.security.atoRisk === 'ELEVATED' ? FOOTPRINT_STEP_UP : null;
     const token = ev.outcome === 'APPROVE'
-      ? tokenFor(productId, id, createdAt, pol, ev, null, repayment, productId === 'car_loan' ? lenderFor(application.lenderId).name : undefined) : null;
+      ? tokenFor(productId, id, createdAt, pol, ev, stepUp, repayment, productId === 'car_loan' ? lenderFor(application.lenderId).name : undefined) : null;
 
     const record = {
       id, createdAt, productId, segment: 'CONSUMER',
@@ -2785,6 +2988,17 @@
                             ? (ev.redFlags.flags.length ? ev.redFlags.flags.map(f => f.code).join(' · ') : 'no signal') +
                               ' · against the customer’s own history · ' + (ev.redFlags.referred ? 'REFER to an underwriter (never a decline or a price change)' : 'no referral')
                             : 'rule off by policy (earlyWarning.redFlagsAtOrigination = false)' });
+    }
+    // v2.8 — the optional digital-footprint consent and the contact preferences, recorded only
+    // when the customer was asked (records from the other journeys keep their earlier shape).
+    // Neither is in the credit memo: CONSENT_CODES is its allowlist.
+    if (consents.digitalFootprint !== undefined) {
+      record.consents.digitalFootprint = { granted: consents.digitalFootprint === true, at: consents.digitalFootprint === true ? consentAt : null,
+                                           scope: FOOTPRINT_SCOPE, used: !!fpa };
+    }
+    if (comms) {
+      record.consents.communications = { granted: true, at: consentAt, reference: 'CNS-' + id.slice(4) + '-COMMS',
+                                         service: comms.service, marketing: comms.marketing, basis: COMMS_BASIS };
     }
     if (productId === 'car_loan') {
       // DecisionRecord additions for the car loan (Addendum v2.7).
@@ -2891,7 +3105,8 @@
     { group: 'Home-country statement figures, banks and file names',
       reason: 'Uploaded for Noor\'s assessment only — the lender receives verification flags (PDPL purpose limitation)' },
     { group: 'Digital-footprint and vendor raw data', reason: 'Never used for credit; dropped at ingestion (PDPL data minimisation)' },
-    { group: 'Raw contact details', reason: 'Not needed to book the loan — Noor stays the customer\'s point of contact (PDPL data minimisation)' }
+    // v2.8 — contact preferences joined the raw contact details: one group, still 7 in all.
+    { group: 'Contact details and preferences', reason: 'Not needed to book the loan — Noor stays the customer\'s point of contact; the email, phone and chosen channels stay with Noor (PDPL data minimisation)' }
   ];
   // Car loan (v2.7) memos add these lines; other products' memos are unchanged.
   const MEMO_SHARED_CAR = [
@@ -3054,6 +3269,7 @@
     return { otherIncome, downPaymentSource };
   }
   const CONSENT_CODES = [['aecb', 'AECB'], ['openFinance', 'ALTAREQ'], ['creditPassport', 'CPASS'], ['homeStatements', 'STMT'], ['shareWithLender', 'LENDER']];
+  const FOOTPRINT_CONFIDENCE_WORD = { HIGH: 'high', MEDIUM: 'medium', LOW: 'low' };
   function creditMemo(decisionId, opts) {
     ensureInit();
     const rec = getDecisionRef(decisionId);
@@ -3109,7 +3325,9 @@
         homeCountryFile: crossBorder ? 'Home-country credit file used (Credit Passport, consented)' : null
       },
       verification: Object.assign({
-        identity: 'Verified (UAE PASS)',
+        // v2.8 — a consented digital-footprint check adds its confidence level, never its data.
+        identity: 'Verified (UAE PASS)' + (FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] && rec.consents && rec.consents.digitalFootprint && rec.consents.digitalFootprint.granted
+          ? ' · digital footprint: ' + FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] + ' confidence' : ''),
         homeStatements: memoStatementsFlag(rec.homeStatements),
         purchaseVerified: rec.productId === 'split'
           ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
@@ -4182,6 +4400,8 @@
     noorScoreBand, creditMemo, memoApiPayload, memoSftpRow,
     // v2.6 — the customer journey: pre-qualification on connected accounts only
     prequalify, loanInstalment,
+    // v2.8 — digital footprint (identity · account security · shadow thin-file overlay), pure
+    assessFootprint, FOOTPRINT_MODES: FOOTPRINT_MODES.slice(), COMMS_CHANNELS: COMMS_CHANNELS.slice(),
     // v2.7 — car loan: a pure live quote (documents path vs Open Finance path) for the car screen
     quoteCar,
     lenders: function () { ensureInit(); return clone(lendersList()); },

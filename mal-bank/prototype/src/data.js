@@ -362,7 +362,9 @@
                     salaryMonthly: 12000, tenureMonths: 30, retiree: false },
       aecb: { hit: true, score: 712, esrPct: 8, obligationsMonthly: 900,
               tradelines: 2, chequeReturns12m: 0, worstDelinquency: 'NONE',
-              creditPassportAvailable: false },
+              creditPassportAvailable: false,
+              // v2.8 — card totals behind the journey's Noor insights (62% used); one card, no loans
+              cards: 1, activeLoans: 0, cardLimitTotal: 12000, cardBalanceTotal: 7440 },
       bankData: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
                   salaryDetected: true, avgSalaryCredit: 12000, salaryCreditDay: 27 },
       connected: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
@@ -378,7 +380,15 @@
                    // mean 7,400 (December higher: travel home)
                    monthlySpend: [7100, 7650, 7300, 7900, 7250, 8200, 7000, 7350, 7450, 7200, 7600, 6800] },
       purpose: 'Family wedding',
-      defaultRequest: { amount: 15000, tenorMonths: 12 }
+      defaultRequest: { amount: 15000, tenorMonths: 12 },
+      // v2.8 — the email botim shares at hand-off (synthetic, reserved domain). The journey shows it
+      // masked; it never reaches the credit memo or the SFTP row.
+      contact: { email: 'ravi.k@example.com', emailSharedBy: 'botim' },
+      // v2.8 — synthetic digital footprint, minimised at ingestion (same shape as FOOTPRINT-SPEC.md):
+      // identity HIGH, account-takeover risk NORMAL; the thin-file overlay is not eligible (AECB file).
+      footprint: { vendorScore: 731, emailAgeYearsMin: 7, nameMatchSources: 2, phoneOnMessenger: true,
+                   velocity: { emailSeenByLenders: 1 },
+                   breaches: { count: 1, includesCredentialStuffingCompilation: false } }
     }
   ];
 
@@ -562,6 +572,16 @@
     RC_BELOW_MIN_AMOUNT: {
       en: 'The amount we can offer is below the minimum for this product.',
       ar: 'المبلغ الذي يمكن تقديمه أقل من الحد الأدنى المطلوب لهذا المنتج.' },
+    // --- Digital footprint (FOOTPRINT-SPEC.md engine, built in v2.8) ---------------
+    RC_FOOTPRINT_IDENTITY: {
+      en: 'Your identity was confirmed with a digital-footprint check you agreed to.',
+      ar: 'تم التحقق من هويتك من خلال فحص البصمة الرقمية الذي وافقت عليه.' },
+    RC_FOOTPRINT_OVERLAY: {
+      en: 'With little credit history, a digital-footprint check you agreed to added to your score.',
+      ar: 'نظراً لمحدودية سجلك الائتماني، أضاف فحص البصمة الرقمية الذي وافقت عليه نقاطاً إلى درجتك.' },
+    RC_STEP_UP_AUTH: {
+      en: 'For your security, please sign in again with UAE PASS before the money is paid out.',
+      ar: 'حرصاً على أمانك، يُرجى تسجيل الدخول مجدداً عبر الهوية الرقمية (UAE PASS) قبل صرف المبلغ.' },
     // --- UAE red flags and early warning (Addendum v2.9) ------------------------------
     // Customer-safe: each one is a change against the customer's own history, worded
     // so an analyst can read it to the customer. No values, no places, no services.
