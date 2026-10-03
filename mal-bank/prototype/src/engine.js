@@ -18,8 +18,8 @@
  *                    company with the owner's personal guarantee (Addendum v2.10,
  *                    ../SME-SPEC.md): underwritten on the company's accounts (Open
  *                    Finance, consent by the authorised signatory) + AECB commercial,
- *                    enhanced by the owner's personal accounts (her own, separate
- *                    consent) that verify the guarantee and her income. Limit = the
+ *                    enhanced by the owner's personal accounts (the owner's own,
+ *                    separate consent) that verify the guarantee and the owner's income. Limit = the
  *                    business capacity (DSCR, revenue, product cap) × a guarantee
  *                    factor; the business and the owner are monitored while it is open
  * Binding spec: ../NOOR-PIVOT.md (overrides ../CONTRACT.md where they conflict;
@@ -391,6 +391,7 @@
   const SME_KFS_CONDITION = 'Key facts and the personal-guarantee disclosure acknowledged by the owner (AR + EN)';
   const SME_GUARANTEE_CONDITION = 'Personal guarantee signed by the owner via UAE PASS';
   const SME_LICENCE_CONDITION = 'Trade licence valid on the day of disbursement';
+  const SME_DD_CONDITION = 'Direct debit mandate active on the company’s business account';
   function tokenConditions(productId, repayment) {
     const repay = repayment ? REPAYMENT_METHODS[repayment.method].condition : null;
     const byProduct = {
@@ -402,7 +403,7 @@
       car_loan: [KFS_CONDITION, repay],
       // v2.10 — a business loan: the owner acknowledges the key facts and the guarantee disclosure,
       // signs the personal guarantee, and the trade licence must still be valid when the money moves.
-      sme_working_capital: [SME_KFS_CONDITION, repay, SME_GUARANTEE_CONDITION, SME_LICENCE_CONDITION]
+      sme_working_capital: [SME_KFS_CONDITION, repayment && repayment.method === 'DIRECT_DEBIT' ? SME_DD_CONDITION : repay, SME_GUARANTEE_CONDITION, SME_LICENCE_CONDITION]
     };
     return (byProduct[productId] || [KFS_CONDITION, repay]).filter(Boolean);
   }
@@ -2417,7 +2418,7 @@
   //
   //   Business features (12 months, all from the connected business accounts):
   //     revenue_m  = credits − owner injections − inter-account transfers
-  //     operating_m = debits − inter-account transfers (the owner's drawings are her pay
+  //     operating_m = debits − inter-account transfers (the owner's drawings are the owner's pay
   //                   and sit inside the operating outflows)
   //     NOCF = mean(revenue) − mean(operating outflows); volatility = stdev/mean of revenue
   //   Business capacity = pickMin( DSCR cap = PV of dscrBudgetPct% × NOCF over the tenor
@@ -2437,7 +2438,7 @@
   const SME_CHEQUE_RETURNS_MAX = 1;        // POL_RETURNED_CHEQUES — the other packs' default tolerance
   const SME_TRADING_BONUS_MONTHS = 36;     // scorecard: trading ≥ 3 years
   const SME_GUARANTEE_WORD = { VERIFIED_STRONG: 'verified (strong)', VERIFIED_WEAK: 'verified (weak)', UNVERIFIED: 'unverified' };
-  // The guarantor's disclosure, in Arabic and English (the owner is an individual: consumer protection applies to her).
+  // The guarantor's disclosure, in Arabic and English (the owner is an individual: consumer protection applies to the owner).
   const SME_GUARANTEE_DISCLOSURE = {
     en: 'Personal guarantee: you guarantee this loan to your company personally. If the company does not repay, the lender can ask you to repay what is owed — the outstanding amount, interest and costs — from your own money. Read the key facts before you sign; you can ask questions and take advice first.',
     ar: 'كفالة شخصية: أنت تكفل هذا القرض الممنوح لشركتك بصفتك الشخصية. إذا لم تسدد الشركة، يحق للمُقرض أن يطالبك بسداد المبلغ المستحق — الرصيد القائم والفائدة والتكاليف — من أموالك الخاصة. اقرأ البيانات الرئيسية قبل التوقيع، ويمكنك طرح الأسئلة وطلب المشورة أولاً.'
@@ -2547,7 +2548,7 @@
   function evaluateSme(p, amount, tenorMonths, pol, consents, ewOverride) {
     const reg = pol.regulatory, prm = pol.params;
     const rs = makeRuleSet();
-    // The owner's personal accounts: her own, separate consent (simulation rows carry it on the row).
+    // The owner's personal accounts: the owner's own, separate consent (simulation rows carry it on the row).
     const ownerGranted = consents ? consents.ownerOpenFinance === true : p.ownerOpenFinanceOnRow;
     const ownerPath = ownerGranted && !!p.personal;
     const pe = ownerPath ? p.personal : null;
@@ -2558,7 +2559,7 @@
     const effTenor = terms.find(n => tenorMonths <= n) || terms[terms.length - 1];
     const tenorAdjusted = effTenor !== tenorMonths;
 
-    // ---- Owner income verified (+15): only on the owner's path, when her income is seen in her accounts ----
+    // ---- Owner income verified (+15): only on the owner's path, when the owner's income is seen in those accounts ----
     const ownerIncome = pe ? pe.drawingsMonthly + pe.otherIncomeMonthly : null;
     const ownerIncomeVerified = !!pe && ownerIncome > 0;
     const score = smeScore(p, ownerIncomeVerified);
@@ -2574,10 +2575,11 @@
     const dscrBudget = nocf > 0 ? Math.floor((prm.dscrBudgetPct / 100) * nocf) : 0;
     const maxByDscr = dscrBudget > 0 ? floor1000(pvAnnuity(dscrBudget, i, effTenor)) : 0;
     const maxByRevenue = floor1000(prm.revenueMultiple * Math.max(0, p.avgMonthlyRevenue));
+    const revMult = Number.isInteger(prm.revenueMultiple) ? prm.revenueMultiple.toFixed(1) : String(prm.revenueMultiple);
     const capCandidates = [
       { label: 'DSCR cap — ' + prm.dscrBudgetPct + '% of net operating cash flow ' + aed(nocf) + '/month' +
                (dscrBudget > 0 ? ' = ' + aed(dscrBudget) + '/month' + over : ' — no operating cash flow to lend against'), value: maxByDscr, key: 'DSCR_CAP' },
-      { label: 'Revenue cap — ' + prm.revenueMultiple + '× average monthly revenue ' + aed(p.avgMonthlyRevenue), value: maxByRevenue, key: 'REVENUE_CAP' },
+      { label: 'Revenue cap — ' + revMult + '× average monthly revenue ' + aed(p.avgMonthlyRevenue), value: maxByRevenue, key: 'REVENUE_CAP' },
       { label: 'Product cap', value: prm.productCap, key: 'PRODUCT_CAP' }
     ];
     const capacity = pickMin(capCandidates);
@@ -2616,7 +2618,7 @@
         value: guaranteed, key: 'GUARANTEE_FACTOR' }]);
     let approved, binding;
     if (requested <= guaranteed) { approved = requested; binding = 'REQUESTED'; }
-    else { approved = guaranteed; binding = factorPct < 100 ? 'GUARANTEE_FACTOR' : capacity.binding; }
+    else { approved = guaranteed; binding = factorPct < 100 && capacity.approved > 0 ? 'GUARANTEE_FACTOR' : capacity.binding; }
     const approvedPre = approved;
     const instalment = approvedPre > 0 ? round2(annuityPayment(approvedPre, i, effTenor)) : 0;
     const dscr = instalment > 0 ? round2(nocf / instalment) : null;
@@ -2712,7 +2714,7 @@
     // What the accounts showed — internal (the SME screen, the Workbench, the Decision log); never in the memo.
     const businessFindings = [
       { key: 'revenue', label: 'Revenue', status: 'PASS', observation: aed(p.avgMonthlyRevenue) + '/month on average over ' + p.historyMonths + ' months — owner injections and transfers between the company’s own accounts excluded',
-        effect: 'Revenue cap ' + aed(maxByRevenue) + ' (' + prm.revenueMultiple + '× a month)' },
+        effect: 'Revenue cap ' + aed(maxByRevenue) + ' (' + revMult + '× a month)' },
       { key: 'nocf', label: 'Net operating cash flow', status: nocf > 0 ? 'PASS' : 'WARN', observation: aed(nocf) + '/month (operating outflows ' + aed(p.operatingOutflowsMonthly) + '/month, the owner’s drawings included)',
         effect: dscrBudget > 0 ? prm.dscrBudgetPct + '% = ' + aed(dscrBudget) + '/month for the instalment → DSCR cap ' + aed(maxByDscr) : 'Nothing to lend against' },
       { key: 'volatility', label: 'Revenue volatility', status: p.revenueVolatilityPct <= 20 ? 'PASS' : 'INFO', observation: p.revenueVolatilityPct + '% month to month',
@@ -2739,6 +2741,9 @@
         { key: 'buffer', label: 'Personal buffer', status: c.buffer.ok ? 'PASS' : 'WARN',
           observation: 'Liquid balances ' + aed(pe.liquidBalances) + ' = ' + (c.buffer.value === null ? '—' : c.buffer.value.toFixed(1)) + ' instalments',
           effect: c.buffer.ok ? 'Above the ' + c.buffer.min + '-instalment minimum' : 'Below ' + c.buffer.min + ' instalments — guarantee weak (80%)' },
+        pe.spendMonthly !== null ? { key: 'spending', label: 'Personal spending', status: 'INFO',
+          observation: '≈ ' + aed(pe.spendMonthly) + '/month',
+          effect: 'Informational — after spending and obligations the owner keeps ' + aed(Math.max(0, ownerIncome - pe.spendMonthly - guarantee.checks.dbr.obligations)) + '/month' } : null,
         { key: 'commingling', label: 'Commingling', status: 'INFO',
           observation: features.comminglingFound ? 'Business money seen in personal accounts' + (pe.comminglingRevenueIn > 0 ? ' — revenue landing ' + aed(pe.comminglingRevenueIn) : '') + (pe.comminglingCostsPaid > 0 ? ' — costs paid ' + aed(pe.comminglingCostsPaid) : '')
                                                  : 'None found — no business revenue landing in the owner’s accounts, no business costs paid from them',
@@ -2746,7 +2751,7 @@
         { key: 'redFlags', label: 'Red flags (the owner’s own history)', status: c.redFlags.read ? (c.redFlags.ok ? 'PASS' : 'WARN') : 'INFO',
           observation: c.redFlags.read ? (c.redFlags.ok ? 'No signal — nothing changed against the owner’s own history' : c.redFlags.flags.join(' · ')) : 'Not read — the red-flag rule is off by policy',
           effect: c.redFlags.read ? (c.redFlags.ok ? 'No referral' : 'REFER to an underwriter — never an automatic decline; guarantee weak (80%)') : 'No effect' }
-      ];
+      ].filter(Boolean);
     }
     return { profile: p, features, rules: rs.rules, score, limit, pricing, outcome, reasonCodes: rs.reasons, effTenor,
              sme: { guarantee, businessFindings, ownerFindings, ownerPath: !!pe } };
@@ -2760,7 +2765,7 @@
              guaranteeStatus: f.guaranteeStatus, guaranteeFactorPct: f.guaranteeFactorPct, businessCapacity: f.businessCapacity, dscr: f.dscr,
              reasonCodes: e.reasonCodes.slice() };
   }
-  // What the owner's accounts were worth: the same application re-evaluated without her consent.
+  // What the owner's accounts were worth: the same application re-evaluated without the owner's consent.
   // Pure (the evidenceComparison / car-uplift pattern) — nothing stored, no clock tick.
   function smeUplift(applicant, amount, tenorMonths, pol, consents, ev, ewOverride) {
     const biz = evaluate(SME_PID, applicant, amount, tenorMonths, pol, Object.assign({}, consents, { ownerOpenFinance: false }), null,
@@ -2803,7 +2808,7 @@
     if (productId === 'personal_loan') return attachRedFlags(evaluateLoan(gateRedFlags(normalizeLoan(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, statements, opts));
     if (productId === 'salary_advance') return evaluateAdvance(normalizeLoan(rawApplicant), amount, tenorMonths, pol);
     if (productId === 'car_loan') return attachRedFlags(evaluateCar(gateRedFlags(normalizeCar(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, opts && opts.vehicle));
-    // v2.10 — the SME route: the red-flag gate reads the OWNER's personal accounts, under her own consent
+    // v2.10 — the SME route: the red-flag gate reads the OWNER's personal accounts, under the owner's own consent
     if (productId === SME_PID) return attachRedFlags(evaluateSme(normalizeSme(rawApplicant), amount, tenorMonths, pol, consents, ew));
     throw err('unknown productId "' + productId + '"');
   }
@@ -2849,7 +2854,7 @@
       return pulls;
     }
     // SME working capital (v2.10): AECB commercial (the company), AECB consumer (the owner, as guarantor),
-    // the trade licence (KYB), the business accounts and — with the owner's own consent — her personal accounts.
+    // the trade licence (KYB), the business accounts and — with the owner's own consent — the owner's personal accounts.
     if (productId === SME_PID) {
       const f = ev.features;
       pulls.push({ source: 'AECB_COMMERCIAL', status: p.commercial.hit ? 'HIT' : 'NO_HIT', latencyMs: pullLatency(seq, i++), cached: false,
@@ -3545,7 +3550,7 @@
       // Internal only (the SME screen, the Workbench, the Decision log) — never part of the credit memo.
       record.businessFindings = ev.sme.businessFindings;
       record.ownerFindings = ev.sme.ownerFindings;
-      // What the owner's accounts were worth — the same application without her consent (pure). Null without it.
+      // What the owner's accounts were worth — the same application without the owner's consent (pure). Null without it.
       record.ownerAccountsUplift = f.ownerAccountsConnected
         ? smeUplift(applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, ev) : null;
       record.audit[0].detail += ' · business accounts (Al Tareq)' + (f.ownerAccountsConnected ? ' + the owner’s personal accounts' : ' only — the owner’s accounts not connected') +
@@ -3906,7 +3911,9 @@
         .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
         .map(([k, code]) => ({ type: k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + code })),
       sharing: { shared: MEMO_SHARED_SME.slice(),
-                 withheld: MEMO_WITHHELD.concat(MEMO_WITHHELD_SME).map(w => ({ group: w.group, reason: w.reason })) }
+                 // the shared seven groups (the first reworded for a business: no purchase category here) + the two SME groups
+                 withheld: MEMO_WITHHELD.map(w => /^Line-by-line/.test(w.group) ? { group: 'Line-by-line account history and counterparty names (business and personal accounts)', reason: w.reason } : w)
+                   .concat(MEMO_WITHHELD_SME).map(w => ({ group: w.group, reason: w.reason })) }
     };
   }
   // ownerOpenFinance (v2.10) is the owner's own consent: its REFERENCE is shared (the guarantee flag rests on it), never its content.
@@ -4731,6 +4738,7 @@
   function bookFor(productId) {
     if (productId === 'starter_loan') return D.sampleBook.starter_loan;
     if (productId === 'car_loan') return D.sampleBook.car_loan || [];
+    if (productId === 'sme_working_capital') return D.sampleBook.sme_working_capital || [];
     return productId === 'split' ? D.sampleBook.split : D.sampleBook.personal_loan;  // salary_advance reuses the loan book
   }
 
@@ -4756,7 +4764,8 @@
     };
     // Car loan (v2.7): most policy changes move amounts, not outcomes — sum the approved
     // amounts and count the approvals that shrink or grow.
-    const isCar = productId === 'car_loan';
+    // v2.10 — the SME pack too: most of its levers (guarantee factor, DSCR budget) move amounts, not outcomes.
+    const isCar = productId === 'car_loan' || productId === 'sme_working_capital';
     const amt = { b: 0, a: 0, reduced: 0, raised: 0 };
     for (const row of book) {
       const rq = rowRequest(productId, row);

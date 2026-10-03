@@ -23,6 +23,9 @@
  *  - 5 seeded day-zero early-warning signals (consumer only).
  *  - A seeded deterministic sample book (120 split + 140 personal-loan +
  *    80 starter-loan rows, + 17 hand-written car-loan rows) for policy simulation.
+ *  - SME working capital (Addendum v2.10): persona s1 (an owner-managed trading
+ *    company, its business accounts and the owner's optional personal accounts),
+ *    a hand-written SME sample book (15 rows) and two SME loans under monitoring.
  *
  * No DOM access. No dependency on engine.js. Runs in Node >= 16 and browsers.
  * All synthetic dates derive from TODAY — never from the wall clock.
@@ -602,7 +605,30 @@
       ar: 'وصل راتبك متأخراً عن موعده المعتاد، أو فاتتك دفعة بعد سلسلة من الدفعات في مواعيدها.' },
     RC_RF_BALANCES_DRAINED: {
       en: 'Your account balances dropped sharply compared with your usual level, after one large outgoing transfer.',
-      ar: 'انخفضت أرصدة حساباتك بشكل حاد مقارنةً بمستواها المعتاد، بعد تحويل صادر كبير واحد.' }
+      ar: 'انخفضت أرصدة حساباتك بشكل حاد مقارنةً بمستواها المعتاد، بعد تحويل صادر كبير واحد.' },
+    // --- SME working capital (Addendum v2.10) ---------------------------------------
+    // Addressed to the company and its owner; business signals compare the company with its own history.
+    RC_TRADING_HISTORY: {
+      en: 'The business has not been trading long enough for this product.',
+      ar: 'لم تمضِ على مزاولة الشركة لنشاطها مدة كافية لهذا المنتج.' },
+    RC_BUSINESS_HISTORY: {
+      en: 'Not enough business-account history yet — this product needs a full year of connected business accounts.',
+      ar: 'لا يتوفر سجل كافٍ للحسابات التجارية المرتبطة بعد — يتطلب هذا المنتج سجلاً لعام كامل.' },
+    RC_BUSINESS_CASH_FLOW: {
+      en: 'The business’s operating cash flow is too low to cover the repayments comfortably.',
+      ar: 'التدفق النقدي التشغيلي للشركة غير كافٍ لتغطية الأقساط بشكل مريح.' },
+    RC_GUARANTEE_UNVERIFIED: {
+      en: 'The owner’s personal guarantee could not be verified, so the amount is limited to a share of what the business supports — connecting the owner’s personal accounts could raise it.',
+      ar: 'تعذّر التحقق من الكفالة الشخصية للمالك، لذا يقتصر المبلغ على جزء مما تدعمه الشركة — وقد يرفعه ربط الحسابات الشخصية للمالك.' },
+    RC_GUARANTEE_WEAK: {
+      en: 'The owner’s personal accounts show limited room to back the guarantee, so the amount is limited to a share of what the business supports.',
+      ar: 'تُظهر الحسابات الشخصية للمالك قدرة محدودة على دعم الكفالة، لذا يقتصر المبلغ على جزء مما تدعمه الشركة.' },
+    RC_RF_REVENUE_DROP: {
+      en: 'Money coming into the business dropped sharply compared with its usual level.',
+      ar: 'انخفضت الأموال الواردة إلى الشركة بشكل حاد مقارنةً بمستواها المعتاد.' },
+    RC_RF_FUNDS_TO_OWNER: {
+      en: 'A transfer from the business to the owner was much larger than the usual drawings.',
+      ar: 'كان تحويل من الشركة إلى المالك أكبر بكثير من المسحوبات المعتادة.' }
   };
 
   // ---------------------------------------------------------------------------
@@ -732,8 +758,94 @@
         baseline: { intlTransfersShareOfIncome6m: 0.28, salaryCreditDay: 26, avgBalance3m: 7500, cardUtilisationPct3mAgo: 25, onTimePaymentsRun: 1 },
         recent: { incomeAed: 12500, intlTransfersAed: 10500, airlinePurchases: [], salaryLateDays: 0,
                   balanceNowAed: 5400, largestOutboundTransferAed: 4000, missedCollection: false },
-        aecb: { cards: 2, cardLimitTotal: 18000, cardBalanceTotal: 5000 } } }
+        aecb: { cards: 2, cardLimitTotal: 18000, cardBalanceTotal: 5000 } } },
+    // v2.10 — two SME working-capital loans: the company's accounts (`business`, its own history) and the
+    // owner's personal accounts (baseline / recent / aecb, read under the owner's own consent). The
+    // customer is the company; `owner` is the personal guarantor. Expected at the default block:
+    //   ML-07 HIGH · FUNDS_DIVERSION (inflows −35% + AED 90,000 to the owner = 2.6× drawings + 88% of it sent
+    //         out in international transfers vs 10% usual) → specialist call
+    //   ML-08 MEDIUM (inflows −32% only; −29% in the same month last year — seasonal) → check-in, payment holiday
+    { id: 'ML-07', customer: 'Harbour Point Building Materials', segment: 'SME', owner: 'Adrian Clarke', productId: 'sme_working_capital',
+      amountAed: 200000, tenorMonths: 12, disbursedAt: addDaysIso(TODAY, -120), contactChannel: 'Phone',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.10, salaryCreditDay: null, avgBalance3m: 64000, cardUtilisationPct3mAgo: 30, onTimePaymentsRun: 4 },
+        recent: { incomeAed: 90000, intlTransfersAed: 79200, airlinePurchases: [], salaryLateDays: 0,
+                  balanceNowAed: 58000, largestOutboundTransferAed: 79200, missedCollection: false },
+        aecb: { cards: 2, cardLimitTotal: 40000, cardBalanceTotal: 12000 },
+        business: { baseline: { inflows3mAvgAed: 210000, usualDrawingsAed: 35000 },
+                    recent: { inflowsAed: 136500, largestTransferToOwnerAed: 90000 } } } },
+    { id: 'ML-08', customer: 'Palm Grove Catering', segment: 'SME', owner: 'Hana Saleh', productId: 'sme_working_capital',
+      amountAed: 80000, tenorMonths: 9, disbursedAt: addDaysIso(TODAY, -75), contactChannel: 'Email',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0, salaryCreditDay: null, avgBalance3m: 48000, cardUtilisationPct3mAgo: 25, onTimePaymentsRun: 2 },
+        recent: { incomeAed: 28000, intlTransfersAed: 0, airlinePurchases: [], salaryLateDays: 0,
+                  balanceNowAed: 45500, largestOutboundTransferAed: 3000, missedCollection: false },
+        aecb: { cards: 1, cardLimitTotal: 30000, cardBalanceTotal: 6000 },
+        business: { baseline: { inflows3mAvgAed: 125000, usualDrawingsAed: 28000, sameMonthLastYearDropPct: 29 },
+                    recent: { inflowsAed: 85000, largestTransferToOwnerAed: 28000 } } } }
   ];
+
+  // ---------------------------------------------------------------------------
+  // SME working capital persona (Addendum v2.10, SME-SPEC.md §3). An owner-managed
+  // Dubai mainland trading company. Everything the engine reads is derived from the
+  // monthly series below (12 months aligned to monthLabels):
+  //   revenue = credits − owner injections − transfers between the company's own accounts
+  //           → 172,000 … 256,000 (the Ramadan peak), mean 200,000, volatility 14%
+  //   operating outflows = debits − inter-account transfers (the owner's drawings, her pay,
+  //           are inside them) → mean 172,400, so net operating cash flow = 27,600/month
+  //   negative-balance days 2 (August), returned cheques 0, top customer 22% of revenue.
+  // The owner's personal accounts are a separate, optional consent (her own, as an
+  // individual). Bank names, masks and balances are internal labels — never in the memo.
+  // ---------------------------------------------------------------------------
+  const smeRevenue = [172000, 168000, 180000, 190000, 196000, 214000, 236000, 256000, 238000, 196000, 182000, 172000];
+  // Operating outflows: variable costs at 70% of revenue + 32,400 a month fixed; the owner's drawings sit inside them,
+  // so net operating cash flow averages 27,600 a month (18,000 in the quietest month, 44,400 at the Ramadan peak).
+  const smeOperating = smeRevenue.map(r => Math.round(0.7 * r + 32400));
+  const personaS1 = {
+    id: 's1', name: 'Kamal Fresh Foods Trading LLC', nameAr: 'كمال للمواد الغذائية الطازجة ش.ذ.م.م', segment: 'SME',
+    tagline: 'Food trading, Dubai mainland — 4 years trading, owner-managed; a larger stock order before Ramadan',
+    business: {
+      legalName: 'Kamal Fresh Foods Trading LLC', legalForm: 'LLC', activity: 'Foodstuff trading',
+      tradeLicence: { authority: 'Dubai DET (mainland)', issuedOn: '2022-07-04', expiresOn: '2027-07-03' },
+      ubo: [{ name: 'Sara Kamal', sharePct: 100 }],
+      // AECB commercial report (the company)
+      aecb: { hit: true, score: 702, worstDelinquency: 'NONE', chequeReturns12m: 0, obligationsMonthly: 0 },
+      // Open Finance on the business accounts (Al Tareq) — consent given by the authorised signatory
+      accounts: { source: 'ALTAREQ_TPP', banks: ['CBD', 'NBF'], monthsAvailable: 12,
+                  accounts: [{ bank: 'CBD', type: 'Business current account', mask: '4410', balance: 96500 },
+                             { bank: 'NBF', type: 'Collections account', mask: '7302', balance: 41200 }],
+                  // A 30,000 sweep from the collections account to the current account every month (inter-account);
+                  // the owner put 20,000 in during the quiet August (an injection, not revenue).
+                  months: monthLabels.map((m, k) => ({ month: m,
+                    credits: smeRevenue[k] + 30000 + (k === 1 ? 20000 : 0), ownerInjections: k === 1 ? 20000 : 0, interAccount: 30000,
+                    debits: smeOperating[k] + 30000, negativeBalanceDays: k === 1 ? 2 : 0, returnedCheques: 0,
+                    topCustomer: Math.round(0.22 * smeRevenue[k]) })) }
+    },
+    owner: {
+      name: 'Sara Kamal', nameAr: 'سارة كمال', age: 39, role: 'Owner, authorised signatory and personal guarantor',
+      // AECB consumer report (the owner, as guarantor)
+      aecb: { hit: true, score: 744, obligationsMonthly: 4500, tradelines: 4, worstDelinquency: 'NONE', chequeReturns12m: 0,
+              obligationsBreakdown: [{ label: 'Car loan', monthly: 3200 }, { label: 'Credit cards', monthly: 1300 }] },
+      // The optional consent: Open Finance on the owner's personal accounts (Al Tareq B2C)
+      personalAccounts: { source: 'ALTAREQ_TPP', banks: ['Emirates NBD', 'FAB'], monthsAvailable: 12,
+                          accounts: [{ bank: 'Emirates NBD', type: 'Current account', mask: '2207', balance: 46000 },
+                                     { bank: 'FAB', type: 'Savings account', mask: '8815', balance: 134000 }],
+                          drawingsFromBusiness: [35000, 35000, 35000, 35000, 35000, 35000, 35000, 35000, 35000, 35000, 35000, 35000],
+                          otherIncome: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                          // mean 21,000 (December higher)
+                          spending: [20400, 21600, 20800, 21200, 20600, 22800, 21400, 20200, 21000, 20600, 20900, 20500],
+                          observedObligationsMonthly: 4500, observedObligationsLabel: 'Car loan + credit cards',
+                          commingling: { businessRevenueIntoPersonalAed: 0, businessCostsPaidFromPersonalAed: 0 },
+                          // No remittance surge, cards not maxed, balances stable — no red flag at origination.
+                          redFlagData: {
+                            baseline: { intlTransfersShareOfIncome6m: 0, salaryCreditDay: null, avgBalance3m: 176000, cardUtilisationPct3mAgo: 18, onTimePaymentsRun: 0 },
+                            recent: { incomeAed: 35000, intlTransfersAed: 0, airlinePurchases: [], salaryLateDays: 0,
+                                      balanceNowAed: 180000, largestOutboundTransferAed: 6000, missedCollection: false },
+                            aecb: { cards: 2, cardLimitTotal: 60000, cardBalanceTotal: 9600 } } }
+    },
+    defaultRequest: { amount: 150000, tenorMonths: 12, purpose: 'A larger stock order before Ramadan' }
+  };
+  const personasSme = [personaS1];
 
   // ---------------------------------------------------------------------------
   // sampleBook — seeded synthetic applications for policy simulation.
@@ -898,6 +1010,53 @@
     return rows.map(([id, r, v, o]) => Object.assign({ id }, base, r, v, o || {}));
   }
 
+  // sme_working_capital (15 rows, hand-written — Addendum v2.10): like the car book, every row
+  //   exercises one rule. Row shape = pre-aggregated business features (tradingMonths, historyMonths,
+  //   aecbCommercialScore, avgMonthlyRevenue, nocfMonthly, revenueVolatilityPct, negativeBalanceDays,
+  //   returnedCheques, topCustomerPct), the owner's AECB consumer file, amount / tenor and — on the rows
+  //   whose owner shared her personal accounts — `ownerOpenFinance: true` with an `owner` block.
+  function buildSmeBook() {
+    const owner = (drawings, other, obligations, balances, months, extra) => Object.assign({ ownerOpenFinance: true,
+      owner: Object.assign({ drawingsMonthly: drawings, drawingsMonths: months === undefined ? 12 : months, otherIncomeMonthly: other || 0,
+                             liquidBalances: balances, spendMonthly: Math.round(drawings * 0.6), observedObligations: obligations }, extra || {}) });
+    const base = { tradingMonths: 48, historyMonths: 12, aecbCommercialScore: 702, ownerAecbScore: 744, ownerObligations: 4500,
+                   avgMonthlyRevenue: 200000, nocfMonthly: 27600, revenueVolatilityPct: 14, negativeBalanceDays: 2, returnedCheques: 0,
+                   topCustomerPct: 22, worstDelinquency: 'NONE', ownerOpenFinance: false, amount: 150000, tenorMonths: 12 };
+    const rows = [
+      // APPROVE — owner's accounts: guarantee verified (strong), the request binds (s1's numbers)
+      ['SM-001', {}, owner(35000, 0, 4500, 180000)],
+      // APPROVE — business accounts only: the unverified guarantee (65% of the capacity) binds
+      ['SM-002', {}],
+      // APPROVE — owner's accounts, but her DBR incl. the contingent instalment is over 50% → weak (80%) binds
+      ['SM-003', { ownerObligations: 9000 }, owner(22000, 0, 9000, 180000)],
+      // APPROVE — owner's accounts strong; the DSCR cap binds (RC_LIMIT_REDUCED)
+      ['SM-004', { nocfMonthly: 16000, amount: 150000 }, owner(30000, 0, 3000, 150000)],
+      // APPROVE — owner's accounts strong; the revenue cap binds (1× a month of revenue)
+      ['SM-005', { avgMonthlyRevenue: 60000, nocfMonthly: 22000, amount: 100000, tenorMonths: 9 }, owner(25000, 0, 2000, 90000)],
+      // DECLINE — trading 8 months, with 8 months of accounts (both below 12)
+      ['SM-006', { tradingMonths: 8, historyMonths: 8, amount: 60000 }],
+      // DECLINE — 6 months of business-account history (the company moved banks)
+      ['SM-007', { historyMonths: 6, amount: 80000 }],
+      // DECLINE — AECB commercial 560 → 580 points, below the 600 cut-off
+      ['SM-008', { aecbCommercialScore: 560, ownerAecbScore: 680, amount: 60000 }],
+      // REFER — AECB commercial 610 and no overlay applies (volatility 26%, 30 months trading, owner 690): between the 600 cut-off and the 650 refer line
+      ['SM-009', { aecbCommercialScore: 610, ownerAecbScore: 690, revenueVolatilityPct: 26, tradingMonths: 30, amount: 60000 }],
+      // DECLINE — three returned cheques in 12 months
+      ['SM-010', { returnedCheques: 3, amount: 80000 }],
+      // DECLINE — negative net operating cash flow (POL_DSCR)
+      ['SM-011', { nocfMonthly: -4000, amount: 50000 }],
+      // DECLINE — request below the AED 25,000 product minimum
+      ['SM-012', { amount: 20000, tenorMonths: 6 }],
+      // APPROVE — 9 negative-balance days (−20 points → 712, still grade B), business accounts only: the request binds
+      ['SM-013', { negativeBalanceDays: 9, amount: 60000 }],
+      // REFER — no AECB commercial file yet (thin file)
+      ['SM-014', { aecbCommercialScore: null, amount: 60000 }],
+      // APPROVE — owner's accounts: a buffer of under 3 instalments → weak (80%) binds
+      ['SM-015', { amount: 150000 }, owner(35000, 0, 4500, 30000)]
+    ];
+    return rows.map(([id, r, o]) => Object.assign({ id }, base, r, o || {}));
+  }
+
   // ---------------------------------------------------------------------------
   // Lenders of record (Addendum v2.5 / v2.6). Noor arranges and decides; a
   // partner bank books, funds and collects the loan, and receives a credit memo
@@ -916,12 +1075,14 @@
     personasUpgrade: personasUpgrade,
     personasJourney: personasJourney,
     personasCar: personasCar,
+    personasSme: personasSme,
     seededDocumentCases: seededDocumentCases,
     lenders: lenders,
     reasonCodes: reasonCodes,
     earlyWarning: earlyWarning,
     monitoredLoans: monitoredLoans,
-    sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook() },
+    sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook(),
+                  sme_working_capital: buildSmeBook() },
     history: { days: 90, seed: 20260719 }
   };
 

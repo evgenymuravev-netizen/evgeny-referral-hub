@@ -1099,3 +1099,89 @@ Decisions and deviations:
 - **Acceptance.** One existing check changed: the demo-strip count went from 9 to 10.
 - **Merging with v2.8.** v2.8's personal-loan free-cash-flow rule should leave r6's APPROVE path intact: free cash
   flow is AED 5,000 and the instalment is 36.5% of it.
+
+### As built — v2.10
+
+Built as SME-SPEC.md specifies (selftest 1503 green, of which the 1370 earlier checks and 133 in group 19; acceptance 764
+green, 12 screens). Every number in the spec's table reproduces exactly from the engine — no rounding-cent differences:
+
+| | Business accounts only | + the owner's personal accounts |
+|---|---|---|
+| NoorScore / grade | 732 (702 + 10 + 10 + 10) · B | 747 (+15 owner's income verified) · A |
+| APR (mid band) | 13.00% | 10.50% |
+| DSCR cap (13,800/month, 12 months) | 154,000 | 156,000 |
+| Guarantee | UNVERIFIED × 65% → 100,000 (binds) | VERIFIED_STRONG × 100% (DBR 31.7% incl. contingent, buffer 13.6) |
+| Approved · instalment / total | AED 100,000 · 8,931.73 / 107,180.73 | AED 150,000 (request binds) · 13,222.29 / 158,667.49 |
+| DSCR | 3.09× | 2.09× |
+
+Uplift +AED 50,000, 2.5 points cheaper. Decisions and deviations:
+
+- **Engine (additive).**
+  - `sme_working_capital` is appended sixth to `MANIFESTS` (segment `SME`). Records carry the manifest's segment, so
+    every earlier product stays `CONSUMER`; `referQueue()` rows carry the record's segment.
+  - The guarantee factor multiplies the **business capacity** (pickMin of the DSCR, revenue and product caps), not the
+    request — that is what makes 65% of 154,000 = 100,000. Approved = min(request, capacity × factor), each floored to
+    1,000. Binding: `REQUESTED` when the request fits; else `GUARANTEE_FACTOR` (factor < 100%) or the capacity's key.
+  - The owner's tests run at the amount the business supports before the factor (min(request, capacity)), so the
+    guarantee is judged on the full exposure. Obligations = the larger of AECB consumer and what leaves her accounts.
+  - Business features are derived from 12 monthly rows: revenue = credits − owner injections − inter-account
+    transfers; operating outflows = debits − inter-account transfers (the owner's drawings, her pay, are inside them).
+    Volatility is the population stdev/mean, rounded to a whole percent (14.08% → 14).
+  - Rules: the spec's list plus `POL_TENOR` (a request between allowed terms rounds up, RC_TENOR_CAP). `POL_DSCR`
+    fails only on a non-positive NOCF and refers below 1.5×; `POL_GUARANTEE` is PASS (strong) or INFO — it scales the
+    amount, never declines. `POL_RETURNED_CHEQUES` uses a fixed tolerance of 1 (the other packs' default) because the
+    spec's params list has no cheque parameter.
+  - An owner red flag refers (RC_RED_FLAGS_REVIEW only) and, per the spec's VERIFIED_STRONG definition, makes the
+    guarantee weak (80% of the provisional amount); the score and the price never change. Without the owner's consent
+    nothing of hers is read; with `redFlagsAtOrigination` off it is INFO.
+  - New pure API `quoteSme()` (the screen's term rows); `rec.ownerAccountsUplift` is a pure re-evaluation with
+    `ownerOpenFinance: false` (null without her consent). Records add `borrower`, `guarantee` (status + internal tests),
+    `businessFindings`, `ownerFindings` (internal), `request.purpose`, and `consents.ownerOpenFinance` beside the
+    signatory's business consent.
+  - New reason codes (EN + AR, appended after the v2.9 codes): RC_TRADING_HISTORY, RC_BUSINESS_HISTORY,
+    RC_BUSINESS_CASH_FLOW, RC_GUARANTEE_UNVERIFIED, RC_GUARANTEE_WEAK, RC_RF_REVENUE_DROP, RC_RF_FUNDS_TO_OWNER.
+- **Policy pack.** The spec's params and locked block exactly, plus `coolingOffDays: 5` in the locked block (an
+  addition: the shared six-step sequence needs it; labelled Noor policy for micro businesses). The pack carries
+  `lockedBasis: 'NOOR_POLICY'`; publishing a locked key is refused with "locked Noor policy … confirm with compliance".
+  Bounds (unspecified): trading 6–60, history 6–24, minimum 10,000–100,000, cap 100,000–2,000,000, terms 1–24 ascending
+  whole months, DSCR budget 20–80%, revenue multiple 0.25–3, unverified factor 30–80% (never above the 80% weak
+  factor), owner DBR cap 30–50%, contingent share 25–100%, buffer 1–12 instalments, scores as the other packs.
+  `REFER_SLA_HOURS.sme_working_capital = 24`.
+- **Execution.** The same six events and labels. SME descriptions and guards: the owner acknowledges the key facts and
+  the personal-guarantee disclosure (AR + EN), signs the loan and the guarantee via UAE PASS, the mandate sits on the
+  business account, and cooling-off is "Noor policy for micro businesses … (confirm with compliance)". Token
+  conditions: the disclosure, the business-account mandate, the owner's guarantee, a valid trade licence.
+- **Credit memo.** SME memos have their own allowlist: the company as borrower (masked trade licence), the guarantor's
+  name and masked Emirates ID, business terms as bands (licence age, annual revenue, DSCR, instalment ÷ NOCF), the
+  guarantee status as a flag, AECB commercial and owner consumer score bands, consent references (the owner's own
+  consent as a reference). Withheld: the shared seven groups (the first reworded for a business) + "Exact business
+  revenue, operating cash flow, balances and customer names" + "Owner's personal account data — used for Noor's
+  guarantee assessment only". Revenue is banded annually (AED 1M–5M a year), so no band boundary is a monthly figure.
+  SFTP rows for SME add `revenue_band, dscr_band, guarantee_status`; other products keep 16 columns. The recursive scan
+  finds none of 35,000 · 180,000 · 21,000 · 4,500 · 27,600 · 200,000, the other business/owner working figures, the
+  bank names or the masks — on both paths, a REFER, an override approval and a weak guarantee.
+- **Monitoring.** `RF_REVENUE_DROP` and `RF_FUNDS_TO_OWNER` live inside the v2.9 primitive, read from an allowlisted
+  `redFlagData.business` block (the company's own inflows and transfers to the owner), monitoring only. Their thresholds
+  (30%, 2×) are fixed constants shown as locked text on the shared block, so the v2.9 block's params publish unchanged.
+  FUNDS_DIVERSION = RF_FUNDS_TO_OWNER + (owner RF_REMITTANCE_SURGE or RF_BALANCES_DRAINED) → HIGH, specialist call.
+  A business revenue drop offers a payment holiday under policy; a same-month dip last year adds a "looks seasonal"
+  note. ML-07 (Harbour Point Building Materials) HIGH · FUNDS_DIVERSION; ML-08 (Palm Grove Catering) MEDIUM; ML-01 …
+  ML-06 keep their severities. The block's `appliesTo` adds the SME pack and carries the owner's consent line
+  ("while the business loan you guarantee is open").
+- **Data.** `MizanData.personasSme = [s1]` (Kamal Fresh Foods Trading LLC; Sara Kamal, سارة كمال, 39), a 15-row
+  hand-written `sampleBook.sme_working_capital` (7 approve · 2 refer · 6 decline; SM-001/SM-002 reproduce s1's paths),
+  ML-07 and ML-08. No nationality, country or destination field anywhere.
+- **UI.** New "SME working capital" screen after "Car loan": the CSS-only ten-step flow map (Open Finance steps 2, 3 and
+  10 in sky; five a row on tablets, stacked on a phone), business and owner cards, the request with live term quotes,
+  the three consents (the owner's a switch, on by default), the decision panel (figures, guarantee chip, business-account
+  repayment, keyed trace), "What the owner's accounts changed", internal Owner findings, "How Mizan decided", the offer
+  with the bilingual guarantee disclosure, and the six steps. Workbench, Decision log, Lender view, Monitoring
+  ("SME" chip, guarantor line, decisions by product), the Policy console (Noor-policy locked block, term list, SME
+  simulation with amount impact; business signals on the shared block) and the Overview (step 11, a topic-map row)
+  all carry the product. The Noor skin `<style>` block is byte-identical; all CSS sits at the end of "Noor additions".
+- **Changed existing checks.** Selftest: the manifest order, segment and pricing-mode checks (six products); "no SME
+  personas" (now: only the v2.10 persona, legacy keys still absent); v2.9's monitored-loan count (8), distinct names
+  (8), reason-code position (the v2.9 codes followed only by v2.10's), block `appliesTo`, scan order, exit-risk counts
+  (HIGH 2 · MEDIUM 4 · LOW 1 · NONE 1) and the recording proxy's allowlist (adds the business keys). Acceptance: the
+  screen list and "12 screens", the demo strip (11) and its "eleven-step" heading, the red-flag tiles and rows (8), and
+  the vocabulary scrub, which no longer bans "SME" / "working capital".

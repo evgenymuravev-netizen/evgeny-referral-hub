@@ -5,7 +5,8 @@
  * group 14 = v2.5 NoorScore + the lender's credit memo (LENDER-VIEW-SPEC.md); group 15 =
  * v2.6 customer journey: prequalify() and persona j1 (JOURNEY-SPEC.md); group 16 = v2.7 car loan
  * (CAR-LOAN-SPEC.md); group 17 = v2.8 digital footprint, the personal-loan FCF rule and contact
- * preferences (BOTIM-V28-SPEC.md))
+ * preferences (BOTIM-V28-SPEC.md); group 18 = v2.9 UAE red flags (RED-FLAGS-SPEC.md); group 19 =
+ * v2.10 SME working capital (SME-SPEC.md))
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -98,11 +99,13 @@ const recs = {};
 
 // ---------------------------------------------------------------------------
 group('1. Persona intended outcomes at default policy (r1–r5 personal loan, c1–c5 split)', () => {
-  // Manifests: five consumer products, in order (starter_loan third — Addendum v2.1; car_loan appended fifth — Addendum v2.7).
+  // Manifests: five consumer products, in order (starter_loan third — Addendum v2.1; car_loan appended fifth — Addendum v2.7),
+  // then the SME route appended sixth (Addendum v2.10).
   const mans = E.manifests();
-  eq(mans.map(m => m.productId).join(','), 'split,personal_loan,starter_loan,salary_advance,car_loan', 'manifests are split, personal_loan, starter_loan, salary_advance, car_loan in order');
-  ok(mans.every(m => m.segment === 'CONSUMER' && m.nameEn && m.nameAr && m.structure && m.pricingMode), 'every manifest is CONSUMER with names, structure, pricingMode');
-  eq(mans.map(m => m.pricingMode).join(','), 'MONTHLY_FEE,BANDED_APR,TENOR_CURVE_APR,FLAT_FEE,BANDED_APR', 'pricing modes per product');
+  eq(mans.map(m => m.productId).join(','), 'split,personal_loan,starter_loan,salary_advance,car_loan,sme_working_capital', 'manifests are split, personal_loan, starter_loan, salary_advance, car_loan, sme_working_capital in order');
+  ok(mans.every(m => m.segment === (m.productId === 'sme_working_capital' ? 'SME' : 'CONSUMER') && m.nameEn && m.nameAr && m.structure && m.pricingMode),
+     'every consumer manifest is CONSUMER (the v2.10 SME route is SME) with names, structure, pricingMode');
+  eq(mans.map(m => m.pricingMode).join(','), 'MONTHLY_FEE,BANDED_APR,TENOR_CURVE_APR,FLAT_FEE,BANDED_APR,BANDED_APR', 'pricing modes per product');
   eq(mans[0].structure, 'Instalment plan (revolving split capacity)', 'split structure string');
   eq(mans[1].structure, 'Amortising loan (reducing balance)', 'personal_loan structure string');
   eq(mans[3].structure, 'Single-repayment advance', 'salary_advance structure string');
@@ -554,8 +557,9 @@ group('10. Determinism, reason-code completeness (EN + AR), no legacy vocabulary
   for (const c of ['RC_SECTOR_EXCLUDED', 'RC_LICENSE_AGE', 'RC_OWNER_SCORE', 'RC_VOLATILITY']) {
     ok(!D.reasonCodes[c], 'removed code ' + c + ' absent');
   }
-  ok(!('personasSme' in D) && !('sectorExclusions' in D) && !('retail' in D.sampleBook) && !('sme' in D.sampleBook),
-     'no SME personas, sector screen or legacy sample-book keys');
+  // v2.10 reintroduces an SME route on purpose (persona s1, sampleBook.sme_working_capital); the legacy v1 keys stay gone.
+  ok(Array.isArray(D.personasSme) && D.personasSme.map(p => p.id).join(',') === 's1' && !('sectorExclusions' in D) && !('retail' in D.sampleBook) && !('sme' in D.sampleBook),
+     'no legacy SME personas, sector screen or legacy sample-book keys (personasSme holds only the v2.10 route, s1)');
 
   // No legacy vocabulary anywhere in the engine or data source. v2.3 also bans
   // salary-transfer recourse wording ("no salary transfer required" is allowed).
@@ -2181,10 +2185,10 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
   ok(b6.intlTransfersShareOfIncome6m === 0.22 && b6.avgBalance3m === 11600 && n6.intlTransfersAed === 12400 && n6.balanceNowAed === 1850 &&
      n6.largestOutboundTransferAed === 7000 && n6.salaryLateDays === 0 && r6.defaultRequest.amount === 40000 && r6.defaultRequest.tenorMonths === 24,
      'r6 redFlagData as specified (22% usual, avg 11,600; 12,400 sent, balance 1,850, one 7,000 transfer out, salary on time); requests 40,000 over 24 months');
-  ok(Array.isArray(D.monitoredLoans) && D.monitoredLoans.length === 6 && D.monitoredLoans.map(l => l.id).join(',') === 'ML-01,ML-02,ML-03,ML-04,ML-05,ML-06',
-     'MizanData.monitoredLoans: 6 funded loans ML-01 … ML-06');
+  ok(Array.isArray(D.monitoredLoans) && D.monitoredLoans.length === 8 && D.monitoredLoans.map(l => l.id).join(',') === 'ML-01,ML-02,ML-03,ML-04,ML-05,ML-06,ML-07,ML-08',
+     'MizanData.monitoredLoans: 8 funded loans ML-01 … ML-08 (v2.10 adds the two SME loans)');
   const surnames = D.monitoredLoans.map(l => l.customer.split(' ').slice(-1)[0]);
-  ok(new Set(surnames).size === 6 && new Set(D.monitoredLoans.map(l => l.customer.split(' ')[0])).size === 6, 'monitored loans carry six different names (' + D.monitoredLoans.map(l => l.customer).join(', ') + ')');
+  ok(new Set(surnames).size === 8 && new Set(D.monitoredLoans.map(l => l.customer.split(' ')[0])).size === 8, 'monitored loans carry eight different names (' + D.monitoredLoans.map(l => l.customer).join(', ') + ')');
   const badKeys = keysDeep(D.monitoredLoans).concat(keysDeep(r6.redFlagData)).filter(k => FORBIDDEN_KEY.test(k));
   ok(badKeys.length === 0, 'no nationality, country, destination, religion or service field anywhere in monitoredLoans or r6.redFlagData (' + badKeys.join(', ') + ')');
   ok(D.earlyWarning.length === 5, 'the seeded day-zero earlyWarning table is kept (5 rows)');
@@ -2200,11 +2204,14 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
        c + ': English + Arabic, customer-safe (no figures, no airline, no place)');
   }
   const rcKeys = Object.keys(D.reasonCodes);
-  eq(rcKeys.slice(-6).join(','), 'RC_RED_FLAGS_REVIEW,' + RF.map(x => 'RC_' + x).join(','), 'the six new reason codes are appended at the end of the reason-code object');
+  const rfAt = rcKeys.indexOf('RC_RED_FLAGS_REVIEW');
+  const V210_RC = ['RC_TRADING_HISTORY', 'RC_BUSINESS_HISTORY', 'RC_BUSINESS_CASH_FLOW', 'RC_GUARANTEE_UNVERIFIED', 'RC_GUARANTEE_WEAK', 'RC_RF_REVENUE_DROP', 'RC_RF_FUNDS_TO_OWNER'];
+  eq(rcKeys.slice(rfAt, rfAt + 6).join(',') + ' | ' + rcKeys.slice(rfAt + 6).join(','), 'RC_RED_FLAGS_REVIEW,' + RF.map(x => 'RC_' + x).join(',') + ' | ' + V210_RC.join(','),
+     'the six new reason codes are appended after every earlier code (only the v2.10 codes follow them)');
 
   // ---- the shared early-warning block ----
   const blk = E.getPolicy('earlyWarning');
-  ok(blk.kind === 'SHARED_BLOCK' && blk.version === 1 && blk.appliesTo.join(',') === 'personal_loan,car_loan,split,monitoring', 'getPolicy("earlyWarning"): a shared block for personal loan, car loan, split and monitoring, v1');
+  ok(blk.kind === 'SHARED_BLOCK' && blk.version === 1 && blk.appliesTo.join(',') === 'personal_loan,car_loan,split,sme_working_capital,monitoring', 'getPolicy("earlyWarning"): a shared block for personal loan, car loan, split, SME working capital (v2.10) and monitoring, v1');
   eq(JSON.stringify(blk.params), JSON.stringify({ redFlagsAtOrigination: true, cardsMaxedUtilisationPct: 90, cardsMaxedMinCards: 2, cardsMaxedRisePp: 30,
     remittanceShareOfIncomePct: 80, remittanceMultipleOfBaseline: 2, travelMinAmountAed: 1000, travelWindowDays: 30, salaryLateDays: 7, onTimeRunMin: 3,
     balanceDropPct: 80, outboundShareOfAvgBalancePct: 50 }), 'default thresholds = the spec (90% / 2 cards / +30 pp · 80% and 2× · AED 1,000 in 30 days · 7 days or 3 on time · −80% and 50%)');
@@ -2329,7 +2336,7 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
 
   // ---- earlyWarningScan: pure, deterministic, sorted ----
   const scan = E.earlyWarningScan();
-  eq(scan.map(r => r.loanId + ':' + r.severityLabel).join(' '), 'ML-01:HIGH ML-02:MEDIUM ML-03:MEDIUM ML-06:MEDIUM ML-04:LOW ML-05:NONE', 'scan: one row per loan, sorted HIGH → NONE');
+  eq(scan.map(r => r.loanId + ':' + r.severityLabel).join(' '), 'ML-01:HIGH ML-07:HIGH ML-02:MEDIUM ML-03:MEDIUM ML-06:MEDIUM ML-08:MEDIUM ML-04:LOW ML-05:NONE', 'scan: one row per loan, sorted HIGH → NONE (v2.10 adds ML-07 HIGH and ML-08 MEDIUM)');
   ok(scan.every(r => r.customer && r.productId && r.action && Array.isArray(r.flags) && Array.isArray(r.guardrailNotes) && r.guardrailNotes.length) &&
      scan.every(r => r.flags.every(f => f.en && ARABIC.test(f.ar) && f.observed && f.baseline && f.threshold)), 'every row: severity, flags (observed / baseline / threshold, EN + AR), action, guardrail notes');
   ok(scan.find(r => r.loanId === 'ML-02').action.channel === 'In-app message' && scan.find(r => r.loanId === 'ML-06').action.channel === 'SMS' &&
@@ -2339,7 +2346,7 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
   const tick1 = E.decide({ productId: 'split', applicant: P.c4, amount: 4800, tenorMonths: 6, consents: ALL });
   ok(scanJson === JSON.stringify(scan) && new Date(tick1.createdAt) - new Date(tick0.createdAt) === 37000, 'earlyWarningScan() is pure: identical output, no clock tick');
   const mm = E.metrics().exitRiskWatch;
-  ok(mm && JSON.stringify(mm.counts) === JSON.stringify({ HIGH: 1, MEDIUM: 3, LOW: 1, NONE: 1 }) && mm.rows.length === 6, 'metrics().exitRiskWatch: HIGH 1 · MEDIUM 3 · LOW 1 · NONE 1');
+  ok(mm && JSON.stringify(mm.counts) === JSON.stringify({ HIGH: 2, MEDIUM: 4, LOW: 1, NONE: 1 }) && mm.rows.length === 8, 'metrics().exitRiskWatch: HIGH 2 · MEDIUM 4 · LOW 1 · NONE 1 (v2.10: + ML-07 HIGH, + ML-08 MEDIUM)');
 
   // ---- redFlags never reads nationality, country or destination fields ----
   const tagged = clone(r6);
@@ -2360,7 +2367,9 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
   // A recording proxy proves which fields are read at all: only the allowlist under redFlagData.
   const ALLOWED = new Set(['redFlagData', 'baseline', 'recent', 'aecb', 'intlTransfersShareOfIncome6m', 'salaryCreditDay', 'avgBalance3m', 'cardUtilisationPct3mAgo',
     'onTimePaymentsRun', 'incomeAed', 'intlTransfersAed', 'airlinePurchases', 'daysAfterDisbursal', 'amountAed', 'salaryLateDays', 'balanceNowAed',
-    'largestOutboundTransferAed', 'missedCollection', 'cards', 'cardLimitTotal', 'cardBalanceTotal']);
+    'largestOutboundTransferAed', 'missedCollection', 'cards', 'cardLimitTotal', 'cardBalanceTotal',
+    // v2.10 — the business block of an SME loan (the company's own inflows and transfers to the owner)
+    'business', 'inflows3mAvgAed', 'usualDrawingsAed', 'sameMonthLastYearDropPct', 'inflowsAed', 'largestTransferToOwnerAed']);
   const ARRAY_INTERNALS = new Set(['length', 'map', 'constructor']);
   function recorder(obj, log) {
     return new Proxy(obj, { get(target, prop, recv) {
@@ -2522,6 +2531,348 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
   ok(snap() === snap(), 'two fresh init() runs: identical r6 record, memo, scan, simulation and exit-risk metrics');
   for (const r of E.listDecisions()) collect(r.reasonCodes);
   ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. RC_RED_FLAGS_REVIEW) exists with Arabic');
+});
+
+// ---------------------------------------------------------------------------
+// v2.10 — SME working capital (SME-SPEC.md). The memo privacy scan: a recursive walk over every memo
+// leaf and every SFTP cell; numbers (numeric leaves and every number inside a string, commas stripped)
+// must not equal a forbidden figure — matched as whole numbers; bank names and masks as words.
+const SME_FORBIDDEN_NUMBERS = [35000, 180000, 21000, 4500, 27600, 200000,
+  // beyond the spec's list: other business / owner working figures that must stay with Noor
+  13800, 172400, 154000, 156000, 96500, 41200, 46000, 134000, 3200, 1300, 6611.15, 4410, 7302, 2207, 8815];
+const SME_FORBIDDEN_WORDS = ['CBD', 'NBF', 'Emirates NBD', 'FAB', 'transactions', 'drawings', 'commingling'];
+function smePrivacyScan(memo, sftp) {
+  const hits = [];
+  const num = (n, where) => { if (SME_FORBIDDEN_NUMBERS.includes(Math.round(Math.abs(n) * 100) / 100)) hits.push(where + ' = ' + n); };
+  const str = (s, where) => {
+    for (const w of SME_FORBIDDEN_WORDS) if (new RegExp('(^|[^A-Za-z])' + w + '($|[^A-Za-z])', 'i').test(s)) hits.push(where + ' names "' + w + '"');
+    for (const tok of s.match(/\d[\d,]*(?:\.\d+)?/g) || []) num(parseFloat(tok.replace(/,/g, '')), where + ' ("' + tok + '")');
+  };
+  (function walk(x, path) {
+    if (x === null || x === undefined) return;
+    if (Array.isArray(x)) { x.forEach((v, i) => walk(v, path + '[' + i + ']')); return; }
+    if (typeof x === 'object') { for (const k of Object.keys(x)) walk(x[k], path + '.' + k); return; }
+    if (typeof x === 'number') num(x, path);
+    else if (typeof x === 'string') str(x, path);
+  })(memo, 'memo');
+  sftp.row.forEach((c, i) => str(c, 'sftp.' + sftp.header[i]));
+  const raw = JSON.stringify(memo) + '\n' + sftp.row.join(',');
+  for (const t of ['35,000', '180,000', '21,000', '4,500', '27,600', '200,000']) {
+    if (new RegExp('(^|[^\\d,.])' + t + '(?![\\d]|,\\d)').test(raw)) hits.push('raw text has "' + t + '"');
+  }
+  return hits;
+}
+
+group('19. SME working capital (v2.10): business accounts + the owner’s personal accounts, guarantee factor, business + owner monitoring', () => {
+  E.init(D);
+  const PID = 'sme_working_capital';
+  const s1 = D.personasSme && D.personasSme[0];
+  const OWN = { aecb: true, openFinance: true, ownerOpenFinance: true }, BIZ = { aecb: true, openFinance: true, ownerOpenFinance: false };
+  const decideSme = (applicant, consents, over) => {
+    const r = E.decide(Object.assign({ productId: PID, applicant, amount: 150000, tenorMonths: 12, consents }, over || {}));
+    collect(r.reasonCodes); return r;
+  };
+  const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  const FORBIDDEN_KEY = /nation|countr|destin|relig|service|merchant|carrier|city|airport/i;
+  const keysDeep = (x, out) => { out = out || []; if (x && typeof x === 'object') for (const k of Object.keys(x)) { out.push(k); keysDeep(x[k], out); } return out; };
+
+  // ---- manifest, pack, bounds ----
+  const man = E.manifests().find(m => m.productId === PID);
+  eq(JSON.stringify(man), JSON.stringify({ productId: 'sme_working_capital', nameEn: 'Business working capital', nameAr: 'قرض رأس المال العامل', segment: 'SME',
+    structure: 'Amortising business loan with the owner\'s personal guarantee', pricingMode: 'BANDED_APR' }), 'manifest exactly as specified (appended sixth; Arabic name uses قرض)');
+  const pol = E.getPolicy(PID);
+  eq(JSON.stringify(pol.params), JSON.stringify({ minMonthsTrading: 12, minBusinessHistoryMonths: 12, minAmount: 25000, productCap: 500000, tenorMonthsAllowed: [3, 6, 9, 12],
+    dscrBudgetPct: 50, revenueMultiple: 1.0, unverifiedGuaranteeFactorPct: 65, ownerDbrCapPct: 50, contingentInstalmentSharePct: 50, ownerBufferMinInstalments: 3,
+    scoreDecline: 600, scoreRefer: 650, pricingBands: { A: [0.095, 0.115], B: [0.12, 0.14], C: [0.15, 0.18] }, tokenValidityDays: 14 }), 'params exactly as specified');
+  ok(pol.regulatory.aecbCommercialRequired === true && pol.regulatory.aecbConsumerOwnerRequired === true && pol.regulatory.kybRequired === 'Trade licence + UBO' &&
+     pol.regulatory.personalGuarantee === 'Owner (individual) — guarantor disclosures in Arabic and English' && pol.regulatory.coolingOffDays === 5,
+     'locked block: AECB commercial + owner consumer, KYB "Trade licence + UBO", the owner\'s personal guarantee with AR + EN disclosures (+ the Noor-policy cooling-off)');
+  ok(pol.lockedBasis === 'NOOR_POLICY' && /confirm with compliance/.test(pol.lockedNote) && /apply to the owner as guarantor, not to the company/.test(pol.lockedNote),
+     'the locked block is labelled Noor policy — "confirm with compliance"; consumer-protection rules apply to the owner as guarantor, not the company');
+  ok(pol.platform && pol.platform.repaymentCollection && pol.platform.repaymentCollection.altareqMaxAmount === 1000, 'the platform repayment rule rides on the SME pack');
+  const META = { author: 'R. Haddad (Credit Policy)', approver: 'S. Nair (CRO)' };
+  throwsWith(() => E.publishPolicy(PID, { personalGuarantee: 'none' }, META), 'confirm with compliance', 'a locked Noor-policy key cannot be published');
+  const bounded = { minMonthsTrading: 5, minBusinessHistoryMonths: 30, minAmount: 5000, productCap: 50000, dscrBudgetPct: 90, revenueMultiple: 4, unverifiedGuaranteeFactorPct: 85,
+                    ownerDbrCapPct: 60, contingentInstalmentSharePct: 10, ownerBufferMinInstalments: 13, scoreDecline: 500, scoreRefer: 800, tokenValidityDays: 40 };
+  for (const k of Object.keys(bounded)) throwsWith(() => E.simulateBook(PID, { [k]: bounded[k] }), 'outside allowed bounds', 'PARAM_BOUNDS refuses ' + k + ' = ' + bounded[k]);
+  throwsWith(() => E.simulateBook(PID, { tenorMonthsAllowed: [6, 3] }), 'ascending whole months', 'tenorMonthsAllowed must be ascending');
+  throwsWith(() => E.simulateBook(PID, { tenorMonthsAllowed: [3, 6, 36] }), 'ascending whole months', 'tenorMonthsAllowed terms are bounded');
+  throwsWith(() => E.simulateBook(PID, { ownerBufferMinInstalments: 2.5 }), 'whole number', 'the buffer minimum is a whole number of instalments');
+  throwsWith(() => E.simulateBook(PID, { pricingBands: { A: [0.1, 0.09], B: [0.12, 0.14], C: [0.15, 0.18] } }), 'pricingBands.A', 'pricing bands are validated');
+  eq(E.REFER_SLA_HOURS.sme_working_capital, 24, 'REFER_SLA_HOURS.sme_working_capital = 24');
+
+  // ---- persona s1 (as specified) ----
+  ok(s1 && s1.id === 's1' && s1.name === 'Kamal Fresh Foods Trading LLC' && s1.owner.name === 'Sara Kamal' && s1.owner.nameAr === 'سارة كمال' && s1.owner.age === 39 &&
+     s1.business.tradeLicence.issuedOn === '2022-07-04' && s1.business.aecb.score === 702 && s1.owner.aecb.score === 744 && s1.owner.aecb.obligationsMonthly === 4500 &&
+     s1.owner.aecb.obligationsBreakdown.map(o => o.monthly).join('+') === '3200+1300', 's1: Kamal Fresh Foods Trading LLC, owner Sara Kamal (سارة كمال), 39; AECB commercial 702; owner 744, obligations 4,500 (3,200 + 1,300)');
+  const bm = s1.business.accounts.months, pa = s1.owner.personalAccounts;
+  const rev = bm.map(m => m.credits - m.ownerInjections - m.interAccount), opx = bm.map(m => m.debits - m.interAccount);
+  ok(s1.business.accounts.accounts.length === 2 && bm.length === 12 && mean(rev) === 200000 && mean(rev) - mean(opx) === 27600 &&
+     bm.reduce((x, m) => x + m.negativeBalanceDays, 0) === 2 && bm.reduce((x, m) => x + m.returnedCheques, 0) === 0 &&
+     Math.round(bm.reduce((x, m) => x + m.topCustomer, 0) / rev.reduce((x, y) => x + y, 0) * 100) === 22,
+     's1 business accounts: 2 accounts, 12 months, revenue 200,000, NOCF 27,600, 2 negative-balance days, 0 returned cheques, top customer 22% (all derived from the monthly series)');
+  ok(mean(pa.drawingsFromBusiness) === 35000 && pa.drawingsFromBusiness.filter(x => x > 0).length === 12 && pa.accounts.reduce((x, a) => x + a.balance, 0) === 180000 &&
+     mean(pa.spending) === 21000 && pa.commingling.businessRevenueIntoPersonalAed === 0 && pa.commingling.businessCostsPaidFromPersonalAed === 0,
+     's1 owner accounts: drawings 35,000 in 12 of 12 months, liquid balances 180,000, spending 21,000, no commingling');
+  ok(s1.defaultRequest.amount === 150000 && s1.defaultRequest.tenorMonths === 12 && /stock order before Ramadan/.test(s1.defaultRequest.purpose), 's1 requests AED 150,000 over 12 months for a stock order before Ramadan');
+  const sBad = keysDeep(s1).concat(keysDeep(D.monitoredLoans.slice(6))).filter(k => FORBIDDEN_KEY.test(k));
+  ok(sBad.length === 0 && !JSON.stringify([s1, D.monitoredLoans.slice(6)]).match(/nationalit|"country"/i), 'no nationality, country, destination or service field on s1 or the SME monitored loans (' + sBad.join(', ') + ')');
+
+  // ---- consent gate ----
+  throwsWith(() => E.decide({ productId: PID, applicant: s1, amount: 150000, tenorMonths: 12, consents: { aecb: true, openFinance: false, ownerOpenFinance: true } }),
+             ['business accounts', 'authorised signatory'], 'business Open Finance (the authorised signatory) is required');
+  throwsWith(() => E.decide({ productId: PID, applicant: s1, amount: 150000, tenorMonths: 12, consents: { aecb: false, openFinance: true } }), 'AECB consent', 'AECB consent is required');
+  eq(E.listDecisions().length, 0, 'refused applications record nothing');
+
+  // ---- the two paths, exactly as the spec's table ----
+  const nB = E.listDecisions().length;
+  const bz = decideSme(s1, BIZ), ow = decideSme(s1, OWN);
+  const fig = (r) => [r.outcome, r.score.points, r.score.grade, r.pricing.kfs.rateMid, r.limit.approved, r.pricing.kfs.monthlyInstalment, r.pricing.kfs.totalRepayable,
+                      r.features.dscr, r.features.guaranteeStatus, r.features.guaranteeFactorPct, r.limit.bindingConstraint].join(' ');
+  eq(fig(bz), 'APPROVE 732 B 0.13 100000 8931.73 107180.73 3.09 UNVERIFIED 65 GUARANTEE_FACTOR', 'business accounts only: 732 · B · 13.00% · AED 100,000 · 8,931.73 / 107,180.73 · DSCR 3.09× · UNVERIFIED × 65%');
+  eq(fig(ow), 'APPROVE 747 A 0.105 150000 13222.29 158667.49 2.09 VERIFIED_STRONG 100 REQUESTED', '+ owner’s personal accounts: 747 · A · 10.50% · AED 150,000 (request binds) · 13,222.29 / 158,667.49 · DSCR 2.09× · VERIFIED_STRONG');
+  eq(bz.score.overlays.map(o => o.name + ' ' + o.delta).join(' | '), 'Trading ≥ 3 years 10 | Revenue volatility ≤ 20% 10 | Owner AECB consumer score ≥ 700 10', 'business-only score: 702 + 10 + 10 + 10');
+  ok(bz.score.base === 702 && ow.score.base === 702 && ow.score.overlays.some(o => /^Owner’s income verified via connected personal accounts$/.test(o.name) && o.delta === 15) &&
+     !bz.score.overlays.some(o => o.delta === 15), 'with the owner’s accounts: +15 owner income verified (only with the personal consent)');
+  const dscrRow = (r) => r.limit.trace.find(t => t.key === 'DSCR_CAP');
+  ok(dscrRow(bz).value === 154000 && dscrRow(ow).value === 156000 && /50% of net operating cash flow AED 27,600\/month = AED 13,800\/month over 12 months/.test(dscrRow(bz).label),
+     'DSCR cap (50% × 27,600 = 13,800/month, 12 months): 154,000 at 13.00% · 156,000 at 10.50%');
+  ok(bz.limit.trace.find(t => t.key === 'REVENUE_CAP').value === 200000 && bz.limit.trace.find(t => t.key === 'PRODUCT_CAP').value === 500000, 'revenue cap 200,000 (1.0 × revenue) · product cap 500,000');
+  const gRow = bz.limit.trace.find(t => t.key === 'GUARANTEE_FACTOR');
+  ok(gRow && gRow.value === 100000 && /^Personal guarantee unverified — 65% of the business capacity/.test(gRow.label), 'trace row "Personal guarantee unverified — 65% of the business capacity" = AED 100,000');
+  ok(ow.limit.trace.find(t => t.key === 'GUARANTEE_FACTOR').value === 156000 && /verified \(strong\) — 100%/.test(ow.limit.trace.find(t => t.key === 'GUARANTEE_FACTOR').label), 'strong: 100% of the capacity (156,000); the request binds');
+  ok(ow.features.ownerDbrInclContingentPct === 31.7 && ow.features.ownerBufferInstalments === 13.6 && ow.features.ownerDrawingsMonths === 12 && ow.features.comminglingFound === false,
+     'owner DBR 31.7% incl. 50% contingent; buffer 13.6 instalments; drawings 12 of 12; no commingling');
+  ok(ow.features.avgMonthlyRevenue === 200000 && ow.features.nocfMonthly === 27600 && ow.features.revenueVolatilityPct === 14 && ow.features.negativeBalanceDays === 2 &&
+     ow.features.returnedCheques12m === 0 && ow.features.topCustomerPct === 22 && ow.features.tradingMonths === 48, 'business features from data: revenue 200,000 · NOCF 27,600 · volatility 14% · 2 days · 0 cheques · top customer 22% · 48 months trading');
+  eq(bz.reasonCodes.join(','), 'RC_GUARANTEE_UNVERIFIED', 'business-only reason: RC_GUARANTEE_UNVERIFIED (the guarantee, not affordability, limits it)');
+  eq(ow.reasonCodes.length, 0, 'with the owner’s accounts: no adverse reason');
+  eq(ow.rules.map(r => r.id).join(','), 'REG_AECB_CHECK,POL_TENOR,POL_MIN_TRADING,POL_HISTORY_MONTHS,POL_SCORE_CUTOFF,POL_SCORE_REFER,POL_RETURNED_CHEQUES,POL_DSCR,POL_GUARANTEE,POL_RED_FLAGS,POL_MIN_AMOUNT',
+     'rules: the spec\'s list (+ POL_TENOR), every one recorded');
+  ok(ow.rules.find(r => r.id === 'POL_DSCR').result === 'PASS' && /^2\.09×/.test(ow.rules.find(r => r.id === 'POL_DSCR').observed) && ow.rules.find(r => r.id === 'POL_GUARANTEE').result === 'PASS' &&
+     bz.rules.find(r => r.id === 'POL_GUARANTEE').result === 'INFO' && !bz.rules.some(r => r.id === 'POL_RED_FLAGS'), 'POL_DSCR 2.09× PASS; POL_GUARANTEE PASS (strong) / INFO (unverified); no owner red-flag read without her consent');
+  ok(bz.segment === 'SME' && ow.segment === 'SME' && ow.consents.ownerOpenFinance.granted === true && bz.consents.ownerOpenFinance.granted === false &&
+     /authorised signatory/.test(ow.consents.openFinance.scope) && /while the business loan the owner guarantees is open/.test(ow.consents.ownerOpenFinance.scope),
+     'records: segment SME; the business consent (signatory) and the owner’s own consent recorded separately');
+  eq(ow.dataPulls.map(p => p.source).join(','), 'AECB_COMMERCIAL,AECB_CONSUMER,KYB,OPEN_FINANCE,OPEN_FINANCE_OWNER', 'pulls: AECB commercial, AECB consumer (owner), KYB, business Open Finance, the owner’s Open Finance');
+  eq(bz.dataPulls.map(p => p.source).join(','), 'AECB_COMMERCIAL,AECB_CONSUMER,KYB,OPEN_FINANCE', 'business-only path: no owner pull');
+  ok(ow.repayment.method === 'DIRECT_DEBIT' && ow.repayment.account === 'BUSINESS' && /business account/.test(ow.repayment.setup) &&
+     ow.token.conditions.join(' | ') === 'Key facts and the personal-guarantee disclosure acknowledged by the owner (AR + EN) | Direct debit mandate active on the company’s business account | Personal guarantee signed by the owner via UAE PASS | Trade licence valid on the day of disbursement',
+     'repayment: direct debit on the business account; token: disclosure (AR + EN), mandate, the owner’s guarantee, a valid trade licence');
+  const gd = ow.pricing.kfs.guaranteeDisclosure;
+  ok(gd && /personally/.test(gd.en) && ARABIC.test(gd.ar) && /كفالة شخصية/.test(gd.ar) && ow.pricing.kfs.coolingOffDays === 5, 'KFS carries the personal-guarantee disclosure in English and Arabic');
+  ok(ow.ownerFindings.map(f => f.key).join(',') === 'drawings,ownerDbr,buffer,spending,commingling,redFlags' && ow.ownerFindings.every(f => f.label && f.observation && f.effect) &&
+     bz.ownerFindings === null && ow.businessFindings.length === 6, 'internal findings: owner (drawings, DBR, buffer, spending, commingling, red flags) and business; none without her consent');
+
+  // ---- the uplift: +AED 50,000 and 2.5 points cheaper; pure ----
+  const up = ow.ownerAccountsUplift;
+  ok(up && up.upliftAed === 50000 && up.aprDeltaPts === 2.5 && up.businessOnly.approved === 100000 && up.withOwnerAccounts.approved === 150000 &&
+     up.guaranteeFrom === 'UNVERIFIED' && up.guaranteeTo === 'VERIFIED_STRONG' && up.drivers.length >= 3, 'rec.ownerAccountsUplift: +AED 50,000, 2.5 points cheaper (UNVERIFIED → VERIFIED_STRONG)');
+  eq(bz.ownerAccountsUplift, null, 'ownerAccountsUplift is null without the personal consent');
+  eq(JSON.stringify(up.businessOnly), JSON.stringify(Object.assign({}, up.businessOnly, { outcome: bz.outcome, approved: bz.limit.approved, apr: bz.pricing.kfs.rateMid, noorScore: 732 })),
+     'the uplift’s business-only column equals the real business-only decision');
+  const n1 = E.listDecisions().length;
+  const q1 = E.quoteSme({ applicant: s1, amount: 150000, tenorMonths: 12, consents: OWN });
+  const tA = E.decide({ productId: 'split', applicant: P.c4, amount: 4800, tenorMonths: 6, consents: CONSENT_ALL });
+  const q2 = E.quoteSme({ applicant: s1, amount: 150000, tenorMonths: 12, consents: OWN }); for (let k = 0; k < 3; k++) E.quoteSme({ applicant: s1, amount: 90000, tenorMonths: 6, consents: OWN });
+  const tB = E.decide({ productId: 'split', applicant: P.c4, amount: 4800, tenorMonths: 6, consents: CONSENT_ALL });
+  ok(JSON.stringify(q1.ownerAccountsUplift) === JSON.stringify(up) && JSON.stringify(q1) === JSON.stringify(q2) && E.listDecisions().length === n1 + 2 &&
+     new Date(tB.createdAt) - new Date(tA.createdAt) === 37000 && n1 === nB + 2, 'the uplift is pure: quoteSme() returns the same uplift, stores nothing and never ticks the clock');
+  throwsWith(() => E.quoteSme({ applicant: s1, amount: 150000, tenorMonths: 12, consents: { aecb: true, openFinance: false } }), 'business accounts', 'quoteSme is consent-bound like decide()');
+  eq(E.quoteSme({ applicant: s1, amount: 150000, tenorMonths: 12, consents: BIZ }).ownerAccountsUplift, null, 'quoteSme without the owner’s consent: no uplift');
+  const terms = [3, 6, 9, 12].map(n => E.quoteSme({ applicant: s1, amount: 150000, tenorMonths: n, consents: OWN }));
+  ok(terms.every(q => q.row.approved > 0 && q.ownerAccountsUplift.upliftAed >= 0) && terms[0].row.approved < terms[3].row.approved, 'quotes for 3 / 6 / 9 / 12 months: a shorter term supports less');
+
+  // ---- guarantee statuses: strong / weak / unverified ----
+  const weak = clone(s1); weak.owner.aecb.obligationsMonthly = 12000; weak.owner.personalAccounts.observedObligationsMonthly = 12000;
+  const wk = decideSme(weak, OWN);
+  ok(wk.features.guaranteeStatus === 'VERIFIED_WEAK' && wk.features.ownerDbrInclContingentPct > 50 && wk.features.guaranteeFactorPct === 80 && wk.limit.approved === 124000 &&
+     wk.limit.bindingConstraint === 'GUARANTEE_FACTOR' && wk.reasonCodes.join() === 'RC_GUARANTEE_WEAK' && wk.outcome === 'APPROVE',
+     'owner DBR forced over 50% (' + wk.features.ownerDbrInclContingentPct + '%) → VERIFIED_WEAK × 80% → AED 124,000');
+  ok(wk.score.points === 747 && wk.pricing.kfs.rateMid === 0.105, 'a weak guarantee changes the amount, not the score or the price');
+  const lowBuf = clone(s1); lowBuf.owner.personalAccounts.accounts = [{ bank: 'FAB', type: 'Savings account', mask: '8815', balance: 30000 }];
+  ok(decideSme(lowBuf, OWN).features.guaranteeStatus === 'VERIFIED_WEAK', 'a buffer under 3 instalments → VERIFIED_WEAK');
+  const irregular = clone(s1); irregular.owner.personalAccounts.drawingsFromBusiness = [35000, 0, 35000, 0, 35000, 35000, 0, 35000, 35000, 35000, 35000, 35000];
+  ok(decideSme(irregular, OWN).features.guaranteeStatus === 'VERIFIED_WEAK', 'drawings in only 9 of 12 months → VERIFIED_WEAK');
+  ok(bz.features.guaranteeStatus === 'UNVERIFIED' && ow.features.guaranteeStatus === 'VERIFIED_STRONG', 'no personal consent → UNVERIFIED (65%); all four tests pass → VERIFIED_STRONG');
+
+  // ---- owner red flags → REFER (v2.9 rule, never an automatic decline, never a price change) ----
+  const rfOwner = clone(s1); Object.assign(rfOwner.owner.personalAccounts.redFlagData.baseline, { intlTransfersShareOfIncome6m: 0.1 });
+  rfOwner.owner.personalAccounts.redFlagData.recent.intlTransfersAed = 31000;
+  const rr = decideSme(rfOwner, OWN);
+  ok(rr.outcome === 'REFER' && rr.reasonCodes.join() === 'RC_RED_FLAGS_REVIEW' && rr.rules.find(r => r.id === 'POL_RED_FLAGS').result === 'REFER' &&
+     /the owner’s own history/.test(rr.rules.find(r => r.id === 'POL_RED_FLAGS').name) && rr.features.redFlagSignals.join() === 'RF_REMITTANCE_SURGE',
+     'an owner red flag (remittance surge in her own accounts) → REFER with RC_RED_FLAGS_REVIEW only');
+  ok(rr.features.guaranteeStatus === 'VERIFIED_WEAK' && rr.pricing.kfs.rateMid === ow.pricing.kfs.rateMid && rr.score.points === ow.score.points && rr.token === null && rr.repayment === null,
+     'the guarantee is not strong with an owner red flag (spec) — but the score and the price are unchanged; no token until a person decides');
+  ok(!rr.rules.some(r => r.result === 'FAIL') && rr.audit.some(a => a.action === 'RED_FLAGS_READ' && /owner’s own history/.test(a.detail)), 'never a decline; the read is audited as the owner’s history');
+  const qRow = E.referQueue().find(q => q.id === rr.id);
+  ok(qRow && qRow.segment === 'SME' && qRow.slaHoursLeft === 24 && qRow.redFlags.join() === 'RF_REMITTANCE_SURGE', 'the referral is in the queue: segment SME, SLA 24 hours, its signal code');
+  const noOwn = decideSme(rfOwner, BIZ);
+  ok(noOwn.outcome === 'APPROVE' && !noOwn.redFlags && !noOwn.rules.some(r => r.id === 'POL_RED_FLAGS'), 'without the owner’s consent her accounts are not read: no red-flag rule');
+  E.publishPolicy('earlyWarning', { redFlagsAtOrigination: false }, META);
+  const off = decideSme(rfOwner, OWN);
+  ok(off.outcome === 'APPROVE' && off.features.guaranteeStatus === 'VERIFIED_STRONG' && off.rules.find(r => r.id === 'POL_RED_FLAGS').result === 'INFO' && off.limit.approved === 150000,
+     'red-flag rule off by policy → INFO, nothing read, guarantee strong, AED 150,000');
+  E.publishPolicy('earlyWarning', { redFlagsAtOrigination: true }, META);
+  throwsWith(() => E.override(rr.id, { outcome: 'APPROVE', reasonCode: 'RC_MANUAL_REVIEW', analyst: 'A. Farsi (Credit Analyst)', approver: 'S. Nair (CRO)' }), 'written reason', 'an SME red-flag override needs a written reason');
+  const ov = E.override(rr.id, { outcome: 'APPROVE', reasonCode: 'RC_MANUAL_REVIEW', analyst: 'A. Farsi (Credit Analyst)', approver: 'S. Nair (CRO)', note: 'Owner sent family support from her own salary-like drawings; business unaffected.' });
+  ok(ov.outcome === 'APPROVE' && ov.repayment.account === 'BUSINESS' && ov.token && ov.token.conditions.includes('Personal guarantee signed by the owner via UAE PASS'), 'override approve: business-account mandate and the SME conditions');
+
+  // ---- execution: the shared 6 steps, business wording ----
+  const st = E.execSteps(PID, ow.id);
+  ok(st.length === 6 && st.map(x => x.type).join() === 'OFFER_ACCEPTED,KFS_ACKNOWLEDGED,AGREEMENT_SIGNED,REPAYMENT_SET_UP,COOLING_OFF_CLEARED,DISBURSED' &&
+     /personal-guarantee disclosure \(Arabic \+ English\)/.test(st[1].description) && /UAE PASS/.test(st[2].description) && /business account/.test(st[3].description) &&
+     /Noor policy for micro businesses/.test(st[4].description) && /confirm with compliance/.test(st[4].description) && /business account/.test(st[5].description),
+     'execSteps(sme): the shared 6 steps — owner disclosures AR + EN, UAE PASS, mandate on the business account, cooling-off as Noor policy for micro businesses, disbursed to the business account');
+  ok(!st.some(x => /CPR 8\/2020|Consumer Protection Regulation/.test(x.description)), 'no SME step is labelled with the CBUAE consumer-protection regulation');
+  throwsWith(() => E.recordEvent(ow.id, 'DISBURSED'), 'out of sequence', 'out-of-order execution is refused');
+  for (const t of ['OFFER_ACCEPTED', 'KFS_ACKNOWLEDGED', 'AGREEMENT_SIGNED', 'REPAYMENT_SET_UP']) E.recordEvent(ow.id, t);
+  throwsWith(() => E.recordEvent(ow.id, 'DISBURSED'), 'Noor policy for micro businesses', 'disbursing before the cooling-off quotes the Noor-policy guard');
+  E.recordEvent(ow.id, 'COOLING_OFF_CLEARED'); E.recordEvent(ow.id, 'DISBURSED');
+  ok(E.getDecision(ow.id).status === 'EXECUTED' && /business loan now exists/.test(E.getDecision(ow.id).audit.slice(-1)[0].detail), 'all six steps → EXECUTED, "the business loan now exists"');
+
+  // ---- the credit memo: allowlist, bands only, the owner's personal data withheld ----
+  const rr2 = decideSme(rfOwner, OWN);   // an open referral (rr was resolved by the override above)
+  for (const [label, rec] of [['owner path', ow], ['business only', bz], ['REFER', rr2], ['override approval', ov], ['weak', wk]]) {
+    const memo = E.creditMemo(rec.id), sftp = E.memoSftpRow(memo);
+    const hits = smePrivacyScan(memo, sftp);
+    ok(hits.length === 0, label + ': memo + SFTP row contain none of 35,000 · 180,000 · 21,000 · 4,500 · 27,600 · 200,000, no bank name or mask (' + hits.slice(0, 4).join(', ') + ')');
+    ok(memo.sharing.withheld.some(w => w.group === 'Owner\'s personal account data — used for Noor\'s guarantee assessment only' && /own Al Tareq consent/.test(w.reason)) &&
+       memo.sharing.withheld.length === 9 && memo.sharing.shared.some(x => /^Business terms as bands/.test(x)), label + ': withheld row "Owner\'s personal account data — used for Noor\'s guarantee assessment only"');
+    const leak = keysDeep(memo).filter(k => /^(features|applicantSnapshot|ownerFindings|businessFindings|guarantee|owner|personalAccounts|business\.accounts|redFlags|dataPulls|rules|audit)$/.test(k) && k !== 'guarantee');
+    ok(leak.length === 0 && !/ownerFindings|drawingsFromBusiness|liquidBalances|ownerDbr/.test(JSON.stringify(memo)), label + ': no internal key reaches the memo');
+  }
+  const mo = E.creditMemo(ow.id), mb = E.creditMemo(bz.id);
+  ok(JSON.stringify(mo.terms.business) === JSON.stringify({ companyName: 'Kamal Fresh Foods Trading LLC', tradeLicenceAgeBand: '3–5 years', revenueBand: 'AED 1M–5M a year',
+     dscrBand: '2.0–3.0×', guaranteeStatus: 'VERIFIED_STRONG', guaranteeFlag: 'Verified (strong) — through the owner’s connected accounts; 100% of the business capacity' }),
+     'business terms: company name, trade-licence age band, revenue band, DSCR band, guarantee status flag');
+  ok(mb.terms.business.dscrBand === '3.0× or more' && mb.terms.business.guaranteeStatus === 'UNVERIFIED' && mb.terms.amount === 100000 && mo.terms.amount === 150000 && mo.terms.repaymentAccount === 'Business account',
+     'business-only memo: DSCR band 3.0× or more, UNVERIFIED, AED 100,000');
+  ok(mo.borrower.kind === 'COMPANY' && mo.borrower.name === 'Kamal Fresh Foods Trading LLC' && /^DED •+\d$/.test(mo.borrower.tradeLicenceMasked) && mo.borrower.guarantor.name === 'Sara Kamal' &&
+     /^784-••••-•••••••-\d$/.test(mo.borrower.guarantor.emiratesIdMasked) && mo.bureau.aecbScoreBand === '700–749' && mo.bureau.ownerConsumerScoreBand === '700–749',
+     'borrower = the company (masked trade licence); the guarantor named with a masked Emirates ID; AECB commercial and owner consumer as bands');
+  ok(mo.consents.map(c => c.reference.replace(/^CNS-\d+-/, '')).join() === 'AECB,ALTAREQ,ALTAREQ-OWNER,LENDER' && mb.consents.map(c => c.reference.replace(/^CNS-\d+-/, '')).join() === 'AECB,ALTAREQ,LENDER',
+     'consent references only (the owner’s consent as a reference when given)');
+  const sf = E.memoSftpRow(mo);
+  ok(sf.header.slice(-3).join() === 'revenue_band,dscr_band,guarantee_status' && sf.row.slice(-3).join('|') === 'AED 1M–5M a year|2.0–3.0×|VERIFIED_STRONG' && sf.row[2] === PID && sf.row[4] === '150000',
+     'SFTP row adds revenue_band, dscr_band, guarantee_status (bands and the flag)');
+  ok(E.memoSftpRow(E.creditMemo(E.listDecisions().find(r => r.productId === 'split').id)).header.length === 16, 'other products’ SFTP rows keep 16 columns');
+  const mr = E.creditMemo(rr2.id);
+  ok(mr.terms === null && mr.decision.reasonCodes.map(c => c.code).join() === 'RC_RED_FLAGS_REVIEW' && !/RF_|exit.risk|international transfer/i.test(JSON.stringify(mr).split('RC_RED_FLAGS_REVIEW').join('')),
+     'SME REFER memo: RC_RED_FLAGS_REVIEW and nothing more');
+
+  // ---- simulateBook ----
+  const book = D.sampleBook.sme_working_capital;
+  ok(Array.isArray(book) && book.length >= 12 && book.every(r => !r.redFlagData), 'sampleBook.sme_working_capital: ' + book.length + ' rows (≥ 12), no redFlagData');
+  const sim0 = E.simulateBook(PID, {});
+  ok(sim0.size === book.length && sim0.before.APPROVE + sim0.before.REFER + sim0.before.DECLINE === book.length && sim0.before.APPROVE >= 4 && sim0.before.DECLINE >= 4 && sim0.before.REFER >= 1 &&
+     sim0.flips.length === 0 && sim0.amountImpact, 'simulateBook runs on the SME book (' + sim0.before.APPROVE + ' approve · ' + sim0.before.REFER + ' refer · ' + sim0.before.DECLINE + ' decline)');
+  const sm1 = E.decideRaw(PID, book[0]), sm2 = E.decideRaw(PID, book[1]);
+  ok(sm1.approved === 150000 && sm1.grade === 'A' && sm2.approved === 100000 && sm2.bindingConstraint === 'GUARANTEE_FACTOR', 'SM-001 / SM-002 reproduce s1’s two paths (150,000 A · 100,000 guarantee-bound)');
+  const sim1 = E.simulateBook(PID, { unverifiedGuaranteeFactorPct: 50 });
+  ok(sim1.amountImpact.approvalsReduced >= 1 && sim1.amountImpact.approvedAmountAfter < sim1.amountImpact.approvedAmountBefore && /approval/.test(sim1.summary),
+     'unverifiedGuaranteeFactorPct 65 → 50: approvals without the owner’s accounts shrink (' + sim1.summary + ')');
+  eq(E.getPolicy(PID).version, 1, 'simulation never publishes');
+  const pub = E.publishPolicy(PID, { tenorMonthsAllowed: [3, 6, 9, 12, 18] }, META);
+  ok(pub.version === 2 && E.policyHistory(PID).length === 2 && decideSme(s1, OWN, { tenorMonths: 15 }).features.effectiveTenor === 18, 'a 4-eyes publish adds an 18-month term; a 15-month request rounds up to it');
+  ok(decideSme(s1, OWN, { tenorMonths: 7 }).reasonCodes.includes('RC_TENOR_CAP') && decideSme(s1, OWN, { tenorMonths: 7 }).features.effectiveTenor === 9, 'a 7-month request rounds up to 9 months (RC_TENOR_CAP)');
+
+  // ---- monitoring: ML-07 FUNDS_DIVERSION → HIGH; ML-08 → MEDIUM ----
+  E.init(D);
+  const MON = { phase: 'MONITORING' };
+  const ML7 = D.monitoredLoans.find(l => l.id === 'ML-07'), ML8 = D.monitoredLoans.find(l => l.id === 'ML-08');
+  ok(ML7 && ML8 && ML7.productId === PID && ML8.productId === PID && ML7.segment === 'SME' && ML7.owner && ML8.owner, 'ML-07 and ML-08 are SME loans with a named guarantor');
+  eq(E.RED_FLAG_BUSINESS_CODES.join(','), 'RF_REVENUE_DROP,RF_FUNDS_TO_OWNER', 'the two business signal codes');
+  const m7 = E.redFlags(ML7, MON), m8 = E.redFlags(ML8, MON);
+  ok(m7.severity === 'HIGH' && m7.pattern === 'FUNDS_DIVERSION' && m7.flags.map(f => f.code).join(',') === 'RF_REVENUE_DROP,RF_FUNDS_TO_OWNER,RF_REMITTANCE_SURGE',
+     'ML-07: revenue −35% + RF_FUNDS_TO_OWNER + owner RF_REMITTANCE_SURGE → HIGH · FUNDS_DIVERSION');
+  const v7 = (c) => m7.flags.find(f => f.code === c).values;
+  ok(v7('RF_REVENUE_DROP').dropPct === 35 && v7('RF_FUNDS_TO_OWNER').multiple === 2.6 && v7('RF_FUNDS_TO_OWNER').transferToOwnerAed === 90000 && v7('RF_REMITTANCE_SURGE').sharePct === 88,
+     'ML-07 values: inflows −35% · AED 90,000 to the owner = 2.6× drawings · 88% of the owner’s income sent out');
+  ok(m7.action.code === 'SPECIALIST_CALL' && m7.action.slaHours === 24 && m7.lenderStatus === 'Early warning: elevated — Noor is in contact with the customer' &&
+     m7.guardrailNotes.some(n => /Funds diversion/.test(n)) && m7.guardrailNotes.some(n => /no default, legal step or account action/i.test(n)) &&
+     m7.guardrailNotes.some(n => /owner’s own consent — while the business loan the owner guarantees is open/.test(n)), 'ML-07 → specialist call within 24h, contact first, the lender gets a status flag only; the owner’s consent scope noted');
+  ok(m8.severityLabel === 'MEDIUM' && m8.flags.map(f => f.code).join() === 'RF_REVENUE_DROP' && m8.flags[0].values.dropPct === 32 && m8.action.code === 'CHECK_IN' &&
+     m8.action.offer === 'PAYMENT_HOLIDAY' && /payment holiday under policy/.test(m8.action.en) && m8.guardrailNotes.some(n => /looks seasonal/.test(n)),
+     'ML-08: revenue −32% only (seasonal) → MEDIUM, check-in, a payment holiday under policy');
+  const noRemit = clone(ML7); noRemit.redFlagData.recent.intlTransfersAed = 4000;
+  const nr = E.redFlags(noRemit, MON);
+  ok(nr.pattern === null && nr.severityLabel === 'MEDIUM+', 'RF_FUNDS_TO_OWNER without an owner money-out leg is not FUNDS_DIVERSION (MEDIUM+)');
+  const drained = clone(noRemit); drained.redFlagData.recent.balanceNowAed = 6000; drained.redFlagData.recent.largestOutboundTransferAed = 50000;
+  ok(E.redFlags(drained, MON).pattern === 'FUNDS_DIVERSION' && E.redFlags(drained, MON).flags.some(f => f.code === 'RF_BALANCES_DRAINED'), 'the owner’s drained balances complete the pattern instead of a remittance surge');
+  const noToOwner = clone(ML7); noToOwner.redFlagData.business.recent.largestTransferToOwnerAed = 35000;
+  ok(E.redFlags(noToOwner, MON).pattern === null, 'without RF_FUNDS_TO_OWNER the owner’s remittance alone is never FUNDS_DIVERSION');
+  const o7 = E.redFlags(ML7, { phase: 'ORIGINATION' });
+  ok(o7.notEvaluated.join(',') === 'RF_TRAVEL_AFTER_DISBURSAL,RF_PAYMENTS_STOPPED,RF_REVENUE_DROP,RF_FUNDS_TO_OWNER' && o7.pattern === null && !o7.flags.some(f => E.RED_FLAG_BUSINESS_CODES.includes(f.code)),
+     'business signals and FUNDS_DIVERSION are monitoring-only');
+  // guardrails: no nationality / destination input; the allowlist only
+  const t7 = clone(ML7); t7.nationality = 'XX'; t7.redFlagData.business.destinationCountry = 'XX'; t7.redFlagData.recent.intlTransfersDestination = 'XX'; t7.redFlagData.business.recent.ownerNationality = 'XX';
+  eq(JSON.stringify(E.redFlags(t7, MON)), JSON.stringify(m7), 'ML-07 with nationality / destination fields: identical HIGH result');
+  const ALLOWED7 = new Set(['redFlagData', 'baseline', 'recent', 'aecb', 'business', 'intlTransfersShareOfIncome6m', 'salaryCreditDay', 'avgBalance3m', 'cardUtilisationPct3mAgo',
+    'onTimePaymentsRun', 'incomeAed', 'intlTransfersAed', 'airlinePurchases', 'daysAfterDisbursal', 'amountAed', 'salaryLateDays', 'balanceNowAed', 'largestOutboundTransferAed',
+    'missedCollection', 'cards', 'cardLimitTotal', 'cardBalanceTotal', 'inflows3mAvgAed', 'usualDrawingsAed', 'sameMonthLastYearDropPct', 'inflowsAed', 'largestTransferToOwnerAed']);
+  const log7 = new Set();
+  const rec7 = (obj) => new Proxy(obj, { get(tg, pr, rv) { if (typeof pr === 'string') log7.add(pr); const v = Reflect.get(tg, pr, rv); return v && typeof v === 'object' ? rec7(v) : v; } });
+  E.redFlags(rec7(clone(t7)), MON);
+  const out7 = [...log7].filter(k => !/^\d+$/.test(k) && !['length', 'map', 'constructor'].includes(k) && !ALLOWED7.has(k));
+  ok(out7.length === 0 && !log7.has('customer') && !log7.has('owner'), 'ML-07: redFlags() reads only the allowlisted fields — not the names (outside: ' + out7.join(', ') + ')');
+  const scan = E.earlyWarningScan();
+  const r7 = scan.find(r => r.loanId === 'ML-07'), r8 = scan.find(r => r.loanId === 'ML-08');
+  ok(r7.segment === 'SME' && r7.guarantor === ML7.owner && r7.action.channel === 'Phone — specialist' && r8.action.channel === 'Email' && r8.severityLabel === 'MEDIUM',
+     'scan rows: SME segment and guarantor; ML-07 a specialist phone call, ML-08 a check-in on the chosen channel (Email)');
+  ok(scan.filter(r => r.productId !== PID).map(r => r.loanId + ':' + r.severityLabel).join(' ') === 'ML-01:HIGH ML-02:MEDIUM ML-03:MEDIUM ML-06:MEDIUM ML-04:LOW ML-05:NONE',
+     'ML-01 … ML-06 keep their v2.9 severities');
+  const blk = E.getPolicy('earlyWarning');
+  ok(blk.businessSignals.map(b => b.code).join() === 'RF_REVENUE_DROP,RF_FUNDS_TO_OWNER,FUNDS_DIVERSION' && /while the business loan you guarantee is open/.test(blk.consentWhyOwner),
+     'the shared block documents the business signals and the owner’s consent scope ("while the business loan you guarantee is open")');
+  for (const c of ['RC_RF_REVENUE_DROP', 'RC_RF_FUNDS_TO_OWNER']) {
+    const rc = D.reasonCodes[c];
+    ok(rc && rc.en && ARABIC.test(rc.ar) && !/\d/.test(rc.en) && !/nationalit|country|abroad/i.test(rc.en), c + ': English + Arabic, customer-safe (no figures, no place)');
+  }
+  const sim = E.simulateEarlyWarning({ remittanceShareOfIncomePct: 90 });
+  ok(sim.changes.some(c => c.loanId === 'ML-07' && c.from === 'HIGH' && c.to === 'MEDIUM+'), 'simulateEarlyWarning: remittance at 90% takes ML-07’s owner leg away (HIGH → MEDIUM+)');
+
+  // ---- metrics, every product list ----
+  const d1 = decideSme(s1, OWN), d2 = decideSme(s1, BIZ);
+  const mt = E.metrics();
+  ok(mt.byProduct.sme_working_capital && mt.byProduct.sme_working_capital.decisions === 2 && mt.byProduct.sme_working_capital.APPROVE === 2 &&
+     mt.totals.decisions === Object.keys(mt.byProduct).reduce((x, k) => x + mt.byProduct[k].decisions, 0), 'metrics(): sme_working_capital counts this session’s decisions (no seeded history); totals add up');
+  ok(mt.exitRiskWatch.rows.filter(r => r.productId === PID).length === 2 && mt.exitRiskWatch.counts.HIGH === 2, 'exit-risk watch carries the two SME rows');
+  eq(E.policyHistory(PID).length, 1, 'the SME pack has its own policy history');
+
+  // ---- existing outcomes unchanged; vocabulary; determinism ----
+  E.init(D);
+  const now = {};
+  for (const id of ['r1', 'r2', 'r3', 'r4', 'r5']) now[id] = decidePersona('personal_loan', P[id]);
+  now['r2+cp'] = decidePersona('personal_loan', P.r2, { consents: { aecb: true, openFinance: true, creditPassport: true } });
+  for (const p of D.personasSplit) now[p.id] = decidePersona('split', p);
+  for (const p of D.personasUpgrade) {
+    now[p.id] = E.decide({ productId: 'starter_loan', applicant: p, consents: CONSENT_ALL });
+    now[p.id + '+st'] = E.decide({ productId: 'starter_loan', applicant: p, consents: { aecb: true, openFinance: true, homeStatements: true } });
+  }
+  for (const p of D.personasJourney) now[p.id] = decidePersona('personal_loan', p);
+  for (const p of D.personasCar) { now[p.id + '+of'] = decidePersona('car_loan', p); now[p.id + '+docs'] = decidePersona('car_loan', p, { consents: { aecb: true, openFinance: false } }); }
+  now['r1 advance'] = decidePersona('salary_advance', P.r1, { amount: 20000, tenorMonths: 1, consents: { aecb: true, openFinance: false } });
+  const changed = Object.keys(V27_FINGERPRINTS).filter(k => fingerprint(now[k]) !== V27_FINGERPRINTS[k]);
+  ok(changed.length === 0 && Object.keys(now).length === Object.keys(V27_FINGERPRINTS).length, 'every existing persona path still matches its fingerprint after v2.10 (changed: ' + changed.join(', ') + ')');
+  ok(Object.values(now).every(r => r.segment === 'CONSUMER'), 'existing products’ records stay CONSUMER');
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
+  const a1 = decideSme(s1, OWN), a2 = decideSme(s1, BIZ);
+  const v210Text = JSON.stringify([s1, D.sampleBook.sme_working_capital, D.monitoredLoans.slice(6), ['RC_TRADING_HISTORY', 'RC_BUSINESS_HISTORY', 'RC_BUSINESS_CASH_FLOW', 'RC_GUARANTEE_UNVERIFIED',
+    'RC_GUARANTEE_WEAK', 'RC_RF_REVENUE_DROP', 'RC_RF_FUNDS_TO_OWNER'].map(c => D.reasonCodes[c]), E.getPolicy(PID), a1, a2, E.creditMemo(a1.id), E.creditMemo(a2.id), E.execSteps(PID, a1.id), E.earlyWarningScan()]);
+  ok(!banned.test(v210Text) && !mentionsSalaryTransfer(v210Text), 'no banned vocabulary or salary-transfer wording in the v2.10 data, pack, records, memos, steps or scan');
+  ok(/قرض/.test(man.nameAr) && ['RC_TRADING_HISTORY', 'RC_BUSINESS_HISTORY', 'RC_BUSINESS_CASH_FLOW', 'RC_GUARANTEE_UNVERIFIED', 'RC_GUARANTEE_WEAK'].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)),
+     'the v2.10 reason codes exist in English and Arabic');
+  function snap() {
+    E.init(D);
+    const x = E.decide({ productId: PID, applicant: s1, amount: 150000, tenorMonths: 12, consents: OWN });
+    return JSON.stringify([x, E.creditMemo(x.id), E.memoSftpRow(E.creditMemo(x.id)), E.quoteSme({ applicant: s1, amount: 150000, tenorMonths: 12, consents: OWN }),
+                           E.simulateBook(PID, { dscrBudgetPct: 40 }), E.earlyWarningScan(), E.metrics().exitRiskWatch]);
+  }
+  ok(snap() === snap(), 'two fresh init() runs: identical SME record, memo, SFTP row, quote, simulation and scan');
+  for (const r of E.listDecisions()) collect(r.reasonCodes);
+  ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. v2.10) exists with Arabic');
 });
 
 // ---------------------------------------------------------------------------

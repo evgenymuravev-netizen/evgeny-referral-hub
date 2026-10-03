@@ -1536,6 +1536,62 @@ details.tbl-view table { margin-top:6px; }
   .jr-exp-kv { grid-template-columns:minmax(0,1fr); gap:2px; }
   .jr-exp-kv dd { margin-bottom:6px; }
 }
+/* ---------- v2.10 SME working capital — the flow map, guarantee chips, the guarantor disclosure (tokens only: light + dark follow the skin) ---------- */
+.demo-strip.demo-11 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media (max-width:1300px) { .demo-strip.demo-11 { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:1100px) { .demo-strip.demo-11 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:600px) { .demo-strip.demo-11 { grid-template-columns:1fr; } }
+/* The flow map: a horizontal CSS-only stepper; Open Finance steps in sky; five a row on tablets; stacked on a phone */
+.sme-flow-panel { margin-bottom:14px; }
+.sme-flow { list-style:none; margin:10px 0 0; padding:0; display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); }
+.sme-fs { position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:0 10px 0 0; min-width:0; }
+.sme-fs::before { content:""; position:absolute; top:14px; left:30px; right:2px; height:2px; border-radius:1px; background:var(--hairline); }
+.sme-fs:last-child::before { display:none; }
+.sme-fs.of::before { background:linear-gradient(90deg, var(--sky) 0%, var(--hairline) 100%); }
+.sme-fs-n { position:relative; z-index:1; flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  font-family:var(--font-label); font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink-2); background:var(--panel); border:1.5px solid var(--hairline); }
+.sme-fs.of .sme-fs-n { color:var(--sky-ink); background:var(--sky-soft); border-color:var(--sky); }
+.sme-fs-b { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.sme-fs-t { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--ink); line-height:1.3; }
+.sme-fs-d { font-size:11.5px; color:var(--muted); line-height:1.35; }
+.sme-fs-of { align-self:flex-start; margin-top:3px; font-family:var(--font-label); font-size:10.5px; font-weight:600; letter-spacing:.02em; color:var(--sky-ink);
+  background:var(--sky-soft); border-radius:var(--radius-pill); padding:1px 8px; white-space:nowrap; }
+@media (max-width:1100px) {
+  .sme-flow { grid-template-columns:repeat(5,minmax(0,1fr)); row-gap:18px; }
+  .sme-fs:nth-child(5)::before { display:none; }
+}
+@media (max-width:600px) {
+  .sme-flow { grid-template-columns:minmax(0,1fr); row-gap:0; }
+  .sme-fs { flex-direction:row; align-items:flex-start; gap:12px; padding:0 0 14px; }
+  .sme-fs::before, .sme-fs:nth-child(5)::before { display:block; top:32px; bottom:2px; left:14px; right:auto; width:2px; height:auto; }
+  .sme-fs.of::before { background:linear-gradient(180deg, var(--sky) 0%, var(--hairline) 100%); }
+  .sme-fs:last-child::before { display:none; }
+  .sme-fs-b { padding-top:5px; }
+}
+/* Guarantee status: strong ok, weak warn, unverified sky — never the brand colour */
+.sme-g { display:inline-flex; align-items:center; font-family:var(--font-label); font-size:12px; font-weight:600; line-height:1.4; border-radius:var(--radius-pill);
+  padding:2px 10px; white-space:nowrap; vertical-align:middle; }
+.sme-g-VERIFIED_STRONG { color:var(--ok); background:var(--ok-soft); }
+.sme-g-VERIFIED_WEAK { color:var(--warn); background:var(--warn-soft); }
+.sme-g-UNVERIFIED { color:var(--sky-ink); background:var(--sky-soft); }
+.sme-figs .os-v .sme-g { font-size:13px; padding:3px 10px; }
+.sme-g-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin:2px 0 8px; }
+.sme-owner-panel .scope-banner { margin-bottom:10px; }
+.sme-uplift .cc-x .sme-g { font-size:11px; padding:1px 8px; }
+.sme-card .pchips .chip { white-space:normal; }
+/* The personal-guarantee disclosure — English and Arabic side by side */
+.sme-disclosure { margin-top:14px; border:1px solid var(--hairline-soft); border-left:4px solid var(--brand); border-radius:var(--radius-md); padding:12px 14px; background:var(--panel-2); }
+.sme-disc-h { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--brand-ink); margin-bottom:8px; }
+.sme-disc-cols { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 24px; }
+.sme-disc-cols p { margin:0; font-size:13.5px; line-height:1.6; color:var(--ink-2); }
+.sme-disc-cols .sme-disc-ar { text-align:right; font-size:15px; line-height:1.7; }
+.sme-find-cols { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 20px; }
+.memo .mb-guarantor { display:block; }
+.rf-guarantor { line-height:1.35; }
+.sme-uplift .car-plus { max-width:100%; white-space:normal; }
+@media (max-width:600px) { .sme-uplift .car-plus { font-size:17px; padding:9px 16px; } }
+@media (max-width:900px) { .sme-find-cols { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:700px) { .sme-disc-cols { grid-template-columns:minmax(0,1fr); } .sme-disc-cols .sme-disc-ar { text-align:right; } }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -1562,6 +1618,7 @@ details.tbl-view table { margin-top:6px; }
     <section data-screen="split" id="scr-split"></section>
     <section data-screen="loan" id="scr-loan"></section>
     <section data-screen="car" id="scr-car"></section>
+    <section data-screen="sme" id="scr-sme"></section>
     <section data-screen="upgrade" id="scr-upgrade"></section>
     <section data-screen="policy" id="scr-policy"></section>
     <section data-screen="workbench" id="scr-workbench"></section>
@@ -1660,7 +1717,7 @@ function outcomeChip(oc) { return h('span', { class: 'oc oc-' + oc, text: oc });
 /* ================= Globals wired at boot ================= */
 var MD = null, ME = null;      // MizanData, MizanEngine
 var PRODUCT_LABEL = { split: 'Split a purchase', personal_loan: 'Personal loan', salary_advance: 'Salary advance' };
-var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', starter_loan: 'Starter loan', salary_advance: 'Salary advance', car_loan: 'Car loan' };
+var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', starter_loan: 'Starter loan', salary_advance: 'Salary advance', car_loan: 'Car loan', sme_working_capital: 'SME' };
 function productLabel(pid, short) { return (short ? PRODUCT_SHORT[pid] : PRODUCT_LABEL[pid]) || pid || '—'; }
 var PULL_LABEL = {
   AECB_CONSUMER: 'AECB consumer report + score (real-time, consent-bound cache)',
@@ -1669,7 +1726,11 @@ var PULL_LABEL = {
   CREDIT_PASSPORT: 'Credit Passport — home-country bureau (AECB × Nova Credit)',
   PRIOR_DECISION: 'Prior decision — the starter loan and how it was repaid',
   HOME_STATEMENTS: 'Home-country bank statements — parsed: integrity, name match, conduct, EMIs, buffer, remittances',
-  DIGITAL_FOOTPRINT: 'Digital footprint (consented, optional) — identity and account security; the thin-file overlay in shadow'
+  DIGITAL_FOOTPRINT: 'Digital footprint (consented, optional) — identity and account security; the thin-file overlay in shadow',
+  /* v2.10 — the SME route */
+  AECB_COMMERCIAL: 'AECB commercial report — the company',
+  KYB: 'Trade licence + UBO (KYB) — the company',
+  OPEN_FINANCE_OWNER: 'The owner’s personal accounts — Al Tareq B2C, the owner’s own consent'
 };
 var EXEC_WHY = 'Why it matters: the customer accepts the offer, reads the Key Facts Statement in Arabic and English, e-signs via UAE PASS, sets up repayment collection from their own account (Al Tareq or direct debit — no salary transfer required) and gets the cooling-off period before any money moves (CBUAE Consumer Protection Regulation 8/2020 and Standards). An approval is not a loan.';
 /* Execution steps always come from the engine; with a decision id the repayment step carries that decision's method */
@@ -1678,7 +1739,7 @@ function execStepsFor(pid, recId) {
   try { var g = ME.execSteps(pid); if (g && g.length) return g; } catch (e2) {}
   return (ME.EXEC_EVENTS || []).map(function (t) { return { type: t, label: t, description: '' }; });
 }
-var NUM_WORD = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+var NUM_WORD = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 function execCount() { return (ME && ME.EXEC_EVENTS ? ME.EXEC_EVENTS.length : 0); }
 function execCountWord() { var n = execCount(); return NUM_WORD[n] || String(n); }
 /* ---- Repayment collection (v2.3): one platform rule — Al Tareq up to AED 1,000, direct debit above ---- */
@@ -1698,7 +1759,7 @@ function repaymentLine(rep, opts) {
   return h('div', { class: 'repay-line', id: opts.id || null, dataset: { method: rep.method, amount: String(rep.amount) } },
     h('span', { class: 'rl-k', text: opts.label || 'Repayment' }),
     h('span', { class: 'chip repay-chip', text: rep.label }),
-    h('span', { class: 'rl-t', text: REPAY_COPY[rep.method] || rep.setup }),
+    h('span', { class: 'rl-t', text: opts.copy || REPAY_COPY[rep.method] || rep.setup }),
     h('span', { class: 'rl-rule', text: 'Set by the ' + (opts.basis || 'approved amount') + ' (' + fmtAED(rep.amount) + '): up to ' + fmtAED(repayThreshold()) + ' → Al Tareq recurring payment, above → direct debit mandate · no salary transfer required' }));
 }
 function repaymentKfsTile(rep) {
@@ -1826,6 +1887,7 @@ var SCREENS = [
   { id: 'split',      label: 'Split a purchase', sub: 'Pay in 3 · 6 · 12',        icon: 'M8 2a6 6 0 1 0 6 6H8zM10 1.6V6h4.4A6 6 0 0 0 10 1.6z' },
   { id: 'loan',       label: 'Personal loan',    sub: 'Salary + AECB + DBR',      icon: 'M2 4h12v8H2zM2 6.8h12M4.5 10h3', stroke: true },
   { id: 'car',        label: 'Car loan',         sub: 'Affluent · +AED 30k with Open Finance', icon: 'M2.2 11V8.4l1.5-3.5a1 1 0 0 1 .9-.6h6.8a1 1 0 0 1 .9.6l1.5 3.5V11zM2.2 8.4h11.6M4.8 11v1.7M11.2 11v1.7', stroke: true },
+  { id: 'sme',        label: 'SME working capital', sub: 'Business + owner\'s accounts', icon: 'M2.5 13.5V6.5l3.5-2v2l3.5-2v2l4-2v9zM5 10.5h1.5M8.5 10.5H10M2 13.5h12', stroke: true },
   { id: 'upgrade',    label: 'Credit upgrade',   sub: 'Starter loan → more for less', icon: 'M2 12.5l4-4 2.5 2.5L14 5.5M10.5 5.5H14V9', stroke: true },
   { id: 'policy',     label: 'Policy console',   sub: 'Packs & primitives',       icon: 'M2 4h12M2 8h12M2 12h12M5 2.5v3M11 6.5v3M7 10.5v3', stroke: true },
   { id: 'workbench',  label: 'Workbench',        sub: 'Refer queue',              icon: 'M2 3h12v7h-4l-1 2H7l-1-2H2zM2 10v3h12v-3' },
@@ -1930,6 +1992,7 @@ document.addEventListener('DOMContentLoaded', function () {
   Split.build();
   Loan.build();
   Car.build();
+  Sme.build();
   Upgrade.build();
   Policy.build();
   Workbench.build();
@@ -1953,11 +2016,11 @@ var Overview = {
   build: function () {
     var root = clear($('#scr-overview'));
     root.appendChild(screenHead('Mizan · ميزان — Noor’s credit decisioning layer', 'One engine behind every Noor credit decision',
-      'Interactive prototype: Split a purchase, Personal loan, the Car loan, the starter-loan upgrade and Salary advance, the policy console, refer workbench, decision replay and monitoring — all running against a real simulated decision engine in the browser.'));
+      'Interactive prototype: Split a purchase, Personal loan, the Car loan, the starter-loan upgrade and Salary advance, the SME route (business working capital), the policy console, refer workbench, decision replay and monitoring — all running against a real simulated decision engine in the browser.'));
 
     root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'What Mizan is' }),
       h('p', { class: 'lead' }, 'Mizan is Noor’s credit decisioning layer — one engine every Noor credit product calls (',
-        h('strong', { text: 'Split a purchase, Personal loan, Car loan, Starter loan, Salary advance' }),
+        h('strong', { text: 'Split a purchase, Personal loan, Car loan, Starter loan, Salary advance — and, for business owners, SME working capital' }),
         ') for approve / refer / decline + limit + pricing, with consent, AECB, connected-account (Open Finance / Al Tareq) data, policy and scoring behind one API — and every decision replayable for CBUAE model-risk and consumer-protection audit.'),
       h('p', { class: 'lead', id: 'ov-pack-line' }, h('strong', { text: 'A new product is a policy pack, not a new engine. ' }),
         'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.'),
@@ -1988,14 +2051,16 @@ var Overview = {
       ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
       ['Step 8', 'Lender view — the credit memo', 'The credit memo the partner bank receives; Open Finance data never leaves Noor. Compare it with the internal Decision log.', function () { showScreen('lender'); }],
       ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }],
-      ['Step 10', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }]
+      ['Step 10', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }],
+      ['Step 11', 'SME working capital — Sara (s1)', 'The company’s accounts support AED 100,000; with Sara’s personal accounts AED 150,000, 2.5 points cheaper — business and owner watched while the loan is open.', function () { showScreen('sme'); Sme.reset(); }]
     ];
-    var ds = h('div', { class: 'demo-strip demo-10' });
+    var ds = h('div', { class: 'demo-strip demo-11' });
     demo.forEach(function (d) {
       ds.appendChild(h('button', { class: 'demo-step ds-top', onclick: d[3] },
         h('div', { class: 'd-n', text: d[0] }), h('div', { class: 'd-t', text: d[1] }), h('div', { class: 'd-d', text: d[2] })));
     });
-    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — a ' + (NUM_WORD[demo.length] || demo.length) + '-step click path' }), ds));
+    var demoWord = NUM_WORD[demo.length] || String(demo.length);
+    root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'How to demo — ' + (/^[aeiou8]/.test(demoWord) ? 'an ' : 'a ') + demoWord + '-step click path' }), ds));
 
     var map = [
       ['Overview', 'Positioning · six positions', 'The argument, compressed'],
@@ -2017,7 +2082,9 @@ var Overview = {
       ['Monitoring', 'STP vs targets · declines · grades · aging · vintages', 'Automation is not buying growth with risk'],
       ['Monitoring — early warning', 'Day-zero signals from connected accounts', 'Signal-to-action time is the tracked metric'],
       ['Monitoring — UAE red flags (exit-risk watch)', 'Own-baseline signals: cards maxed · remittance surge · travel after payout · payments stopped · balances drained · EXIT_RISK pattern · shared early-warning block (4-eyes) · refer-only origination · contact first · lender gets a status flag only',
-        'Red flags — Marco (r6): cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch']
+        'Red flags — Marco (r6): cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch'],
+      ['SME working capital', 'The SME route · business accounts (Al Tareq, the authorised signatory) · the owner’s personal accounts (B2C, her own consent) · AECB commercial + owner consumer · DSCR cap × personal-guarantee factor · locked block = Noor policy (confirm with compliance) · guarantor disclosures AR + EN · business + owner monitoring (FUNDS_DIVERSION)',
+        'SME — Sara (s1): the company’s accounts support AED 100,000; with her personal accounts Mizan verifies the guarantee and her income — AED 150,000, 2.5 points cheaper']
     ];
     var mt = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
       h('th', { text: 'Screen' }), h('th', { text: 'Topics' }), h('th', { text: 'What it proves' }))));
@@ -2068,6 +2135,8 @@ function pullsTimeline(rec, opts) {
     (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'requested by the underwriter' : 'uploaded by the customer') + ')' : '') +
     (c.digitalFootprint && c.digitalFootprint.granted ? ' · Digital-footprint check consented (optional)' : '') +
     (c.communications ? ' · Contact preferences recorded (' + c.communications.reference + ')' : '') +
+    /* v2.10 — the SME route: the business consent (signatory) and the owner's own consent */
+    (c.ownerOpenFinance ? (c.ownerOpenFinance.granted ? ' · the owner’s own consent: personal accounts (Al Tareq B2C)' : ' · the owner’s personal accounts not connected (optional)') : '') +
     (rec.kind === 'UPGRADE' && !(c.homeStatements && c.homeStatements.granted) ? ' · Home-country statements not shared (optional)' : ''), lat: null });
   (rec.dataPulls || []).forEach(function (p) {
     steps.push({ title: PULL_LABEL[p.source] || p.source, sum: pullSummary(p), lat: p.latencyMs });
@@ -2075,7 +2144,8 @@ function pullsTimeline(rec, opts) {
   if (rec.kind === 'UPGRADE') steps.push({ title: 'Upgrade policy pack — tier, APR curve, affordability per option',
     sum: 'every rule evaluated · tier set · offer ceiling and options derived', lat: null });
   else steps.push({ title: rec.productId === 'split' ? 'Cash-flow policy pack + NoorScore + split capacity'
-      : (rec.productId === 'car_loan' ? 'Car-loan policy pack + NoorScore + LTV / DBR limit engine' : 'Policy pack + NoorScore + DBR limit engine'),
+      : (rec.productId === 'car_loan' ? 'Car-loan policy pack + NoorScore + LTV / DBR limit engine'
+        : (rec.productId === 'sme_working_capital' ? 'SME pack + NoorScore + DSCR / revenue cap × personal-guarantee factor' : 'Policy pack + NoorScore + DBR limit engine')),
     sum: 'every rule evaluated · NoorScore and grade assigned · limit and pricing derived', lat: null });
 
   var tl = h('div', { class: 'timeline' });
@@ -2130,6 +2200,7 @@ function scoreBlock(rec) {
   var rows = h('div', { class: 'kv' });
   rows.appendChild(h('dt', { text: 'Model' })); rows.appendChild(h('dd', null, h('code', { text: (s.model || '—') + ' v' + (s.version || '?') })));
   var baseLabel = s.basis === 'CASH_FLOW_PROXY' ? 'Cash-flow proxy (no AECB file)' : (s.basis === 'HOME_STATEMENTS' ? 'Statements proxy (no AECB file)'
+    : s.basis === 'AECB_COMMERCIAL' ? 'AECB commercial score (the company)'
     : ((s.basis === 'CREDIT_PASSPORT' || (rec.features && rec.features.crossBorder)) ? 'Home-country bureau score' : 'Bureau score (AECB)'));
   rows.appendChild(h('dt', { text: baseLabel })); rows.appendChild(h('dd', { class: 'num', text: isNum(s.base) ? String(s.base) : 'no AECB file' }));
   (s.overlays || []).forEach(function (o) {
@@ -2327,7 +2398,7 @@ function buildExecPanel(rec, boxId, opts) {
   var panel = h('div', { class: 'panel' });
   panel.appendChild(h('h3', null, 'An approval is not a loan — execute in order ', h('span', { class: 'h3-note', text: '(product layer, sequence enforced by the engine)' })));
   panel.appendChild(h('p', { class: 'small muted' },
-    'Mizan’s approval is a time-boxed risk decision, not a contract. The product layer records each consumer-protection step against the decision record. Click the steps in order — or try one out of order to see the engine refuse it (that refusal is the audit control, not a bug).'));
+    opts.intro || 'Mizan’s approval is a time-boxed risk decision, not a contract. The product layer records each consumer-protection step against the decision record. Click the steps in order — or try one out of order to see the engine refuse it (that refusal is the audit control, not a bug).'));
   var list = h('div', { class: 'exec-steps', id: boxId + '-steps' });
   var errBox = h('div', { id: boxId + '-err', 'aria-live': 'polite' });
   function paint(r) {
@@ -2363,7 +2434,7 @@ function buildExecPanel(rec, boxId, opts) {
         h('div', { class: 'co-title', text: 'Out of order — refused by the engine' }),
         h('div', { class: 'co-body' },
           h('code', { text: err && err.message ? err.message : String(err) }),
-          h('div', { class: 'small', style: 'margin-top:4px;', text: EXEC_WHY }))));
+          h('div', { class: 'small', style: 'margin-top:4px;', text: opts.why || EXEC_WHY }))));
       return;
     }
     paint(updated);
@@ -3455,6 +3526,425 @@ var Car = {
     box.appendChild(panel);
   }
 };
+/* ================= SME working capital (Addendum v2.10) — business accounts, enhanced with the owner's personal accounts ================= */
+var SME_PID = 'sme_working_capital';
+var SME_TERMS = [3, 6, 9, 12];
+var SME_GUARANTEE_LABEL = { VERIFIED_STRONG: 'Verified — strong', VERIFIED_WEAK: 'Verified — weak', UNVERIFIED: 'Unverified' };
+/* The flow the board asked for — [title, detail, uses Open Finance] */
+var SME_FLOW = [
+  ['Business details', 'Trade licence lookup', false],
+  ['Connect business accounts', 'Al Tareq — the authorised signatory', true],
+  ['Owner connects personal accounts', 'Optional — B2C consent, the owner’s own', true],
+  ['AECB consent', 'Commercial + the owner’s consumer report', false],
+  ['Decision', 'Mizan', false],
+  ['Offer + key terms', 'Personal-guarantee disclosure (AR + EN)', false],
+  ['E-sign', 'UAE PASS — the owner', false],
+  ['Repayment', 'Direct debit on the business account', false],
+  ['Disbursement', 'To the business account', false],
+  ['Monitoring', 'Business + owner', true]
+];
+var SME_REPAY_COPY = 'A mandate on the company’s business account — active before the first collection.';
+var SME_EXEC_WHY = 'Why it matters: the authorised signatory accepts the offer, the owner reads the key facts and the personal-guarantee disclosure in Arabic and English, signs the loan and the guarantee via UAE PASS, the direct debit on the business account is set up, and the cooling-off period — Noor policy for micro businesses (confirm with compliance) — passes before any money moves. An approval is not a loan.';
+function smePersona() { return (MD && MD.personasSme && MD.personasSme[0]) || null; }
+function smeSum(arr, k) { return (arr || []).reduce(function (s, x) { return s + (isNum(x[k]) ? x[k] : 0); }, 0); }
+function smeAvg(arr) { return arr && arr.length ? arr.reduce(function (s, x) { return s + x; }, 0) / arr.length : 0; }
+function smeBindWord(key) {
+  if (key === 'GUARANTEE_FACTOR') return 'the guarantee factor binds';
+  if (key === 'DSCR_CAP') return 'DSCR cap binds';
+  if (key === 'REVENUE_CAP') return 'revenue cap binds';
+  if (key === 'PRODUCT_CAP') return 'product cap binds';
+  return 'the amount requested';
+}
+function smeFmtX(x) { return isNum(x) ? Number(x).toFixed(2) + '×' : '—'; }
+var SME_GUARANTEE_SHORT = { VERIFIED_STRONG: 'Strong', VERIFIED_WEAK: 'Weak', UNVERIFIED: 'Unverified' };
+function smeGuaranteeChip(status, factor, id, short) {
+  return h('span', { class: 'sme-g sme-g-' + (status || 'NONE'), id: id || null, dataset: { status: status || '' }, title: SME_GUARANTEE_LABEL[status] || null },
+    ((short ? SME_GUARANTEE_SHORT : SME_GUARANTEE_LABEL)[status] || status || '—') + (isNum(factor) ? ' · ' + factor + '%' : ''));
+}
+/* One path of the comparison in plain words: "grade B · 13.00% · the guarantee factor binds" */
+function smePathText(row) {
+  if (!row) return '';
+  if (row.outcome !== 'APPROVE') return row.outcome + (row.reasonCodes && row.reasonCodes[0] ? ' — ' + rcEn(row.reasonCodes[0]).replace(/\.$/, '') : '');
+  return 'grade ' + (row.grade || '—') + ' · ' + fmtRate(row.apr) + ' · ' + smeBindWord(row.bindingConstraint);
+}
+/* "What the owner's accounts were worth" as the v2.4 evidence strip (Workbench case file + Decision log replay) */
+function smeUpliftStrip(rec) {
+  var up = rec.ownerAccountsUplift;
+  if (!up) {
+    return h('div', { class: 'callout callout-info small sme-uplift-strip', dataset: { ref: rec.id, path: 'BUSINESS_ONLY' } },
+      'Decided on the business accounts only — the owner’s personal accounts were not connected, so the guarantee is unverified (' + ((rec.features || {}).guaranteeFactorPct || 65) + '% of the business capacity).');
+  }
+  var strip = h('div', { class: 'ev-strip sme-uplift-strip', dataset: { ref: rec.id, uplift: String(up.upliftAed) }, 'aria-label': 'What each evidence path decided' });
+  [['BUSINESS_ONLY', 'Business accounts only', up.businessOnly], ['WITH_OWNER', '+ the owner’s personal accounts', up.withOwnerAccounts]].forEach(function (x) {
+    var c = x[2];
+    strip.appendChild(h('div', { class: 'ev' + (x[0] === 'WITH_OWNER' ? ' ev-new' : ''), dataset: { path: x[0], outcome: c.outcome, approved: String(c.approved) } },
+      h('div', { class: 'ev-l', text: x[1] }),
+      h('div', { class: 'ev-v' + (c.outcome === 'APPROVE' ? '' : ' ev-' + c.outcome), text: c.outcome === 'APPROVE' ? fmtAED(c.approved) : c.outcome }),
+      h('div', { class: 'ev-s', text: smePathText(c) + ' · guarantee ' + (SME_GUARANTEE_LABEL[c.guaranteeStatus] || '—').toLowerCase() })));
+  });
+  strip.appendChild(h('div', { class: 'ev', dataset: { path: 'UPLIFT', approved: String(up.upliftAed) } },
+    h('div', { class: 'ev-l', text: 'The owner’s accounts' }), h('div', { class: 'ev-v', text: signedAED(up.upliftAed) }),
+    h('div', { class: 'ev-s', text: up.aprDeltaPts ? up.aprDeltaPts + ' points cheaper' : '' })));
+  return strip;
+}
+/* Case file block (Workbench + Decision log): the two paths and the internal findings */
+function smeCaseBlock(rec) {
+  var wrap = h('div', { class: 'sme-case', style: 'margin-bottom:12px;' });
+  var b = rec.borrower || {}, g = rec.guarantee || {};
+  wrap.appendChild(h('h3', { text: 'SME working capital — what the owner’s accounts were worth (same application, each path)' }));
+  wrap.appendChild(h('div', { class: 'small muted', style: 'margin-bottom:8px;' },
+    (b.name || nameOf(rec)) + ' · guarantor ' + (b.guarantor || '—') + ' · ', smeGuaranteeChip(g.status, g.factorPct),
+    (rec.request && rec.request.purpose ? ' · ' + rec.request.purpose : '')));
+  wrap.appendChild(smeUpliftStrip(rec));
+  var cols = h('div', { class: 'sme-find-cols' });
+  if (rec.businessFindings) cols.appendChild(h('div', null, h('div', { class: 'small', style: 'font-weight:600;margin:10px 0 4px;', text: 'What the business accounts showed' }), carFindingsList(rec.businessFindings)));
+  if (rec.ownerFindings) cols.appendChild(h('div', null, h('div', { class: 'small', style: 'font-weight:600;margin:10px 0 4px;', text: 'Owner findings — internal, never sent to the lender' }), carFindingsList(rec.ownerFindings)));
+  wrap.appendChild(cols);
+  return wrap;
+}
+var Sme = {
+  sel: null, rec: null, pendingId: null, amount: null, months: 12, exec: null,
+  build: function () {
+    var root = clear($('#scr-sme'));
+    root.appendChild(screenHead('SME route — board, 2 Oct', 'SME working capital',
+      'The company\'s accounts support AED 100,000. With Sara\'s personal accounts, Mizan verifies her guarantee and her income: AED 150,000, 2.5 points cheaper — and both sets of accounts are watched while the loan is open.'));
+    var p = Sme.sel = smePersona();
+    if (!p) { root.appendChild(h('div', { class: 'callout callout-error', text: 'No SME persona found in MizanData.personasSme.' })); return; }
+    root.appendChild(Sme.flowMap());
+    var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
+    root.appendChild(h('div', { class: 'grid2' }, left, right));
+    root.appendChild(h('div', { class: 'stack', style: 'margin-top:14px;' }, h('div', { id: 'sme-how' }), h('div', { id: 'sme-kfs' }), h('div', { id: 'sme-exec' })));
+    left.appendChild(Sme.businessCard(p));
+    left.appendChild(Sme.ownerCard(p));
+    left.appendChild(Sme.form(p));
+    left.appendChild(h('div', { class: 'panel', id: 'sme-orch' }));
+    right.appendChild(h('div', { id: 'sme-decision' }));
+    right.appendChild(h('div', { id: 'sme-uplift' }));
+    right.appendChild(h('div', { id: 'sme-owner' }));
+    Sme.reset();
+  },
+  /* The flow map — a CSS-only horizontal stepper; the Open Finance steps are highlighted; it stacks on a phone */
+  flowMap: function () {
+    var ol = h('ol', { class: 'sme-flow', id: 'sme-flow', 'aria-label': 'The SME flow, ten steps' });
+    SME_FLOW.forEach(function (s, i) {
+      ol.appendChild(h('li', { class: 'sme-fs' + (s[2] ? ' of' : ''), dataset: { step: String(i + 1), of: String(s[2]) } },
+        h('span', { class: 'sme-fs-n', 'aria-hidden': 'true', text: String(i + 1) }),
+        h('span', { class: 'sme-fs-b' }, h('span', { class: 'sme-fs-t', text: s[0] }), h('span', { class: 'sme-fs-d', text: s[1] }),
+          s[2] ? h('span', { class: 'sme-fs-of', text: 'Open Finance' }) : null)));
+    });
+    return h('div', { class: 'panel sme-flow-panel', id: 'sme-flow-panel' },
+      h('h3', null, 'The flow ', h('span', { class: 'h3-note', text: '— ten steps; the highlighted ones use Open Finance (Al Tareq)' })), ol);
+  },
+  businessCard: function (p) {
+    var b = p.business || {}, acc = b.accounts || {}, months = acc.months || [];
+    var rev = months.map(function (m) { return m.credits - m.ownerInjections - m.interAccount; });
+    var opx = months.map(function (m) { return m.debits - m.interAccount; });
+    var lic = b.tradeLicence || {};
+    var yrs = lic.issuedOn ? Math.floor(daysBetween(lic.issuedOn, MD.TODAY) / 365.25) : null;
+    return h('div', { class: 'panel', id: 'sme-business' },
+      h('h3', null, 'Business ', h('span', { class: 'h3-note', text: '(s1, synthetic — the borrower)' })),
+      h('div', { class: 'pcard sel car-person sme-card', id: 'smep-' + p.id, dataset: { id: p.id } },
+        h('span', { class: 'pname' }, h('span', { text: p.name }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: p.nameAr || '' })),
+        h('span', { class: 'ptag', text: p.tagline || '' }),
+        h('span', { class: 'pchips' },
+          h('span', { class: 'chip', dataset: { k: 'licence' }, text: 'Trade licence · ' + (lic.authority || '—') + (yrs !== null ? ' · ' + yrs + ' years' : '') }),
+          h('span', { class: 'chip', dataset: { k: 'aecb' }, text: 'AECB commercial ' + ((b.aecb || {}).score || '—') }),
+          h('span', { class: 'chip', dataset: { k: 'accounts' }, text: (acc.accounts || []).length + ' business accounts · ' + (acc.monthsAvailable || months.length) + ' months' }),
+          h('span', { class: 'chip', dataset: { k: 'revenue' }, text: 'Revenue ≈ ' + fmtAED(smeAvg(rev)) + '/mo' }),
+          h('span', { class: 'chip acc', dataset: { k: 'nocf' }, text: 'Net operating cash flow ' + fmtAED(smeAvg(rev) - smeAvg(opx)) + '/mo' }))));
+  },
+  ownerCard: function (p) {
+    var o = p.owner || {}, a = o.aecb || {};
+    var parts = (a.obligationsBreakdown || []).map(function (x) { return String(x.label || '').toLowerCase().replace('credit ', ''); });
+    return h('div', { class: 'panel', id: 'sme-owner-card' },
+      h('h3', null, 'Owner ', h('span', { class: 'h3-note', text: '— authorised signatory and personal guarantor' })),
+      h('div', { class: 'pcard sel car-person sme-card', dataset: { id: p.id + '-owner' } },
+        h('span', { class: 'pname' }, h('span', { text: o.name || '—' }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: o.nameAr || '' })),
+        h('span', { class: 'ptag', text: (o.age ? o.age + ' · ' : '') + (o.role || 'Owner') }),
+        h('span', { class: 'pchips' },
+          h('span', { class: 'chip', dataset: { k: 'ownerAecb' }, text: 'AECB consumer ' + (a.score || '—') }),
+          h('span', { class: 'chip', dataset: { k: 'ownerObligations' }, text: 'Obligations ' + fmtAED(a.obligationsMonthly) + '/mo' + (parts.length ? ' (' + parts.join(' + ') + ')' : '') }),
+          h('span', { class: 'chip acc', text: 'Personal accounts — her own consent, optional' }))));
+  },
+  form: function (p) {
+    var prm = currentParams(SME_PID), mn = prm.minAmount || 25000, mx = prm.productCap || 500000;
+    var form = h('div', { class: 'panel', id: 'sme-form' });
+    form.appendChild(h('h3', { text: 'Request — amount, term and consents' }));
+    var amt = h('input', { type: 'range', min: String(mn), max: String(mx), step: '5000', id: 'sme-amount', 'aria-label': 'Loan amount' });
+    var amtN = h('input', { type: 'number', min: String(mn), max: String(mx), step: '5000', id: 'sme-amount-n', 'aria-label': 'Loan amount (number)' });
+    amt.addEventListener('input', function () { Sme.setAmount(amt.value); });
+    amtN.addEventListener('change', function () { Sme.setAmount(amtN.value); });
+    form.appendChild(h('div', { class: 'field' },
+      h('label', { for: 'sme-amount', text: 'Loan amount (AED) — ' + fmtAED(mn) + ' to ' + fmtAED(mx) }),
+      h('div', { class: 'slider-row' }, amt, amtN),
+      h('div', { class: 'bounds', id: 'sme-purpose', text: 'Purpose: ' + ((p.defaultRequest || {}).purpose || '—') })));
+    form.appendChild(h('div', { class: 'field' },
+      h('label', { id: 'sme-tenor-l', text: 'Term — what each path lends at this amount (live, from the engine)' }),
+      h('div', { class: 'plan-list car-tenors', id: 'sme-tenors', role: 'radiogroup', 'aria-labelledby': 'sme-tenor-l' }),
+      h('div', { class: 'car-hint', text: 'Each row: the business accounts only beside what the owner’s personal accounts add — a pure quote (quoteSme), nothing recorded until you decide. Terms 3 / 6 / 9 / 12 months.' })));
+    form.appendChild(h('div', { class: 'consent-box' },
+      h('input', { type: 'checkbox', id: 'sme-c-aecb', onchange: function () { Sme.renderTenors(); } }),
+      h('label', { for: 'sme-c-aecb' }, h('div', { class: 'cb-title', text: 'AECB — commercial report (the company) and consumer report (the owner) · required' }),
+        h('div', { class: 'cb-legal', text: 'The authorised signatory consents for the company, and the owner consents as an individual guarantor, to Noor requesting both reports from Al Etihad Credit Bureau (Federal Law 6/2010). No consent record → no pull → no decision.' }))));
+    form.appendChild(h('div', { class: 'consent-box' },
+      h('input', { type: 'checkbox', id: 'sme-c-of', onchange: function () { Sme.renderTenors(); } }),
+      h('label', { for: 'sme-c-of' }, h('div', { class: 'cb-title', text: 'Open Finance — the business accounts (Al Tareq) · required' }),
+        h('div', { class: 'cb-legal', text: 'Given by the authorised signatory for the company: 12 months of the company’s accounts, read-only, revocable. Mizan reads revenue, operating cash flow, volatility, negative-balance days, returned cheques and customer concentration.' }))));
+    form.appendChild(h('div', { class: 'consent-box car-of' },
+      h('span', { class: 'car-switch' }, h('input', { type: 'checkbox', id: 'sme-c-owner', role: 'switch', onchange: function () { Sme.renderTenors(); } }), h('span', { class: 'cs-track', 'aria-hidden': 'true' })),
+      h('label', { for: 'sme-c-owner' }, h('div', { class: 'cb-title', text: 'Open Finance — the owner’s personal accounts (Al Tareq B2C) · optional' }),
+        h('div', { class: 'cb-legal', text: 'The owner’s own, separate consent as an individual: Mizan verifies the guarantee and the owner’s income from 12 months of personal accounts — and, while the business loan the owner guarantees is open, watches for early signs of trouble. Revocable any time; never shared with the lender.' }))));
+    form.appendChild(lenderShareNote('sme-c-lender'));
+    form.appendChild(h('div', { id: 'sme-consent-err', 'aria-live': 'polite' }));
+    form.appendChild(h('div', { class: 'btnrow', style: 'margin-top:12px;' },
+      h('button', { class: 'btn btn-primary car-decide', id: 'sme-submit', type: 'button', text: 'Decide', onclick: function () { Sme.submit(); } }),
+      h('span', { class: 'small muted', text: 'POST /decisions · product sme_working_capital · a real DecisionRecord' })));
+    return form;
+  },
+  /* Back to the default application: AED 150,000 over 12 months, every consent on (the owner's by default) */
+  reset: function () {
+    var p = Sme.sel = smePersona(); if (!p) return;
+    Sme.rec = null; Sme.pendingId = null; Sme.exec = null;
+    Sme.amount = p.defaultRequest.amount; Sme.months = p.defaultRequest.tenorMonths;
+    ['#sme-c-aecb', '#sme-c-of', '#sme-c-owner'].forEach(function (s) { var e = $(s); if (e) e.checked = true; });
+    Sme.syncAmount(); Sme.renderTenors();
+    clear($('#sme-consent-err'));
+    Sme.clearOutputs();
+    var orch = clear($('#sme-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(h('div', { class: 'small muted', text: 'Ready — decide to run the pulls: AECB commercial and the owner’s consumer report, the trade licence, the business accounts and — with the owner’s consent — the personal accounts.' }));
+  },
+  clearOutputs: function () {
+    var d = clear($('#sme-decision'));
+    d.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Decision' }),
+      h('div', { class: 'small muted', text: 'The decision appears here — outcome, NoorScore, the offer, the guarantee, and what the owner’s accounts changed.' })));
+    ['#sme-uplift', '#sme-owner', '#sme-how', '#sme-kfs', '#sme-exec'].forEach(function (s) { clear($(s)); });
+  },
+  consents: function () { return { aecb: !!($('#sme-c-aecb') || {}).checked, openFinance: !!($('#sme-c-of') || {}).checked, ownerOpenFinance: !!($('#sme-c-owner') || {}).checked }; },
+  setAmount: function (val) {
+    var prm = currentParams(SME_PID), mn = prm.minAmount || 25000, mx = prm.productCap || 500000;
+    var n = Math.round(Number(val) / 5000) * 5000;
+    if (!isNum(n)) n = mn;
+    Sme.amount = Math.max(mn, Math.min(mx, n));
+    Sme.syncAmount(); Sme.renderTenors();
+  },
+  syncAmount: function () {
+    var a = $('#sme-amount'), n = $('#sme-amount-n');
+    if (a) a.value = String(Sme.amount);
+    if (n) n.value = String(Sme.amount);
+  },
+  setMonths: function (n) { Sme.months = n; Sme.renderTenors(); },
+  renderTenors: function () {
+    var box = $('#sme-tenors'); if (!box) return;
+    clear(box);
+    var cons = Sme.consents();
+    var terms = currentParams(SME_PID).tenorMonthsAllowed || SME_TERMS;
+    terms.forEach(function (n) {
+      var q = null, blocked = false;
+      try { q = ME.quoteSme({ applicant: Sme.sel, amount: Sme.amount, tenorMonths: n, consents: cons }); } catch (e) { blocked = true; }
+      var up = q && q.ownerAccountsUplift;
+      var biz = up ? up.businessOnly : (q ? q.row : null);
+      var sel = n === Sme.months;
+      var main = blocked ? 'Tick the AECB and business-account consents to see what Mizan can lend'
+        : (up ? 'Business accounts only ' + (biz.outcome === 'APPROVE' ? fmtAED(biz.approved) : biz.outcome) : 'Business accounts only — the owner’s accounts off');
+      var pay = blocked ? '—' : (up ? (up.withOwnerAccounts.outcome === 'APPROVE' ? fmtAED(up.withOwnerAccounts.approved) : up.withOwnerAccounts.outcome)
+        : (biz.outcome === 'APPROVE' ? fmtAED(biz.approved) : biz.outcome));
+      var sub = blocked ? '' : (up ? (up.upliftAed > 0 ? signedAED(up.upliftAed) + ' with the owner’s accounts' : 'with the owner’s accounts') : 'guarantee unverified');
+      box.appendChild(h('button', { class: 'plan-row car-tenor' + (sel ? ' sel' : ''), type: 'button', id: 'sme-tenor-' + n, role: 'radio', 'aria-checked': sel ? 'true' : 'false',
+        dataset: { months: String(n), biz: biz ? String(biz.approved) : '', owner: up ? String(up.withOwnerAccounts.approved) : '', uplift: up ? String(up.upliftAed) : '' },
+        onclick: function () { Sme.setMonths(n); } },
+        h('span', { class: 'pr-dot', 'aria-hidden': 'true' }),
+        h('span', { class: 'pr-main' }, h('span', { class: 'pr-name', text: n + ' months' }), h('span', { class: 'pr-apr', text: main })),
+        h('span', { class: 'pr-right' }, h('span', { class: 'pr-pay', text: pay }), h('span', { class: 'pr-fee', text: sub }))));
+    });
+  },
+  submit: function () {
+    var errBox = clear($('#sme-consent-err'));
+    var c = Sme.consents(), rec;
+    try {
+      rec = ME.decide({ productId: SME_PID, applicant: Sme.sel, amount: Sme.amount, tenorMonths: Sme.months, consents: c });
+    } catch (err) {
+      /* Expected engine refusals (consents) render inline — never the fatal banner */
+      var consentGap = !c.aecb || !c.openFinance;
+      errBox.appendChild(h('div', { class: 'callout callout-error', dataset: { blocked: consentGap ? 'consent' : 'engine' } },
+        h('div', { class: 'co-title', text: !c.aecb ? 'Decision blocked — AECB consent missing' : (!c.openFinance ? 'Decision blocked — the business accounts are not connected' : 'Engine rejected the application') }),
+        h('div', { class: 'co-body' }, h('code', { text: err && err.message ? err.message : String(err) }),
+          consentGap ? h('div', { class: 'small', style: 'margin-top:4px;', text: 'The SME route underwrites on the company’s accounts: the AECB pulls and the business-account consent (the authorised signatory) are required; the owner’s personal accounts are optional.' }) : null)));
+      return;
+    }
+    Sme.rec = null; Sme.pendingId = rec.id; Sme.exec = null;
+    Sme.clearOutputs();
+    var orch = clear($('#sme-orch'));
+    orch.appendChild(h('h3', { text: 'Orchestration' }));
+    orch.appendChild(pullsTimeline(rec, { onDone: function () { if (Sme.pendingId === rec.id) Sme.showDecision(rec); } }));
+    afterEngineMutation();
+  },
+  showDecision: function (rec) {
+    Sme.rec = rec;
+    Sme.renderDecision(rec); Sme.renderUplift(rec); Sme.renderOwner(rec); Sme.renderHow(rec); Sme.renderKfs(rec);
+    clear($('#sme-exec'));
+    if (rec.outcome === 'APPROVE') {
+      Sme.exec = buildExecPanel(rec, 'sme-exec', { onEvent: function (r) { Sme.rec = r; }, why: SME_EXEC_WHY,
+        intro: 'Mizan’s approval is a time-boxed risk decision, not a contract. The product layer records each step of the shared six-step sequence against the decision record — the company is not a consumer, but the owner, as personal guarantor, gets the disclosures in Arabic and English, and the cooling-off step stays as Noor policy for micro businesses. Try a step out of order to see the engine refuse it.',
+        executedNote: 'The money is credited to the company’s business account; the direct debit collects from it. The audit can replay approval → offer → disclosures → e-sign → repayment set-up → cooling-off → disbursement end to end. ' });
+    }
+  },
+  renderDecision: function (rec) {
+    var box = clear($('#sme-decision'));
+    var f = rec.features || {}, k = rec.pricing && rec.pricing.kfs, s = rec.score || {};
+    var panel = h('div', { class: 'panel', id: 'sme-decision-panel', dataset: { id: rec.id, outcome: rec.outcome, approved: String(rec.limit.approved), guarantee: f.guaranteeStatus || '' } });
+    panel.appendChild(h('h3', { text: 'Decision' }));
+    panel.appendChild(outcomeBanner(rec, nameOf(rec) + ' · ' + fmtAED(rec.request.amount) + ' over ' + rec.request.tenorMonths + ' months · ' +
+      (f.ownerAccountsConnected ? 'business accounts + the owner’s personal accounts' : 'business accounts only')));
+    var band = noorBand(s.points);
+    panel.appendChild(h('div', { class: 'ns-block car-ns', id: 'sme-ns', dataset: { noorscore: isNum(s.points) ? String(s.points) : '', band: band || '' } },
+      h('div', { class: 'ns-head' },
+        h('span', { class: 'grade-chip', text: s.grade || '—', 'aria-label': 'Internal risk grade ' + (s.grade || 'unknown') }),
+        h('span', { class: 'ns-lbl', text: 'NoorScore' }), h('span', { class: 'ns-val', text: isNum(s.points) ? String(s.points) : '—' }), bandChip(band),
+        h('span', { class: 'small muted', text: f.ownerIncomeVerified ? 'AECB commercial ' + s.base + ' + overlays, incl. +15 — the owner’s income verified' : 'AECB commercial ' + (s.base || '—') + ' + business and owner overlays' }))));
+    if (rec.outcome !== 'DECLINE' && k) {
+      var fig = function (key, label, value, sub) {
+        return h('div', { class: 'os', dataset: { fig: key } }, h('div', { class: 'os-l', text: label }), h('div', { class: 'os-v', text: value }), h('div', { class: 'os-s', text: sub || '' }));
+      };
+      panel.appendChild(h('div', { class: 'offer-strip car-figs sme-figs', id: 'sme-figs' },
+        fig('approved', rec.outcome === 'REFER' ? 'Provisional amount' : 'Approved amount', fmtAED(rec.limit.approved), smeBindWord(rec.limit.bindingConstraint)),
+        fig('apr', 'APR', fmtRate(k.rateMid), 'mid-band · grade ' + (rec.pricing.band || '—')),
+        fig('instalment', 'Monthly instalment', fmtMoney(k.monthlyInstalment), k.tenorMonths + ' months'),
+        fig('total', 'Total repayable', fmtMoney(k.totalRepayable), 'interest ' + fmtMoney(k.totalInterest)),
+        fig('dscr', 'DSCR', smeFmtX(f.dscr), 'operating cash flow ÷ instalment (≥ 1.5×)'),
+        h('div', { class: 'os', dataset: { fig: 'guarantee' } }, h('div', { class: 'os-l', text: 'Personal guarantee' }), h('div', { class: 'os-v' }, smeGuaranteeChip(f.guaranteeStatus, f.guaranteeFactorPct, 'sme-guarantee', true)),
+          h('div', { class: 'os-s', text: f.guaranteeStatus === 'UNVERIFIED' ? 'owner’s accounts not connected' : 'from the owner’s accounts' }))));
+      if (rec.outcome === 'APPROVE' && rec.repayment) panel.appendChild(repaymentLine(rec.repayment, { id: 'sme-repay', label: 'Repayment', copy: SME_REPAY_COPY }));
+    }
+    panel.appendChild(h('div', { class: 'dgrid car-trace', id: 'sme-trace' }, h('h4', { class: 'car-sub-h', text: 'Limit — binding-constraint trace (incl. the guarantee factor)' }), limitBlock(rec)));
+    if (rec.outcome === 'REFER') {
+      panel.appendChild(h('div', { class: 'callout callout-warn', style: 'margin-top:12px;' },
+        h('div', { class: 'co-title', text: 'Routed to the refer workbench' }),
+        h('div', { class: 'co-body' }, 'A structured case with both sets of findings is in the analyst queue (SME SLA: 24 hours). ',
+          h('button', { class: 'btn btn-ghost', type: 'button', text: 'Open in Workbench →', onclick: function () { showScreen('workbench'); Workbench.select(rec.id); } }))));
+    }
+    if (rec.outcome === 'DECLINE') {
+      panel.appendChild(h('div', { class: 'callout callout-error', style: 'margin-top:12px;' }, h('div', { class: 'co-title', text: 'No offer' }),
+        h('div', { class: 'co-body', text: 'The reasons below are the ones the company and the owner receive, in English and Arabic.' })));
+    }
+    /* the owner's red flags show here only when they refer; the owner-findings panel always says what was read */
+    if (rec.redFlags && rec.redFlags.referred) panel.appendChild(RedFlagsUI.tripped(rec.redFlags, { id: 'sme-rf-trip', title: 'Owner red flags — what tripped' }));
+    if ((rec.reasonCodes || []).length) {
+      panel.appendChild(h('div', { id: 'sme-reasons', style: 'margin-top:12px;' }, h('div', { class: 'small muted', style: 'margin-bottom:4px;', text: 'Reason codes — English + Arabic' }),
+        rec.reasonCodes.map(function (c) { return reasonLine(c); })));
+    }
+    box.appendChild(panel);
+  },
+  /* "What the owner's accounts changed" — from rec.ownerAccountsUplift (engine-computed, pure) */
+  renderUplift: function (rec) {
+    var box = clear($('#sme-uplift'));
+    var up = rec.ownerAccountsUplift, f = rec.features || {};
+    if (!up) {
+      if (f.ownerAccountsConnected) return;
+      box.appendChild(h('div', { class: 'panel car-cta', id: 'sme-cta-panel' },
+        h('h3', { text: 'What the owner’s accounts could change' }),
+        h('div', { class: 'callout callout-info', id: 'sme-cta' },
+          h('div', { class: 'co-title', text: 'Connect the owner’s personal accounts — verify the guarantee' }),
+          h('div', { class: 'co-body', text: 'This decision read the company’s accounts only: the guarantee is unverified, so Mizan lends ' + (f.guaranteeFactorPct || 65) + '% of what the business supports (' + fmtAED(f.businessCapacity) + '). With the owner’s own consent, Mizan checks her drawings, debts and buffer, and verifies her income.' }),
+          h('div', { class: 'btnrow', style: 'margin-top:10px;' },
+            h('button', { class: 'btn btn-primary car-decide', id: 'sme-cta-connect', type: 'button', text: 'Connect the owner’s accounts and re-decide',
+              onclick: function () { var o = $('#sme-c-owner'); if (o) o.checked = true; Sme.renderTenors(); Sme.submit(); } }),
+            h('span', { class: 'small muted', text: 'Al Tareq B2C · the owner’s own consent · revocable' })))));
+      return;
+    }
+    var b = up.businessOnly, o = up.withOwnerAccounts;
+    var panel = h('div', { class: 'panel car-uplift sme-uplift', id: 'sme-uplift-panel', dataset: { uplift: String(up.upliftAed), biz: String(b.approved), owner: String(o.approved), apr: String(up.aprDeltaPts) } });
+    panel.appendChild(h('h3', null, 'What the owner’s accounts changed ', h('span', { class: 'h3-note', text: '— same application, same rules, two evidence paths' })));
+    function col(cls, label, row) {
+      return h('div', { class: 'car-col ' + cls, id: 'sme-col-' + cls, dataset: { approved: String(row.approved), outcome: row.outcome } },
+        h('div', { class: 'cc-l', text: label }),
+        h('div', { class: 'cc-v', text: row.outcome === 'APPROVE' ? fmtAED(row.approved) : row.outcome }),
+        h('div', { class: 'cc-s', text: smePathText(row) }),
+        h('div', { class: 'cc-x' }, 'NoorScore ' + (row.noorScore || '—') + ' · ', smeGuaranteeChip(row.guaranteeStatus, row.guaranteeFactorPct),
+          isNum(row.monthlyInstalment) ? ' · ' + fmtMoney(row.monthlyInstalment) + '/mo' : ''));
+    }
+    panel.appendChild(h('div', { class: 'car-cols' }, col('docs', 'Business accounts only', b), col('of', '+ the owner’s personal accounts', o)));
+    var flat = up.upliftAed === 0 && !up.aprDeltaPts;
+    var chip = flat ? 'Same amount either way' : (up.upliftAed > 0 ? '+' + fmtAED(up.upliftAed) : signedAED(up.upliftAed)) + (up.aprDeltaPts ? ' · ' + up.aprDeltaPts + ' points cheaper' : '');
+    panel.appendChild(h('div', { class: 'car-plus-row' },
+      h('span', { class: 'car-plus' + (flat ? ' flat' : ''), id: 'sme-plus', text: chip }),
+      h('p', { class: 'car-why', id: 'sme-why', text: up.explanation })));
+    var dl = h('ul', { class: 'car-drivers', id: 'sme-drivers', 'aria-label': 'What drove the difference' });
+    (up.drivers || []).forEach(function (t) { dl.appendChild(h('li', { text: t })); });
+    panel.appendChild(dl);
+    box.appendChild(panel);
+  },
+  /* Owner findings — internal, Noor-only */
+  renderOwner: function (rec) {
+    var box = clear($('#sme-owner'));
+    var f = rec.features || {}, g = rec.guarantee || {};
+    var panel = h('div', { class: 'panel car-found sme-owner-panel', id: 'sme-owner-panel', dataset: { connected: String(!!f.ownerAccountsConnected) } });
+    panel.appendChild(h('h3', null, 'Owner findings ', h('span', { class: 'h3-note', text: '— the guarantee, from the owner’s own accounts' })));
+    panel.appendChild(scopeBanner('internal', 'sme-owner-banner', 'Internal — Noor only.', 'Used for Noor’s guarantee assessment; the lender receives the guarantee status as a flag, never these figures.'));
+    panel.appendChild(h('div', { class: 'sme-g-row' }, h('span', { class: 'small muted', text: 'Guarantee status' }), smeGuaranteeChip(g.status, g.factorPct, 'sme-owner-status'),
+      h('span', { class: 'small muted', text: g.status === 'VERIFIED_STRONG' ? 'DBR incl. contingent ≤ 50% · buffer ≥ 3 instalments · drawings regular · no red flags'
+        : (g.status === 'VERIFIED_WEAK' ? 'failed: ' + (g.failed || []).join(', ') : 'the owner’s accounts were not connected') })));
+    if (rec.ownerFindings) panel.appendChild(carFindingsList(rec.ownerFindings));
+    else panel.appendChild(h('div', { class: 'small muted', style: 'margin-top:8px;', text: 'Not connected — nothing read from the owner’s personal accounts: no drawings, no buffer, no red-flag check. The guarantee counts at ' + (f.guaranteeFactorPct || 65) + '%.' }));
+    box.appendChild(panel);
+  },
+  renderHow: function (rec) {
+    var box = clear($('#sme-how'));
+    var panel = h('div', { class: 'panel', id: 'sme-how-panel' });
+    panel.appendChild(h('h3', null, 'How Mizan decided ', h('span', { class: 'h3-note', text: '— the shared engine, the SME pack v' + rec.policyVersion + ': every rule, and what the business accounts showed' })));
+    var rl = h('div', { class: 'car-how-grid', id: 'sme-rules' });
+    rl.appendChild(h('div', null, h('div', { class: 'car-rules-h', text: 'NoorScore & grade' }), scoreBlock(rec)));
+    var list = h('div', { class: 'rule-list' });
+    (rec.rules || []).forEach(function (r) {
+      list.appendChild(h('div', { class: 'rule-item', dataset: { rule: r.id, result: r.result } },
+        h('div', { class: 'ri-head' }, h('strong', { class: 'res-' + r.result, text: r.result }), h('code', { class: 'small', text: r.id })),
+        h('div', { class: 'small', text: r.name || '' }),
+        h('div', { class: 'small muted', text: 'observed ' + fmtSummaryVal(r.observed) + ' · threshold ' + fmtSummaryVal(r.threshold) })));
+    });
+    rl.appendChild(h('div', { class: 'car-rule-col' }, h('div', { class: 'car-rules-h', text: 'Rules — the SME pack (locked block: Noor policy, confirm with compliance)' }), list));
+    rl.appendChild(h('div', null, h('div', { class: 'car-rules-h', text: 'What the business accounts showed (internal)' }), carFindingsList(rec.businessFindings || [])));
+    panel.appendChild(rl);
+    box.appendChild(panel);
+  },
+  renderKfs: function (rec) {
+    var box = clear($('#sme-kfs'));
+    var panel = h('div', { class: 'panel', id: 'sme-kfs-panel' });
+    panel.appendChild(h('h3', { text: 'Offer — key terms and the personal-guarantee disclosure (AR + EN)' }));
+    var k = rec.pricing && rec.pricing.kfs, lender = lenderName();
+    if (rec.outcome !== 'APPROVE' || !k) {
+      panel.appendChild(h('div', { class: 'small muted', text: rec.outcome === 'REFER' ? 'No offer yet — the application is with a credit analyst.' : 'No offer — the application was declined; the reasons above are the ones the company and the owner receive.' }));
+    } else {
+      panel.appendChild(h('div', { class: 'kfs car-kfs', id: 'sme-kfs-tiles' },
+        kfTile('lender', 'Lender', lender, 'lender of record · arranged by Noor'),
+        kfTile('borrower', 'Borrower', k.borrower || nameOf(rec), 'the company'),
+        kfTile('guarantor', 'Personal guarantor', k.guarantor || '—', 'the owner'),
+        kfTile('apr', 'APR', fmtRate(k.rateMid), 'band ' + fmtRate(rec.pricing.rateMin) + ' – ' + fmtRate(rec.pricing.rateMax)),
+        kfTile('monthlyInstalment', 'Monthly instalment', fmtMoney(k.monthlyInstalment), 'reducing balance'),
+        kfTile('payments', 'Number of payments', String(k.tenorMonths), 'monthly'),
+        kfTile('totalRepayable', 'Total repayable', fmtMoney(k.totalRepayable), 'principal ' + fmtAED(k.principal)),
+        kfTile('totalInterest', 'Total interest', fmtMoney(k.totalInterest), 'total cost of credit'),
+        kfTile('coolingOff', 'Cooling-off', (k.coolingOffDays || 5) + ' days', 'Noor policy for micro businesses'),
+        h('div', { class: 'kf kf-wide', dataset: { kfs: 'repayment', method: (rec.repayment || {}).method || '' } }, h('span', { class: 'kf-l', text: 'Repayment method' }),
+          h('span', { class: 'kf-v', text: (rec.repayment || {}).label || 'Direct debit mandate' }), h('span', { class: 'kf-s', text: 'on the company’s business account · no salary transfer required' }))));
+      var gd = k.guaranteeDisclosure || {};
+      panel.appendChild(h('div', { class: 'sme-disclosure', id: 'sme-disclosure' },
+        h('div', { class: 'sme-disc-h', text: 'Personal-guarantee disclosure — for the owner, in English and Arabic' }),
+        h('div', { class: 'sme-disc-cols' },
+          h('p', { class: 'sme-disc-en', lang: 'en', text: gd.en || '' }),
+          h('p', { class: 'sme-disc-ar ar', lang: 'ar', dir: 'rtl', text: gd.ar || '' }))));
+      if (rec.token) {
+        var conds = h('ul', { class: 'car-conds', id: 'sme-conditions' });
+        (rec.token.conditions || []).forEach(function (c) { conds.appendChild(h('li', /guarantee|Trade licence|business account/.test(c) ? { class: 'car-specific', text: c } : { text: c })); });
+        panel.appendChild(h('div', { style: 'margin-top:12px;' },
+          h('div', { class: 'small muted', text: 'Approval token ' + rec.token.id + ' — conditions before the money moves (◆ = SME-specific):' }), conds));
+      }
+    }
+    panel.appendChild(h('div', { class: 'btnrow car-links' },
+      h('button', { class: 'btn', type: 'button', id: 'sme-memo-link', text: 'Open the lender’s memo →', onclick: function () { Lender.open(rec.id); } }),
+      h('button', { class: 'btn btn-ghost', type: 'button', id: 'sme-log-link', text: 'Open in the Decision log →', onclick: function () { showScreen('log'); LogScreen.select(rec.id); } })));
+    box.appendChild(panel);
+  }
+};
 /* ================= Credit upgrade — starter loan → upgrade (Addendum v2.1) ================= */
 /* APR as a short percentage: 0.35 → "35%", 0.426 → "42.6%" */
 function fmtApr(r) { return !isNum(r) ? '—' : String(Number((r * 100).toFixed(2))) + '%'; }
@@ -4056,7 +4546,9 @@ var Upgrade = {
    Workbench (the red-flags panel + analyst actions), Policy console (the shared early-warning block),
    Decision log (replay). Everything comes from the engine; nothing here decides. */
 var RF_NAME = { RF_CARDS_MAXED: 'Cards maxed', RF_REMITTANCE_SURGE: 'Remittance surge', RF_TRAVEL_AFTER_DISBURSAL: 'Travel after payout',
-  RF_PAYMENTS_STOPPED: 'Payments stopped', RF_BALANCES_DRAINED: 'Balances drained' };
+  RF_PAYMENTS_STOPPED: 'Payments stopped', RF_BALANCES_DRAINED: 'Balances drained',
+  /* v2.10 — business signals on SME loans */
+  RF_REVENUE_DROP: 'Revenue drop', RF_FUNDS_TO_OWNER: 'Funds to owner' };
 var RF_POLICY_LINE = 'Signals are changes against the customer’s own history. Sending money home at the usual level, or travelling, is never a flag on its own.';
 var RF_SEV_SUB = { HIGH: 'specialist call ≤ 24h · new credit paused', MEDIUM: 'check-in same day (two signals: sooner)', LOW: 'watch · no customer contact', NONE: 'no flag' };
 var RedFlagsUI = {
@@ -4072,6 +4564,8 @@ var RedFlagsUI = {
     if (f.code === 'RF_TRAVEL_AFTER_DISBURSAL') return fmtAED(v.amountAed) + ' · day ' + v.daysAfterDisbursal + ' after payout';
     if (f.code === 'RF_PAYMENTS_STOPPED') return v.salaryLate ? 'salary ' + v.salaryLateDays + ' days late' : 'missed after ' + v.onTimeRun + ' on time';
     if (f.code === 'RF_BALANCES_DRAINED') return '−' + Math.round(v.dropPct) + '% vs 3-month average';
+    if (f.code === 'RF_REVENUE_DROP') return 'inflows −' + Math.round(v.dropPct) + '% vs 3-month average';
+    if (f.code === 'RF_FUNDS_TO_OWNER') return fmtAED(v.transferToOwnerAed) + ' = ' + v.multiple + '× usual drawings';
     return f.observed;
   },
   flagChip: function (f) {
@@ -4153,7 +4647,9 @@ var RedFlagsUI = {
       tb.appendChild(h('tr', { class: 'rowbtn rf-r' + (isOpen ? ' open' : ''), id: 'rf-r-' + r.loanId, dataset: { loan: r.loanId, sev: r.severityLabel },
         onclick: function () { RedFlagsUI.toggle(r.loanId); } },
         h('td', { class: 'nowrap rf-c-sev' }, toggle, RedFlagsUI.sevChip(r.severityLabel)),
-        h('td', { class: 'rf-cust' }, h('div', { class: 'rf-cust-n', text: r.customer }), h('div', { class: 'small muted nowrap', text: r.loanId + ' · ' + fmtAED(r.amountAed) }),
+        h('td', { class: 'rf-cust' }, h('div', { class: 'rf-cust-n', text: r.customer }),
+          r.guarantor ? h('div', { class: 'small muted rf-guarantor', text: 'guarantor ' + r.guarantor + ' — business + owner accounts' }) : null,
+          h('div', { class: 'small muted nowrap', text: r.loanId + ' · ' + fmtAED(r.amountAed) }),
           h('div', { class: 'small muted nowrap', text: 'paid out ' + fmtD(r.disbursedAt) })),
         h('td', { class: 'rf-c-prod' }, h('span', { class: 'chip prod-chip', text: productLabel(r.productId, true) })),
         h('td', { class: 'rf-c-flags' }, flagsCell),
@@ -4166,7 +4662,8 @@ var RedFlagsUI = {
       else reasons.appendChild(h('div', { class: 'small muted', text: 'No reason code — there is nothing to raise with the customer.' }));
       var detail = h('div', { class: 'rf-detail-in' },
         h('div', { class: 'rf-d-col' }, h('div', { class: 'rf-d-h', text: 'Guardrails for this row' }), notes,
-          r.action && r.action.offer ? h('div', { class: 'small', text: 'Offer: ' + (r.action.offer === 'PAYMENT_DATE_MOVE' ? 'move the payment date to when the salary lands' : 'a payment-date move or a restructure') + ' — help, not a collections step.' }) : null,
+          r.action && r.action.offer ? h('div', { class: 'small', text: 'Offer: ' + (r.action.offer === 'PAYMENT_DATE_MOVE' ? 'move the payment date to when the salary lands'
+            : (r.action.offer === 'PAYMENT_HOLIDAY' ? 'a payment holiday under policy' : 'a payment-date move or a restructure')) + ' — help, not a collections step.' }) : null,
           r.lenderStatus ? h('div', { class: 'rf-lender', dataset: { lender: 'status' } }, h('span', { class: 'rf-k', text: 'What ' + lenderName() + ' (lender of record) receives' }),
             h('span', { class: 'rf-v', text: '“' + r.lenderStatus + '” — a status flag only, never the account history or the values.' })) : null),
         h('div', { class: 'rf-d-col' }, h('div', { class: 'rf-d-h', text: 'Reason codes — what the analyst can read to the customer (EN / AR)' }), reasons,
@@ -4179,8 +4676,10 @@ var RedFlagsUI = {
     t.appendChild(tb);
     box.appendChild(h('div', { class: 'tbl-scroll' }, t));
     var why = RedFlagsUI.consentWhy();
+    var whyOwner = ''; try { whyOwner = ME.getPolicy('earlyWarning').consentWhyOwner || ''; } catch (e) {}
     box.appendChild(h('div', { class: 'small muted rf-foot' },
       'Consent scope: the Al Tareq consent covers monitoring while a loan is open — “' + why + '” ',
+      rows.some(function (r) { return r.segment === 'SME'; }) && whyOwner ? 'On SME loans the company’s accounts are read under the signatory’s consent and the owner’s personal accounts under the owner’s own: “' + whyOwner + '” ' : '',
       'Before LIVE an offline disparate-impact test runs across customer groups (labels used only for the test, never as features) — CBUAE AI/ML guidance (Feb 2026), Consumer Protection Regulation (fair treatment, collections conduct), PDPL purpose limitation. ',
       h('button', { class: 'btn btn-ghost rf-link', type: 'button', id: 'rf-to-policy', text: 'Thresholds in the policy console →', onclick: function () { Policy.pid = 'earlyWarning'; showScreen('policy'); } })));
   },
@@ -4291,13 +4790,25 @@ var RedFlagsUI = {
     box.appendChild(h('div', { class: 'rf-d-h', style: 'margin-top:12px;', text: 'Action ladder — locked' }));
     box.appendChild(h('div', { class: 'tbl-scroll' }, lad));
     box.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'EXIT_RISK = travel after the payout AND (remittance surge OR drained balances) AND (payments stopped OR cards maxed) → HIGH. Two or more MEDIUM signals → MEDIUM+ (sooner contact).' }));
+    /* v2.10 — the SME business signals: fixed thresholds, shown as locked text */
+    if (p.businessSignals && p.businessSignals.length) {
+      var bt = h('table', { class: 'tbl', id: 'pc-ew-business' }, h('thead', null, h('tr', null, h('th', { text: 'Severity' }), h('th', { text: 'Signal' }), h('th', { text: 'When it fires' }))));
+      var bb = h('tbody');
+      p.businessSignals.forEach(function (b) {
+        bb.appendChild(h('tr', { class: 'lockrow' }, h('td', null, RedFlagsUI.sevChip(b.severity)), h('td', null, h('code', { text: b.code })), h('td', { class: 'small', text: b.text })));
+      });
+      bt.appendChild(bb);
+      box.appendChild(h('div', { class: 'rf-d-h', style: 'margin-top:12px;', text: 'SME loans — business signals (v2.10), locked' }));
+      box.appendChild(h('div', { class: 'tbl-scroll' }, bt));
+      if (p.consentWhyOwner) box.appendChild(h('div', { class: 'small muted', style: 'margin-top:6px;', text: 'The owner’s personal accounts are read under the owner’s own consent: “' + p.consentWhyOwner + '”' }));
+    }
   },
   policyParamsNote: function (box) {
     var b = $('#pp-remittanceMultipleOfBaseline');
     var bd = b && b.closest('.field') ? b.closest('.field').querySelector('.bounds') : null;
     if (bd) bd.textContent = 'engine bounds 1.5× – 5× — never below 1.5×, so the usual level can never become a flag';
     var sw = $('#pp-redFlagsAtOrigination');
-    if (sw && sw.closest('.field')) sw.closest('.field').appendChild(h('div', { class: 'bounds', text: 'true: POL_RED_FLAGS refers personal-loan, car-loan and split applications on cards maxed, a remittance surge or drained balances — refer only. false: the rule is recorded as INFO and no signal is read.' }));
+    if (sw && sw.closest('.field')) sw.closest('.field').appendChild(h('div', { class: 'bounds', text: 'true: POL_RED_FLAGS refers personal-loan, car-loan and split applications — and SME applications, on the owner’s personal accounts — on cards maxed, a remittance surge or drained balances — refer only. false: the rule is recorded as INFO and no signal is read.' }));
     box.appendChild(h('div', { class: 'small muted', style: 'margin-top:4px;', text: 'Not a parameter, by design: nationality, the destination of a transfer or a trip, religion, any service name. The engine refuses them on simulate and publish.' }));
   },
   policySim: function (box, result) {
@@ -4358,6 +4869,14 @@ var REG_CITES_BY_PRODUCT = { salary_advance: { tenorCapMonths: 'Single repayment
     ltvCapPct: 'CBUAE Reg 29/2011 — car loan ≤ 80% of the vehicle’s value (no 20× salary multiple — the loan-to-value cap does that job), double-enforced by the engine',
     tenorCapMonths: 'CBUAE Reg 29/2011 — car-loan tenor ≤ 60 months',
     security: 'CBUAE Reg 29/2011 — secured by a mortgage over the car, registered with the RTA in favour of the lender'
+  },
+  /* v2.10 — the SME pack: the locked block is NOOR POLICY for a business loan, not a CBUAE consumer rule — confirm with compliance */
+  sme_working_capital: {
+    aecbCommercialRequired: 'Noor policy — the AECB commercial report on the company before any decision (Federal Law 6/2010 governs the pull) · confirm with compliance',
+    aecbConsumerOwnerRequired: 'Noor policy — the owner’s AECB consumer report, with the owner’s consent as an individual guarantor · confirm with compliance',
+    kybRequired: 'Noor policy — trade licence and ultimate beneficial owner verified before any decision · confirm with compliance',
+    personalGuarantee: 'Noor policy — the owner guarantees personally; as an individual, the owner gets the guarantor disclosures in Arabic and English (consumer protection covers the guarantor, not the company) · confirm with compliance',
+    coolingOffDays: 'Noor policy for micro businesses — 5 business days, waivable in writing by the owner; keeps the shared six-step sequence · confirm with compliance'
   } };
 /* Editable-parameter metadata — bounds mirror the engine's enforced PARAM_BOUNDS (the engine re-validates on simulate and publish) */
 var PARAM_META = {
@@ -4416,6 +4935,23 @@ var PARAM_META = {
     regularIncomeCountedPct: ['Verified regular income counted toward DBR (%) — Open Finance only', 0, 100, 5],
     regularIncomeMinMonths: ['Connected history needed to count regular income (months)', 12, 24, 1],
     instalmentToFcfMaxPct: ['Max instalment as % of free cash flow (when spending is seen)', 10, 80, 5],
+    tokenValidityDays: ['Offer validity (days)', 3, 30, 1]
+  },
+  /* v2.10 — SME working capital */
+  sme_working_capital: {
+    minMonthsTrading: ['Minimum months trading (trade licence)', 6, 60, 1],
+    minBusinessHistoryMonths: ['Minimum business-account history (months)', 6, 24, 1],
+    minAmount: ['Minimum loan amount (AED)', 10000, 100000, 5000],
+    productCap: ['Product cap (AED)', 100000, 2000000, 50000],
+    tenorMonthsAllowed: ['Allowed terms (months, comma-separated, ascending)', 1, 24, null],
+    dscrBudgetPct: ['Instalment budget — % of net operating cash flow (DSCR cap)', 20, 80, 5],
+    revenueMultiple: ['Revenue cap — multiple of average monthly revenue', 0.25, 3, 0.25],
+    unverifiedGuaranteeFactorPct: ['Guarantee factor when the owner’s accounts are not connected (%)', 30, 80, 5],
+    ownerDbrCapPct: ['Owner DBR cap incl. the contingent instalment (%)', 30, 50, 1],
+    contingentInstalmentSharePct: ['Contingent share of the new instalment in the owner’s DBR (%)', 25, 100, 5],
+    ownerBufferMinInstalments: ['Owner’s buffer — minimum liquid balances, in instalments', 1, 12, 1],
+    scoreDecline: ['Score — decline below', 550, 700, 5],
+    scoreRefer: ['Score — refer below (must be ≥ decline cut-off)', 600, 760, 5],
     tokenValidityDays: ['Offer validity (days)', 3, 30, 1]
   },
   salary_advance: {
@@ -4503,7 +5039,12 @@ var Policy = {
   renderReg: function () {
     var box = clear($('#pc-reg'));
     if (Policy.pid === 'earlyWarning') { RedFlagsUI.policyReg(box); return; }   /* v2.9 shared block: guardrails as locked text */
-    box.appendChild(h('h3', null, 'Regulatory primitives — locked ', h('span', { class: 'h3-note muted', text: '(engine double-enforces; packs reference, never edit)' })));
+    var noorPolicy = !!(Policy.policy && Policy.policy.lockedBasis === 'NOOR_POLICY');   /* v2.10 — the SME pack */
+    if (noorPolicy) {
+      box.appendChild(h('h3', null, 'Locked — Noor policy ', h('span', { class: 'h3-note muted', text: '(not CBUAE consumer rules — confirm with compliance)' })));
+      box.appendChild(h('div', { class: 'callout callout-warn small', id: 'pc-noor-policy', style: 'margin:0 0 8px;' },
+        h('strong', { text: 'Confirm with compliance. ' }), Policy.policy.lockedNote || ''));
+    } else box.appendChild(h('h3', null, 'Regulatory primitives — locked ', h('span', { class: 'h3-note muted', text: '(engine double-enforces; packs reference, never edit)' })));
     if (!Policy.policy) { box.appendChild(h('div', { class: 'callout callout-error', text: 'Policy unavailable from engine.' })); return; }
     var t = h('table', { class: 'tbl' });
     var tb = h('tbody');
@@ -4513,7 +5054,7 @@ var Policy = {
       tb.appendChild(h('tr', { class: 'lockrow' },
         h('td', null, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), h('code', { text: k })),
         h('td', { class: 'num', text: fmtRegVal(reg[k], k) }),
-        h('td', { class: 'muted small', text: byP[k] || REG_CITES[k] || 'Regulatory primitive' })));
+        h('td', { class: 'muted small', text: byP[k] || REG_CITES[k] || (noorPolicy ? 'Noor policy · confirm with compliance' : 'Regulatory primitive') })));
     });
     /* Platform rule (v2.3) — the same locked row on every product pack */
     var plat = (Policy.policy.platform || {}).repaymentCollection;
@@ -4537,6 +5078,15 @@ var Policy = {
     Object.keys(params).forEach(function (k) {
       var v = params[k];
       if (Policy.pid === 'starter_loan' && (k === 'starter' || k === 'tiers')) { Policy.renderNestedParam(wrap, k, v); return; }
+      /* v2.10 — a list of whole months (the SME terms), edited as text */
+      if (Array.isArray(v)) {
+        var mt = metaP[k] || [k, null, null, null];
+        var ti = h('input', { type: 'text', id: 'pp-' + k, value: v.join(', '), dataset: { pkey: k, ptype: 'months' }, inputmode: 'numeric' });
+        ti.addEventListener('input', function () { Policy.markChanged(k, ti.value.split(/[\s,]+/).filter(Boolean).join(',')); });
+        wrap.appendChild(h('div', { class: 'field' }, h('label', { for: 'pp-' + k }, mt[0] + ' ', h('code', { class: 'small muted', text: k })), ti,
+          h('div', { class: 'bounds', text: 'each term ' + (mt[1] || 1) + ' – ' + (mt[2] || 24) + ' whole months, ascending' })));
+        return;
+      }
       if (v !== null && typeof v === 'object') {
         var bm = BAND_META[k] || { label: k, unit: '', scale: 1, step: 0.01, min: 0, max: 100, note: '' };
         var grid = h('div', { class: 'band-grid' });
@@ -4704,11 +5254,12 @@ var Policy = {
     Object.keys(params).forEach(function (k) {
       var v = params[k];
       if (Policy.pid === 'starter_loan' && (k === 'starter' || k === 'tiers')) { out[k] = Policy.readNested(k); return; }
-      if (v !== null && typeof v === 'object') { out[k] = Policy.readBand(k); return; }
+      if (v !== null && typeof v === 'object' && !Array.isArray(v)) { out[k] = Policy.readBand(k); return; }
       var inp = $('#pp-' + k);
       if (!inp) { out[k] = v; return; }
       if (inp.dataset.ptype === 'num') out[k] = Number(inp.value);
       else if (inp.dataset.ptype === 'bool') out[k] = inp.value === 'true';
+      else if (inp.dataset.ptype === 'months') out[k] = inp.value.split(/[\s,]+/).filter(Boolean).map(Number);
       else out[k] = inp.value;
     });
     return out;
@@ -4719,9 +5270,11 @@ var Policy = {
     box.appendChild(h('h3', { text: 'Simulate before publish — replay the synthetic book' }));
     var sb = MD.sampleBook || {};
     var n = Policy.pid === 'split' ? (sb.split || []).length + ' split' : (Policy.pid === 'starter_loan' ? (sb.starter_loan || []).length + ' starter-loan'
-      : (Policy.pid === 'car_loan' ? (sb.car_loan || []).length + ' car-loan' : (sb.personal_loan || []).length + ' personal-loan'));
+      : (Policy.pid === 'car_loan' ? (sb.car_loan || []).length + ' car-loan'
+        : (Policy.pid === 'sme_working_capital' ? (sb.sme_working_capital || []).length + ' SME' : (sb.personal_loan || []).length + ' personal-loan')));
     var tryIt = Policy.pid === 'starter_loan' ? 'Try lowering the enhanced tier’s APR at max tenor: outcomes stay put, and the pricing impact shows what it does to APRs and partner income.'
-      : (Policy.pid === 'car_loan' ? 'Try setting regularIncomeCountedPct to 0: the rows with verified rent lose it — one approval shrinks, one becomes a decline.' : 'Try raising the decline cut-off.');
+      : (Policy.pid === 'car_loan' ? 'Try setting regularIncomeCountedPct to 0: the rows with verified rent lose it — one approval shrinks, one becomes a decline.'
+        : (Policy.pid === 'sme_working_capital' ? 'Try setting unverifiedGuaranteeFactorPct to 50: the approvals without the owner’s accounts shrink; the verified ones do not move.' : 'Try raising the decline cut-off.'));
     box.appendChild(h('p', { class: 'small muted', text: 'Runs the draft parameters against the seeded application sample (' + n + ' applications) and diffs outcomes against the live pack — the console never publishes blind. ' + tryIt }));
     box.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', id: 'pc-sim-run', text: 'Run simulation', onclick: function () {
       var res;
@@ -4778,7 +5331,7 @@ var Policy = {
       var ai = result.amountImpact;
       var dAmt = ai.approvedAmountAfter - ai.approvedAmountBefore;
       box.appendChild(h('div', { id: 'pc-sim-amounts', class: 'pi-tiles' },
-        h('strong', { class: 'small', text: 'Amount impact — most car-loan policy changes move amounts, not outcomes' }),
+        h('strong', { class: 'small', text: 'Amount impact — most ' + (Policy.pid === 'sme_working_capital' ? 'SME' : 'car-loan') + ' policy changes move amounts, not outcomes' }),
         h('div', { class: 'tbl-scroll', style: 'margin-top:4px;' }, h('table', { class: 'tbl' },
           h('thead', null, h('tr', null, h('th', { text: 'Measure' }), h('th', { class: 'num', text: 'Live pack' }), h('th', { class: 'num', text: 'Draft' }), h('th', { class: 'num', text: 'Change' }))),
           h('tbody', null,
@@ -4916,6 +5469,7 @@ function caseFile(rec) {
     wrap.appendChild(h('div', { style: 'margin-bottom:12px;' }, h('h3', { text: 'Income vs spending — connected accounts' }), cashFlowCallouts(rec), cashFlowChart(rec.applicantSnapshot, { name: nameOf(rec) })));
   }
   if (rec.productId === 'car_loan') wrap.appendChild(carCaseBlock(rec));
+  if (rec.productId === 'sme_working_capital') wrap.appendChild(smeCaseBlock(rec));
   if (rec.homeStatements) {
     wrap.appendChild(h('div', { style: 'margin-bottom:12px;' }, h('h3', { text: 'Home-country statements — parsed findings (as read for this decision)' }),
       statementsParsePanel(rec.homeStatements, { instant: true, noSkip: true, title: 'Parsed' })));
@@ -4939,7 +5493,7 @@ var Workbench = {
   build: function () {
     var root = clear($('#scr-workbench'));
     root.appendChild(screenHead('Human judgment, designed in', 'Refer workbench',
-      'Queues with SLAs (split 4h, personal loan 8h, car loan 8h, salary advance 4h). The analyst opens a complete pre-assembled file — connected-account data, features, every rule fired, score, limit trace — and can ask for evidence (6 months of home-country statements) that Mizan re-decides on, or override with a reason code and a mandatory second approver.'));
+      'Queues with SLAs (split 4h, personal loan 8h, car loan 8h, SME working capital 24h, salary advance 4h). The analyst opens a complete pre-assembled file — connected-account data, features, every rule fired, score, limit trace — and can ask for evidence (6 months of home-country statements) that Mizan re-decides on, or override with a reason code and a mandatory second approver.'));
     root.appendChild(h('div', { class: 'panel', id: 'wb-queue' }));
     root.appendChild(h('div', { id: 'wb-case', style: 'margin-top:14px;' }));
     Workbench.refresh();
@@ -5301,7 +5855,9 @@ var LogScreen = {
         (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'underwriter request' : 'customer upload') + ')' : '') +
         /* v2.8 — internal record only: neither reaches the credit memo */
         (c.digitalFootprint ? ' · Digital footprint ' + (c.digitalFootprint.granted ? 'granted' : 'declined') : '') +
-        (c.communications ? ' · Contact preferences ' + c.communications.reference + ' (service ' + c.communications.service.join(', ') + (c.communications.marketing.length ? '; marketing ' + c.communications.marketing.join(', ') : '; no marketing') + ')' : '') }),
+        (c.communications ? ' · Contact preferences ' + c.communications.reference + ' (service ' + c.communications.service.join(', ') + (c.communications.marketing.length ? '; marketing ' + c.communications.marketing.join(', ') : '; no marketing') + ')' : '') +
+        /* v2.10 — the SME route: the business consent is the signatory's; the owner's is her own */
+        (c.ownerOpenFinance ? ' · the owner’s personal accounts ' + (c.ownerOpenFinance.granted ? 'granted (the owner’s own consent)' : 'not connected') : '') }),
       rec.supersedes ? h('dt', { text: 'Supersedes' }) : null,
       rec.supersedes ? h('dd', { id: 'lg-supersedes' }, h('button', { class: 'btn btn-ghost linkbtn', text: 'supersedes ' + rec.supersedes, onclick: function () { LogScreen.select(rec.supersedes); } }),
         h('span', { class: 'small muted', text: ' — ' + (rec.redecision && rec.redecision.trigger === 'UNDERWRITER_REQUEST' ? 'statements requested by ' + ((rec.redecision.documentRequest || {}).analyst || 'the underwriter') : 'statements uploaded by the customer') +
@@ -5321,7 +5877,7 @@ var LogScreen = {
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
 
     var grid = h('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px;' });
-    var evWrap = h('div', { id: 'lg-events' }, h('h3', { text: 'Execution events — consumer-protection order, provable' }));
+    var evWrap = h('div', { id: 'lg-events' }, h('h3', { text: rec.productId === 'sme_working_capital' ? 'Execution events — the shared six-step order, provable (owner disclosures; Noor-policy cooling-off)' : 'Execution events — consumer-protection order, provable' }));
     if (rec.outcome === 'APPROVE' || (rec.events && rec.events.length)) {
       var doneAt = {};
       (rec.events || []).forEach(function (ev) { doneAt[ev.type] = ev.at; });
@@ -5392,7 +5948,8 @@ function copyText(text, statusEl, preEl) {
   fallback();
 }
 var MEMO_CONSENT_LABEL = { aecb: 'AECB credit bureau check', openFinance: 'Connected accounts (Open Finance, Al Tareq)', creditPassport: 'Credit Passport — home-country bureau',
-  homeStatements: 'Home-country bank statements', shareWithLender: 'Share the application result with the lender' };
+  homeStatements: 'Home-country bank statements', shareWithLender: 'Share the application result with the lender',
+  ownerOpenFinance: 'The owner’s personal accounts (Open Finance, Al Tareq) — the owner’s own consent' };
 function memoTermsTiles(m) {
   var t = m.terms, d = m.decision;
   if (!t) {
@@ -5420,11 +5977,21 @@ function memoTermsTiles(m) {
   else if (isNum(t.aprFrom)) tiles.push(kfTile('apr', 'APR', 'from ' + fmtRate(t.aprFrom), 'falls with a longer term'));
   if (isNum(t.monthlyPayment)) tiles.push(kfTile('monthlyPayment', 'Monthly payment', fmtMoney(t.monthlyPayment), null));
   if (isNum(t.totalRepayable)) tiles.push(kfTile('totalRepayable', 'Total repayable', fmtMoney(t.totalRepayable), isNum(t.totalInterest) ? 'interest ' + fmtMoney(t.totalInterest) : (isNum(t.totalFees) ? 'fees ' + fmtMoney(t.totalFees) : null)));
-  tiles.push(kfTile('coolingOff', 'Cooling-off', t.coolingOffDays + ' business days', 'waivable in writing'));
+  tiles.push(kfTile('coolingOff', 'Cooling-off', t.coolingOffDays + ' business days', t.business ? 'Noor policy for micro businesses' : 'waivable in writing'));
+  /* v2.10 — business terms: company, licence age, revenue and DSCR as bands, the guarantee as a flag */
+  if (t.business) {
+    var tb = t.business;
+    tiles.push(kfTile('company', 'Company', tb.companyName || '—', 'the borrower'));
+    tiles.push(kfTile('licenceAge', 'Trade licence age', tb.tradeLicenceAgeBand || '—', 'band'));
+    tiles.push(kfTile('revenueBand', 'Revenue', tb.revenueBand || '—', 'annual band'));
+    tiles.push(kfTile('dscrBand', 'DSCR', tb.dscrBand || '—', 'band — operating cash flow ÷ instalment'));
+    tiles.push(h('div', { class: 'kf kf-wide', dataset: { kfs: 'guarantee', status: tb.guaranteeStatus || '' } }, h('span', { class: 'kf-l', text: 'Personal guarantee' }),
+      h('span', { class: 'kf-v', text: tb.guaranteeStatus || '—' }), h('span', { class: 'kf-s', text: tb.guaranteeFlag || '' })));
+  }
   if (t.repaymentMethodLabel) {
     tiles.push(h('div', { class: 'kf kf-wide', dataset: { kfs: 'repayment', method: t.repaymentMethod } },
       h('span', { class: 'kf-l', text: 'Repayment method' }), h('span', { class: 'kf-v', text: t.repaymentMethodLabel }),
-      h('span', { class: 'kf-s', text: 'from the customer’s own account · no salary transfer required' })));
+      h('span', { class: 'kf-s', text: t.business ? 'from the company’s business account · no salary transfer required' : 'from the customer’s own account · no salary transfer required' })));
   }
   return h('div', { class: 'kfs memo-terms', dataset: { memo: 'terms' } }, tiles);
 }
@@ -5456,7 +6023,11 @@ function memoDoc(m) {
     h('div', { class: 'memo-borrower' },
       h('span', { class: 'mb-name', text: m.borrower.name }),
       m.borrower.nameAr ? h('span', { class: 'ar mb-ar', lang: 'ar', dir: 'rtl', text: m.borrower.nameAr }) : null,
-      h('span', { class: 'mb-meta', text: 'Emirates ID ' + m.borrower.emiratesIdMasked + ' · KYC ' + m.borrower.kycSource }))));
+      m.borrower.kind === 'COMPANY'
+        ? h('span', { class: 'mb-meta', text: 'Trade licence ' + m.borrower.tradeLicenceMasked + ' · ' + m.borrower.kycSource })
+        : h('span', { class: 'mb-meta', text: 'Emirates ID ' + m.borrower.emiratesIdMasked + ' · KYC ' + m.borrower.kycSource }),
+      m.borrower.guarantor ? h('span', { class: 'mb-meta mb-guarantor', id: 'lv-guarantor' }, 'Personal guarantor: ' + m.borrower.guarantor.name + ' ',
+        h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: m.borrower.guarantor.nameAr || '' }), ' · Emirates ID ' + m.borrower.guarantor.emiratesIdMasked) : null)));
   body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Outcome & terms' }), memoTermsTiles(m)));
   var factors = h('ul', { class: 'factor-list' });
   (ns.factors || []).forEach(function (f) { factors.appendChild(h('li', { text: f })); });
@@ -5467,6 +6038,17 @@ function memoDoc(m) {
       bandChip(ns.band, 'lv-band'),
       h('span', { class: 'ns-scale', text: ns.value === null ? 'thin file — decided on the repayment record' : 'Excellent ≥ 740 · Very good 680–739 · Good 620–679 · Fair 560–619 · Poor < 560' })),
     (ns.factors && ns.factors.length) ? h('div', { class: 'ns-factors' }, h('span', { class: 'ns-fl', text: 'What moved it' }), factors) : null));
+  if (m.product.productId === 'sme_working_capital') {
+    /* v2.10 — a business memo: the company's figures as bands; the owner's personal data withheld */
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-business' }, h('h4', { text: 'Business — bands, never figures' }), memoKv([
+        ['Revenue', af.revenueBand || '—', 'revenue'], ['Debt service cover (DSCR)', af.dscrBand || '—', 'dscr'],
+        ['Instalment / operating cash flow', af.instalmentToCashFlowBand || '—', 'share'], ['Cash flow verified via', af.incomeVerifiedVia, 'via'],
+        ['Personal guarantee', ve.guarantee, 'guarantee']])));
+    body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Bureau & verification — flags' }), memoKv([
+        ['AECB checked', bu.aecbChecked ? 'Yes — commercial and the owner’s consumer report' : 'No', 'aecb'], ['AECB commercial band', bu.aecbScoreBand, 'aecbBand'],
+        ['Owner’s AECB consumer band', bu.ownerConsumerScoreBand, 'ownerBand'], ['Delinquency', bu.delinquencyFlag, 'delinquency'],
+        ['Returned cheques', bu.chequeReturnsFlag, 'cheques'], ['Identity', ve.identity, 'identity']])));
+  } else {
   body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Affordability — bands, never figures' }), memoKv([
       ['Income', af.incomeBand || 'Not verified', 'income'], ['Debt burden incl. this loan', af.dbrBand, 'dbr'],
       ['Free cash flow', af.freeCashFlowBand || (m.product.productId === 'car_loan' ? 'Not assessed — spending not seen (salary certificate path)' : 'Not assessed for this product'), 'fcf'], ['Instalment / free cash flow', af.instalmentToCashFlowBand || '—', 'share'],
@@ -5476,6 +6058,7 @@ function memoDoc(m) {
       ['Returned cheques', bu.chequeReturnsFlag, 'cheques'], ['Home-country bureau', bu.homeCountryFile, 'cpass'], ['Identity', ve.identity, 'identity'],
       ['Home-country statements', ve.homeStatements, 'statements'], ['Purchase', ve.purchaseVerified, 'purchase'],
       ['Other income', ve.otherIncome, 'otherIncome'], ['Down-payment source', ve.downPaymentSource, 'downPaymentSource']])));
+  }
   var rc = h('div', { class: 'memo-rc' });
   if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
   d.reasonCodes.forEach(function (c) {
@@ -7120,7 +7703,7 @@ var Monitoring = {
     Object.keys(bp).forEach(function (pid) {
       var b = bp[pid];
       tb.appendChild(h('tr', { dataset: { product: pid } },
-        h('td', null, h('span', { class: 'chip prod-chip', text: productLabel(pid, true) }), pid === 'car_loan' ? h('span', { class: 'small muted', text: ' new pack — no seeded history' }) : null),
+        h('td', null, h('span', { class: 'chip prod-chip', text: productLabel(pid, true) }), pid === 'car_loan' || pid === 'sme_working_capital' ? h('span', { class: 'small muted', text: ' new pack — no seeded history' }) : null),
         h('td', { class: 'num', text: fmtN(b.decisions) }), h('td', { class: 'num', text: fmtN(b.APPROVE) }), h('td', { class: 'num', text: fmtN(b.REFER) }),
         h('td', { class: 'num', text: fmtN(b.DECLINE) }), h('td', { class: 'num', text: b.decisions ? fmtPct(b.stpPct, 1) : '—' })));
     });
