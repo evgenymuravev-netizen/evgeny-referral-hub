@@ -9,5 +9,5 @@ __pycache__/
 
 # Skill-local runtime
 sent_log.jsonl
-drafts/
-assets/
+/drafts/
+/assets/
