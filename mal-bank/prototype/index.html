@@ -1541,33 +1541,7 @@ details.tbl-view table { margin-top:6px; }
 @media (max-width:1300px) { .demo-strip.demo-11 { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (max-width:1100px) { .demo-strip.demo-11 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:600px) { .demo-strip.demo-11 { grid-template-columns:1fr; } }
-/* The flow map: a horizontal CSS-only stepper; Open Finance steps in sky; five a row on tablets; stacked on a phone */
-.sme-flow-panel { margin-bottom:14px; }
-.sme-flow { list-style:none; margin:10px 0 0; padding:0; display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); }
-.sme-fs { position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:0 10px 0 0; min-width:0; }
-.sme-fs::before { content:""; position:absolute; top:14px; left:30px; right:2px; height:2px; border-radius:1px; background:var(--hairline); }
-.sme-fs:last-child::before { display:none; }
-.sme-fs.of::before { background:linear-gradient(90deg, var(--sky) 0%, var(--hairline) 100%); }
-.sme-fs-n { position:relative; z-index:1; flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
-  font-family:var(--font-label); font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink-2); background:var(--panel); border:1.5px solid var(--hairline); }
-.sme-fs.of .sme-fs-n { color:var(--sky-ink); background:var(--sky-soft); border-color:var(--sky); }
-.sme-fs-b { display:flex; flex-direction:column; gap:2px; min-width:0; }
-.sme-fs-t { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--ink); line-height:1.3; }
-.sme-fs-d { font-size:11.5px; color:var(--muted); line-height:1.35; }
-.sme-fs-of { align-self:flex-start; margin-top:3px; font-family:var(--font-label); font-size:10.5px; font-weight:600; letter-spacing:.02em; color:var(--sky-ink);
-  background:var(--sky-soft); border-radius:var(--radius-pill); padding:1px 8px; white-space:nowrap; }
-@media (max-width:1100px) {
-  .sme-flow { grid-template-columns:repeat(5,minmax(0,1fr)); row-gap:18px; }
-  .sme-fs:nth-child(5)::before { display:none; }
-}
-@media (max-width:600px) {
-  .sme-flow { grid-template-columns:minmax(0,1fr); row-gap:0; }
-  .sme-fs { flex-direction:row; align-items:flex-start; gap:12px; padding:0 0 14px; }
-  .sme-fs::before, .sme-fs:nth-child(5)::before { display:block; top:32px; bottom:2px; left:14px; right:auto; width:2px; height:auto; }
-  .sme-fs.of::before { background:linear-gradient(180deg, var(--sky) 0%, var(--hairline) 100%); }
-  .sme-fs:last-child::before { display:none; }
-  .sme-fs-b { padding-top:5px; }
-}
+/* The flow map moved to the shared v2.11 FlowMap (.fm-*, at the end of this block) — the same look, now clickable */
 /* Guarantee status: strong ok, weak warn, unverified sky — never the brand colour */
 .sme-g { display:inline-flex; align-items:center; font-family:var(--font-label); font-size:12px; font-weight:600; line-height:1.4; border-radius:var(--radius-pill);
   padding:2px 10px; white-space:nowrap; vertical-align:middle; }
@@ -1592,6 +1566,66 @@ details.tbl-view table { margin-top:6px; }
 @media (max-width:600px) { .sme-uplift .car-plus { font-size:17px; padding:9px 16px; } }
 @media (max-width:900px) { .sme-find-cols { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:700px) { .sme-disc-cols { grid-template-columns:minmax(0,1fr); } .sme-disc-cols .sme-disc-ar { text-align:right; } }
+/* ---------- v2.11 — FlowMap: one clickable flow map on every flow screen, in the look of the v2.10 SME stepper (tokens only: light + dark follow the skin) ---------- */
+/* Numbered circles on a hairline; Open Finance steps in sky; the column count comes from --fm-cols (5–10); five a row on tablets; stacked on a phone */
+.fm-panel { margin-bottom:14px; }
+.fm-list { list-style:none; margin:10px 0 0; padding:0; display:grid; grid-template-columns:repeat(var(--fm-cols,10),minmax(0,1fr)); }
+.fm-step { position:relative; min-width:0; padding:0 10px 0 0; }
+.fm-step::before { content:""; position:absolute; top:14px; left:30px; right:2px; height:2px; border-radius:1px; background:var(--hairline); }
+.fm-step:last-child::before { display:none; }
+.fm-step.of::before { background:linear-gradient(90deg, var(--sky) 0%, var(--hairline) 100%); }
+/* Every step is a button: the whole step is the hit area, with a visible focus ring */
+.fm-btn { display:flex; flex-direction:column; align-items:flex-start; gap:8px; width:100%; min-width:0; margin:0; padding:0; border:0; border-radius:var(--radius-sm);
+  background:none; color:inherit; font:inherit; letter-spacing:inherit; word-spacing:inherit; text-align:left; cursor:pointer; }
+.fm-btn:focus-visible { outline:2px solid var(--sky); outline-offset:3px; }
+.fm-btn:hover .fm-t { text-decoration:underline; text-underline-offset:2px; text-decoration-thickness:1px; }
+.fm-n { position:relative; z-index:1; flex:0 0 auto; width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  font-family:var(--font-label); font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink-2); background:var(--panel); border:1.5px solid var(--hairline);
+  transition:background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.fm-step.of .fm-n { color:var(--sky-ink); background:var(--sky-soft); border-color:var(--sky); }
+.fm-b { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.fm-t { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--ink); line-height:1.3; }
+.fm-d { font-size:11.5px; color:var(--muted); line-height:1.35; }
+.fm-of { align-self:flex-start; margin-top:3px; font-family:var(--font-label); font-size:10.5px; font-weight:600; letter-spacing:.02em; color:var(--sky-ink);
+  background:var(--sky-soft); border-radius:var(--radius-pill); padding:1px 8px; white-space:nowrap; }
+/* Status from the screen's own record: done = a check on the ok tokens; next = a ring; selected = brand fill, white text */
+.fm-step.done .fm-n { color:var(--ok); background:var(--ok-soft); border-color:var(--ok); }
+.fm-step.next .fm-n { box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--brand); }
+.fm-step.sel .fm-n { color:#fff; background:var(--brand-fill); border-color:var(--brand-fill); }
+/* The detail panel opens under the map, inside the same panel */
+.fm-detail { margin-top:16px; padding-top:14px; border-top:1px solid var(--hairline-soft); }
+.fm-detail[hidden] { display:none; }
+.fm-detail-head { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-bottom:10px; }
+.fm-detail-h { margin:0; font-family:var(--font-display); font-size:14.5px; font-weight:600; color:var(--ink); line-height:1.35; }
+.fm-state { font-family:var(--font-label); font-size:11.5px; font-weight:600; line-height:1.4; border-radius:var(--radius-pill); padding:1px 9px; white-space:nowrap; }
+.fm-state:empty { display:none; }
+.fm-state.done { color:var(--ok); background:var(--ok-soft); }
+.fm-state.next { color:var(--brand-ink); background:var(--brand-soft); }
+.fm-state.todo { color:var(--muted); background:var(--panel-2); }
+.fm-blocks { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:0; }
+.fm-blk { min-width:0; background:var(--panel-2); border:1px solid var(--hairline-soft); border-radius:var(--radius-md); padding:10px 12px; }
+.fm-blk dt { margin:0 0 3px; font-family:var(--font-label); font-size:11.5px; font-weight:600; letter-spacing:.02em; color:var(--muted); }
+.fm-blk dd { margin:0; font-size:13px; line-height:1.5; color:var(--ink-2); overflow-wrap:anywhere; }
+.fm-go-row { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.btn.fm-go[disabled] { opacity:1; color:var(--muted); background:var(--panel-2); border-style:dashed; }
+/* "Show on this screen →": the target is outlined in --brand for ~1.5 s (no animation under reduced motion) */
+.fm-flash { outline:2px solid var(--brand); outline-offset:4px; animation:fm-flash 1.5s var(--ease-out) both; }
+@keyframes fm-flash { 0% { outline-color:transparent; } 12% { outline-color:var(--brand); } 72% { outline-color:var(--brand); } 100% { outline-color:transparent; } }
+@media (prefers-reduced-motion: reduce) { .fm-flash { animation:none; } .fm-n { transition:none; } }
+@media (max-width:1100px) {
+  .fm-list { grid-template-columns:repeat(5,minmax(0,1fr)); row-gap:18px; }
+  .fm-step:nth-child(5n)::before { display:none; }
+}
+@media (max-width:860px) { .fm-blocks { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:600px) {
+  .fm-list { grid-template-columns:minmax(0,1fr); row-gap:0; }
+  .fm-step { padding:0 0 14px; }
+  .fm-btn { flex-direction:row; gap:12px; }
+  .fm-step::before, .fm-step:nth-child(5n)::before { display:block; top:32px; bottom:2px; left:14px; right:auto; width:2px; height:auto; }
+  .fm-step.of::before { background:linear-gradient(180deg, var(--sky) 0%, var(--hairline) 100%); }
+  .fm-step:last-child::before { display:none; }
+  .fm-b { padding-top:5px; }
+}
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -2010,6 +2044,7 @@ function afterEngineMutation() {
   LogScreen.refresh();
   Lender.refresh();
   Monitoring.refresh();
+  FlowMap.refreshAll();   /* v2.11 — every flow map re-reads its record (execution events, new decisions) */
 }
 /* ================= Overview screen ================= */
 var Overview = {
@@ -2447,6 +2482,473 @@ function buildExecPanel(rec, boxId, opts) {
   box.appendChild(panel);
   return { repaint: function (r) { paint(r); } };
 }
+/* ================= v2.11 — FlowMap: the clickable flow map on every flow screen =================
+   One component in the look of the v2.10 SME stepper: numbered circles on a hairline, Open Finance steps in sky.
+   Every step is a button. It opens a detail panel inside the same panel (Customer · Mizan · Rule) with a
+   "Show on this screen →" jump that scrolls to the step's target and outlines it for about 1.5 s.
+   Status (a check = done, a ring = next) comes from the screen's own decision record: each screen passes a
+   status() function and calls map.refresh() when it re-renders its decision or execution panel. */
+function fmReduced() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return REDUCED; } }
+/* A target counts once it has content — an empty slot (e.g. the execution box before deciding) does not */
+function fmRendered(el) { return !!el && (el.childElementCount > 0 || /\S/.test(el.textContent || '')); }
+/* A step's target: a selector, or a list of selectors where the first rendered one wins ("falls back to") */
+function fmTarget(t) {
+  var list = Array.isArray(t) ? t : (t ? [t] : []);
+  for (var i = 0; i < list.length; i++) { var el = $(list[i]); if (fmRendered(el)) return el; }
+  return null;
+}
+/* Scroll so the element sits in view below the phone tab bar (instant under reduced motion) */
+function fmScrollTo(el) {
+  if (!el) return;
+  var bar = $('.sidebar'), off = 0;
+  if (bar && window.innerWidth <= 900 && getComputedStyle(bar).position === 'sticky') off = bar.getBoundingClientRect().height;
+  var r = el.getBoundingClientRect(), room = window.innerHeight - off;
+  var pad = r.height < room - 32 ? Math.max(16, Math.round((room - r.height) / 3)) : 16;
+  var top = Math.max(0, Math.round(r.top + window.scrollY - off - pad));
+  try { window.scrollTo({ top: top, behavior: fmReduced() ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, top); }
+}
+function fmFlash(el) {
+  if (!el) return;
+  el.classList.remove('fm-flash');
+  void el.offsetWidth;   /* restart the outline when the same target is shown twice */
+  el.classList.add('fm-flash');
+  if (el.fmTimer) clearTimeout(el.fmTimer);
+  el.fmTimer = setTimeout(function () { el.classList.remove('fm-flash'); el.fmTimer = null; }, 1500);
+}
+function fmShow(el) { if (!el) return; fmScrollTo(el); fmFlash(el); }
+/* "Next" is the step after the last done one — so an optional step that was skipped never carries the ring */
+function fmMarkNext(states) {
+  var last = -1;
+  states.forEach(function (s, i) { if (s.done) last = i; });
+  if (last + 1 < states.length) states[last + 1].next = true;
+  return states;
+}
+/* Status from a screen's decision record: form (always done), decided (a record exists, even while the
+   orchestration animates), outcome (APPROVE or REFER rendered) or an execution event read from rec.events */
+function fmRecStatus(steps, rec, pendingId) {
+  var r = rec;
+  if (rec && rec.id) { try { r = ME.getDecision(rec.id) || rec; } catch (e) { r = rec; } }
+  var ev = {};
+  ((r && r.events) || []).forEach(function (e) { ev[e.type] = true; });
+  var decided = !!(r || pendingId), outcome = !!(r && (r.outcome === 'APPROVE' || r.outcome === 'REFER'));
+  return { shown: !!r, approved: !!(r && r.outcome === 'APPROVE'), steps: fmMarkNext(steps.map(function (s) {
+    var k = s.status;
+    return { done: k === 'form' ? true : (k === 'decided' ? decided : (k === 'outcome' ? outcome : (k ? !!ev[k] : false))) };
+  })) };
+}
+var FlowMap = {
+  all: [],
+  /* cfg: { id, key, label, steps:[{t, d, of, target, status, c, m, r, pending?, pendingAny?, action?}], status(), pending?, go(i)?, run(i)?, doneText?, todoText? } */
+  create: function (cfg) {
+    var steps = cfg.steps, n = steps.length, id = cfg.id, detailId = id + '-detail';
+    var self = { id: id, cfg: cfg, sel: -1, states: null, shown: false, approved: false, btns: [], lis: [] };
+    var anyOf = steps.some(function (s) { return !!s.of; });
+    var ol = h('ol', { class: 'fm-list', id: id, style: '--fm-cols:' + n, 'aria-label': cfg.label });
+    steps.forEach(function (s, i) {
+      var b = h('button', { class: 'fm-btn', type: 'button', id: id + '-b' + (i + 1), 'aria-pressed': 'false', 'aria-expanded': 'false', 'aria-controls': detailId,
+        onclick: function () { self.toggle(i); } },
+        h('span', { class: 'fm-n', 'aria-hidden': 'true', text: String(i + 1) }),
+        h('span', { class: 'fm-b' },
+          h('span', { class: 'sr-only', text: 'Step ' + (i + 1) + ': ' }),
+          h('span', { class: 'fm-t', text: s.t }),
+          h('span', { class: 'fm-d', text: s.d }),
+          s.of ? h('span', { class: 'fm-of', text: 'Open Finance' }) : null,
+          h('span', { class: 'sr-only fm-sr' })));
+      var li = h('li', { class: 'fm-step' + (s.of ? ' of' : ''), dataset: { step: String(i + 1), of: String(!!s.of), status: 'neutral' } }, b);
+      self.btns.push(b); self.lis.push(li);
+      ol.appendChild(li);
+    });
+    var detail = h('div', { class: 'fm-detail', id: detailId, role: 'region', 'aria-labelledby': detailId + '-h', hidden: 'hidden' });
+    var panel = h('div', { class: 'panel fm-panel', id: id + '-panel', dataset: { flow: cfg.key || id } },
+      h('h3', null, 'The flow ', h('span', { class: 'h3-note', text: '— ' + (NUM_WORD[n] || String(n)) + ' steps' + (anyOf ? '; the highlighted ones use Open Finance (Al Tareq)' : '') })),
+      ol, detail);
+    self.el = panel; self.detail = detail;
+
+    function block(k, label, text) {
+      return h('div', { class: 'fm-blk fm-blk-' + k, dataset: { block: k } }, h('dt', { text: label }), h('dd', { text: text || '' }));
+    }
+    function stateText(st) {
+      if (!st) return ['', ''];
+      if (st.current) return ['next', 'You are here'];
+      if (st.done) return ['done', cfg.doneText || 'Done'];
+      if (st.next) return ['next', 'Next'];
+      return ['todo', cfg.todoText || 'Not yet'];
+    }
+    self.goState = function (i) {
+      var s = steps[i];
+      if (cfg.go) return cfg.go(i, s);
+      if (s.action) return { label: s.action.label, enabled: true };
+      if (fmTarget(s.target)) return { label: 'Show on this screen →', enabled: true };
+      /* Not rendered yet: before a decision, after an approval, or a step's own reason (e.g. after you accept an option) */
+      var why = !self.shown ? (cfg.pending || 'Appears after you decide')
+        : (s.pending && (self.approved || s.pendingAny) ? s.pending : 'Appears after an approval');
+      return { label: why, enabled: false };
+    };
+    self.go = function () {
+      var i = self.sel; if (i < 0) return;
+      var s = steps[i];
+      if (cfg.run) cfg.run(i, s);
+      else if (s.action) s.action.run();
+      else fmShow(fmTarget(s.target));
+    };
+    self.paintDetail = function () {
+      var i = self.sel; if (i < 0) return;
+      var chip = detail.querySelector('.fm-state'), go = detail.querySelector('.fm-go');
+      var t = stateText(self.states ? self.states[i] : null);
+      if (chip) { chip.className = 'fm-state' + (t[0] ? ' ' + t[0] : ''); chip.textContent = t[1]; }
+      if (go) {
+        var g = self.goState(i);
+        go.textContent = g.label;
+        go.dataset.enabled = String(!!g.enabled);
+        if (g.enabled) go.removeAttribute('disabled'); else go.setAttribute('disabled', 'disabled');
+      }
+    };
+    self.select = function (i) {
+      self.sel = i;
+      self.btns.forEach(function (b, k) {
+        var on = k === i;
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.setAttribute('aria-expanded', on ? 'true' : 'false');
+        self.lis[k].classList.toggle('sel', on);
+      });
+      var s = steps[i];
+      clear(detail);
+      detail.dataset.step = String(i + 1);
+      detail.appendChild(h('div', { class: 'fm-detail-head' },
+        h('h4', { class: 'fm-detail-h', id: detailId + '-h', text: 'Step ' + (i + 1) + ' · ' + s.t }),
+        h('span', { class: 'fm-state' })));
+      detail.appendChild(h('dl', { class: 'fm-blocks' }, block('customer', 'Customer', s.c), block('mizan', 'Mizan', s.m), block('rule', 'Rule', s.r)));
+      detail.appendChild(h('div', { class: 'fm-go-row' }, h('button', { class: 'btn fm-go', type: 'button', id: id + '-go', onclick: function () { self.go(); } })));
+      detail.hidden = false;
+      self.paintDetail();
+    };
+    self.close = function () {
+      self.sel = -1;
+      self.btns.forEach(function (b, k) { b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-expanded', 'false'); self.lis[k].classList.remove('sel'); });
+      detail.hidden = true;
+      clear(detail);
+      delete detail.dataset.step;
+    };
+    self.toggle = function (i) { if (self.sel === i) self.close(); else self.select(i); };
+    self.refresh = function () {
+      var res = cfg.status ? cfg.status() : null;
+      self.states = res ? res.steps : null;
+      self.shown = !!(res && res.shown);
+      self.approved = !!(res && res.approved);
+      steps.forEach(function (s, i) {
+        var st = self.states ? self.states[i] : null, li = self.lis[i], b = self.btns[i];
+        var status = !st ? 'neutral' : (st.next ? 'next' : (st.done ? 'done' : 'todo'));
+        li.classList.toggle('done', status === 'done');
+        li.classList.toggle('next', status === 'next');
+        li.dataset.status = status;
+        if (st && st.reached !== undefined) li.dataset.reached = String(!!st.reached);
+        if (st && st.current) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+        li.querySelector('.fm-n').textContent = status === 'done' ? '✓' : String(i + 1);
+        li.querySelector('.fm-sr').textContent = status === 'done' ? ' — done' : (status === 'next' ? (st.current ? ' — you are here' : ' — next') : '');
+      });
+      self.paintDetail();
+    };
+    /* Esc closes the detail and returns focus to its step; the arrow keys (and Home / End) move the selection */
+    panel.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' || ev.key === 'Esc') {
+        if (self.sel < 0) return;
+        ev.preventDefault();
+        var b = self.btns[self.sel];
+        self.close();
+        try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); }
+        return;
+      }
+      var at = self.btns.indexOf(document.activeElement);
+      if (at < 0) return;
+      var to = null;
+      if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown') to = Math.min(n - 1, at + 1);
+      else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp') to = Math.max(0, at - 1);
+      else if (ev.key === 'Home') to = 0;
+      else if (ev.key === 'End') to = n - 1;
+      if (to === null) return;
+      ev.preventDefault();
+      if (to !== self.sel) self.select(to);
+      self.btns[to].focus();
+    });
+    FlowMap.all.push(self);
+    return self;
+  },
+  refreshAll: function () { FlowMap.all.forEach(function (m) { m.refresh(); }); }
+};
+/* Esc with the focus outside a map still closes the open detail on the visible screen */
+document.addEventListener('keydown', function (ev) {
+  if ((ev.key !== 'Escape' && ev.key !== 'Esc') || ev.defaultPrevented) return;
+  FlowMap.all.forEach(function (m) { if (m.sel >= 0 && m.el.closest('section[data-screen].active')) m.close(); });
+});
+
+/* ---- The flows. Titles, detail lines, Open Finance marks, targets and status keys are FLOWS-SPEC.md's;
+        the Customer / Mizan / Rule lines come from the specs and the engine. ---- */
+var FLOW_SPLIT = [
+  { t: 'Purchase spotted', d: 'A big card purchase in the last 60 days', of: true, target: '#sp-purchase', status: 'form',
+    c: 'Sees a purchase they already paid for, found in their connected accounts, with an offer to split it.',
+    m: 'The purchase comes from the Al Tareq account data. POL_PURCHASE_VERIFIED checks it was seen there within the lookback window.',
+    r: 'Noor policy: purchaseLookbackDays (60). Reading the accounts needs the customer’s Al Tareq consent (CBUAE Open Finance).' },
+  { t: 'Consents', d: 'AECB + Al Tareq', target: '#sp-form', status: 'form',
+    c: 'Ticks two consents: the AECB check and the connected accounts. Both are required to split.',
+    m: 'The consent registry gates decide(): no consent record, no pull, no decision. Split has no document fallback.',
+    r: 'Federal Law 6/2010: consent before an AECB report is requested. CBUAE Open Finance: the Al Tareq consent.' },
+  { t: 'Cash-flow read', d: 'Income, spending, free cash flow', of: true, target: '#sp-orch', status: 'decided',
+    c: 'Waits a moment while Noor reads 12 months of income and spending.',
+    m: 'The OPEN_FINANCE pull gives verified income, spending, free cash flow, income volatility and connected months.',
+    r: 'Noor policy (split pack): minMonthlyIncome, minConnectedMonths, minFreeCashFlow, maxIncomeVolatilityPct.' },
+  { t: 'Credit check', d: 'AECB, or the cash-flow path for a thin file', target: '#sp-orch', status: 'decided',
+    c: 'Uploads nothing. A thin credit file is not a reason to say no.',
+    m: 'The AECB_CONSUMER pull. With no AECB file but enough connected months, Mizan underwrites on cash flow (RC_CASH_FLOW_UNDERWRITTEN, grade capped at B).',
+    r: 'Federal Law 6/2010: an AECB check before credit (REG_AECB_CHECK). The thin-file path is Noor policy (minConnectedMonths).' },
+  { t: 'Decision', d: 'Mizan: rules, NoorScore, split capacity', target: '#sp-decision', status: 'outcome',
+    c: 'Sees approve, refer or decline, with the reasons in English and Arabic.',
+    m: 'decide() records every rule, NoorScore and grade, and the split capacity: splitCapacityMultiple × free cash flow, up to productCap.',
+    r: 'Reg 29/2011: DBR ≤ 50% (30% for retirees), enforced by the engine. Noor policy: scoreDecline, scoreRefer, splitCapacityMultiple.' },
+  { t: 'Choose the plan', d: 'Pay in 3 · 6 · 12, fee + APR equivalent', target: '#sp-plans', status: 'OFFER_ACCEPTED',
+    c: 'Picks Pay in 3, 6 or 12. The plan is fixed when they accept the offer.',
+    m: 'One decision prices all three plans: a monthly fee by grade (monthlyFeeRate) and an APR equivalent. Accepting records OFFER_ACCEPTED.',
+    r: 'Split terms are fixed at 3 / 6 / 12 months (REG_PLAN_TERMS). Noor policy: the instalment fits instalmentToFcfMaxPct (50%) of free cash flow.' },
+  { t: 'Key Facts', d: 'Arabic + English', target: '#sp-kfs', status: 'KFS_ACKNOWLEDGED',
+    c: 'Reads the Key Facts Statement in Arabic and English, then acknowledges it.',
+    m: 'The KFS figures come from the chosen plan’s pricing; recordEvent() records KFS_ACKNOWLEDGED.',
+    r: 'CPR 8/2020 and the Consumer Protection Standards: the monthly fee and the APR equivalent in the KFS, before signing.' },
+  { t: 'E-sign', d: 'UAE PASS', target: '#sp-exec', status: 'AGREEMENT_SIGNED',
+    c: 'Signs the agreement with UAE PASS.',
+    m: 'recordEvent() records AGREEMENT_SIGNED. The engine refuses it until the KFS is acknowledged.',
+    r: 'CBUAE Consumer Protection Standards: the KFS comes before the signature.' },
+  { t: 'Repayment', d: 'Al Tareq ≤ AED 1,000 · direct debit above', target: ['#sp-repay', '#sp-exec'], status: 'REPAYMENT_SET_UP',
+    c: 'Sets up collection from their own account. No salary transfer required.',
+    m: 'repaymentFor() picks the method from the approved plan amount; recordEvent() records REPAYMENT_SET_UP.',
+    r: 'Platform rule on every pack: an Al Tareq recurring payment up to AED 1,000, a direct debit mandate above.' },
+  { t: 'Cooling-off → plan live', d: '5 business days or a written waiver', target: '#sp-exec', status: 'DISBURSED',
+    c: 'Has 5 business days to change their mind, or waives them in writing. Then the amount comes back and the freed cash goes to their goal.',
+    m: 'COOLING_OFF_CLEARED, then DISBURSED: the record becomes EXECUTED. The engine refuses disbursement before both.',
+    r: 'CPR 8/2020: a cooling-off period of 5 business days, waivable in writing.' }
+];
+var FLOW_LOAN = [
+  { t: 'Application', d: 'Amount, term, purpose', target: '#ln-form', status: 'form',
+    c: 'Chooses an amount and a term. Each applicant comes prefilled.',
+    m: 'Nothing runs yet. Submitting calls decide() for personal_loan (POST /decisions).',
+    r: 'Reg 29/2011: at most 48 months and 20× monthly salary. A longer term is clamped (RC_TENOR_CAP).' },
+  { t: 'Consents', d: 'AECB + Al Tareq (+ Credit Passport for newcomers)', target: '#ln-form', status: 'form',
+    c: 'Ticks AECB (required) and connected accounts (optional; the fallback is a salary certificate). Newcomers can add Credit Passport.',
+    m: 'The consent registry gates decide(): without AECB consent nothing is pulled and nothing is recorded.',
+    r: 'Federal Law 6/2010: consent before a credit report is requested. CBUAE Open Finance: the Al Tareq consent.' },
+  { t: 'Data pulls', d: 'AECB report, connected accounts', of: true, target: '#ln-orch', status: 'decided',
+    c: 'Waits a second or two. No documents when the accounts are connected.',
+    m: 'AECB_CONSUMER, then OPEN_FINANCE (salary verified, +15 NoorScore) or DOCUMENTS. Each pull is written to the record with its latency.',
+    r: 'Federal Law 6/2010 for the bureau. CBUAE Open Finance for the account data, within the consent’s scope.' },
+  { t: 'Regulatory rules', d: 'DBR 50% · 20× salary · 48 months', target: '#ln-decision', status: 'decided',
+    c: 'Sees no separate step: these limits shape the offer.',
+    m: 'REG_DBR_CAP, REG_SALARY_MULTIPLE and REG_TENOR_CAP run on every application, enforced in the engine whatever the policy params say.',
+    r: 'CBUAE Reg 29/2011: DBR ≤ 50% (30% for retirees), at most 20× monthly salary, at most 48 months.' },
+  { t: 'Red-flag check', d: 'Own-baseline signals — refer only', of: true, target: ['#ln-rf-trip', '#ln-decision'], status: 'decided',
+    c: 'If recent account changes stand out, a person reviews the application. Never an automatic decline, never a higher price.',
+    m: 'redFlags() compares card use, money sent abroad and balances with the customer’s own history. POL_RED_FLAGS can only refer (RC_RED_FLAGS_REVIEW).',
+    r: 'Noor policy: earlyWarning.redFlagsAtOrigination, read only under the Al Tareq consent. Never nationality, a destination or religion.' },
+  { t: 'NoorScore, limit, price', d: 'DBR headroom, free-cash-flow cap, band APR', of: true, target: '#ln-decision', status: 'decided',
+    c: 'Sees the amount offered, the APR and the monthly instalment.',
+    m: 'NoorScore = AECB score + factor adjustments. The limit is the lowest of the request, DBR headroom, the free-cash-flow cap, 20× salary and the product cap.',
+    r: 'Noor policy: pricingBands, instalmentToFcfMaxPct (50%), scoreDecline, scoreRefer. The DBR cap is Reg 29/2011.' },
+  { t: 'Outcome', d: 'Approve · refer to an analyst · decline, reasons in EN + AR', target: '#ln-decision', status: 'outcome',
+    c: 'Gets the outcome with the reasons in English and Arabic. A refer goes to an analyst; it is not a decline.',
+    m: 'The record carries the outcome, the reason codes, the approval token and the repayment method. A refer joins the Workbench queue (8-hour SLA).',
+    r: 'Reasons in Arabic and English (CBUAE consumer protection). The refer SLA is Noor policy.' },
+  { t: 'Offer + Key Facts', d: 'Arabic + English', target: '#ln-exec', status: 'KFS_ACKNOWLEDGED',
+    c: 'Accepts the time-boxed offer and reads the Key Facts Statement in Arabic and English.',
+    m: 'recordEvent() records OFFER_ACCEPTED, then KFS_ACKNOWLEDGED. Out of order, the engine refuses.',
+    r: 'CBUAE Consumer Protection Standards: the KFS before signing. Early settlement is capped at 1% of outstanding or AED 10,000 (Reg 29/2011).' },
+  { t: 'E-sign + repayment', d: 'UAE PASS · direct debit or Al Tareq', target: '#ln-exec', status: 'REPAYMENT_SET_UP',
+    c: 'Signs with UAE PASS, then sets up collection from their own account. No salary transfer required.',
+    m: 'AGREEMENT_SIGNED, then REPAYMENT_SET_UP with the method repaymentFor() chose for the approved amount.',
+    r: 'Platform rule on every pack: an Al Tareq recurring payment up to AED 1,000, a direct debit mandate above.' },
+  { t: 'Cooling-off → disbursement', d: '5 business days or a written waiver', target: '#ln-exec', status: 'DISBURSED',
+    c: 'Has 5 business days to change their mind, or waives them in writing. Then the money arrives.',
+    m: 'COOLING_OFF_CLEARED, then DISBURSED: the record becomes EXECUTED and replays end to end in the Decision log.',
+    r: 'CPR 8/2020: a cooling-off period of 5 business days, waivable in writing. No disbursement before it clears.' }
+];
+var FLOW_CAR = [
+  { t: 'Dealer quote', d: 'Vehicle, price, quote validity', target: '#car-vehicle', status: 'form',
+    c: 'Brings a dealer quote: category, condition, model year, price and a valid-until date.',
+    m: 'decide() needs the quote. POL_VEHICLE checks the car is new or within maxVehicleAgeYears and the quote has not expired.',
+    r: 'Noor policy: maxVehicleAgeYears (5). The loan is secured by a vehicle mortgage registered with the RTA (Reg 29/2011).' },
+  { t: 'Request', d: 'Up to 80% of the price · up to 60 months', target: '#car-form', status: 'form',
+    c: 'Sets the amount and the term. Each term row shows what each evidence path would finance.',
+    m: 'quoteCar() is a pure quote: nothing is recorded until Decide. A request above the LTV maximum is clamped (RC_LTV_CAP).',
+    r: 'CBUAE Reg 29/2011: a car loan is at most 80% of the vehicle’s value, over at most 60 months.' },
+  { t: 'Consents', d: 'AECB + Al Tareq', target: '#car-form', status: 'form',
+    c: 'Ticks the AECB check (required) and leaves Open Finance on (optional, on by default).',
+    m: 'Without AECB consent decide() refuses and records nothing. Without Open Finance the documents path decides on the salary certificate.',
+    r: 'Federal Law 6/2010: consent before the AECB pull. CBUAE Open Finance: the Al Tareq consent, revocable any time.' },
+  { t: 'Income read', d: 'Salary + regular income (rent) verified', of: true, target: ['#car-found-panel', '#car-orch'], status: 'decided',
+    c: 'Uploads nothing: the salary and the rent are read from the connected accounts.',
+    m: 'Rent counts only with 12 months of receipts, on schedule and matching the tenancy, at regularIncomeCountedPct. The findings stay internal.',
+    r: 'Noor policy: regularIncomeCountedPct (75%), regularIncomeMinMonths (12). DBR counts salary and other regular income (Reg 29/2011).' },
+  { t: 'Decision', d: 'DBR on salary + regular income · LTV · free cash flow', target: '#car-decision-panel', status: 'outcome',
+    c: 'Sees the outcome, the amount, the APR, the instalment, the down payment and the loan-to-value.',
+    m: 'The limit is the lowest of the request, the LTV cap, DBR headroom, the free-cash-flow budget and the product cap, each floored to AED 1,000.',
+    r: 'Reg 29/2011: DBR ≤ 50% of salary and other regular income, every instalment included. Noor policy: instalmentToFcfMaxPct, pricingBands.' },
+  { t: 'What Open Finance changed', d: 'Documents only vs Open Finance', of: true, target: '#car-uplift-panel', status: 'outcome',
+    pending: 'Appears when Open Finance is on', pendingAny: true,
+    c: 'Sees the same application on both evidence paths, and how much more Open Finance finances.',
+    m: 'rec.openFinanceUplift is a pure re-evaluation with Open Finance off: no record, no clock tick.',
+    r: 'The same pack and rules on both paths; only the evidence differs. Verified rent counts at regularIncomeCountedPct (Noor policy).' },
+  { t: 'Offer + Key Facts', d: 'Vehicle, down payment, LTV (AR + EN)', target: '#car-kfs-panel', status: 'KFS_ACKNOWLEDGED',
+    c: 'Accepts the offer and reads the KFS: vehicle price, down payment, LTV, APR, security and insurance.',
+    m: 'recordEvent() records OFFER_ACCEPTED, then KFS_ACKNOWLEDGED. The approval token adds insurance, the RTA mortgage and the down payment.',
+    r: 'CBUAE Consumer Protection Standards: the KFS in Arabic and English before signing. Early settlement capped at 1% or AED 10,000 (Reg 29/2011).' },
+  { t: 'E-sign', d: 'UAE PASS', target: '#car-exec', status: 'AGREEMENT_SIGNED',
+    c: 'Signs the loan agreement with UAE PASS.',
+    m: 'recordEvent() records AGREEMENT_SIGNED. The engine refuses it until the KFS is acknowledged.',
+    r: 'CBUAE Consumer Protection Standards: the KFS comes before the signature.' },
+  { t: 'Before release', d: 'Insurance · RTA mortgage · down payment · direct debit', target: ['#car-conditions', '#car-exec'], status: 'REPAYMENT_SET_UP',
+    c: 'Arranges comprehensive insurance, pays the down payment to the dealer and approves the direct debit.',
+    m: 'The approval token lists these conditions; REPAYMENT_SET_UP records the mandate (a direct debit above AED 1,000).',
+    r: 'Reg 29/2011: a vehicle mortgage registered with the RTA in favour of the lender. Collection follows the platform rule.' },
+  { t: 'Paid to the dealer', d: 'Cooling-off cleared, Partner Bank pays', target: '#car-exec', status: 'DISBURSED',
+    c: 'After 5 business days, or a written waiver, the car is released.',
+    m: 'COOLING_OFF_CLEARED, then DISBURSED: Partner Bank pays the dealer and the mortgage is registered.',
+    r: 'CPR 8/2020: a cooling-off period of 5 business days, waivable in writing.' }
+];
+var FLOW_UPGRADE = [
+  { t: 'Starter loan repaid', d: 'AED 1,000 · 1 month · 50% APR, on time', target: '#up-prior', status: 'form',
+    c: 'Repaid Noor’s starter loan. It built a repayment record and an AECB file.',
+    m: 'The PRIOR_DECISION pull reads the starter loan. POL_STARTER_REPAID_ON_TIME declines a late repayment (RC_STARTER_LATE).',
+    r: 'Noor policy: minOnTimeStarterRepayments (1). After a late repayment, the starter terms continue.' },
+  { t: 'Connected accounts', d: 'UAE accounts via Al Tareq', of: true, target: '#up-form', status: 'form',
+    c: 'Ticks the AECB check and the connected UAE accounts. Both are required to re-decide.',
+    m: 'OPEN_FINANCE reads income and spending. POL_CONNECTED_ACCOUNTS needs at least 3 connected months.',
+    r: 'CBUAE Open Finance: the Al Tareq consent. Federal Law 6/2010: consent before the AECB check.' },
+  { t: 'Home-country statements', d: 'Optional · 6 months · India, Pakistan, Egypt', target: '#up-stmt', status: 'form',
+    c: 'May upload 6 months of home-country statements to unlock a bigger limit and a lower rate.',
+    m: 'parseStatements() reads the file before any decision uses it, for this decision only.',
+    r: 'Noor policy: statements from India, Pakistan or Egypt. The enhanced tier needs minIncomeHistoryMonthsEnhanced (12) months of history.' },
+  { t: 'Parse', d: 'Integrity, name match, 6 of 6, EMIs, buffer', target: ['#up-parse-panel', '#up-stmt'], status: 'decided',
+    c: 'Sees each check pass or fail before the statements count.',
+    m: 'A failed integrity or name check refers to fraud review (RC_STATEMENTS_INTEGRITY), never an automatic decline. Fewer than 6 months asks again.',
+    r: 'Noor policy: home-country EMIs count in DBR and free cash flow, so obligations in both countries are seen.' },
+  { t: 'Re-decision', d: 'Base or enhanced tier', target: '#up-decision', status: 'outcome',
+    c: 'Sees the upgrade: up to an amount and a term, from an APR.',
+    m: 'decide() for starter_loan sets the tier; a re-decision on statements supersedes the base offer. The ceiling is the tier cap or what affordability allows.',
+    r: 'Noor policy: the tier caps and APR curves, checked at publish. DBR ≤ 50% (Reg 29/2011).' },
+  { t: 'Choose amount × term', d: 'Longer term, lower APR', target: '#up-opts', status: 'OFFER_ACCEPTED',
+    c: 'Moves the amount and picks a term. Terms that don’t fit are shown but can’t be chosen.',
+    m: 'quoteUpgrade() prices every term and selectUpgradeOption() re-checks the choice. OFFER_ACCEPTED fixes it.',
+    r: 'Noor policy: the instalment fits instalmentToFcfMaxPct (50%) of free cash flow. DBR ≤ 50% (Reg 29/2011).' },
+  { t: 'Key Facts', d: 'Arabic + English', target: '#up-kfs', status: 'KFS_ACKNOWLEDGED',
+    c: 'Reads the KFS for the chosen option. A longer term lowers the APR but raises the total interest.',
+    m: 'recordEvent() records KFS_ACKNOWLEDGED against the decision.',
+    r: 'CBUAE Consumer Protection Standards: the KFS in Arabic and English before signing.' },
+  { t: 'E-sign + repayment', d: 'Al Tareq ≤ AED 1,000 · direct debit above', target: '#up-exec', status: 'REPAYMENT_SET_UP', pending: 'Appears after you accept an option',
+    c: 'Signs with UAE PASS and authorises collection from their own account. No salary transfer required.',
+    m: 'AGREEMENT_SIGNED, then REPAYMENT_SET_UP. The method follows the chosen amount (repaymentFor).',
+    r: 'Platform rule on every pack: an Al Tareq recurring payment up to AED 1,000, a direct debit mandate above.' },
+  { t: 'Cooling-off', d: '5 business days or a written waiver', target: '#up-exec', status: 'COOLING_OFF_CLEARED', pending: 'Appears after you accept an option',
+    c: 'Can change their mind for 5 business days, or waive them in writing.',
+    m: 'recordEvent() records COOLING_OFF_CLEARED. No disbursement before it.',
+    r: 'CPR 8/2020: 5 business days, waivable in writing.' },
+  { t: 'Disbursement', d: 'Partner Bank pays out', target: '#up-exec', status: 'DISBURSED', pending: 'Appears after you accept an option',
+    c: 'Gets the upgraded loan in their account.',
+    m: 'DISBURSED: the record becomes EXECUTED, on the option fixed at offer acceptance.',
+    r: 'Every earlier step comes first; the engine enforces the order (CBUAE Consumer Protection Standards).' }
+];
+/* The customer journey: ten phases over the journey's own steps; each variant's path applies */
+var JR_FLOW = [
+  { t: 'botim entry', d: 'Banner · Noor icon · Credit · Loans', match: function (e, v) { return e.n === 0 || (v === 'A' && e.n === 7); },
+    c: 'Taps the Noor banner, the Noor icon or Credit. In variant A: the Noor tile on the Loans screen.',
+    m: 'Nothing is decided. botim receives events only (impression, click), each with the variant.',
+    r: 'Noor’s position (confirm with counsel): every Noor surface in botim is a Noor embed, and botim gets events only.' },
+  { t: 'Noor opens in botim', d: 'Web-view · account · email · contact consent', match: function (e) { return e.n >= 1 && e.n <= 3; },
+    c: 'Agrees to the hand-off, creates an account, verifies the phone and the email, and picks contact channels.',
+    m: 'assessFootprint() runs only if the customer opts in. The contact choice goes to decide() as consents.communications.',
+    r: 'CBUAE consumer protection: marketing only with prior consent and an easy opt-out. PDPL minimisation for the footprint check.' },
+  { t: 'Connect banks', d: 'Al Tareq consent', of: true, match: function (e) { return e.n === 4; },
+    c: 'Picks banks and reads what Noor will read, why and for how long. Cancel any time in the Al Tareq dashboard.',
+    m: 'No engine call yet: the consent sets what later pulls may read.',
+    r: 'CBUAE Open Finance: the Al Tareq consent, for 12 months or until cancelled.' },
+  { t: 'Approve in your bank', d: 'Leaves the web-view', of: true, match: function (e) { return e.n === 5; },
+    c: 'Approves in the bank’s own app, then comes straight back to botim.',
+    m: 'Noor never sees the bank credentials; the return link resumes the Noor web-view.',
+    r: 'OAuth for native apps (RFC 8252) and FAPI 2.0 behind UAE Open Finance: never an embedded web-view.' },
+  { t: 'What you can borrow', d: 'Pre-qualified (B) or affordability check (A)', of: true,
+    match: function (e, v) { return v === 'A' ? (e.n === 8 && e.sub === 2) : e.n === 7; },
+    c: 'Sees a range (B) or whether the request fits (A). Checking does not affect the credit score.',
+    m: 'prequalify(): connected accounts only, no AECB inquiry, no record. The caps take the stricter of DBR headroom and 50% of free cash flow.',
+    r: 'Indicative only; it never promises more than decide() allows (the Reg 29/2011 DBR cap, Noor policy instalmentToFcfMaxPct).' },
+  { t: 'Choose your loan', d: 'Amount, term, purpose', match: function (e, v) { return v === 'A' ? (e.n === 8 && e.sub === 1) : e.n === 8; },
+    c: 'Sets the amount, the term (6, 12 or 24 months) and the purpose.',
+    m: 'Indicative payments come from loanInstalment(). Nothing is recorded.',
+    r: 'Noor policy: the personal-loan pricing bands set the “from” APR. Reg 29/2011: at most 48 months.' },
+  { t: 'Final checks', d: 'AECB consent · UAE PASS · decide()', match: function (e) { return e.n === 9; },
+    c: 'Gives AECB consent, confirms with UAE PASS and applies.',
+    m: 'decide() for personal_loan: the journey’s first and only decision. It lands in the Decision log.',
+    r: 'Federal Law 6/2010: AECB consent before any loan.' },
+  { t: 'Offer · Partner Bank confirms', d: 'Offer, credit memo to the lender', match: function (e) { return e.n === 10 || e.n === 11; },
+    c: 'Sees the offer (amount, APR, instalment, total), then Partner Bank confirms.',
+    m: 'creditMemo() sends Partner Bank an allowlisted memo: bands, flags and consent references, never account data.',
+    r: 'CBUAE Open Finance consent scope and PDPL: the account data stays with Noor.' },
+  { t: 'Key Facts · e-sign · repayment · cooling-off', d: 'The execution steps', match: function (e) { return e.n >= 12 && e.n <= 15; },
+    c: 'Reads the KFS in English or Arabic, signs with UAE PASS, approves the repayment, then waits or waives.',
+    m: 'recordEvent(), in order: OFFER_ACCEPTED, KFS_ACKNOWLEDGED, AGREEMENT_SIGNED, REPAYMENT_SET_UP, COOLING_OFF_CLEARED.',
+    r: 'CBUAE Consumer Protection Standards (the KFS first) and CPR 8/2020 (5 business days, waivable in writing).' },
+  { t: 'Funded · back in botim', d: 'botim learns only “funded”', match: function (e) { return e.n === 16; },
+    c: 'The money is on its way from Partner Bank. botim shows “Loan funded · managed in Noor”, with no amount.',
+    m: 'DISBURSED: the record becomes EXECUTED. botim gets the funded event only.',
+    r: 'Noor’s position: botim receives events only, never an amount or credit data.' }
+];
+/* Each phase's entries on the active variant's path (indices into jrPath()) */
+function jrFlowEntries() {
+  var v = (Journey.S && Journey.S.variant) || 'B', path = jrPath();
+  return JR_FLOW.map(function (ph) { var out = []; path.forEach(function (e, i) { if (ph.match(e, v)) out.push(i); }); return out; });
+}
+var FLOW_WORKBENCH = [
+  { t: 'Referred', d: 'A rule asks for a person', target: '#wb-queue',
+    c: 'Hears that a person is looking at the application. A refer is a designed path, not a decline.',
+    m: 'A rule that returns REFER puts the record in referQueue() with its reason codes.',
+    r: 'Noor policy: each pack’s refer rules, such as scoreRefer, maxIncomeVolatilityPct, the thin-file rule and the red-flag rule.' },
+  { t: 'Queue + SLA', d: 'Oldest first, SLA by product', target: '#wb-queue',
+    c: 'Waits. The clock runs for Noor, not for them.',
+    m: 'referQueue() lists open cases in the order they arrived. A statements request pauses the SLA.',
+    r: 'Noor policy: REFER_SLA_HOURS — split 4h, personal and car loan 8h, SME working capital 24h, salary advance 4h.' },
+  { t: 'Case file', d: 'Pre-assembled: data, rules, reasons', target: '#wb-case',
+    c: 'Does not resend anything they already shared.',
+    m: 'The case file is the decision record: every pull, feature and rule, the NoorScore breakdown and the limit trace.',
+    r: 'Internal only. Open Finance data never leaves Noor (the consent’s scope, PDPL).' },
+  { t: 'Ask the customer', d: 'Explanation or 6 months of statements', target: ['#wb-redflags', '#wb-stmt', '#wb-case'],
+    c: 'Gets a message in English and Arabic: a question about recent changes, or a request for 6 months of home-country statements.',
+    m: 'askCustomer() records the question. requestDocuments() asks for the statements and pauses the SLA.',
+    r: 'Noor policy: statements from India, Pakistan or Egypt, on personal loans and upgrades. Red flags start with talking to the customer.' },
+  { t: 'Decide', d: 'Re-decide on evidence, or override with a reason (4-eyes)', target: '#wb-case',
+    c: 'Gets a decision a person made, on evidence.',
+    m: 'redecide() makes a new record that supersedes the original. override() needs a reason code, a second approver and, for red flags, a written reason.',
+    r: 'Noor policy: 4-eyes on every override. The override rate is watched (appetite under 10% without a pattern).' },
+  { t: 'Customer + lender told', d: 'Reason in EN + AR · credit memo', target: '#wb-case',
+    c: 'Hears the outcome and the reason in English and Arabic.',
+    m: 'creditMemo() follows the record. After an override the memo’s route reads ANALYST_REVIEW.',
+    r: 'Reasons in Arabic and English (CBUAE consumer protection). The memo is built from an allowlist (CBUAE Open Finance, PDPL).' }
+];
+var FLOW_MONITORING = [
+  { t: 'Accounts watched', d: 'Consented, while a loan is open', of: true, target: '#mn-rf',
+    c: 'Agreed in the Al Tareq consent that Noor may spot early if repayments might become hard, while the loan is open.',
+    m: 'earlyWarningScan() runs over the funded loans: the customer’s accounts and, on SME loans, the business plus the owner.',
+    r: 'CBUAE Open Finance: within the consent’s scope. PDPL purpose limitation.' },
+  { t: 'Signals vs own history', d: 'Cards, remittances, travel, salary, balances', of: true, target: '#rf-table',
+    c: 'Is never flagged for who they are, only for changes against their own history.',
+    m: 'redFlags() reads an allowlist only: never nationality, a destination, religion or a service name.',
+    r: 'Noor policy: the shared earlyWarning block. Thresholds change under 4-eyes.' },
+  { t: 'Severity', d: 'Low · medium · high · patterns', target: '#rf-tiles',
+    c: 'Does not see the severity. It only sets how Noor reaches out.',
+    m: 'One signal is LOW or MEDIUM; two MEDIUM signals make MEDIUM+. The EXIT_RISK and FUNDS_DIVERSION patterns are HIGH.',
+    r: 'Noor guardrails: travel alone is never actioned, and sending money home at the usual level is never a flag.' },
+  { t: 'Action', d: 'Watch · check-in · specialist call', target: '#rf-table',
+    c: 'Gets a check-in on their chosen channel (a date move or a restructure) or, for HIGH, a specialist call.',
+    m: 'WATCH (no contact), CHECK_IN (same day), SPECIALIST_CALL (within 24 hours, new credit paused).',
+    r: 'Consumer Protection Regulation (fair treatment, collections conduct): no default, legal step or account action on signals alone.' },
+  { t: 'Lender told', d: 'A status flag only', target: '#rf-table',
+    c: 'Their account history stays with Noor.',
+    m: 'For HIGH, Partner Bank gets “Early warning: elevated — Noor is in contact with the customer”, never the values.',
+    r: 'CBUAE Open Finance consent scope and PDPL: account data is not passed on.' }
+];
 /* ================= SVG chart helpers (hand-rolled; dataviz-skill conventions) ================= */
 var SVGNS = 'http://www.w3.org/2000/svg';
 function S(tag, attrs) {
@@ -2661,11 +3163,15 @@ function purchasePhrase(pu) { return PURCHASE_PHRASE[pu.merchant] || ('at ' + pu
 function detectedAccount(pu) { var m = /\(([^)]+)\)/.exec(pu.detectedVia || ''); return m ? m[1] : (pu.detectedVia || 'a connected account'); }
 
 var Split = {
-  sel: null, rec: null, reqMonths: 6, selMonths: null, saMonths: 6, pendingId: null,
+  sel: null, rec: null, reqMonths: 6, selMonths: null, saMonths: 6, pendingId: null, map: null,
   build: function () {
     var root = clear($('#scr-split'));
     root.appendChild(screenHead('Core product · تقسيط مشترياتك', 'Split a purchase',
       'Noor spots a big purchase you already made in your connected accounts and offers to split it — Pay in 3, 6 or 12, with a monthly fee. Mizan underwrites on connected-account cash flow, with AECB as a check. The freed cash goes to your goal.'));
+    /* v2.11 — the flow map: every step clickable; status from this screen's decision record */
+    Split.map = FlowMap.create({ id: 'sp-flow', key: 'split', label: 'The split flow, ten steps', steps: FLOW_SPLIT,
+      status: function () { return fmRecStatus(FLOW_SPLIT, Split.rec, Split.pendingId); } });
+    root.appendChild(Split.map.el);
     var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
     root.appendChild(h('div', { class: 'grid2' }, left, right));
 
@@ -2707,6 +3213,7 @@ var Split = {
     right.appendChild(h('div', { id: 'sp-exec' }));
     right.appendChild(h('div', { id: 'sp-another' }));
     Split.renderPlans();
+    Split.map.refresh();
   },
   pickById: function (id) {
     var p = (MD.personasSplit || []).filter(function (x) { return x.id === id; })[0];
@@ -2724,6 +3231,7 @@ var Split = {
     orch.appendChild(h('div', { class: 'small muted', text: 'Ready — tick both consents and submit ' + firstName(p.name) + '’s split.' }));
     Split.renderPurchase();
     Split.renderPlans();
+    if (Split.map) Split.map.refresh();
   },
   renderPurchase: function () {
     var box = clear($('#sp-purchase'));
@@ -2859,6 +3367,7 @@ var Split = {
       });
       Split.buildAnother(rec);
     }
+    if (Split.map) Split.map.refresh();
   },
   /* Offer strip + KFS — re-rendered when the plan changes */
   renderOffer: function () {
@@ -2950,11 +3459,15 @@ var Split = {
 };
 /* ================= Personal loan ================= */
 var Loan = {
-  sel: null, rec: null, pendingId: null,
+  sel: null, rec: null, pendingId: null, map: null,
   build: function () {
     var root = clear($('#scr-loan'));
     root.appendChild(screenHead('Personal loan · قرض شخصي', 'Personal loan',
       'Consent → real-time AECB + salary verified via connected accounts → affordability (DBR ≤ 50%) → policy pack → scorecard → limit, APR band and KFS → approval token. Then the ' + execCountWord() + ' consumer-protection steps, in order — repayment collected from the customer’s own account, no salary transfer required.'));
+    /* v2.11 — the flow map: every step clickable; status from this screen's decision record */
+    Loan.map = FlowMap.create({ id: 'ln-flow', key: 'loan', label: 'The personal-loan flow, ten steps', steps: FLOW_LOAN,
+      status: function () { return fmRecStatus(FLOW_LOAN, Loan.rec, Loan.pendingId); } });
+    root.appendChild(Loan.map.el);
     var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
     root.appendChild(h('div', { class: 'grid2' }, left, right));
 
@@ -3023,6 +3536,7 @@ var Loan = {
       h('div', { class: 'small muted', text: 'Submit an application to watch the pulls run — each step shows source, result and latency, exactly as written to the decision record.' })));
     right.appendChild(h('div', { id: 'ln-decision' }));
     right.appendChild(h('div', { id: 'ln-exec' }));
+    Loan.map.refresh();
   },
   pickById: function (id) {
     var p = (MD.personasLoan || []).filter(function (x) { return x.id === id; })[0];
@@ -3047,6 +3561,7 @@ var Loan = {
     var orch = clear($('#ln-orch'));
     orch.appendChild(h('h3', { text: 'Orchestration' }));
     orch.appendChild(h('div', { class: 'small muted', text: 'Ready — submit ' + firstName(p.name) + '’s application to run the pulls.' }));
+    if (Loan.map) Loan.map.refresh();
   },
   submit: function () {
     var errBox = clear($('#ln-consent-err'));
@@ -3092,6 +3607,7 @@ var Loan = {
     }
     box.appendChild(panel);
     if (rec.outcome === 'APPROVE') buildExecPanel(rec, 'ln-exec', { onEvent: function (r) { Loan.rec = r; } });
+    if (Loan.map) Loan.map.refresh();
   },
   runAdvance: function (pid) {
     var out = clear($('#ln-sa-out'));
@@ -3186,13 +3702,17 @@ function carCaseBlock(rec) {
   return wrap;
 }
 var Car = {
-  sel: null, rec: null, pendingId: null, amount: null, months: 60, exec: null,
+  sel: null, rec: null, pendingId: null, amount: null, months: 60, exec: null, map: null,
   build: function () {
     var root = clear($('#scr-car'));
     root.appendChild(screenHead('New product on the shared layer', 'Car loan',
       'Karim’s salary alone supports AED 150,000. Open Finance shows the rent he receives every quarter — Mizan counts it, and finances the full 80%: AED 30,000 more, on the same engine and the same policy rules.'));
     var p = Car.sel = carPersona();
     if (!p) { root.appendChild(h('div', { class: 'callout callout-error', text: 'No car-loan persona found in MizanData.personasCar.' })); return; }
+    /* v2.11 — the flow map: every step clickable; status from this screen's decision record */
+    Car.map = FlowMap.create({ id: 'car-flow', key: 'car', label: 'The car-loan flow, ten steps', steps: FLOW_CAR,
+      status: function () { return fmRecStatus(FLOW_CAR, Car.rec, Car.pendingId); } });
+    root.appendChild(Car.map.el);
     var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
     root.appendChild(h('div', { class: 'grid2' }, left, right));
     root.appendChild(h('div', { class: 'stack', style: 'margin-top:14px;' }, h('div', { id: 'car-how' }), h('div', { id: 'car-kfs' }), h('div', { id: 'car-exec' })));
@@ -3282,6 +3802,7 @@ var Car = {
     var orch = clear($('#car-orch'));
     orch.appendChild(h('h3', { text: 'Orchestration' }));
     orch.appendChild(h('div', { class: 'small muted', text: 'Ready — decide ' + firstName(p.name) + '’s car loan to run the pulls: AECB, then connected accounts (with Open Finance) or the salary certificate (without).' }));
+    if (Car.map) Car.map.refresh();
   },
   clearOutputs: function () {
     var d = clear($('#car-decision'));
@@ -3358,6 +3879,7 @@ var Car = {
       Car.exec = buildExecPanel(rec, 'car-exec', { onEvent: function (r) { Car.rec = r; },
         executedNote: lenderName() + ' pays the dealer and the car is released with the mortgage registered. The consumer-protection audit can replay approval → offer → KFS → e-sign → repayment set-up → cooling-off → disbursement end to end. ' });
     }
+    if (Car.map) Car.map.refresh();
   },
   renderDecision: function (rec) {
     var box = clear($('#car-decision'));
@@ -3530,18 +4052,50 @@ var Car = {
 var SME_PID = 'sme_working_capital';
 var SME_TERMS = [3, 6, 9, 12];
 var SME_GUARANTEE_LABEL = { VERIFIED_STRONG: 'Verified — strong', VERIFIED_WEAK: 'Verified — weak', UNVERIFIED: 'Unverified' };
-/* The flow the board asked for — [title, detail, uses Open Finance] */
+/* The flow the board asked for — since v2.11 on the shared FlowMap (titles, detail lines and Open Finance marks unchanged).
+   The locked block of the SME pack is Noor policy for a business loan — confirm with compliance. */
 var SME_FLOW = [
-  ['Business details', 'Trade licence lookup', false],
-  ['Connect business accounts', 'Al Tareq — the authorised signatory', true],
-  ['Owner connects personal accounts', 'Optional — B2C consent, the owner’s own', true],
-  ['AECB consent', 'Commercial + the owner’s consumer report', false],
-  ['Decision', 'Mizan', false],
-  ['Offer + key terms', 'Personal-guarantee disclosure (AR + EN)', false],
-  ['E-sign', 'UAE PASS — the owner', false],
-  ['Repayment', 'Direct debit on the business account', false],
-  ['Disbursement', 'To the business account', false],
-  ['Monitoring', 'Business + owner', true]
+  { t: 'Business details', d: 'Trade licence lookup', target: '#sme-business', status: 'form',
+    c: 'The owner names the company, and Noor looks up its trade licence.',
+    m: 'The KYB pull verifies the trade licence and the ultimate owner. POL_MIN_TRADING needs minMonthsTrading (12) of trading.',
+    r: 'kybRequired, trade licence + UBO before any decision: Noor policy — confirm with compliance.' },
+  { t: 'Connect business accounts', d: 'Al Tareq — the authorised signatory', of: true, target: '#sme-form', status: 'form',
+    c: 'The authorised signatory connects the company’s accounts: read-only, revocable, required.',
+    m: 'OPEN_FINANCE on 12 months of business accounts: revenue, net operating cash flow, volatility, negative-balance days, returned cheques, top-customer share.',
+    r: 'CBUAE Open Finance: the signatory’s consent for the company. Noor policy: minBusinessHistoryMonths (12).' },
+  { t: 'Owner connects personal accounts', d: 'Optional — B2C consent, the owner’s own', of: true, target: '#sme-owner-card', status: 'form',
+    c: 'The owner may connect their personal accounts, as an individual. Optional, and never shared with the lender.',
+    m: 'OPEN_FINANCE_OWNER: drawings, debts, buffer and red flags set the guarantee (strong, weak or unverified) and verify the owner’s income (+15).',
+    r: 'CBUAE Open Finance: the owner’s own consent (Al Tareq B2C). Noor policy: unverifiedGuaranteeFactorPct (65%); a weak guarantee counts at 80%.' },
+  { t: 'AECB consent', d: 'Commercial + the owner’s consumer report', target: '#sme-form', status: 'form',
+    c: 'The signatory consents for the company; the owner consents as an individual guarantor.',
+    m: 'AECB_COMMERCIAL (the company’s score is the NoorScore base) and AECB_CONSUMER for the owner. No consent, no pull, no decision.',
+    r: 'Both reports are required: Noor policy — confirm with compliance. Federal Law 6/2010 governs the pulls.' },
+  { t: 'Decision', d: 'Mizan', target: '#sme-decision-panel', status: 'outcome',
+    c: 'Sees the amount, the APR, the instalment, the DSCR and the guarantee status.',
+    m: 'The limit is the lowest of the request, the DSCR cap, the revenue cap and the product cap, times the guarantee factor. Below 1.5× DSCR it refers (POL_DSCR).',
+    r: 'Noor policy: dscrBudgetPct, revenueMultiple, pricingBands, scoreDecline, scoreRefer. The company is not a consumer, so these are not CBUAE consumer rules.' },
+  { t: 'Offer + key terms', d: 'Personal-guarantee disclosure (AR + EN)', target: '#sme-kfs-panel', status: 'KFS_ACKNOWLEDGED',
+    c: 'The signatory accepts the offer; the owner reads the key terms and the guarantee disclosure in Arabic and English.',
+    m: 'recordEvent() records OFFER_ACCEPTED, then KFS_ACKNOWLEDGED by the owner as guarantor.',
+    r: 'personalGuarantee, guarantor disclosures in Arabic and English: Noor policy — confirm with compliance. Consumer protection covers the owner, not the company.' },
+  { t: 'E-sign', d: 'UAE PASS — the owner', target: '#sme-exec', status: 'AGREEMENT_SIGNED',
+    c: 'The owner signs the company’s loan and the personal guarantee with UAE PASS.',
+    m: 'recordEvent() records AGREEMENT_SIGNED. The engine refuses it until the disclosure is acknowledged.',
+    r: 'The owner signs the guarantee as an individual: Noor policy — confirm with compliance.' },
+  { t: 'Repayment', d: 'Direct debit on the business account', target: '#sme-exec', status: 'REPAYMENT_SET_UP',
+    c: 'Approves a direct debit mandate on the company’s business account.',
+    m: 'recordEvent() records REPAYMENT_SET_UP. Above AED 1,000 the platform rule picks the direct debit.',
+    r: 'Platform rule on every pack: Al Tareq up to AED 1,000, a direct debit mandate above.' },
+  { t: 'Disbursement', d: 'To the business account', target: '#sme-exec', status: 'DISBURSED',
+    c: 'After the cooling-off period, or the owner’s written waiver, the money lands in the business account.',
+    m: 'COOLING_OFF_CLEARED, then DISBURSED: the record becomes EXECUTED.',
+    r: 'Cooling-off of 5 business days for micro businesses: Noor policy — confirm with compliance.' },
+  { t: 'Monitoring', d: 'Business + owner', of: true, status: 'DISBURSED',
+    action: { label: 'Open Monitoring →', run: function () { showScreen('monitoring'); fmShow($('#mn-rf')); } },
+    c: 'Nothing to do. If repayments might become hard, Noor gets in touch first.',
+    m: 'earlyWarningScan() watches both: a revenue drop or money moved to the owner, plus the owner’s own signals. FUNDS_DIVERSION is HIGH.',
+    r: 'Covered by both consents while the loan is open. Signals lead to contact, never a default: Noor policy (the shared early-warning block).' }
 ];
 var SME_REPAY_COPY = 'A mandate on the company’s business account — active before the first collection.';
 var SME_EXEC_WHY = 'Why it matters: the authorised signatory accepts the offer, the owner reads the key facts and the personal-guarantee disclosure in Arabic and English, signs the loan and the guarantee via UAE PASS, the direct debit on the business account is set up, and the cooling-off period — Noor policy for micro businesses (confirm with compliance) — passes before any money moves. An approval is not a loan.';
@@ -3603,7 +4157,7 @@ function smeCaseBlock(rec) {
   return wrap;
 }
 var Sme = {
-  sel: null, rec: null, pendingId: null, amount: null, months: 12, exec: null,
+  sel: null, rec: null, pendingId: null, amount: null, months: 12, exec: null, map: null,
   build: function () {
     var root = clear($('#scr-sme'));
     root.appendChild(screenHead('SME route — board, 2 Oct', 'SME working capital',
@@ -3623,17 +4177,12 @@ var Sme = {
     right.appendChild(h('div', { id: 'sme-owner' }));
     Sme.reset();
   },
-  /* The flow map — a CSS-only horizontal stepper; the Open Finance steps are highlighted; it stacks on a phone */
+  /* The flow map — v2.11: the shared FlowMap (the same look; every step a button; status from this screen's record).
+     The Open Finance steps are highlighted; five a row on tablets; it stacks on a phone. */
   flowMap: function () {
-    var ol = h('ol', { class: 'sme-flow', id: 'sme-flow', 'aria-label': 'The SME flow, ten steps' });
-    SME_FLOW.forEach(function (s, i) {
-      ol.appendChild(h('li', { class: 'sme-fs' + (s[2] ? ' of' : ''), dataset: { step: String(i + 1), of: String(s[2]) } },
-        h('span', { class: 'sme-fs-n', 'aria-hidden': 'true', text: String(i + 1) }),
-        h('span', { class: 'sme-fs-b' }, h('span', { class: 'sme-fs-t', text: s[0] }), h('span', { class: 'sme-fs-d', text: s[1] }),
-          s[2] ? h('span', { class: 'sme-fs-of', text: 'Open Finance' }) : null)));
-    });
-    return h('div', { class: 'panel sme-flow-panel', id: 'sme-flow-panel' },
-      h('h3', null, 'The flow ', h('span', { class: 'h3-note', text: '— ten steps; the highlighted ones use Open Finance (Al Tareq)' })), ol);
+    Sme.map = FlowMap.create({ id: 'sme-flow', key: 'sme', label: 'The SME flow, ten steps', steps: SME_FLOW,
+      status: function () { return fmRecStatus(SME_FLOW, Sme.rec, Sme.pendingId); } });
+    return Sme.map.el;
   },
   businessCard: function (p) {
     var b = p.business || {}, acc = b.accounts || {}, months = acc.months || [];
@@ -3713,6 +4262,7 @@ var Sme = {
     var orch = clear($('#sme-orch'));
     orch.appendChild(h('h3', { text: 'Orchestration' }));
     orch.appendChild(h('div', { class: 'small muted', text: 'Ready — decide to run the pulls: AECB commercial and the owner’s consumer report, the trade licence, the business accounts and — with the owner’s consent — the personal accounts.' }));
+    if (Sme.map) Sme.map.refresh();
   },
   clearOutputs: function () {
     var d = clear($('#sme-decision'));
@@ -3788,6 +4338,7 @@ var Sme = {
         intro: 'Mizan’s approval is a time-boxed risk decision, not a contract. The product layer records each step of the shared six-step sequence against the decision record — the company is not a consumer, but the owner, as personal guarantor, gets the disclosures in Arabic and English, and the cooling-off step stays as Noor policy for micro businesses. Try a step out of order to see the engine refuse it.',
         executedNote: 'The money is credited to the company’s business account; the direct debit collects from it. The audit can replay approval → offer → disclosures → e-sign → repayment set-up → cooling-off → disbursement end to end. ' });
     }
+    if (Sme.map) Sme.map.refresh();
   },
   renderDecision: function (rec) {
     var box = clear($('#sme-decision'));
@@ -4111,11 +4662,15 @@ function upgradeChart(quote, opts) {
 }
 
 var Upgrade = {
-  sel: null, rec: null, pendingId: null, amount: null, months: null, quote: null, execBuilt: false, exec: null, parsed: null,
+  sel: null, rec: null, pendingId: null, amount: null, months: null, quote: null, execBuilt: false, exec: null, parsed: null, map: null,
   build: function () {
     var root = clear($('#scr-upgrade'));
     root.appendChild(screenHead('Credit lifecycle — re-decision on new data', 'From starter loan to upgrade',
       'A thin-file customer repaid Noor’s AED 1,000 starter loan on time. Mizan re-decides on connected UAE accounts — plus 6 months of home-country bank statements (India, Pakistan or Egypt), if the customer uploads them — and offers more for less. The customer picks the amount and the term: the longer the term, the lower the APR, and the lending partner still earns more.'));
+    /* v2.11 — the flow map: every step clickable; status from this screen's decision record */
+    Upgrade.map = FlowMap.create({ id: 'up-flow', key: 'upgrade', label: 'The credit-upgrade flow, ten steps', steps: FLOW_UPGRADE,
+      status: function () { return fmRecStatus(FLOW_UPGRADE, Upgrade.rec, Upgrade.pendingId); } });
+    root.appendChild(Upgrade.map.el);
     var left = h('div', { class: 'stack' }), right = h('div', { class: 'stack' });
     root.appendChild(h('div', { class: 'grid2' }, left, right));
 
@@ -4173,6 +4728,7 @@ var Upgrade = {
     right.appendChild(h('div', { id: 'up-token' }));
     right.appendChild(h('div', { id: 'up-exec' }));
     right.appendChild(h('div', { id: 'up-details' }));
+    Upgrade.map.refresh();
   },
   slots: ['#up-shape', '#up-chart', '#up-kfs', '#up-token', '#up-exec', '#up-details'],
   pickById: function (id) {
@@ -4199,6 +4755,7 @@ var Upgrade = {
     orch.appendChild(h('h3', { text: 'Orchestration' }));
     orch.appendChild(h('div', { class: 'small muted', text: 'Ready — the re-decision reads four sources, in order.' }));
     Upgrade.renderPrior();
+    if (Upgrade.map) Upgrade.map.refresh();
   },
   renderPrior: function () {
     var box = clear($('#up-prior'));
@@ -4306,6 +4863,7 @@ var Upgrade = {
     Upgrade.renderDecision();
     if (Upgrade.quote) { Upgrade.renderShape(); Upgrade.renderChart(); Upgrade.renderKfs(); }
     Upgrade.renderDetails();
+    if (Upgrade.map) Upgrade.map.refresh();
   },
   renderDecision: function () {
     var rec = Upgrade.rec; if (!rec) return;
@@ -5489,11 +6047,15 @@ function caseFile(rec) {
 
 /* ================= Workbench ================= */
 var Workbench = {
-  selId: null, queue: [], animateParseFor: null,
+  selId: null, queue: [], animateParseFor: null, map: null,
   build: function () {
     var root = clear($('#scr-workbench'));
     root.appendChild(screenHead('Human judgment, designed in', 'Refer workbench',
       'Queues with SLAs (split 4h, personal loan 8h, car loan 8h, SME working capital 24h, salary advance 4h). The analyst opens a complete pre-assembled file — connected-account data, features, every rule fired, score, limit trace — and can ask for evidence (6 months of home-country statements) that Mizan re-decides on, or override with a reason code and a mandatory second approver.'));
+    /* v2.11 — the refer flow: steps 1–3 are done once a case is open; 4–6 follow the case (asked · re-decided or overridden) */
+    Workbench.map = FlowMap.create({ id: 'wb-flow', key: 'workbench', label: 'The refer flow, six steps', steps: FLOW_WORKBENCH,
+      pending: 'Appears when you open a case', status: function () { return Workbench.flowStatus(); } });
+    root.appendChild(Workbench.map.el);
     root.appendChild(h('div', { class: 'panel', id: 'wb-queue' }));
     root.appendChild(h('div', { id: 'wb-case', style: 'margin-top:14px;' }));
     Workbench.refresh();
@@ -5535,6 +6097,18 @@ var Workbench = {
       box.appendChild(h('div', { class: 'tbl-scroll' }, t));
     }
     if (Workbench.selId) Workbench.renderCase(Workbench.selId);
+    if (Workbench.map) Workbench.map.refresh();
+  },
+  flowStatus: function () {
+    var id = Workbench.selId, rec = null, row = null;
+    if (id) {
+      try { rec = ME.getDecision(id); } catch (e) { rec = null; }
+      row = (Workbench.queue || []).filter(function (q) { return q.id === id; })[0] || null;
+    }
+    var open = !!(rec || row);
+    var asked = rec ? ((rec.customerQueries || []).length > 0 || !!rec.documentRequest) : !!(row && row.documentRequest);
+    var decided = !!(rec && (rec.supersededBy || rec.override));
+    return { steps: fmMarkNext([open, open, open, open && asked, open && decided, open && decided].map(function (d) { return { done: d }; })) };
   },
   select: function (id) {
     Workbench.selId = id;
@@ -5619,6 +6193,7 @@ var Workbench = {
             h('button', { class: 'btn btn-ghost', text: 'Decision log →', onclick: function () { showScreen('log'); LogScreen.select(rec.id); } })))));
     }
     box.appendChild(panel);
+    if (Workbench.map) Workbench.map.refresh();
   },
   /* ---- v2.4: ask for evidence → customer uploads → parse → Mizan re-decides (supersedes this decision) ---- */
   stmtApplies: function (rec) {
@@ -6318,7 +6893,7 @@ function jrFirstDue() {
   return { day: day, iso: d.toISOString().slice(0, 10) };
 }
 var Journey = {
-  S: null, persona: null, timer: null, otpTimer: null,
+  S: null, persona: null, timer: null, otpTimer: null, map: null,
   /* v2.8 — the A/B test: the variant survives restarts; the event log is this session's, across journeys */
   variant: 'B', eventLog: [], run: 0,
   build: function () {
@@ -6327,6 +6902,11 @@ var Journey = {
     root.appendChild(screenHead('Botim user → Noor web-view → Partner Bank', 'Customer journey',
       'Ravi Kumar (j1) meets Noor inside botim money — a banner, the Noor icon and Noor-rendered insights — connects his bank and applies for a personal loan, on the real Mizan engine: the decision lands in the Decision log and its credit memo in Lender view. Switch the entry experiment (A / B) in the Experiment panel.'));
     if (!Journey.persona) { root.appendChild(h('div', { class: 'panel', text: 'Journey persona j1 is missing from MizanData.personasJourney.' })); return; }
+    /* v2.11 — the flow map above the phone: ten phases over the journey's own steps; "Go to this step" uses the journey's jump */
+    Journey.map = FlowMap.create({ id: 'jr-flow', key: 'journey', label: 'The customer journey, ten phases', steps: JR_FLOW,
+      doneText: 'Reached', todoText: 'Not reached yet',
+      status: function () { return Journey.flowStatus(); }, go: function (i) { return Journey.flowGo(i); }, run: function (i) { Journey.flowRun(i); } });
+    root.appendChild(Journey.map.el);
     root.appendChild(h('div', { class: 'jr-grid' },
       h('div', { class: 'jr-phone-col' },
         h('div', { class: 'ph-stage', id: 'jr-stage' }, h('div', { class: 'phone', id: 'jr-phone' }, h('div', { class: 'ph-screen', id: 'jr-screen', 'aria-live': 'polite' })))),
@@ -6567,6 +7147,7 @@ var Journey = {
     Journey.renderExperiment();
     Journey.renderSteps();
     Journey.fit();
+    if (Journey.map) Journey.map.refresh();
   },
   /* ---------- phone building blocks ---------- */
   wv: function (body, cta, cls) {
@@ -7593,6 +8174,31 @@ var Journey = {
     if (n >= 10 && !S.recId) return;
     if (n === 8 && sub === 2 && !S.connected) return;
     Journey.go(n, sub);
+  },
+  /* v2.11 — the flow map: a phase is reached once any of its steps on this variant's path is; the ring sits on the
+     phase holding the current step (or, between phases, on the next one) */
+  flowStatus: function () {
+    var S = Journey.S; if (!S) return null;
+    var ent = jrFlowEntries(), cur = jrIdx(S.step, S.sub), curPh = -1, nextPh = -1, best = Infinity;
+    ent.forEach(function (e, k) { if (e.indexOf(cur) >= 0) curPh = k; });
+    if (curPh < 0) ent.forEach(function (e, k) { e.forEach(function (i) { if (i > cur && i < best) { best = i; nextPh = k; } }); });
+    var ring = curPh >= 0 ? curPh : nextPh;
+    return { steps: ent.map(function (e, k) {
+      var reached = e.some(function (i) { return i <= S.reachedIdx; });
+      return { reached: reached, current: k === curPh, next: k === ring, done: reached && k !== ring };
+    }) };
+  },
+  /* "Go to this step →" jumps (with the journey's own jump) to the phase's first step, once it has been reached */
+  flowGo: function (i) {
+    var S = Journey.S, e = jrFlowEntries()[i] || [], first = e.length ? e[0] : -1;
+    var ok = !!S && first >= 0 && first <= S.reachedIdx && !(jrPath()[first].n >= 10 && !S.recId);
+    return ok ? { label: 'Go to this step →', enabled: true } : { label: 'Walk the journey to reach this step', enabled: false };
+  },
+  flowRun: function (i) {
+    var e = jrFlowEntries()[i] || [];
+    if (!e.length || !Journey.flowGo(i).enabled) return;
+    Journey.jump(e[0]);
+    fmScrollTo($('#jr-stage'));
   }
 };
 /* ================= Monitoring ================= */
@@ -7605,10 +8211,15 @@ var RC_SHORT = {
   RC_LTV_CAP: 'Limited to 80% of vehicle value', RC_VEHICLE_INELIGIBLE: 'Vehicle not eligible', RC_BELOW_MIN_AMOUNT: 'Below product minimum'
 };
 var Monitoring = {
+  map: null,
   build: function () {
     var root = clear($('#scr-monitoring'));
     root.appendChild(screenHead('The platform proves it is working', 'Monitoring & governance',
       'Decision health over the seeded 90-day window plus everything decided this session: STP per product against targets, decline reasons, grades, refer aging, vintage first-payment default, the UAE red-flags exit-risk watch and day-zero early warning.'));
+    /* v2.11 — the early-warning flow: an operational flow, so every step stays neutral (no status) */
+    Monitoring.map = FlowMap.create({ id: 'mn-flow', key: 'monitoring', label: 'The early-warning flow, five steps', steps: FLOW_MONITORING });
+    root.appendChild(Monitoring.map.el);
+    Monitoring.map.refresh();
     root.appendChild(h('div', { class: 'tiles', id: 'mn-tiles' }));
     root.appendChild(h('div', { class: 'stack' },
       h('div', { class: 'panel', id: 'mn-rf' }),   /* v2.9 — UAE red flags, exit-risk watch (above the day-zero table) */

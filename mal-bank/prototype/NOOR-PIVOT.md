@@ -1185,3 +1185,69 @@ Uplift +AED 50,000, 2.5 points cheaper. Decisions and deviations:
   (HIGH 2 · MEDIUM 4 · LOW 1 · NONE 1) and the recording proxy's allowlist (adds the business keys). Acceptance: the
   screen list and "12 screens", the demo strip (11) and its "eleven-step" heading, the red-flag tiles and rows (8), and
   the vocabulary scrub, which no longer bans "SME" / "working capital".
+
+### As built — v2.11
+
+Built as FLOWS-SPEC.md specifies (selftest 1503 green, unchanged: no engine change; acceptance 885 green, of which the 764
+earlier checks and 121 in the new "v2.11 — flow maps" section). Decisions and deviations:
+
+- **One component.** `FlowMap.create(cfg)` in index.html (next to `buildExecPanel`) renders the panel, an `<ol>` of step
+  buttons and the detail region. Eight configs: `FLOW_SPLIT`, `FLOW_LOAN`, `FLOW_CAR`, `SME_FLOW`, `FLOW_UPGRADE`,
+  `JR_FLOW`, `FLOW_WORKBENCH`, `FLOW_MONITORING`. Map ids: `sp-flow`, `ln-flow`, `car-flow`, `sme-flow`, `up-flow`,
+  `jr-flow`, `wb-flow`, `mn-flow` (plus `-panel`, `-detail`, `-b<N>`, `-go`). Every map sits right under its screen head;
+  on the journey, above the phone and panel row.
+- **SME migrated.** The v2.10 `.sme-flow` / `.sme-fs-*` rules were removed; `.fm-*` at the end of "Noor additions"
+  reproduces them, with `--fm-cols` for 5–10 columns. The acceptance compares every step, circle, title, detail line
+  and chip with the v2.10 pixels at 1440px. A button does not inherit letter-spacing, so `.fm-btn` sets it explicitly;
+  without that, titles wrapped differently.
+- **Status.** The keys are as specified. `decided` counts the pending record while the orchestration animates.
+  "Next" (the ring) is the step after the last done one, so a skipped optional step never carries it. A done step
+  shows a check on the `--ok` tokens, Open Finance steps included; the sky chip and connector stay.
+  - Screens call `map.refresh()` in pick / reset / showDecision.
+  - `afterEngineMutation()` calls `FlowMap.refreshAll()`, which covers execution events and new decisions.
+  - Events are read from `ME.getDecision(id).events`.
+- **Targets.** A target counts once it has content; an empty slot does not. A list is a fallback chain. Disabled
+  buttons say why:
+  - "Appears after you decide" before a decision;
+  - "Appears after an approval" when the decision has no such panel;
+  - upgrade steps 8–10: "Appears after you accept an option", because the execution panel appears on acceptance;
+  - car step 6: "Appears when Open Finance is on", because the documents path shows the CTA instead;
+  - Workbench: "Appears when you open a case".
+- **Scroll and outline.** The page scrolls below the phone tab bar with the target in the upper third. The scroll is
+  smooth unless reduced motion is on (read live from `matchMedia`). `.fm-flash` is a 2px `--brand` outline for 1.5 s;
+  under reduced motion it is static, with no animation.
+- **Keyboard and ARIA.** All four arrows plus Home / End move the selection and the focus. Esc closes the detail and
+  returns focus to the step. A document-level Esc also closes an open detail on the visible screen when the focus is
+  elsewhere. Steps carry `aria-pressed`, `aria-expanded` and `aria-controls`; the detail is a labelled region.
+  Screen-reader text gives "Step N:" and "— done / — next / — you are here".
+- **Journey phases.** They map onto the variant's path:
+
+  | Phase | Journey steps |
+  |---|---|
+  | 1 | 0, plus variant A's Loans screen (step 7) — A's botim entry |
+  | 2 | 1–3, with 3·1 and 3·2 |
+  | 3 | 4 |
+  | 4 | 5 |
+  | 5 | 7 (B) / 8·2 (A) |
+  | 6 | 8 (B) / 8·1 (A) |
+  | 7 | 9 |
+  | 8 | 10–11 |
+  | 9 | 12–15 |
+  | 10 | 16 |
+
+  - Step 6 (back in botim) belongs to no phase; while it is current, the ring sits on the next phase.
+  - A phase is reached when any of its steps is within `reachedIdx`. It is current (`aria-current`) when it holds the
+    current step.
+  - "Go to this step →" calls `Journey.jump` on the phase's first step, then scrolls to the phone. The existing step
+    list is unchanged.
+- **Workbench.** Steps 1–3 are done once a case is open (a full record or a seeded row). Step 4 is done when the
+  customer was asked (`askCustomer`) or statements were requested. Steps 5–6 are done once the case is re-decided or
+  overridden. The header drops the Open Finance clause, because no step uses it.
+- **Copy.** Every block is one or two sentences, and the acceptance counts them. Every Rule names its source: Reg
+  29/2011, Federal Law 6/2010, CPR 8/2020, the CBUAE Consumer Protection Standards / Regulation, CBUAE Open Finance,
+  PDPL, the platform repayment rule, RFC 8252 / FAPI 2.0 for the bank hand-off, or a named Noor policy param. The SME
+  locked-block steps (1, 4, 6, 7, 9) say "Noor policy — confirm with compliance".
+- **Changed existing check.** One acceptance check changed. The v2.10 dark-theme check read
+  `#sme-flow li.of .sme-fs-n`; it now reads `#sme-flow li.of:not(.done) .fm-n`. The class moved, and after Decide
+  steps 2–3 are done and wear `--ok`, so the check reads step 10.
+- The Noor skin `<style>` block is byte-identical; all v2.11 CSS sits at the end of "Noor additions".
