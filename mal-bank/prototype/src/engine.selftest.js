@@ -8,6 +8,7 @@
  * preferences (BOTIM-V28-SPEC.md); group 18 = v2.9 UAE red flags (RED-FLAGS-SPEC.md); group 19 =
  * v2.10 SME working capital (SME-SPEC.md))
  * Group 20 = v2.13 contact preferences recorded after the loan is issued (JOURNEY-CONTACT-SPEC.md).
+ * Group 21 = v2.14 the digital-footprint check covered by the accepted terms (JOURNEY-FOOTPRINT-TC-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -2991,6 +2992,102 @@ group('20. Addendum v2.13: recordCommunications() on the funded loan — same co
     return JSON.stringify([a, E.creditMemo(a.id), E.memoSftpRow(E.creditMemo(a.id))]);
   }
   ok(snap() === snap(), 'two fresh init() runs: identical record, consent, audit, memo and SFTP row');
+  E.init(D);
+});
+
+// ---------------------------------------------------------------------------
+// v2.14 — the digital-footprint check covered by the Terms of Use and Privacy policy accepted at sign-up
+// (JOURNEY-FOOTPRINT-TC-SPEC.md §2, §3): consents.digitalFootprint = {basis:'TERMS', termsVersion, acceptedAt}.
+group('21. Addendum v2.14: the footprint check on the basis of the accepted terms — basis recorded, decision and memo unchanged', () => {
+  E.init(D);
+  const j = D.personasJourney[0];
+  const OF = { aecb: true, openFinance: true };
+  const TV = 'T&C v1.0 · Privacy policy v1.0', AT = '2026-07-19T08:58:00.000Z';
+  const TERMS = { basis: 'TERMS', termsVersion: TV, acceptedAt: AT };
+  const decideJ = (fp, extra) => E.decide(Object.assign({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12,
+                                                          consents: Object.assign({}, OF, fp === undefined ? {} : { digitalFootprint: fp }) }, extra || {}));
+
+  // ---- the object form runs the check and records basis TERMS with the version ----
+  const recT = decideJ(TERMS), recE = decideJ(true), recN = decideJ(undefined), recD = decideJ(false);
+  const cT = recT.consents.digitalFootprint, cE = recE.consents.digitalFootprint, cD = recD.consents.digitalFootprint;
+  const pullT = recT.dataPulls.find(p => p.source === 'DIGITAL_FOOTPRINT');
+  ok(!!pullT && pullT.summary.identity === 'HIGH' && pullT.summary.atoRisk === 'NORMAL' && recT.features.footprintIdentity === 'HIGH' &&
+     recT.rules.some(r => r.id === 'POL_IDENTITY_FOOTPRINT' && r.result === 'PASS'), 'TERMS form: the check runs — DIGITAL_FOOTPRINT pull (identity HIGH, ATO NORMAL), POL_IDENTITY_FOOTPRINT PASS');
+  ok(!!cT && cT.granted === true && cT.basis === 'TERMS' && cT.termsVersion === TV && cT.at === AT && cT.used === true && /Covered by the Terms of Use and Privacy policy accepted at sign-up/.test(cT.scope),
+     'TERMS form: record.consents.digitalFootprint = {granted, basis TERMS, termsVersion "' + TV + '", at = when the terms were accepted, scope, used}');
+  eq(Object.keys(cT).join(','), 'granted,basis,termsVersion,at,scope,used', 'the consent’s shape: granted, basis, termsVersion, at, scope, used');
+  const recT2 = decideJ({ basis: 'TERMS', termsVersion: '  ' + TV + ' ' });
+  ok(recT2.consents.digitalFootprint.termsVersion === TV && recT2.consents.digitalFootprint.at === recT2.createdAt, 'TERMS without acceptedAt: at falls back to the decision time; the version is trimmed');
+
+  // ---- the boolean form still works, as EXPLICIT ----
+  ok(!!cE && cE.granted === true && cE.basis === 'EXPLICIT' && cE.termsVersion === null && cE.at === recE.createdAt && cE.used === true && recE.dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'),
+     'boolean true (v2.8): still runs the check and records basis EXPLICIT, termsVersion null');
+  ok(!!cD && cD.granted === false && cD.basis === 'EXPLICIT' && cD.at === null && cD.used === false && !recD.dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'),
+     'boolean false (v2.8 declined): no pull, recorded as declined (basis EXPLICIT)');
+  ok(!('digitalFootprint' in recN.consents) && !recN.dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'), 'not passed: not asked, no pull, nothing recorded (unchanged)');
+
+  // ---- a bad object throws, before anything is recorded ----
+  const n0 = E.listDecisions().length;
+  throwsWith(() => decideJ({}), ['digitalFootprint', 'TERMS'], 'an object without a basis → throws');
+  throwsWith(() => decideJ({ basis: 'EXPLICIT', termsVersion: TV }), ['digitalFootprint', 'EXPLICIT'], 'an object with basis EXPLICIT → throws (the explicit form is the boolean)');
+  throwsWith(() => decideJ({ basis: 'TERMS' }), 'termsVersion', 'basis TERMS without a termsVersion → throws');
+  throwsWith(() => decideJ({ basis: 'TERMS', termsVersion: '   ' }), 'termsVersion', 'basis TERMS with a blank termsVersion → throws');
+  throwsWith(() => decideJ({ basis: 'TERMS', termsVersion: 42 }), 'termsVersion', 'a non-string termsVersion → throws');
+  throwsWith(() => decideJ({ basis: 'TERMS', termsVersion: TV, acceptedAt: 'yesterday' }), 'acceptedAt', 'an acceptedAt that is not a date-time → throws');
+  throwsWith(() => decideJ(['TERMS']), 'digitalFootprint', 'an array → throws');
+  eq(E.listDecisions().length, n0, 'refused footprint consents create no record');
+
+  // ---- Ravi: identical outcome, score and price with either form ----
+  const same = (a, b) => a.outcome === b.outcome && a.score.points === b.score.points && a.score.grade === b.score.grade && a.limit.approved === b.limit.approved &&
+    a.limit.bindingConstraint === b.limit.bindingConstraint && JSON.stringify(a.pricing) === JSON.stringify(b.pricing) && JSON.stringify(a.reasonCodes) === JSON.stringify(b.reasonCodes) &&
+    JSON.stringify(a.token.conditions) === JSON.stringify(b.token.conditions) && JSON.stringify(a.repayment) === JSON.stringify(b.repayment);
+  ok(same(recT, recE) && same(recT, recN) && recT.score.points === 737 && recT.score.grade === 'B' && recT.limit.approved === 15000 && recT.pricing.kfs.monthlyInstalment === 1311.7,
+     'Ravi with the TERMS form = the boolean form = no footprint: APPROVE · 737 · B · AED 15,000 · AED 1,311.70/mo, same reasons, conditions and repayment');
+  ok(JSON.stringify(recT.features) === JSON.stringify(recE.features) && JSON.stringify(recT.rules) === JSON.stringify(recE.rules) &&
+     JSON.stringify(recT.dataPulls.map(p => p.summary)) === JSON.stringify(recE.dataPulls.map(p => p.summary)), 'TERMS and EXPLICIT: the same features, rules and pull summaries — only the consent’s basis differs');
+
+  // ---- other paths follow the same gate ----
+  ok(!E.decide({ productId: 'personal_loan', applicant: P.r1, amount: P.r1.defaultRequest.amount, tenorMonths: P.r1.defaultRequest.tenorMonths,
+                 consents: Object.assign({}, OF, { digitalFootprint: TERMS }) }).dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'),
+     'TERMS on an applicant without a footprint (r1) → no pull');
+  const carFp = Object.assign(clone(D.personasCar[0]), { footprint: clone(j.footprint) });
+  ok(!E.decide({ productId: 'car_loan', applicant: carFp, amount: 180000, tenorMonths: 60, consents: Object.assign({}, OF, { digitalFootprint: TERMS }) })
+       .dataPulls.some(p => p.source === 'DIGITAL_FOOTPRINT'), 'TERMS on a pack without the overlay params (car loan) → no pull');
+  const c4fp = Object.assign(clone(P.c4), { footprint: { vendorScore: 742, emailAgeYearsMin: 6, nameMatchSources: 2, phoneOnMessenger: true,
+                                                         velocity: { emailSeenByLenders: 1 }, breaches: { count: 1, includesCredentialStuffingCompilation: false } } });
+  const c4 = (fp) => E.decide({ productId: 'split', applicant: c4fp, amount: P.c4.defaultRequest.amount, tenorMonths: P.c4.defaultRequest.tenorMonths,
+                                consents: Object.assign({}, OF, fp === undefined ? {} : { digitalFootprint: fp }) });
+  const c4T = c4(TERMS), c4E = c4(true), c4N = c4(undefined);
+  ok(c4T.score.footprintOverlay && c4T.score.footprintOverlay.delta === 10 && c4T.score.footprintOverlay.applied === false && c4T.score.points === c4N.score.points &&
+     JSON.stringify(c4T.score.footprintOverlay) === JSON.stringify(c4E.score.footprintOverlay), 'c4 (AECB no-hit) with TERMS: +10 in SHADOW, not applied — the same as the boolean form');
+
+  // ---- the memo: only the identity flag; no terms version, no email, no vendor fields ----
+  const memo = E.creditMemo(recT.id), sftp = E.memoSftpRow(memo), memoE = E.creditMemo(recE.id);
+  eq(memo.verification.identity, 'Verified (UAE PASS) · digital footprint: high confidence', 'memo identity flag with the TERMS basis: "Verified (UAE PASS) · digital footprint: high confidence"');
+  eq(JSON.stringify(memo.verification), JSON.stringify(memoE.verification), 'the memo’s verification block is the same with either basis');
+  /* the memo's own "terms" (the loan terms) and the withheld-list labels are fine; the sharing block is checked separately below */
+  const body = (JSON.stringify(Object.assign({}, memo, { sharing: null })) + '\n' + sftp.row.join(',')).toLowerCase();
+  const leaks = [TV, 'T&C', 'termsVersion', 'Terms of Use', 'privacy policy', 'v1.0', 'basis', 'EXPLICIT', j.contact.email, 'example.com', '@', 'vendor', 'breach', 'messenger', 'footprintVendorScore']
+    .filter(w => body.includes(w.toLowerCase()));
+  ok(leaks.length === 0, 'memo + SFTP row: no terms version, no basis, no email, no vendor fields' + (leaks.length ? ' (found: ' + leaks.join(', ') + ')' : ''));
+  ok(memo.consents.map(c => c.type).join(',') === 'aecb,openFinance,shareWithLender', 'memo consent references: AECB, Al Tareq, lender only — the footprint consent is not among them');
+  ok(!JSON.stringify(memo.sharing).includes(TV) && !/T&C|Terms of Use/.test(JSON.stringify(memo.sharing)) && memo.sharing.withheld.some(w => /^Digital-footprint and vendor raw data/.test(w.group)),
+     'the sharing block names the vendor raw data as withheld and carries no terms version');
+  const hits = privacyScan(recT, memo, sftp, { incomeBand: T.income(12000), dbrBand: T.dbr(recT.features.dbrPct), freeCashFlowBand: T.fcf(3700),
+    instalmentToCashFlowBand: T.share(recT.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) });
+  ok(hits.length === 0, 'j1 memo on the TERMS basis: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
+
+  // ---- recordCommunications (v2.13) leaves the footprint consent alone; determinism ----
+  for (const t of E.EXEC_EVENTS) E.recordEvent(recT.id, t);
+  const fpBefore = JSON.stringify(recT.consents.digitalFootprint);
+  E.recordCommunications(recT.id, { service: ['SMS'], marketing: [] });
+  eq(JSON.stringify(recT.consents.digitalFootprint), fpBefore, 'recording contact preferences after the payout leaves the footprint consent unchanged');
+  function snap() {
+    E.init(D);
+    const a = decideJ(TERMS);
+    return JSON.stringify([a, E.creditMemo(a.id), E.memoSftpRow(E.creditMemo(a.id))]);
+  }
+  ok(snap() === snap(), 'two fresh init() runs: identical TERMS-basis record, memo and SFTP row');
   E.init(D);
 });
 

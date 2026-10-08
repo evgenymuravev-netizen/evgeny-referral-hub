@@ -1660,7 +1660,11 @@ button.bm-nav-i.on { cursor:default; }
   font-family:var(--font-label); font-size:12.5px; line-height:17px; box-shadow:0 10px 24px -12px rgba(0,0,0,.7); animation:bhToast 2s var(--ease-out) both; }
 @keyframes bhToast { 0% { opacity:0; transform:translate(-50%, 6px); } 10%, 82% { opacity:1; transform:translate(-50%, 0); } 100% { opacity:0; transform:translate(-50%, 0); } }
 @media (prefers-reduced-motion: reduce) { .bm-demo-toast { animation:none; } }
-</style>
+/* v2.14 — "Privacy policy" / "Terms of Use" open the clause sheet: inline link buttons with the .ph-u look */
+button.ph-u { background:none; border:0; padding:0; margin:0; font:inherit; cursor:pointer; }
+button.ph-u:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; border-radius:2px; }
+.ph-sheet-terms { width:100%; max-height:84%; overflow-y:auto; }
+.ph-fp-notice { margin:0; }
 
 <div id="fatal-banner" role="alert"></div>
 
@@ -2202,13 +2206,13 @@ function pullsTimeline(rec, opts) {
     (c.openFinance && c.openFinance.granted ? ' · Open Finance consent active (Al Tareq)' : '') +
     (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport consent active (home-country bureau)' : '') +
     (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'requested by the underwriter' : 'uploaded by the customer') + ')' : '') +
-    (c.digitalFootprint && c.digitalFootprint.granted ? ' · Digital-footprint check consented (optional)' : '') +
+    (c.digitalFootprint && c.digitalFootprint.granted ? (c.digitalFootprint.basis === 'TERMS' ? ' · Digital-footprint check covered by the Terms (' + c.digitalFootprint.termsVersion + ')' : ' · Digital-footprint check consented (optional)') : '') +
     (c.communications ? ' · Contact preferences recorded (' + c.communications.reference + ')' : '') +
     /* v2.10 — the SME route: the business consent (signatory) and the owner's own consent */
     (c.ownerOpenFinance ? (c.ownerOpenFinance.granted ? ' · the owner’s own consent: personal accounts (Al Tareq B2C)' : ' · the owner’s personal accounts not connected (optional)') : '') +
     (rec.kind === 'UPGRADE' && !(c.homeStatements && c.homeStatements.granted) ? ' · Home-country statements not shared (optional)' : ''), lat: null });
   (rec.dataPulls || []).forEach(function (p) {
-    steps.push({ title: PULL_LABEL[p.source] || p.source, sum: pullSummary(p), lat: p.latencyMs });
+    steps.push({ title: pullLabel(p, rec), sum: pullSummary(p), lat: p.latencyMs });
   });
   if (rec.kind === 'UPGRADE') steps.push({ title: 'Upgrade policy pack — tier, APR curve, affordability per option',
     sum: 'every rule evaluated · tier set · offer ceiling and options derived', lat: null });
@@ -2894,10 +2898,11 @@ var JR_FLOW = [
     m: 'Nothing is decided. botim receives events only (impression, click), each with the variant and the surface: the main screen or botim money.',
     r: 'Noor’s position (confirm with counsel): every Noor surface in botim, on the main screen and in botim money, is a Noor embed, and botim gets events only.' },
   /* v2.13 — the contact preferences moved to phase 10 (after the payout) */
+  /* v2.14 — the footprint check is covered by the terms accepted at sign-up (no checkbox) */
   { t: 'Noor opens in botim', d: 'Web-view · account · email', match: function (e) { return e.n >= 1 && e.n <= 3; },
-    c: 'Agrees to the hand-off, creates an account, and verifies the phone and the email.',
-    m: 'assessFootprint() runs only if the customer opts in. No contact preferences yet: they are asked once the loan is issued.',
-    r: 'PDPL minimisation for the footprint check: a separate, optional consent that never affects the application.' },
+    c: 'Agrees to the hand-off, creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — and verifies the phone and the email.',
+    m: 'assessFootprint() runs for every applicant, covered by the terms accepted at sign-up. No contact preferences yet: they are asked once the loan is issued.',
+    r: 'PDPL purpose limitation: identity and account security only, and the Privacy policy says how to object (Noor’s position — confirm the terms-based basis with counsel).' },
   { t: 'Connect banks', d: 'Al Tareq consent', of: true, match: function (e) { return e.n === 4; },
     c: 'Picks banks and reads what Noor will read, why and for how long. Cancel any time in the Al Tareq dashboard.',
     m: 'No engine call yet: the consent sets what later pulls may read.',
@@ -6009,6 +6014,12 @@ function nameOf(rec) {
   var a = rec.applicantSnapshot || rec.applicant || {};
   return a.name || rec.name || '—';
 }
+/* v2.14 — the footprint pull says what it rests on: an explicit opt-in (v2.8) or the terms accepted at sign-up */
+function pullLabel(p, rec) {
+  var fc = rec && rec.consents ? rec.consents.digitalFootprint : null;
+  if (p.source === 'DIGITAL_FOOTPRINT' && fc && fc.basis === 'TERMS') return 'Digital footprint (covered by the Terms) — identity and account security; the thin-file overlay in shadow';
+  return PULL_LABEL[p.source] || p.source;
+}
 function pullsTable(rec) {
   var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
     h('th', { text: 'Source' }), h('th', { text: 'Status' }), h('th', { class: 'num', text: 'Latency' }), h('th', { text: 'Summary' }))));
@@ -6018,7 +6029,7 @@ function pullsTable(rec) {
     if (p.cached) sum.push('cached');
     if (p.summary) for (var k in p.summary) sum.push(k + ': ' + fmtSummaryVal(p.summary[k]));
     tb.appendChild(h('tr', null,
-      h('td', { text: PULL_LABEL[p.source] || p.source }),
+      h('td', { text: pullLabel(p, rec) }),
       h('td', null, h('span', { class: 'chip' + (p.status === 'NO_HIT' ? '' : ' acc'), text: p.status || '—' })),
       h('td', { class: 'num', text: p.latencyMs !== undefined ? fmtN(p.latencyMs) + ' ms' : '—' }),
       h('td', { class: 'small muted mono', text: sum.join(' · ') })));
@@ -6466,7 +6477,9 @@ var LogScreen = {
       h('dt', { text: 'Consents' }), h('dd', { class: 'small', text: 'AECB ' + (c.aecb && c.aecb.granted ? 'granted ' + fmtDT(c.aecb.at) : '—') + ' · Open Finance ' + (c.openFinance && c.openFinance.granted ? 'granted' : 'not granted') + (c.creditPassport && c.creditPassport.granted ? ' · Credit Passport granted' : '') +
         (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'underwriter request' : 'customer upload') + ')' : '') +
         /* v2.8 — internal record only: neither reaches the credit memo */
-        (c.digitalFootprint ? ' · Digital footprint ' + (c.digitalFootprint.granted ? 'granted' : 'declined') : '') +
+        /* v2.14 — the basis: covered by the accepted terms, or v2.8's explicit opt-in */
+        (c.digitalFootprint ? (c.digitalFootprint.basis === 'TERMS' ? ' · Digital footprint — covered by the Terms (' + c.digitalFootprint.termsVersion + ')'
+                                                                    : ' · Digital footprint ' + (c.digitalFootprint.granted ? 'granted' : 'declined')) : '') +
         (c.communications ? ' · Contact preferences ' + c.communications.reference + ' (service ' + c.communications.service.join(', ') + (c.communications.marketing.length ? '; marketing ' + c.communications.marketing.join(', ') : '; no marketing') + ')' +
           /* v2.13 — recordCommunications() after the payout leaves an audit entry */
           ((rec.audit || []).some(function (a) { return a.action === 'COMMUNICATIONS_RECORDED'; }) ? ' · asked after the payout, ' + fmtDT(c.communications.at) : '') : '') +
@@ -6843,7 +6856,7 @@ var JR_ONBOARD = [
   { n: 1, title: 'Noor opens inside botim (web-view)' },
   { n: 2, title: 'Create your account' },
   { n: 3, title: 'Enter the code' },
-  { n: 3, sub: 1, title: 'Your email — optional digital-footprint check', engine: 'assessFootprint()' },
+  { n: 3, sub: 1, title: 'Your email — digital-footprint check (covered by the terms)', engine: 'assessFootprint()' },
   { n: 4, title: 'Connect your bank accounts — Al Tareq' },
   { n: 5, title: 'Approve in your bank — leaves the web-view' }
 ];
@@ -6884,13 +6897,22 @@ var JR_GROUPS = {
 };
 var JR_VARIANTS = { A: 'From the Loans screen', B: 'See what you can get' };
 var JR_CHANNELS = [['EMAIL', 'Email'], ['SMS', 'SMS'], ['WHATSAPP', 'WhatsApp'], ['PUSH', 'Push notifications']];
+/* v2.14 — the digital-footprint check is covered by the Terms of Use and Privacy policy accepted at "Create your account"
+   (no separate checkbox). The clause, in plain words, opens from the step-2 links and the email step's notice. */
+var JR_TERMS = {
+  version: 'T&C v1.0 · Privacy policy v1.0',
+  clause: 'to confirm it’s you and protect your account, we check your email and mobile number with a fraud-prevention provider. We use it for identity and security — and, only if we switch it on after testing, to help when you have little credit history. We never use your gender, the apps or services you use, or where a data breach came from.',
+  object: 'Contact us in the app to ask about or object to this check.'
+};
+/* When the terms were accepted: the demo's day (MizanData.TODAY), just before the engine's session clock starts (09:00) */
+function jrTermsAt() { return new Date(new Date(MD.TODAY + 'T09:00:00Z').getTime() - 120000).toISOString(); }
 /* The experiment: 2.0% → 2.5% funded, 80% power, two-sided α 0.05 */
 var JR_EXP = { p1: 0.020, p2: 0.025, alpha: 0.05, power: 0.80 };
 function jrFresh(variant) {
   return { variant: variant || 'B', step: 0, sub: 0, reachedIdx: 0, dir: 1, intent: null, account: false, phoneOk: false, connected: false, newTiles: false, hostTab: 'pay', hostBack: 0,
            otp: '', otpErr: false, otpLeft: 24, banks: { ENBD: true, FAB: true }, bankDeclined: false,
            emailEdit: false, emailOther: '', emailErr: null, emailCode: '', emailCodeErr: false, emailOk: false, emailDone: false,
-           footprint: false, fpa: null,
+           footprint: false, fpa: null, terms: null, termsSheet: null,
            comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
            commsTouched: false, commsDone: false, commsErr: null,
            insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
@@ -7087,6 +7109,41 @@ var Journey = {
     var c = Journey.S.comms, pick = function (g) { return JR_CHANNELS.map(function (x) { return x[0]; }).filter(function (k) { return !!c[g][k]; }); };
     return { service: pick('service'), marketing: pick('marketing') };
   },
+  /* v2.14 — step 2: accepting the Terms of Use and Privacy policy (which cover the footprint check), kept with its version and time */
+  acceptTerms: function () {
+    var S = Journey.S;
+    S.account = true; S.termsSheet = null;
+    if (!S.terms) S.terms = { version: JR_TERMS.version, acceptedAt: jrTermsAt() };
+  },
+  termsLink: function (which, text, id) {
+    return h('button', { class: 'ph-u', type: 'button', id: id, 'aria-haspopup': 'dialog', onclick: function () { Journey.S.termsSheet = which; Journey.render(); } }, text);
+  },
+  /* The clause sheet (step 2 and the email step): the digital-footprint check in plain words, and how to object */
+  termsSheet: function () {
+    var S = Journey.S, which = S.termsSheet;
+    if (!which) return null;
+    var title = which === 'terms' ? 'Terms of Use' : 'Privacy policy';
+    return h('div', { class: 'ph-overlay', id: 'jr-terms-sheet', dataset: { doc: which } },
+      h('div', { class: 'ph-sheet ph-sheet-terms', role: 'dialog', 'aria-modal': 'true', 'aria-label': title + ' — the digital footprint check' },
+        h('div', { class: 'ph-sheet-h' }, h('span', { class: 'ph-sheet-t', text: title }),
+          h('button', { class: 'wv-x', type: 'button', id: 'jr-terms-close', 'aria-label': 'Close the ' + title, onclick: function () { S.termsSheet = null; Journey.render(); } }, jrSvg(JR_ICON.close, null, '1.8'))),
+        h('p', { class: 'ph-small ph-muted', id: 'jr-terms-version', text: JR_TERMS.version + ' · the clause in plain words' }),
+        h('p', { class: 'ph-p', id: 'jr-terms-clause' }, h('strong', { text: 'Digital footprint check: ' }), JR_TERMS.clause),
+        h('p', { class: 'ph-small', id: 'jr-terms-object', text: JR_TERMS.object })));
+  },
+  /* v2.14 — the footprint check runs for every applicant who accepted the terms (no checkbox): a pure preview on the
+     verified email; decide() makes the DIGITAL_FOOTPRINT pull with the terms as its basis */
+  runFootprint: function () {
+    var S = Journey.S, p = Journey.persona;
+    if (!S.terms || S.fpa) return;
+    try {
+      var prm = ME.getPolicy('personal_loan').params;
+      S.fpa = ME.assessFootprint(p.footprint, { mode: prm.footprintOverlayMode, cap: prm.footprintOverlayCap });
+      S.footprint = true;
+      Journey.log('assessFootprint(j1.footprint)', 'identity ' + S.fpa.identity.confidence + ' · ATO risk ' + S.fpa.security.atoRisk + ' · overlay +' + S.fpa.creditOverlay.points +
+        ' (' + S.fpa.creditOverlay.mode.toLowerCase() + ', thin or no-hit file only) · covered by the terms · pure, no record');
+    } catch (err) { S.fpa = null; }
+  },
   /* v2.13 — 16·1 Continue: the choice is recorded on the funded loan (recordCommunications); refusals render inline */
   saveComms: function () {
     var S = Journey.S, comms = Journey.commsConsent(), r;
@@ -7108,10 +7165,14 @@ var Journey = {
   apply: function () {
     var S = Journey.S, p = Journey.persona, rec;
     S.applyErr = null;
-    var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true, digitalFootprint:' + !!S.footprint + '}})';
+    /* v2.14 — the footprint check rests on the terms accepted at step 2 */
+    var fpc = S.terms ? { basis: 'TERMS', termsVersion: S.terms.version, acceptedAt: S.terms.acceptedAt } : undefined;
+    var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true' +
+      (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}})';
+    var cons = { aecb: !!S.aecb, openFinance: true };
+    if (fpc) cons.digitalFootprint = fpc;
     try {
-      rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months,
-                        consents: { aecb: !!S.aecb, openFinance: true, digitalFootprint: !!S.footprint }, lenderId: 'partner-bank' });
+      rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' });
     } catch (err) {
       /* Expected: no AECB consent → the engine refuses. Shown in the phone, calmly. */
       S.applyErr = err && err.message ? err.message : String(err);
@@ -7582,9 +7643,12 @@ var Journey = {
         h('h2', { class: 'ph-h1', text: 'Create your account' }),
         h('label', { class: 'ph-field' }, h('span', { class: 'ph-field-l', text: 'Mobile number' }),
           h('span', { class: 'ph-input' }, h('span', { class: 'ph-input-v', id: 'jr-phone-v', text: phone }), h('span', { class: 'ph-tag ph-tag-sm', text: 'shared by Botim' }))),
-        h('p', { class: 'ph-small', text: 'We’ll send a one-time code to confirm it’s you.' })),
-        h('div', null, h('p', { class: 'ph-legal' }, 'By continuing you agree to ', h('span', { class: 'ph-u', text: 'Privacy policy' }), ' and ', h('span', { class: 'ph-u', text: 'Terms of Use' })),
-          B('Continue', function () { Journey.S.account = true; Journey.go(3, 0, 1); }, 'jr-cta'))) };
+        h('p', { class: 'ph-small', text: 'We’ll send a one-time code to confirm it’s you.' }),
+        Journey.termsSheet()),
+        /* v2.14 — "Privacy policy" and "Terms of Use" open the clause; continuing records the acceptance (version + time) */
+        h('div', null, h('p', { class: 'ph-legal', id: 'jr-legal' }, 'By continuing you agree to ', Journey.termsLink('privacy', 'Privacy policy', 'jr-privacy-link'), ' and ',
+            Journey.termsLink('terms', 'Terms of Use', 'jr-terms-link')),
+          B('Continue', function () { Journey.acceptTerms(); Journey.go(3, 0, 1); }, 'jr-cta'))) };
     }
     if (st === 3 && sub === 1) return { kind: 'webview', node: Journey.emailView() };
     if (st === 3) {
@@ -7768,6 +7832,7 @@ var Journey = {
       if (S.emailCode.length < 6) { S.emailCodeErr = true; Journey.render(); return; }
       S.emailOk = true; S.emailCodeErr = false;
       if (!S.commsTouched) S.comms.service.EMAIL = true;   /* Email joins the defaults once it is verified */
+      Journey.runFootprint();   /* v2.14 — covered by the terms accepted at step 2: no checkbox */
       Journey.render();
     };
     if (!S.emailOk) {
@@ -7785,28 +7850,15 @@ var Journey = {
             h('span', { class: 'ph-af-k', text: 'From Mail' }), h('span', { class: 'ph-af-v', text: '739 204' })) : null,
           B('Verify email', verify, 'jr-cta')));
     }
-    var fp = h('input', { type: 'checkbox', id: 'jr-fp', onchange: function (ev) {
-      S.footprint = ev.target.checked;
-      if (S.footprint) {
-        try {
-          var prm = ME.getPolicy('personal_loan').params;
-          S.fpa = ME.assessFootprint(p.footprint, { mode: prm.footprintOverlayMode, cap: prm.footprintOverlayCap });
-          Journey.log('assessFootprint(j1.footprint)', 'identity ' + S.fpa.identity.confidence + ' · ATO risk ' + S.fpa.security.atoRisk + ' · overlay +' + S.fpa.creditOverlay.points +
-            ' (' + S.fpa.creditOverlay.mode.toLowerCase() + ', thin or no-hit file only) · pure, no record');
-        } catch (err) { S.fpa = null; }
-      } else S.fpa = null;
-      Journey.render();
-    } });
-    fp.checked = !!S.footprint;
+    /* v2.14 — no "Digital footprint check · Optional" checkbox: the check is covered by the terms accepted at step 2.
+       A notice, not a question: one muted line under the confirmation (its "Privacy policy" opens the clause). */
     return Journey.wv(h('div', { id: 'jr-email', dataset: { verified: 'true' } },
       h('h2', { class: 'ph-h1', text: 'Your email' }),
       field,
       h('div', { class: 'ph-note ph-note-ok', id: 'jr-email-ok' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'Email verified · ' + masked })),
-      h('label', { class: 'ph-card ph-check ph-fp', for: 'jr-fp', id: 'jr-fp-box' }, fp,
-        h('span', null,
-          h('span', { class: 'ph-check-t' }, 'Digital footprint check ', h('span', { class: 'ph-opt-tag', text: 'Optional' })),
-          h('span', { class: 'ph-check-s', text: 'We check your email and phone with a digital-footprint provider to confirm it’s you and protect your account. Declining never affects your application.' }),
-          h('span', { class: 'ph-check-s ph-fp-purpose', text: 'Used for identity and account security — and, only if Noor switches it on later, to help when you have little credit history.' })))),
+      h('p', { class: 'ph-small ph-muted ph-fp-notice', id: 'jr-fp-notice' }, 'We verify your email and phone to protect your account — see our ',
+        Journey.termsLink('privacy', 'Privacy policy', 'jr-fp-privacy'), '.'),
+      Journey.termsSheet()),
       B('Continue', function () { S.emailDone = true; Journey.go(4, 0, 1); }, 'jr-cta'));   /* v2.13 — straight to the bank: contact preferences come after the payout */
   },
   /* v2.8 — contact preferences; at least one channel for the account and the loan.
@@ -8136,10 +8188,15 @@ var Journey = {
           'Noor runs on its own domain (noor.finance) with its own session — botim can’t read the page, and Noor can’t read botim.',
           S.intent === 'loan' ? (A ? 'Variant A: the customer named an amount first; Noor needs an account and the bank accounts to check it fits.' : 'The customer asked “How much can you borrow?” before connecting a bank, so Noor asks them to connect first — pre-qualification is worked out from the accounts.')
             : 'Entry 1: the customer tapped “Add another +” in Connected accounts.']],
-      2: ['Noor’s own account', ['The number comes from the hand-off; the customer confirms it and accepts Noor’s Terms and Privacy policy — Noor is responsible for the data that follows.']],
-      3: sub === 1 ? ['Your email — and an optional digital-footprint check', [
+      2: ['Noor’s own account', ['The number comes from the hand-off; the customer confirms it and accepts Noor’s Terms and Privacy policy — Noor is responsible for the data that follows.',
+          'The Terms of Use and Privacy policy (' + JR_TERMS.version + ') cover the digital-footprint check — there is no separate checkbox later. Continuing records the acceptance with its version and time; decide() receives it as the check’s basis.']],
+      3: sub === 1 ? ['Your email — and the digital-footprint check, covered by the terms', [
             'botim shared the email at hand-off; Noor confirms it with its own 6-digit code before using it. The customer can use a different one.',
-            'The footprint check is a separate, optional consent (email + phone → a RiskSeal-style provider): identity and account security — thin-file scoring only if credit risk switches it on. Declining never affects the application.',
+            /* v2.14 — no separate checkbox (JOURNEY-FOOTPRINT-TC-SPEC.md §1) */
+            'No separate checkbox: the check is covered by the Terms of Use and Privacy policy accepted when the account was created (step 2).',
+            'Purpose stays limited to identity and account security; the thin-file overlay runs in shadow until switched live.',
+            'The Privacy policy says how to object.',
+            'Noor’s position — confirm with counsel that a terms-based basis is enough under PDPL for a third-party provider, including where the provider processes data.',
             'Never used for credit here: Ravi has an AECB file; on a thin file the overlay runs in shadow until back-tested.',
             'Never used at all: gender, lifestyle traits, service names, breach sources (PDPL minimisation).']]
         : ['Noor verifies the number itself', ['A one-time code from Noor: the host’s hand-off is a convenience, not proof of identity. UAE PASS comes later, for signing.']],
@@ -8181,7 +8238,8 @@ var Journey = {
             'Still no decision: nothing is decided until the customer confirms in the next step.']]),
       9: ['decide() — the real Mizan engine', [
           'AECB consent is required by law before any loan (Federal Law 6/2010). Without it the engine refuses — try confirming with the box unticked.',
-          'Applying also records consent “share with lender”: Partner Bank gets the application result, never the bank data.' + (S.footprint ? ' The digital-footprint consent is recorded too — and stays with Noor.' : ''),
+          'Applying also records consent “share with lender”: Partner Bank gets the application result, never the bank data.' +
+            (S.terms ? ' The digital-footprint check runs on the terms accepted at sign-up (' + S.terms.version + ') — recorded as its basis, and it stays with Noor.' : ''),
           'Contact preferences are asked once the loan is issued. Until then, service messages — the Key Facts, the e-signature and the confirmations — happen inside the Noor web-view, and the verified mobile (the OTP number) gets them by SMS.',
           'UAE PASS confirms identity; decide() then pulls AECB, verifies the salary through Open Finance, runs the policy pack — including the free-cash-flow rule — NoorScore and the limit, and prices the loan.']],
       10: ['The offer is the decision record', [
@@ -8235,13 +8293,13 @@ var Journey = {
     if (st === 3 && sub === 1) {
       var fa = S.fpa;
       wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-fp-out' },
-        h('div', { class: 'jr-engine-h' }, h('code', { text: 'assessFootprint(j1.footprint)' }), h('span', { class: 'small muted', text: fa ? ' · pure — no record' : ' · not run' })),
+        h('div', { class: 'jr-engine-h' }, h('code', { text: 'assessFootprint(j1.footprint)' }), h('span', { class: 'small muted', text: fa ? ' · pure — no record · covered by the terms' : ' · not run yet' })),
         fa ? h('div', { class: 'jr-chips', id: 'jr-fp-chips' },
               h('span', { class: 'jr-chip ok', dataset: { chip: 'identity' }, text: 'Identity ' + fa.identity.confidence }),
               h('span', { class: 'jr-chip' + (fa.security.atoRisk === 'NORMAL' ? ' ok' : ' warn'), dataset: { chip: 'ato' }, text: 'ATO risk ' + fa.security.atoRisk + ' → ' + fa.security.action.toLowerCase() }),
               h('span', { class: 'jr-chip shadow', dataset: { chip: 'overlay' }, text: 'Overlay +' + fa.creditOverlay.points + ' · ' + fa.creditOverlay.mode.toLowerCase() + ' · ' + fa.creditOverlay.eligibleWhen + ' only' }),
               h('span', { class: 'jr-chip', dataset: { chip: 'excluded' }, text: fa.excluded.length + ' item types dropped at ingestion' }))
-           : h('div', { class: 'small muted', text: 'Not run — the customer hasn’t agreed. Declining never affects the application.' })));
+           : h('div', { class: 'small muted', text: 'Runs once the email is verified — covered by the terms accepted at sign-up (step 2).' })));
     }
     if (st === 7 && sub === 3 && S.pq) {
       var pq = S.pq;

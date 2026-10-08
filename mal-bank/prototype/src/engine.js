@@ -3365,6 +3365,28 @@
     return rec;
   }
 
+  // v2.14 — the digital-footprint consent. `true` is v2.8's explicit opt-in (basis EXPLICIT); the object
+  // { basis:'TERMS', termsVersion, acceptedAt } says the check is covered by the Terms of Use and Privacy policy
+  // the customer accepted at sign-up (basis TERMS). Either runs the check. undefined: not asked; any other
+  // non-object value is v2.8's "declined". An object is validated before anything is pulled or recorded.
+  const FOOTPRINT_SCOPE_TERMS = 'Identity, account security and — only when switched live — thin-file scoring. Covered by the Terms of Use and Privacy policy accepted at sign-up; the Privacy policy says how to object.';
+  function normalizeFootprintConsent(c) {
+    if (c === undefined) return null;
+    if (c === true) return { granted: true, basis: 'EXPLICIT', termsVersion: null, acceptedAt: null };
+    if (c === null || typeof c !== 'object') return { granted: false, basis: 'EXPLICIT', termsVersion: null, acceptedAt: null };
+    if (Array.isArray(c) || c.basis !== 'TERMS') {
+      throw err('consents.digitalFootprint must be true (an explicit opt-in) or {basis:\'TERMS\', termsVersion, acceptedAt} (covered by the accepted terms) — basis "' +
+                (Array.isArray(c) ? 'array' : String(c.basis)) + '" is not supported');
+    }
+    if (typeof c.termsVersion !== 'string' || !c.termsVersion.trim()) {
+      throw err('consents.digitalFootprint {basis:\'TERMS\'} needs the termsVersion the customer accepted (e.g. "T&C v1.0 · Privacy policy v1.0")');
+    }
+    if (c.acceptedAt !== undefined && c.acceptedAt !== null && (typeof c.acceptedAt !== 'string' || isNaN(Date.parse(c.acceptedAt)))) {
+      throw err('consents.digitalFootprint.acceptedAt must be an ISO date-time string');
+    }
+    return { granted: true, basis: 'TERMS', termsVersion: c.termsVersion.trim(), acceptedAt: c.acceptedAt || null };
+  }
+
   // `internal` (not part of the public contract) carries redecide()'s trigger.
   function decide(application, internal) {
     ensureInit();
@@ -3434,6 +3456,8 @@
     const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
     // v2.8 — contact preferences: validated before anything is pulled or recorded.
     const comms = normalizeCommunications(consents.communications);
+    // v2.14 — the footprint consent's basis (EXPLICIT or TERMS), validated here too.
+    const fpc = normalizeFootprintConsent(consents.digitalFootprint);
 
     const pol = getPolicyRef(productId);
     let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements, vehicle ? { vehicle } : undefined);
@@ -3443,7 +3467,7 @@
     // starter loan). Identity and security never change the outcome; the thin-file overlay
     // is applied only in LIVE mode (SHADOW records it), so default decisions are unchanged.
     let fpa = null, fpOverlay = null;
-    if (consents.digitalFootprint === true && applicant.footprint && pol.params.footprintOverlayMode !== undefined) {
+    if (fpc && fpc.granted && applicant.footprint && pol.params.footprintOverlayMode !== undefined) {
       fpa = assessFootprint(applicant.footprint, { aecbFile: footprintFileKind(ev.profile.aecbHit, ev.profile.score),
                                                    mode: pol.params.footprintOverlayMode, cap: pol.params.footprintOverlayCap });
       const co = fpa.creditOverlay;
@@ -3540,9 +3564,11 @@
     // v2.8 — the optional digital-footprint consent and the contact preferences, recorded only
     // when the customer was asked (records from the other journeys keep their earlier shape).
     // Neither is in the credit memo: CONSENT_CODES is its allowlist.
-    if (consents.digitalFootprint !== undefined) {
-      record.consents.digitalFootprint = { granted: consents.digitalFootprint === true, at: consents.digitalFootprint === true ? consentAt : null,
-                                           scope: FOOTPRINT_SCOPE, used: !!fpa };
+    if (fpc) {
+      // v2.14 — the basis is recorded: EXPLICIT (v2.8 opt-in) or TERMS (with the accepted version; `at` is when the terms were accepted).
+      record.consents.digitalFootprint = { granted: fpc.granted, basis: fpc.basis, termsVersion: fpc.termsVersion,
+                                           at: fpc.granted ? (fpc.acceptedAt || consentAt) : null,
+                                           scope: fpc.basis === 'TERMS' ? FOOTPRINT_SCOPE_TERMS : FOOTPRINT_SCOPE, used: !!fpa };
     }
     if (comms) {
       record.consents.communications = { granted: true, at: consentAt, reference: 'CNS-' + id.slice(4) + '-COMMS',

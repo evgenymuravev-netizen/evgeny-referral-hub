@@ -1299,3 +1299,55 @@ the 885 earlier checks and 66 in the new "v2.12 — botim main screen" section).
   - "back to variant B (the default)" and "dark theme: … the botim main page shows the banner" look for the main screen's
     `#bh-banner` (was the money page's `#bm-banner`).
 - The Noor skin `<style>` block is byte-identical; all v2.12 CSS sits at the end of "Noor additions".
+
+### As built — v2.13
+
+Built as JOURNEY-CONTACT-SPEC.md specifies (selftest 1544 green, of which the 1503 earlier checks and 41 in group 20;
+acceptance 1010 green, of which 956 after updating the existing walks and 54 in the new "v2.13 — contact preferences
+after payout" section). Decisions and deviations:
+
+- **Engine (additive).** `recordCommunications(decisionId, {service, marketing})` sits next to `normalizeCommunications`
+  and reuses it. It refuses a non-APPROVE record ("contact preferences can only be recorded on an approved loan (… is
+  REFER)"), an unknown id and missing preferences. It also refuses a superseded record, like `recordEvent` (stricter
+  than the spec). It does not require DISBURSED: an approved record is enough. It writes the v2.8 shape with the same
+  basis text, keeps an existing reference (including one recorded at decide time), and adds a `COMMUNICATIONS_RECORDED`
+  audit entry (actor `customer`, "recorded" or "updated"). decide()'s v2.8 `consents.communications` is untouched.
+  The diff to `src/` only adds lines.
+- **Journey.** The email (3·1) continues straight to 4·0, and resuming onboarding never asks for contact preferences.
+  Step 16 now has four sub-steps:
+  - 16·0 "on its way" (DISBURSED), with a Continue button;
+  - 16·1 the contact screen, with the same copy, switches, defaults and validation, and the new line under the title;
+  - 16·2 "You’re all set": the choice as recorded, the PWA card and "Back to botim";
+  - 16·3 botim (was 16·1).
+
+  The PWA card moved from 16·0 to 16·2 because the spec puts it after the contact choice. An engine refusal on
+  Continue renders inline ("We couldn’t save your choice.").
+- **Step list.** Both paths lose 3·2 and end `16, 16·1 "How should we contact you?" (recordCommunications()), 16·2 "Noor on
+  your home screen · back in botim"`. Step 16's own title is now "Done — the money is on its way". `jrIdx` maps 16·3
+  to the 16·2 entry; the rule applies to step 16 only.
+- **decide()** no longer passes `consents.communications`, and the "Mizan calls" line drops it.
+- **Copy.** The behind-the-scenes copy for 16·1 is the spec's four lines, plus a `recordCommunications()` box. Step 9
+  says that, until the customer chooses, service messages stay in the web-view and go by SMS to the verified mobile.
+  The main screen's onboarding line drops "contact choices".
+- **Decision log.** It appends "· asked after the payout, <time>" when the audit holds COMMUNICATIONS_RECORDED.
+- **Flow map.**
+  - Phase 2's detail is "Web-view · account · email".
+  - Interpretation: phase 10's *title* becomes "Funded · contact preferences · back in botim". Its detail stays
+    "botim learns only “funded”"; making it the detail would repeat the title.
+  - The Customer / Mizan / Rule copy of both phases is updated (one or two sentences, sources named).
+- **Changed existing acceptance checks** (intent kept):
+  - B walk: the seven 3·2 checks moved to 16·1. The behind regex reads the new CBUAE line.
+  - B walk: "contact choices land in the record’s consents" is now read after the 16·1 Continue. A new
+    decide-time check says there are none.
+  - B walk: the PWA checks are on 16·2 and "back in botim" is on 16·3.
+  - Variant A: the path string (no 3·2; 16·1, 16·2 added); "contact preferences (3·2)" became "4·0".
+  - Variant A: "default contact choices recorded" is now after the 16·1 Continue.
+  - Variant A: DISBURSED → 16·1 defaults → 16·2 PWA → 16·3.
+  - The animated walk, the v2.11 flow-map walk and screenshot walk, and v2.12's `WALK_TO_9` each have one Continue
+    fewer. `walkToFunded` has two more, and its check reads 16·3.
+  - The dark-theme contact check walks to 16·1.
+  - The 390px walk drops the 3·2 scroll check and continues from the offer to 16·1 to check it there.
+  - The v2.11 titles list has phase 10's new title.
+  - v2.12's "no engine change: src/ is untouched" is now "engine change is additive only" (`git diff --numstat
+    8b62ec7 -- src`: no line removed, data.js untouched).
+- The Noor skin `<style>` block is byte-identical; v2.13 needed no CSS.
