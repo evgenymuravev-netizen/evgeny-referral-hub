@@ -2893,10 +2893,11 @@ var JR_FLOW = [
     c: 'Lands on botim’s main screen and taps Noor’s banner or the Noor icon, or opens money to connect a bank first. In variant A, the entry leads to the Noor tile on the Loans screen.',
     m: 'Nothing is decided. botim receives events only (impression, click), each with the variant and the surface: the main screen or botim money.',
     r: 'Noor’s position (confirm with counsel): every Noor surface in botim, on the main screen and in botim money, is a Noor embed, and botim gets events only.' },
-  { t: 'Noor opens in botim', d: 'Web-view · account · email · contact consent', match: function (e) { return e.n >= 1 && e.n <= 3; },
-    c: 'Agrees to the hand-off, creates an account, verifies the phone and the email, and picks contact channels.',
-    m: 'assessFootprint() runs only if the customer opts in. The contact choice goes to decide() as consents.communications.',
-    r: 'CBUAE consumer protection: marketing only with prior consent and an easy opt-out. PDPL minimisation for the footprint check.' },
+  /* v2.13 — the contact preferences moved to phase 10 (after the payout) */
+  { t: 'Noor opens in botim', d: 'Web-view · account · email', match: function (e) { return e.n >= 1 && e.n <= 3; },
+    c: 'Agrees to the hand-off, creates an account, and verifies the phone and the email.',
+    m: 'assessFootprint() runs only if the customer opts in. No contact preferences yet: they are asked once the loan is issued.',
+    r: 'PDPL minimisation for the footprint check: a separate, optional consent that never affects the application.' },
   { t: 'Connect banks', d: 'Al Tareq consent', of: true, match: function (e) { return e.n === 4; },
     c: 'Picks banks and reads what Noor will read, why and for how long. Cancel any time in the Al Tareq dashboard.',
     m: 'No engine call yet: the consent sets what later pulls may read.',
@@ -2926,10 +2927,11 @@ var JR_FLOW = [
     c: 'Reads the KFS in English or Arabic, signs with UAE PASS, approves the repayment, then waits or waives.',
     m: 'recordEvent(), in order: OFFER_ACCEPTED, KFS_ACKNOWLEDGED, AGREEMENT_SIGNED, REPAYMENT_SET_UP, COOLING_OFF_CLEARED.',
     r: 'CBUAE Consumer Protection Standards (the KFS first) and CPR 8/2020 (5 business days, waivable in writing).' },
-  { t: 'Funded · back in botim', d: 'botim learns only “funded”', match: function (e) { return e.n === 16; },
-    c: 'The money is on its way from Partner Bank. botim shows “Loan funded · managed in Noor”, with no amount.',
-    m: 'DISBURSED: the record becomes EXECUTED. botim gets the funded event only.',
-    r: 'Noor’s position: botim receives events only, never an amount or credit data.' }
+  /* v2.13 — covers 16·0 (on its way), 16·1 (contact preferences), 16·2 (the PWA card) and 16·3 (back in botim) */
+  { t: 'Funded · contact preferences · back in botim', d: 'botim learns only “funded”', match: function (e) { return e.n === 16; },
+    c: 'The money is on its way from Partner Bank. Picks how Noor reaches them about repayments, then botim shows “Loan funded · managed in Noor”, with no amount.',
+    m: 'DISBURSED makes the record EXECUTED, and recordCommunications() adds the contact consent to the loan. botim gets the funded event only.',
+    r: 'CBUAE consumer protection: marketing only with prior consent and an easy opt-out. Noor’s position: botim receives events only, never channels, an amount or credit data.' }
 ];
 /* Each phase's entries on the active variant's path (indices into jrPath()) */
 function jrFlowEntries() {
@@ -6465,7 +6467,9 @@ var LogScreen = {
         (c.homeStatements && c.homeStatements.granted ? ' · Home-country statements shared (' + (c.homeStatements.source === 'UNDERWRITER_REQUEST' ? 'underwriter request' : 'customer upload') + ')' : '') +
         /* v2.8 — internal record only: neither reaches the credit memo */
         (c.digitalFootprint ? ' · Digital footprint ' + (c.digitalFootprint.granted ? 'granted' : 'declined') : '') +
-        (c.communications ? ' · Contact preferences ' + c.communications.reference + ' (service ' + c.communications.service.join(', ') + (c.communications.marketing.length ? '; marketing ' + c.communications.marketing.join(', ') : '; no marketing') + ')' : '') +
+        (c.communications ? ' · Contact preferences ' + c.communications.reference + ' (service ' + c.communications.service.join(', ') + (c.communications.marketing.length ? '; marketing ' + c.communications.marketing.join(', ') : '; no marketing') + ')' +
+          /* v2.13 — recordCommunications() after the payout leaves an audit entry */
+          ((rec.audit || []).some(function (a) { return a.action === 'COMMUNICATIONS_RECORDED'; }) ? ' · asked after the payout, ' + fmtDT(c.communications.at) : '') : '') +
         /* v2.10 — the SME route: the business consent is the signatory's; the owner's is her own */
         (c.ownerOpenFinance ? ' · the owner’s personal accounts ' + (c.ownerOpenFinance.granted ? 'granted (the owner’s own consent)' : 'not connected') : '') }),
       rec.supersedes ? h('dt', { text: 'Supersedes' }) : null,
@@ -6833,13 +6837,13 @@ var JR_HOST = {
 };
 var JR_BANKS = [['ENBD', 'EN'], ['FAB', 'FA'], ['ADCB', 'AD'], ['Mashreq', 'MQ'], ['RAKBANK', 'RK'], ['Other bank', '··']];
 /* v2.8 — each experiment variant renders its own path through the shared steps. Top-level numbers 0–16 are the
-   shared steps; the v2.8 additions are sub-steps (3·1 email, 3·2 contact preferences; variant A's 8·1 and 8·2). */
+   shared steps; the v2.8 additions are sub-steps (3·1 email; variant A's 8·1 and 8·2).
+   v2.13 — "How should we contact you?" moved from onboarding (3·2) to right after the payout (16·1). */
 var JR_ONBOARD = [
   { n: 1, title: 'Noor opens inside botim (web-view)' },
   { n: 2, title: 'Create your account' },
   { n: 3, title: 'Enter the code' },
   { n: 3, sub: 1, title: 'Your email — optional digital-footprint check', engine: 'assessFootprint()' },
-  { n: 3, sub: 2, title: 'How should we contact you?' },
   { n: 4, title: 'Connect your bank accounts — Al Tareq' },
   { n: 5, title: 'Approve in your bank — leaves the web-view' }
 ];
@@ -6851,7 +6855,10 @@ var JR_LOAN_STEPS = [
   { n: 13, title: 'Sign with UAE PASS', exec: [2] },
   { n: 14, title: 'Set up repayments', exec: [3] },
   { n: 15, title: 'Cooling-off', exec: [4] },
-  { n: 16, title: 'Done — back in botim · Noor on your home screen', exec: [5] }
+  { n: 16, title: 'Done — the money is on its way', exec: [5] },
+  /* v2.13 — asked once the loan is issued; 16·3 (back in botim) belongs to the 16·2 entry */
+  { n: 16, sub: 1, title: 'How should we contact you?', engine: 'recordCommunications()' },
+  { n: 16, sub: 2, title: 'Noor on your home screen · back in botim' }
 ];
 function jrInGroup(g, list) { return list.map(function (s) { return Object.assign({ group: g }, s); }); }
 /* v2.12 — the journey starts on botim's main screen (step 0); botim money is its sub-step 0·1 */
@@ -6885,7 +6892,7 @@ function jrFresh(variant) {
            emailEdit: false, emailOther: '', emailErr: null, emailCode: '', emailCodeErr: false, emailOk: false, emailDone: false,
            footprint: false, fpa: null,
            comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
-           commsTouched: false, commsDone: false,
+           commsTouched: false, commsDone: false, commsErr: null,
            insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
            recId: null, applyErr: null, eventErr: null, kfsLang: 'en', kfsSheet: false, waive: false, memoSent: null, pwaOpen: false,
            calls: [], botim: [], logged: {} };
@@ -6898,10 +6905,13 @@ function jrMaskEmail(e) {
   return m ? m[1] + '•••••@•••' + m[2].toLowerCase() : '•••••@•••';
 }
 function jrPath() { return JR_PATHS[(Journey.S && Journey.S.variant) || 'B'] || JR_PATHS.B; }
-/* Where (step, sub) sits on the variant's path: an exact sub-step entry wins, else the step's own entry */
+/* Where (step, sub) sits on the variant's path: an exact sub-step entry wins, else the step's own entry.
+   v2.13 — a sub-step after the last listed one belongs to that entry (16·3, back in botim, sits under 16·2). */
 function jrIdx(step, sub) {
-  var path = jrPath(), i;
+  var path = jrPath(), i, best = -1;
   for (i = 0; i < path.length; i++) if (path[i].n === step && path[i].sub !== undefined && path[i].sub === sub) return i;
+  if (step === 16) for (i = 0; i < path.length; i++) if (path[i].n === step && path[i].sub !== undefined && path[i].sub < sub) best = i;
+  if (best >= 0) return best;
   for (i = 0; i < path.length; i++) if (path[i].n === step && path[i].sub === undefined) return i;
   for (i = 0; i < path.length; i++) if (path[i].n === step) return i;
   return 0;
@@ -7049,7 +7059,7 @@ var Journey = {
       r = Journey.rec();
       if (r && r.status === 'EXECUTED') Journey.emit('funded');
     }
-    if (S.step === 16 && S.sub === 1) S.hostTab = 'credit';
+    if (S.step === 16 && S.sub === 3) S.hostTab = 'credit';
   },
   /* Record execution events (skipping any already recorded); engine refusals render inline, never the fatal banner */
   record: function (types) {
@@ -7077,15 +7087,31 @@ var Journey = {
     var c = Journey.S.comms, pick = function (g) { return JR_CHANNELS.map(function (x) { return x[0]; }).filter(function (k) { return !!c[g][k]; }); };
     return { service: pick('service'), marketing: pick('marketing') };
   },
+  /* v2.13 — 16·1 Continue: the choice is recorded on the funded loan (recordCommunications); refusals render inline */
+  saveComms: function () {
+    var S = Journey.S, comms = Journey.commsConsent(), r;
+    var call = 'recordCommunications(' + S.recId + ', {service:[' + comms.service.join(',') + '], marketing:[' + comms.marketing.join(',') + ']})';
+    S.commsErr = null;
+    try { r = ME.recordCommunications(S.recId, comms); }
+    catch (err) {
+      S.commsErr = err && err.message ? err.message : String(err);
+      Journey.log(call, 'refused — ' + S.commsErr);
+      Journey.render();
+      return;
+    }
+    S.commsDone = true;
+    Journey.log(call, r.consents.communications.reference + ' · consent on the loan · not in the credit memo · botim gets none of it');
+    afterEngineMutation();
+    Journey.go(16, 2, 1);
+  },
+  /* v2.13 — the decision no longer carries the contact preferences: they are asked once the loan is issued (16·1) */
   apply: function () {
     var S = Journey.S, p = Journey.persona, rec;
     S.applyErr = null;
-    var comms = Journey.commsConsent();
-    var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true, digitalFootprint:' + !!S.footprint +
-      ', communications:{service:[' + comms.service.join(',') + '], marketing:[' + comms.marketing.join(',') + ']}}})';
+    var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true, digitalFootprint:' + !!S.footprint + '}})';
     try {
       rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months,
-                        consents: { aecb: !!S.aecb, openFinance: true, digitalFootprint: !!S.footprint, communications: comms }, lenderId: 'partner-bank' });
+                        consents: { aecb: !!S.aecb, openFinance: true, digitalFootprint: !!S.footprint }, lenderId: 'partner-bank' });
     } catch (err) {
       /* Expected: no AECB consent → the engine refuses. Shown in the phone, calmly. */
       S.applyErr = err && err.message ? err.message : String(err);
@@ -7093,7 +7119,7 @@ var Journey = {
       Journey.render();
       return;
     }
-    S.recId = rec.id; S.reachedIdx = jrIdx(9, 0); S.kfsLang = 'en'; S.kfsSheet = false; S.waive = false; S.eventErr = null; S.pwaOpen = false;
+    S.recId = rec.id; S.reachedIdx = jrIdx(9, 0); S.kfsLang = 'en'; S.kfsSheet = false; S.waive = false; S.eventErr = null; S.pwaOpen = false; S.commsDone = false; S.commsErr = null;
     S.botim = S.botim.filter(function (b) { return b.key !== 'funded'; });
     Journey.emit('applied');
     Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : ''));
@@ -7133,13 +7159,13 @@ var Journey = {
     S.hostTab = t;
     Journey.render();
   },
-  /* Onboarding picks up where it stopped: hand-off → account → code → email → contact → banks */
+  /* Onboarding picks up where it stopped: hand-off → account → code → email → banks
+     (v2.13 — the contact preferences are asked after the payout, not here) */
   resumeOnboarding: function () {
     var S = Journey.S;
     if (!S.account) { Journey.go(1, 0, 1); return; }
     if (!S.phoneOk) { Journey.go(3, 0, 1); return; }
     if (!S.emailDone) { Journey.go(3, 1, 1); return; }
-    if (!S.commsDone) { Journey.go(3, 2, 1); return; }
     Journey.go(4, 0, 1);
   },
   /* botim money → "Add another +": entry 1 (both variants) */
@@ -7530,7 +7556,7 @@ var Journey = {
     var S = Journey.S, p = Journey.persona, st = S.step, sub = S.sub, B = Journey.btn;
     /* v2.12 — 0·0 is botim's main screen, where the journey starts; 0·1 is botim money */
     if (st === 0 && sub === 0) return { kind: 'host', node: Journey.home() };
-    var hostStep = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 1);
+    var hostStep = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 3);
     if (hostStep && S.chat) return { kind: 'hostchat', node: Journey.chat() };
     if (hostStep) return { kind: 'host', node: Journey.host() };
     var phone = JR_HOST.phoneMasked;
@@ -7561,7 +7587,6 @@ var Journey = {
           B('Continue', function () { Journey.S.account = true; Journey.go(3, 0, 1); }, 'jr-cta'))) };
     }
     if (st === 3 && sub === 1) return { kind: 'webview', node: Journey.emailView() };
-    if (st === 3 && sub === 2) return { kind: 'webview', node: Journey.contactView() };
     if (st === 3) {
       var cells = h('div', { class: 'ph-otp', id: 'jr-otp', role: 'group', 'aria-label': '6-digit code' });
       for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.otp[i] ? ' on' : (i === S.otp.length ? ' cur' : '')), text: S.otp[i] || '' }));
@@ -7709,6 +7734,9 @@ var Journey = {
     if (st === 13) return { kind: 'webview', node: Journey.signView() };
     if (st === 14) return { kind: 'webview', node: Journey.repayView() };
     if (st === 15) return { kind: 'webview', node: Journey.coolView() };
+    /* v2.13 — after the payout: 16·1 contact preferences, 16·2 the PWA card and "Back to botim" (16·3 is botim) */
+    if (st === 16 && sub === 1) return { kind: 'webview', node: Journey.contactView() };
+    if (st === 16 && sub === 2) return { kind: 'webview', node: Journey.allSetView() };
     return { kind: 'webview', node: Journey.doneView() };
   },
   inlineEngineError: function (msg, title) {
@@ -7779,16 +7807,18 @@ var Journey = {
           h('span', { class: 'ph-check-t' }, 'Digital footprint check ', h('span', { class: 'ph-opt-tag', text: 'Optional' })),
           h('span', { class: 'ph-check-s', text: 'We check your email and phone with a digital-footprint provider to confirm it’s you and protect your account. Declining never affects your application.' }),
           h('span', { class: 'ph-check-s ph-fp-purpose', text: 'Used for identity and account security — and, only if Noor switches it on later, to help when you have little credit history.' })))),
-      B('Continue', function () { S.emailDone = true; Journey.go(3, 2, 1); }, 'jr-cta'));
+      B('Continue', function () { S.emailDone = true; Journey.go(4, 0, 1); }, 'jr-cta'));   /* v2.13 — straight to the bank: contact preferences come after the payout */
   },
-  /* v2.8 — sub-step 3·2: contact preferences; at least one channel for the account and the loan */
+  /* v2.8 — contact preferences; at least one channel for the account and the loan.
+     v2.13 — asked at 16·1, once the loan is issued (no longer in onboarding): the same copy, toggles, defaults and
+     validation, one line under the title; Continue records the choice on the loan (recordCommunications) */
   contactView: function () {
     var S = Journey.S, B = Journey.btn;
     var group = function (key, title, tag, note, id) {
       var list = h('div', { class: 'ph-chans' });
       JR_CHANNELS.forEach(function (ch) {
         var cb = h('input', { type: 'checkbox', role: 'switch', id: 'jr-' + (key === 'service' ? 'svc' : 'mkt') + '-' + ch[0], dataset: { group: key, channel: ch[0] },
-          onchange: function (ev) { S.comms[key][ch[0]] = ev.target.checked; S.commsTouched = true; Journey.render(); } });
+          onchange: function (ev) { S.comms[key][ch[0]] = ev.target.checked; S.commsTouched = true; S.commsErr = null; Journey.render(); } });
         cb.checked = !!S.comms[key][ch[0]];
         list.appendChild(h('label', { class: 'ph-chan', for: cb.id }, h('span', { class: 'ph-chan-n', text: ch[1] }), cb));
       });
@@ -7799,10 +7829,12 @@ var Journey = {
     var none = !JR_CHANNELS.some(function (ch) { return S.comms.service[ch[0]]; });
     return Journey.wv(h('div', { id: 'jr-contact' },
       h('h2', { class: 'ph-h1', text: 'How should we contact you?' }),
+      h('p', { class: 'ph-small', id: 'jr-contact-lead', text: 'Your loan is on its way. Pick how we reach you about repayments and your account.' }),
       group('service', 'About your account and loan', 'Required', 'Some messages are required by law — like your Key Facts and payment reminders. We send them on the channels you choose.', 'jr-comms-service'),
       none ? h('div', { class: 'ph-note ph-note-err', id: 'jr-comms-err', role: 'alert' }, h('span', null, h('strong', { text: 'Choose at least one channel. ' }), 'We need one way to reach you about your account and loan.')) : null,
-      group('marketing', 'Offers and news', 'Optional', 'Change this anytime in Settings. We never share your contact details with botim or the lender.', 'jr-comms-mkt')),
-      B('Continue', function () { if (none) return; S.commsDone = true; S.account = true; Journey.go(4, 0, 1); }, 'jr-cta', { disabled: none }));
+      group('marketing', 'Offers and news', 'Optional', 'Change this anytime in Settings. We never share your contact details with botim or the lender.', 'jr-comms-mkt'),
+      Journey.inlineEngineError(S.commsErr, 'We couldn’t save your choice. ')),
+      B('Continue', function () { if (none) return; Journey.saveComms(); }, 'jr-cta', { disabled: none }));
   },
   /* v2.8 — variant A, sub-step 8·1: the customer names an amount first (no pre-qualification yet) */
   needView: function () {
@@ -8051,6 +8083,7 @@ var Journey = {
       done ? B('Continue', function () { Journey.go(16, 0, 1); }, 'jr-cta')
            : B('Waive and continue', function () { Journey.exec(['COOLING_OFF_CLEARED'], 16); }, 'jr-waive-go', { disabled: !S.waive }));
   },
+  /* 16·0 — DISBURSED: the money is on its way. v2.13: Continue leads to the contact preferences (16·1) */
   doneView: function () {
     var S = Journey.S, B = Journey.btn, r = Journey.rec();
     var k = r.pricing.kfs, due = jrFirstDue(), ok = r.status === 'EXECUTED';
@@ -8059,7 +8092,24 @@ var Journey = {
       h('h2', { class: 'ph-hero', id: 'jr-done-head', text: ok ? fmtAED(r.limit.approved) + ' is on its way from Partner Bank' : 'Almost there' }),
       h('p', { class: 'ph-p', text: ok ? 'It reaches your ENBD account today. First instalment ' + fmtMoney(k.monthlyInstalment) + ' on ' + fmtLongDate(due.iso) + '.' : '' }),
       h('p', { class: 'ph-small', text: 'Manage your loan in Noor — statements, early settlement and help.' }),
-      Journey.inlineEngineError(S.eventErr),
+      Journey.inlineEngineError(S.eventErr)),
+      ok ? B('Continue', function () { Journey.go(16, 1, 1); }, 'jr-cta') : B('Back to botim', function () { Journey.go(16, 3, 1); }, 'jr-cta'));
+  },
+  /* v2.13 — 16·2, after the contact preferences: the choice as recorded, then the PWA card and "Back to botim" as before */
+  allSetView: function () {
+    var S = Journey.S, B = Journey.btn, r = Journey.rec(), ok = !!r && r.status === 'EXECUTED';
+    var cc = r && r.consents ? r.consents.communications : null, names = {};
+    JR_CHANNELS.forEach(function (ch) { names[ch[0]] = ch[1]; });
+    var said = function (list) {
+      var a = list.map(function (x) { return names[x] || x; });
+      return a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : (a[0] || '');
+    };
+    return Journey.wv(h('div', { class: 'ph-center', id: 'jr-allset', dataset: { status: r ? r.status : '' } },
+      h('span', { class: 'ph-okico', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.2')),
+      h('h2', { class: 'ph-h1', id: 'jr-allset-head', text: 'You’re all set' }),
+      cc ? h('p', { class: 'ph-p', id: 'jr-comms-saved', text: 'We’ll reach you about repayments and your account by ' + said(cc.service) + '. ' +
+        (cc.marketing.length ? 'Offers and news: ' + said(cc.marketing) + '.' : 'No offers or news.') }) : null,
+      h('p', { class: 'ph-small', text: 'Change this anytime in Settings. Manage your loan in Noor — statements, early settlement and help.' }),
       /* v2.8 — the PWA: a second, Noor-owned servicing channel (installing needs the phone's browser) */
       ok ? h('div', { class: 'ph-card ph-pwa', id: 'jr-pwa' },
         h('span', { class: 'ph-pwa-ico', 'aria-hidden': 'true' }, h('span', { class: 'noor-icon' })),
@@ -8069,7 +8119,7 @@ var Journey = {
               h('span', { text: 'Opened noor.finance in your browser (simulated). Tap Share → Add to Home Screen.' }))
           : h('button', { class: 'ph-btn-sm', type: 'button', id: 'jr-pwa-open', onclick: function () { S.pwaOpen = true; Journey.render(); } }, 'Open noor.finance in your browser'),
         h('span', { class: 'ph-small', text: 'Simulated in this prototype.' })) : null),
-      B('Back to botim', function () { Journey.go(16, 1, 1); }, 'jr-cta'));
+      B('Back to botim', function () { Journey.go(16, 3, 1); }, 'jr-cta'));
   },
   /* ---------- "Behind the scenes" ---------- */
   behind: function () {
@@ -8092,11 +8142,7 @@ var Journey = {
             'The footprint check is a separate, optional consent (email + phone → a RiskSeal-style provider): identity and account security — thin-file scoring only if credit risk switches it on. Declining never affects the application.',
             'Never used for credit here: Ravi has an AECB file; on a thin file the overlay runs in shadow until back-tested.',
             'Never used at all: gender, lifestyle traits, service names, breach sources (PDPL minimisation).']]
-        : (sub === 2 ? ['How should we contact you? — a consent of its own', [
-            'CBUAE consumer-protection rules: marketing only with prior consent and an easy opt-out; WhatsApp needs explicit opt-in under the platform’s policy; service messages follow the channels the customer picked.',
-            'Stored with the application as consents.communications — a consent with its own reference. Not in the credit memo (data minimisation): the lender sees “Contact details and preferences” on the withheld list.',
-            'botim gets none of it — no email, no channels.']]
-        : ['Noor verifies the number itself', ['A one-time code from Noor: the host’s hand-off is a convenience, not proof of identity. UAE PASS comes later, for signing.']]),
+        : ['Noor verifies the number itself', ['A one-time code from Noor: the host’s hand-off is a convenience, not proof of identity. UAE PASS comes later, for signing.']],
       4: ['Al Tareq — UAE Open Finance consent', [
           'Al Tareq is the CBUAE’s Open Finance platform; Noor is the licensed third party that holds this consent.',
           'The consent is specific: what (accounts, balances, 12 months of transactions), why (what the customer can afford — and, while a loan with Noor is open, spotting early if repayments might become hard), how long (12 months or until cancelled), and where it shows: in Noor — including Noor views inside botim.',
@@ -8135,7 +8181,8 @@ var Journey = {
             'Still no decision: nothing is decided until the customer confirms in the next step.']]),
       9: ['decide() — the real Mizan engine', [
           'AECB consent is required by law before any loan (Federal Law 6/2010). Without it the engine refuses — try confirming with the box unticked.',
-          'Applying also records consent “share with lender”: Partner Bank gets the application result, never the bank data. The contact preferences' + (S.footprint ? ' and the digital-footprint consent' : '') + ' are recorded too — and stay with Noor.',
+          'Applying also records consent “share with lender”: Partner Bank gets the application result, never the bank data.' + (S.footprint ? ' The digital-footprint consent is recorded too — and stays with Noor.' : ''),
+          'Contact preferences are asked once the loan is issued. Until then, service messages — the Key Facts, the e-signature and the confirmations — happen inside the Noor web-view, and the verified mobile (the OTP number) gets them by SMS.',
           'UAE PASS confirms identity; decide() then pulls AECB, verifies the salary through Open Finance, runs the policy pack — including the free-cash-flow rule — NoorScore and the limit, and prices the loan.']],
       10: ['The offer is the decision record', [
           'Every figure on this screen is read from ' + (S.recId || 'the decision record') + ': amount, term, APR (mid of band B), instalment and total repayable — the record the Decision log replays.',
@@ -8148,7 +8195,12 @@ var Journey = {
       14: ['Repayment collection — one platform rule', ['Above AED 1,000: a direct debit mandate in favour of Partner Bank on the customer’s own account. AED 1,000 or less: an Al Tareq recurring payment approved in the bank app. No salary transfer required.',
           'Repayment set-up must happen before cooling-off can clear — the engine refuses otherwise.']],
       15: ['Cooling-off — CBUAE Consumer Protection Regulation 8/2020', ['Five business days to change your mind, or a written waiver. Nothing is paid out before it clears.']],
-      16: ['Disbursed — botim learns only “funded”', ['Partner Bank credits the loan; the record is EXECUTED and its memo shows the new status.',
+      16: sub === 1 ? ['How should we contact you? — asked once the loan is issued', [
+          'Asked once the loan is issued — one screen fewer before the decision.',
+          'Until now, service messages lived in the Noor web-view and went by SMS to the verified mobile; from here, repayment reminders and statements follow the channels chosen.',
+          'Offers and news stay opt-in, off by default (CBUAE consumer-protection rules: marketing only with prior consent and an easy opt-out; WhatsApp needs explicit opt-in under the platform’s policy).',
+          'Recorded on the loan as a consent with its own reference — never in the credit memo, and botim gets none of it.']]
+        : ['Disbursed — botim learns only “funded”', ['Partner Bank credits the loan; the record is EXECUTED and its memo shows the new status.',
           'botim money’s Credit tab shows “Loan funded · managed in Noor” (a Noor embed) — no amount, no terms.']]
     };
     var b = B[st] || B[0];
@@ -8156,10 +8208,10 @@ var Journey = {
     if (st === 0 && sub === 0) {
       b = ['botim’s main screen — where the journey starts', [
         'Where botim users land. Noor’s banner and icon sit on the main screen (Max’s ask) and on botim money — both are Noor embeds, so botim gets events only. Tap the banner or the Noor icon to go straight to Noor, or open money to connect a bank first.',
-        'Variant ' + S.variant + ': the banner and the Noor icon open ' + (A ? 'botim’s Loans screen with the Noor tile' : '“How much can you borrow?”') + '. A customer without a Noor account creates one first — account, email and contact choices.',
+        'Variant ' + S.variant + ': the banner and the Noor icon open ' + (A ? 'botim’s Loans screen with the Noor tile' : '“How much can you borrow?”') + '. A customer without a Noor account creates one first — account and email; contact choices come after the payout.',
         'Events: impression and click carry the surface they came from (home or money), so the experiment counts impressions by surface.']];
     }
-    var hostView = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 1);
+    var hostView = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 3);
     if (S.chat && hostView) {
       b = ['Next: split in chat — a read-only teaser', ['botim AI could offer to split recent card purchases right in the chat.',
         'It needs a 1-month “repay next month” plan. The engine’s split product allows Pay in 3, 6 or 12 only, so nothing here calls Mizan and no price is shown — the plan would go through the policy console with 4-eyes first.']];
@@ -8219,7 +8271,15 @@ var Journey = {
       steps.forEach(function (s) { ol.appendChild(h('li', { class: done[s.type] ? 'done' : '', dataset: { type: s.type } }, h('span', { class: 'jr-exec-l', text: s.label }), h('span', { class: 'jr-exec-t', text: done[s.type] ? fmtDT(done[s.type]).slice(11) : '' }))); });
       wrap.appendChild(h('div', { class: 'jr-engine' }, h('div', { class: 'jr-engine-h' }, h('code', { text: 'recordEvent(' + r.id + ', …)' }), h('span', { class: 'small muted', text: ' · status ' + r.status })), ol));
     }
-    if (st === 16 && sub === 0) {
+    if (st === 16 && sub === 1) {
+      /* v2.13 — what Continue records, and what botim and the lender never get */
+      var ccNow = r && r.consents ? r.consents.communications : null;
+      wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-comms-out' },
+        h('div', { class: 'jr-engine-h' }, h('code', { text: 'recordCommunications(' + (r ? r.id : '…') + ', …)' }),
+          h('span', { class: 'small muted', text: ccNow ? ' · recorded · ' + ccNow.reference : ' · on Continue' })),
+        h('div', { class: 'small muted', text: 'A consent on the funded loan (CNS-…-COMMS): service channels, marketing opt-ins and the time. The credit memo lists “Contact details and preferences” as withheld.' })));
+    }
+    if (st === 16 && sub === 2) {
       wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-pwa-why' }, h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Noor on the home screen — a PWA' })),
         h('ul', { class: 'jr-bts-l' },
           h('li', { text: 'In-app web-views (iOS WKWebView, Android WebView) can’t install a PWA: there is no install prompt. Installing needs the phone’s browser.' }),

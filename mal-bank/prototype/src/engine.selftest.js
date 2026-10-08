@@ -7,6 +7,7 @@
  * (CAR-LOAN-SPEC.md); group 17 = v2.8 digital footprint, the personal-loan FCF rule and contact
  * preferences (BOTIM-V28-SPEC.md); group 18 = v2.9 UAE red flags (RED-FLAGS-SPEC.md); group 19 =
  * v2.10 SME working capital (SME-SPEC.md))
+ * Group 20 = v2.13 contact preferences recorded after the loan is issued (JOURNEY-CONTACT-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -2873,6 +2874,124 @@ group('19. SME working capital (v2.10): business accounts + the owner’s person
   ok(snap() === snap(), 'two fresh init() runs: identical SME record, memo, SFTP row, quote, simulation and scan');
   for (const r of E.listDecisions()) collect(r.reasonCodes);
   ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. v2.10) exists with Arabic');
+});
+
+// ---------------------------------------------------------------------------
+// v2.13 — contact preferences asked after the loan is issued (JOURNEY-CONTACT-SPEC.md §2, §3):
+// recordCommunications() on the funded loan, in the v2.8 consent shape, never in the memo.
+group('20. Addendum v2.13: recordCommunications() on the funded loan — same consent shape, outcome and memo untouched', () => {
+  E.init(D);
+  const j = D.personasJourney[0];
+  const OF = { aecb: true, openFinance: true };
+  const decideJ = (amount, months, extra) => E.decide({ productId: 'personal_loan', applicant: j, amount, tenorMonths: months,
+                                                        consents: Object.assign({}, OF, extra || {}) });
+  ok(typeof E.recordCommunications === 'function', 'MizanEngine exports recordCommunications');
+
+  // ---- the journey's decide() call no longer carries contact preferences ----
+  const rec = decideJ(15000, 12, { digitalFootprint: true });
+  ok(rec.outcome === 'APPROVE' && rec.limit.approved === 15000 && rec.score.points === 737, 'j1 15,000 / 12 with footprint consent only: APPROVE · AED 15,000 · 737');
+  ok(!('communications' in rec.consents), 'decide() without consents.communications records no contact preferences (asked later now)');
+  for (const t of E.EXEC_EVENTS) E.recordEvent(rec.id, t);
+  ok(rec.status === 'EXECUTED' && rec.events.length === 6 && rec.events[5].type === 'DISBURSED', 'j1: the six execution events are recorded — DISBURSED, the loan exists');
+
+  // ---- recordCommunications on the approved, disbursed record ----
+  const freeze = (r) => JSON.stringify({ outcome: r.outcome, status: r.status, events: r.events, token: r.token, limit: r.limit, pricing: r.pricing,
+                                          score: r.score, reasonCodes: r.reasonCodes, rules: r.rules, repayment: r.repayment, features: r.features,
+                                          dataPulls: r.dataPulls, digitalFootprint: r.consents.digitalFootprint });
+  const before = freeze(rec);
+  const memoBefore = JSON.stringify(E.creditMemo(rec.id));
+  const sftpBefore = JSON.stringify(E.memoSftpRow(E.creditMemo(rec.id)));
+  const nDec = E.listDecisions().length, nAudit = rec.audit.length;
+  const out = E.recordCommunications(rec.id, { service: ['PUSH', 'SMS', 'EMAIL'], marketing: [] });
+  ok(out === E.getDecision(rec.id), 'recordCommunications returns the stored record');
+  const cc = rec.consents.communications;
+  ok(!!cc && cc.granted === true && cc.reference === 'CNS-' + rec.id.slice(4) + '-COMMS' && /^CNS-\d{6}-COMMS$/.test(cc.reference) &&
+     JSON.stringify(cc.service) === '["EMAIL","SMS","PUSH"]' && JSON.stringify(cc.marketing) === '[]' && /^\d{4}-\d\d-\d\dT/.test(cc.at),
+     'consent recorded: granted, reference CNS-…-COMMS, service EMAIL · SMS · PUSH (canonical order), marketing none, a timestamp');
+  const v28 = decideJ(15000, 12, { communications: { service: ['SMS'], marketing: [] } }).consents.communications;
+  eq(Object.keys(cc).join(','), Object.keys(v28).join(','), 'the same shape as the v2.8 decide-time consent (granted, at, reference, service, marketing, basis)');
+  eq(cc.basis, v28.basis, 'the same basis text as v2.8 (CBUAE consumer protection; WhatsApp by explicit opt-in)');
+  ok(new Date(cc.at) > new Date(rec.events[5].at), 'recorded after DISBURSED (the engine clock moved on)');
+  const au = rec.audit.filter(a => a.action === 'COMMUNICATIONS_RECORDED');
+  ok(au.length === 1 && au[0].actor === 'customer' && /^recorded · CNS-\d{6}-COMMS · service EMAIL · SMS · PUSH · marketing none/.test(au[0].detail) &&
+     au[0].at === cc.at, 'one COMMUNICATIONS_RECORDED audit entry (actor customer, "recorded", the reference and the channels)');
+  eq(rec.audit.length, nAudit + 1, 'exactly one audit entry added');
+  eq(freeze(rec), before, 'outcome, status, events, token, limit, pricing, score, reasons, rules, repayment, features, pulls and the footprint consent unchanged');
+  eq(JSON.stringify(E.creditMemo(rec.id)), memoBefore, 'the credit memo is unchanged');
+  eq(JSON.stringify(E.memoSftpRow(E.creditMemo(rec.id))), sftpBefore, 'the SFTP row is unchanged');
+  eq(E.listDecisions().length, nDec + 1, 'no new DecisionRecord (the +1 is the v2.8 comparison decision above)');
+
+  // ---- refused: no service channel, unknown channel, wrong shape, not approved, unknown id ----
+  const snapC = JSON.stringify(rec.consents.communications), nA = rec.audit.length;
+  throwsWith(() => E.recordCommunications(rec.id, { service: [], marketing: ['EMAIL'] }), 'at least one channel', 'no service channel → throws');
+  throwsWith(() => E.recordCommunications(rec.id, { service: ['FAX'], marketing: [] }), 'unknown contact channel', 'an unknown channel → throws');
+  throwsWith(() => E.recordCommunications(rec.id, { service: ['SMS'], marketing: ['PIGEON'] }), 'unknown contact channel', 'an unknown marketing channel → throws');
+  throwsWith(() => E.recordCommunications(rec.id, ['SMS']), 'service', 'preferences must be {service, marketing}');
+  throwsWith(() => E.recordCommunications(rec.id), 'service', 'no preferences → throws');
+  ok(JSON.stringify(rec.consents.communications) === snapC && rec.audit.length === nA, 'a refused call leaves the consent and the audit trail unchanged');
+  const dec = E.decide({ productId: 'personal_loan', applicant: P.r4, amount: P.r4.defaultRequest.amount, tenorMonths: P.r4.defaultRequest.tenorMonths, consents: OF });
+  const ref = E.decide({ productId: 'personal_loan', applicant: P.r2, amount: P.r2.defaultRequest.amount, tenorMonths: P.r2.defaultRequest.tenorMonths, consents: OF });
+  ok(dec.outcome === 'DECLINE' && ref.outcome === 'REFER', 'fixtures: r4 DECLINE, r2 REFER');
+  throwsWith(() => E.recordCommunications(dec.id, { service: ['SMS'], marketing: [] }), ['approved loan', 'DECLINE'], 'a DECLINE record → throws, naming the outcome');
+  throwsWith(() => E.recordCommunications(ref.id, { service: ['SMS'], marketing: [] }), ['approved loan', 'REFER'], 'a REFER record → throws, naming the outcome');
+  ok(!('communications' in dec.consents) && !('communications' in ref.consents) && !dec.audit.some(a => a.action === 'COMMUNICATIONS_RECORDED'),
+     'nothing is recorded on the refused DECLINE / REFER records');
+  throwsWith(() => E.recordCommunications('DEC-999999', { service: ['SMS'], marketing: [] }), 'unknown decision id', 'an unknown id → throws');
+  E.override(ref.id, { outcome: 'APPROVE', reasonCode: 'RC_MANUAL_REVIEW', analyst: 'a.hassan', approver: 'm.rashid' });
+  ok(E.recordCommunications(ref.id, { service: ['SMS'], marketing: [] }).consents.communications.reference === 'CNS-' + ref.id.slice(4) + '-COMMS',
+     'a REFER approved by a 4-eyes override is an approved loan: the preferences are recorded');
+
+  // ---- idempotent: a second call replaces the preferences, keeps the reference, adds an "updated" entry ----
+  const ref1 = cc.reference, at1 = cc.at;
+  E.recordCommunications(rec.id, { service: ['SMS'], marketing: ['WHATSAPP', 'EMAIL'] });
+  const cc2 = rec.consents.communications;
+  ok(cc2.reference === ref1 && JSON.stringify(cc2.service) === '["SMS"]' && JSON.stringify(cc2.marketing) === '["EMAIL","WHATSAPP"]' && cc2.granted === true,
+     'second call: preferences replaced (service SMS; marketing Email · WhatsApp), the reference unchanged');
+  ok(new Date(cc2.at) > new Date(at1), 'second call: a new timestamp');
+  const au2 = rec.audit.filter(a => a.action === 'COMMUNICATIONS_RECORDED');
+  ok(au2.length === 2 && /^updated · /.test(au2[1].detail) && au2[1].detail.includes(ref1) && /marketing EMAIL · WHATSAPP/.test(au2[1].detail),
+     'second call: a second COMMUNICATIONS_RECORDED audit entry, "updated"');
+  eq(freeze(rec), before, 'second call: the decision and its events are still unchanged');
+  eq(JSON.stringify(E.creditMemo(rec.id)), memoBefore, 'second call: the credit memo is still unchanged');
+
+  // ---- backward compatibility: a decide-time (v2.8) consent keeps its reference when updated ----
+  const old = decideJ(15000, 12, { communications: { service: ['PUSH'], marketing: [] } });
+  const oldRef = old.consents.communications.reference;
+  E.recordCommunications(old.id, { service: ['EMAIL', 'PUSH'], marketing: [] });
+  ok(old.consents.communications.reference === oldRef && JSON.stringify(old.consents.communications.service) === '["EMAIL","PUSH"]' &&
+     /^updated · /.test(old.audit.find(a => a.action === 'COMMUNICATIONS_RECORDED').detail),
+     'a v2.8 decide-time consent is updated in place: same reference, "updated"');
+  const fresh = decideJ(15000, 12);
+  ok(fresh.events.length === 0 && E.recordCommunications(fresh.id, { service: ['SMS'], marketing: [] }).consents.communications.granted === true && fresh.events.length === 0,
+     'the API needs an approved record only (no events required) and records no execution event');
+
+  // ---- privacy: the memo and the SFTP row never carry the channels ----
+  const memo = E.creditMemo(rec.id), sftp = E.memoSftpRow(memo);
+  ok(memo.sharing.withheld.length === 7 && memo.sharing.withheld.some(w => w.group === 'Contact details and preferences' && /PDPL/.test(w.reason)),
+     '"Contact details and preferences" stays on the withheld list');
+  ok(memo.consents.map(c => c.type).join(',') === 'aecb,openFinance,shareWithLender' && !memo.consents.some(c => /COMMS/.test(c.reference)),
+     'memo consent references: AECB, Al Tareq, lender only — no contact consent');
+  const memoBody = JSON.stringify(Object.assign({}, memo, { sharing: null })), row = sftp.row.join(',').toLowerCase();
+  const leaks = [j.contact.email, 'example.com', '@', 'WHATSAPP', 'WhatsApp', 'SMS', 'PUSH', 'EMAIL', 'marketing', 'communications', 'COMMS', ref1]
+    .filter(w => memoBody.toLowerCase().includes(w.toLowerCase()) || row.includes(w.toLowerCase()));
+  ok(leaks.length === 0, 'memo + SFTP row after recordCommunications: no email, channels, preferences or the consent reference' + (leaks.length ? ' (found: ' + leaks.join(', ') + ')' : ''));
+  ok(forbiddenKeys(memo).length === 0 && !/communications|contact/.test(JSON.stringify(Object.keys(memo))), 'memo keys stay on the allowlist');
+  const hits = privacyScan(rec, memo, sftp, { incomeBand: T.income(12000), dbrBand: T.dbr(rec.features.dbrPct), freeCashFlowBand: T.fcf(3700),
+    instalmentToCashFlowBand: T.share(rec.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) });
+  ok(hits.length === 0, 'j1 memo after the post-payout consent: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
+  ok(JSON.stringify(E.memoApiPayload(memo)) === JSON.stringify(memo), 'the API payload equals the memo (no channels either)');
+
+  // ---- determinism ----
+  function snap() {
+    E.init(D);
+    const a = decideJ(15000, 12, { digitalFootprint: true });
+    for (const t of E.EXEC_EVENTS) E.recordEvent(a.id, t);
+    E.recordCommunications(a.id, { service: ['EMAIL', 'SMS', 'PUSH'], marketing: [] });
+    E.recordCommunications(a.id, { service: ['PUSH'], marketing: ['EMAIL'] });
+    return JSON.stringify([a, E.creditMemo(a.id), E.memoSftpRow(E.creditMemo(a.id))]);
+  }
+  ok(snap() === snap(), 'two fresh init() runs: identical record, consent, audit, memo and SFTP row');
+  E.init(D);
 });
 
 // ---------------------------------------------------------------------------

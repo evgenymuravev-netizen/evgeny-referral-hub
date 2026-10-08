@@ -3341,6 +3341,30 @@
     return { service: pick(c.service), marketing: pick(c.marketing) };
   }
 
+  // v2.13 — the customer is asked how to be contacted once the loan is issued (not during onboarding).
+  // Records the choice on an approved record, in the v2.8 shape. Idempotent: a later call replaces the
+  // preferences, keeps the reference and adds an "updated" audit entry. The outcome, events, token
+  // and credit memo are untouched (CONSENT_CODES, the memo's allowlist, never includes it).
+  function recordCommunications(decisionId, prefs) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    if (rec.outcome !== 'APPROVE') {
+      throw err('contact preferences can only be recorded on an approved loan (' + decisionId + ' is ' + rec.outcome + ')');
+    }
+    if (rec.supersededBy) throw err(decisionId + ' was superseded by ' + rec.supersededBy + ' — record the preferences on the newer decision');
+    if (prefs === undefined || prefs === null) throw err('recordCommunications requires {service:[…], marketing:[…]}');
+    const comms = normalizeCommunications(prefs);
+    const prev = rec.consents.communications;
+    const reference = prev && prev.reference ? prev.reference : 'CNS-' + rec.id.slice(4) + '-COMMS';
+    const at = nowIso();
+    rec.consents.communications = { granted: true, at, reference, service: comms.service, marketing: comms.marketing, basis: COMMS_BASIS };
+    rec.audit.push({ at, actor: 'customer', action: 'COMMUNICATIONS_RECORDED',
+                     detail: (prev ? 'updated' : 'recorded') + ' · ' + reference + ' · service ' + comms.service.join(' · ') +
+                             ' · marketing ' + (comms.marketing.length ? comms.marketing.join(' · ') : 'none') +
+                             ' · kept by Noor — not in the credit memo, not shared with botim' });
+    return rec;
+  }
+
   // `internal` (not part of the public contract) carries redecide()'s trigger.
   function decide(application, internal) {
     ensureInit();
@@ -5148,6 +5172,8 @@
     prequalify, loanInstalment,
     // v2.8 — digital footprint (identity · account security · shadow thin-file overlay), pure
     assessFootprint, FOOTPRINT_MODES: FOOTPRINT_MODES.slice(), COMMS_CHANNELS: COMMS_CHANNELS.slice(),
+    // v2.13 — contact preferences recorded on the funded loan (asked after disbursal)
+    recordCommunications,
     // v2.7 — car loan: a pure live quote (documents path vs Open Finance path) for the car screen
     quoteCar,
     lenders: function () { ensureInit(); return clone(lendersList()); },
