@@ -69,6 +69,11 @@
  *    credit risk switches it LIVE with 4-eyes. Declining is never a decline reason.
  *  - Contact preferences (v2.8): recorded as a consent with a reference; never in
  *    the credit memo (data minimisation).
+ *  - Emirates ID front + back (v2.16, ../JOURNEY-EID-SPEC.md): the employer on the
+ *    card is matched against the WPS salary payer seen in Open Finance. A mismatch
+ *    or an expired card REFERs — never a decline, never a price change. Only the
+ *    name, masked ID number, date of birth, expiry, occupation and employer are
+ *    read; the memo carries a flag only.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -1235,6 +1240,112 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Emirates ID front + back (Addendum v2.16, JOURNEY-EID-SPEC.md) — pure.
+  // The back of a resident's card shows the employer; Open Finance shows who pays
+  // the salary (the payer name on the monthly salary credit, usually WPS). Mizan
+  // matches the two and checks that the name on the card is the account holder's.
+  // A match strengthens income verification; a mismatch REFERs (usually a job
+  // change) — never a decline, never a price change. Data minimisation (PDPL):
+  // only the fields in EID_FIELDS are read — the card's other personal fields and
+  // the photos never are (the selftest proves it with a property recorder).
+  // ---------------------------------------------------------------------------
+  const EID_FIELDS = { front: ['nameEn', 'nameAr', 'idMasked', 'dob', 'expiry'], back: ['occupation', 'employer'] };
+  const EID_NOT_READ = ['nationality', 'sex', 'photos'];
+  const EID_MATCH_MIN = 0.7;   // match when ≥ 70% of the employer's tokens appear in the payer
+  const EID_DROP = ['LLC', 'FZE', 'FZCO', 'LTD', 'CO', 'SALARY', 'WPS', 'SAL'];   // legal suffixes + payroll words
+  const EID_ABBREV = { SVCS: 'SERVICES', TRDG: 'TRADING', LOG: 'LOGISTICS' };
+  // Uppercase; drop L.L.C / LLC / FZE / FZCO / LTD / CO, SALARY / WPS / SAL and '/'; expand
+  // SVCS / TRDG / LOG; split into distinct tokens.
+  function employerTokens(s) {
+    const t = String(s || '').toUpperCase()
+      .replace(/(^|[^A-Z0-9])L\.\s?L\.\s?C\.?(?=$|[^A-Z0-9])/g, '$1 ')
+      .replace(/\//g, ' ').replace(/[^A-Z0-9&\s]/g, ' ').replace(/&/g, ' ');
+    const out = [];
+    for (const raw of t.split(/\s+/)) {
+      if (!raw) continue;
+      const tok = EID_ABBREV[raw] || raw;
+      if (EID_DROP.includes(tok) || out.includes(tok)) continue;
+      out.push(tok);
+    }
+    return out;
+  }
+  function employerMatch(employer, payer) {
+    const e = employerTokens(employer), p = employerTokens(payer);
+    const hits = e.filter(x => p.includes(x)).length;
+    const ratio = e.length ? hits / e.length : 0;
+    return { employerTokens: e, payerTokens: p, score: Math.round(ratio * 100), match: e.length > 0 && ratio >= EID_MATCH_MIN };
+  }
+  function wholeYearsBetween(fromIso, toIso) {
+    const a = String(fromIso).slice(0, 10), b = String(toIso).slice(0, 10);
+    let y = Number(b.slice(0, 4)) - Number(a.slice(0, 4));
+    if (b.slice(5) < a.slice(5)) y -= 1;
+    return y;
+  }
+  // The persona's scan when `scan` is missing or true; otherwise {front, back}.
+  function eidScanOf(applicant, scan) {
+    const s = scan === undefined || scan === null || scan === true ? (applicant && applicant.emiratesId) : scan;
+    if (!s || typeof s !== 'object' || Array.isArray(s) || !s.front || !s.back || typeof s.front !== 'object' || typeof s.back !== 'object') {
+      throw err(scan === undefined || scan === null || scan === true
+        ? 'applicant ' + ((applicant && applicant.id) || '') + ' has no Emirates ID scan on file — pass {front, back}'
+        : 'the Emirates ID scan needs both sides: {front, back}');
+    }
+    return s;
+  }
+  // checkEmiratesId(applicant, scan?, opts?) — pure. opts.salaryPayer overrides the payer (the
+  // what-if); opts.openFinance === false reads nothing from the connected accounts; opts.asOf
+  // (default TODAY) dates the expiry and age checks.
+  function checkEmiratesId(applicant, scan, opts) {
+    ensureInit();
+    const s = eidScanOf(applicant, scan);
+    const o = opts || {};
+    const f = {}, b = {};
+    for (const k of EID_FIELDS.front) f[k] = s.front[k];
+    for (const k of EID_FIELDS.back) b[k] = s.back[k];
+    const fieldsRead = EID_FIELDS.front.filter(k => f[k] !== undefined && f[k] !== null && f[k] !== '')
+      .concat(EID_FIELDS.back.filter(k => b[k] !== undefined && b[k] !== null && b[k] !== ''));
+    const asOf = String(o.asOf || D.TODAY).slice(0, 10);
+    const expiry = typeof f.expiry === 'string' ? f.expiry.slice(0, 10) : null;
+    const expiryValid = !!expiry && expiry >= asOf;
+    const ageFromDob = typeof f.dob === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.dob) ? wholeYearsBetween(f.dob, asOf) : null;
+    // Open Finance side: the account holder (the salary account first) and the salary payer.
+    const of = o.openFinance !== false;
+    const cn = of && applicant && applicant.connected ? applicant.connected : null;
+    const accts = cn && Array.isArray(cn.accounts) ? cn.accounts : [];
+    const holderAcct = accts.find(a => a && a.salaryAccount && a.holderName) || accts.find(a => a && a.holderName) || null;
+    const accountHolder = holderAcct ? holderAcct.holderName : null;
+    const salaryPayer = o.salaryPayer !== undefined && o.salaryPayer !== null ? String(o.salaryPayer) : (cn && cn.salaryPayer ? cn.salaryPayer : null);
+    const idName = f.nameEn || null;
+    const em = b.employer && salaryPayer ? employerMatch(b.employer, salaryPayer) : null;
+    return {
+      fieldsRead,
+      notRead: EID_NOT_READ.slice(),
+      idMasked: f.idMasked || null,
+      expiry, expiryValid, ageFromDob,
+      nameMatch: { idName, accountHolder, match: idName && accountHolder ? normName(idName) === normName(accountHolder) : null },
+      employerMatch: { idEmployer: b.employer || null, salaryPayer, score: em ? em.score : null, match: em ? em.match : null,
+                       threshold: Math.round(EID_MATCH_MIN * 100) + '% of the employer’s words in the payer name' },
+      openFinance: !!cn,
+      whatIf: o.salaryPayer !== undefined && o.salaryPayer !== null
+    };
+  }
+  // POL_ID_VALID + POL_EMPLOYER_MATCH (personal loan). REFER or INFO only — never a FAIL.
+  function emiratesIdRules(rs, ec) {
+    if (!ec) return;
+    rs.add('POL_ID_VALID', 'Emirates ID valid (front + back scanned; refer only — never a decline)', 'POLICY',
+           ec.expiryValid ? 'PASS' : 'REFER',
+           (ec.expiryValid ? 'valid until ' + ec.expiry : (ec.expiry ? 'expired ' + ec.expiry : 'expiry not read')) +
+           ' · name on the card ' + (ec.nameMatch.match === true ? 'matches' : (ec.nameMatch.match === false ? 'does not match' : 'not yet checked against')) + ' the account holder',
+           'not expired', 'RC_ID_EXPIRED');
+    const m = ec.employerMatch;
+    const checked = ec.openFinance && m.salaryPayer && m.match !== null;
+    rs.add('POL_EMPLOYER_MATCH', 'Employer on the Emirates ID matches the salary payer in Open Finance (refer only — never a decline, never a price change)', 'POLICY',
+           checked ? (m.match ? 'PASS' : 'REFER') : 'INFO',
+           checked ? (m.match ? 'match' : 'mismatch') + ' — ' + m.score + '% of the employer’s words in the WPS payer name'
+                   : (ec.openFinance ? 'no salary payer seen in the connected accounts' : 'checked once accounts are connected'),
+           '≥ ' + Math.round(EID_MATCH_MIN * 100) + '% of the employer’s words', checked && !m.match ? 'RC_EMPLOYER_MISMATCH' : null);
+  }
+
+  // ---------------------------------------------------------------------------
   // Rule helpers — every rule evaluated is recorded, pass or fail.
   // ---------------------------------------------------------------------------
   function makeRuleSet() {
@@ -1443,6 +1554,9 @@
              '≤ ' + prm.instalmentToFcfMaxPct + '%', 'RC_FREE_CASH_FLOW');
     }
 
+    // v2.16 — the Emirates ID scan, when the application carries one: POL_ID_VALID and
+    // POL_EMPLOYER_MATCH (REFER or INFO only — never a FAIL; the limit and price above are untouched).
+    emiratesIdRules(rs, extra && extra.emiratesId);
     redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
     const outcome = outcomeFromRules(rs.rules);
     if (outcome === 'DECLINE') approved = 0;
@@ -1473,6 +1587,14 @@
       homeStatementsUsed: stUsable,
       statementsHaircutPct
     };
+    if (extra && extra.emiratesId) {
+      // v2.16 — flags and a score only: the employer, the payer, the date of birth and the occupation stay on record.emiratesId.
+      const ec = extra.emiratesId;
+      features.idExpiryValid = ec.expiryValid;
+      features.idNameMatch = ec.nameMatch.match;
+      features.employerMatch = ec.employerMatch.match;
+      features.employerMatchScore = ec.employerMatch.score;
+    }
     const limit = {
       requested: amount, approved: outcome === 'DECLINE' ? 0 : approved,
       bindingConstraint: binding,
@@ -3459,8 +3581,18 @@
     // v2.14 — the footprint consent's basis (EXPLICIT or TERMS), validated here too.
     const fpc = normalizeFootprintConsent(consents.digitalFootprint);
 
+    // v2.16 — the Emirates ID scan (front + back): {front, back}, or true for the applicant's own
+    // record. Personal loan only. The employer is matched against the salary payer only with
+    // Open Finance consent; without it the check waits until the accounts are connected (INFO).
+    let eid = null;
+    if (application.emiratesId !== undefined && application.emiratesId !== null && application.emiratesId !== false) {
+      if (productId !== 'personal_loan') throw err('the Emirates ID scan feeds personal-loan decisions only (not ' + productId + ')');
+      eid = checkEmiratesId(applicant, application.emiratesId, { openFinance: consents.openFinance === true });
+    }
+
     const pol = getPolicyRef(productId);
-    let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements, vehicle ? { vehicle } : undefined);
+    let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
+                      vehicle ? { vehicle } : (eid ? { emiratesId: eid } : undefined));
 
     // v2.8 — digital footprint: only with its own consent, only when the applicant has a
     // footprint, only on the packs that carry the overlay params (split, personal loan,
@@ -3478,7 +3610,7 @@
                       note: co.applied && !scored ? 'Not applied — no scorecard on this decision' : co.status };
         if (fpOverlay.applied) {
           ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
-                        { footprintOverlay: { name: fpOverlay.name, delta: fpOverlay.delta } });
+                        Object.assign({ footprintOverlay: { name: fpOverlay.name, delta: fpOverlay.delta } }, eid ? { emiratesId: eid } : {}));
         }
       }
     }
@@ -3488,6 +3620,15 @@
     const createdAt = nowIso();
     const consentAt = createdAt;
     const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
+    if (eid) {
+      // v2.16 — what the scan read, as flags: never the employer, the payer, the date of birth or the occupation.
+      pulls.push({ source: 'EMIRATES_ID', status: 'SCANNED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
+                   summary: { scan: 'front + back scanned', fieldsRead: 'name (EN + AR), ID number (masked), date of birth, expiry, occupation, employer',
+                              notRead: 'nationality · sex · photos (not kept)', expiry: eid.expiryValid ? 'valid' : 'expired',
+                              nameMatch: eid.nameMatch.match === null ? 'checked once accounts are connected' : (eid.nameMatch.match ? 'matches the account holder' : 'does not match the account holder'),
+                              employerMatch: eid.employerMatch.match === null ? (eid.openFinance ? 'no salary payer seen' : 'checked once accounts are connected')
+                                : (eid.employerMatch.match ? 'match' : 'mismatch') + ' — ' + eid.employerMatch.score + '% (WPS salary payer)' } });
+    }
     if (fpa) {
       ev.features.footprintIdentity = fpa.identity.confidence;
       ev.features.footprintAtoRisk = fpa.security.atoRisk;
@@ -3569,6 +3710,10 @@
       record.consents.digitalFootprint = { granted: fpc.granted, basis: fpc.basis, termsVersion: fpc.termsVersion,
                                            at: fpc.granted ? (fpc.acceptedAt || consentAt) : null,
                                            scope: fpc.basis === 'TERMS' ? FOOTPRINT_SCOPE_TERMS : FOOTPRINT_SCOPE, used: !!fpa };
+    }
+    if (eid) {
+      // v2.16 — internal only (the Decision log, an underwriter on a REFER). The memo carries one flag and the masked ID.
+      record.emiratesId = { scanned: 'FRONT_AND_BACK', idMasked: eid.idMasked, check: clone(eid) };
     }
     if (comms) {
       record.consents.communications = { granted: true, at: consentAt, reference: 'CNS-' + id.slice(4) + '-COMMS',
@@ -3969,6 +4114,14 @@
   // ownerOpenFinance (v2.10) is the owner's own consent: its REFERENCE is shared (the guarantee flag rests on it), never its content.
   const CONSENT_CODES = [['aecb', 'AECB'], ['openFinance', 'ALTAREQ'], ['ownerOpenFinance', 'ALTAREQ-OWNER'], ['creditPassport', 'CPASS'], ['homeStatements', 'STMT'], ['shareWithLender', 'LENDER']];
   const FOOTPRINT_CONFIDENCE_WORD = { HIGH: 'high', MEDIUM: 'medium', LOW: 'low' };
+  // v2.16 — the Emirates ID part of the identity flag ('' when the decision had no scan).
+  function memoEmiratesIdFlag(rec) {
+    if (!rec.emiratesId) return '';
+    const f = rec.features || {};
+    return ' · Emirates ID front + back' + (f.idExpiryValid === false ? ' · card expired' : '') +
+      (f.employerMatch === true ? ' · employer matches salary payer'
+        : (f.employerMatch === false ? ' · employer differs from salary payer' : ' · employer not yet checked against salary credits'));
+  }
   function creditMemo(decisionId, opts) {
     ensureInit();
     const rec = getDecisionRef(decisionId);
@@ -3992,7 +4145,8 @@
       product: { productId: rec.productId, nameEn: man.nameEn || rec.productId },
       policyVersion: rec.policyVersion,
       engineVersion: rec.engineVersion,
-      borrower: { name: a.name || null, nameAr: a.nameAr || null, emiratesIdMasked: maskedEmiratesId(a.id), kycSource: 'UAE PASS (onboarding)' },
+      borrower: { name: a.name || null, nameAr: a.nameAr || null,
+                  emiratesIdMasked: (rec.emiratesId && rec.emiratesId.idMasked) || maskedEmiratesId(a.id), kycSource: 'UAE PASS (onboarding)' },
       decision: {
         outcome: rec.outcome,
         status: rec.status,
@@ -4026,7 +4180,9 @@
       },
       verification: Object.assign({
         // v2.8 — a consented digital-footprint check adds its confidence level, never its data.
-        identity: 'Verified (UAE PASS)' + (FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] && rec.consents && rec.consents.digitalFootprint && rec.consents.digitalFootprint.granted
+        // v2.16 — an Emirates ID scan adds a flag only: never the employer, the payer, the date of birth or the occupation.
+        identity: 'Verified (UAE PASS)' + memoEmiratesIdFlag(rec) +
+          (FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] && rec.consents && rec.consents.digitalFootprint && rec.consents.digitalFootprint.granted
           ? ' · digital footprint: ' + FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] + ' confidence' : ''),
         homeStatements: memoStatementsFlag(rec.homeStatements),
         purchaseVerified: rec.productId === 'split'
@@ -5200,6 +5356,8 @@
     assessFootprint, FOOTPRINT_MODES: FOOTPRINT_MODES.slice(), COMMS_CHANNELS: COMMS_CHANNELS.slice(),
     // v2.13 — contact preferences recorded on the funded loan (asked after disbursal)
     recordCommunications,
+    // v2.16 — the Emirates ID front + back, cross-checked against the salary payer in Open Finance (pure)
+    checkEmiratesId, EMIRATES_ID_NOT_READ: EID_NOT_READ.slice(),
     // v2.7 — car loan: a pure live quote (documents path vs Open Finance path) for the car screen
     quoteCar,
     lenders: function () { ensureInit(); return clone(lendersList()); },

@@ -373,12 +373,15 @@
                   salaryDetected: true, avgSalaryCredit: 12000, salaryCreditDay: 27 },
       connected: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
                    accounts: [
-                     { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true },
-                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false },
+                     { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true, holderName: 'RAVI KUMAR' },
+                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false, holderName: 'RAVI KUMAR' },
                      // v2.15 — the ENBD credit card and personal loan come through the same Al Tareq consent
-                     { bank: 'ENBD', type: 'Credit card', mask: '7702', limit: 12000, balance: 7440, monthlyRepayment: 400 },
-                     { bank: 'ENBD', type: 'Personal loan', mask: '3317', outstanding: 6200, instalment: 500, endsOn: '2027-03' }
+                     { bank: 'ENBD', type: 'Credit card', mask: '7702', limit: 12000, balance: 7440, monthlyRepayment: 400, holderName: 'RAVI KUMAR' },
+                     { bank: 'ENBD', type: 'Personal loan', mask: '3317', outstanding: 6200, instalment: 500, endsOn: '2027-03', holderName: 'RAVI KUMAR' }
                    ],
+                   // v2.16 — the payer name on the monthly salary credit (a WPS transfer), as the salary account shows it.
+                   // Read only to cross-check the employer on the Emirates ID; never sent to the lender.
+                   salaryPayer: 'SALARY/WPS DUNECREST LOGISTICS',
                    avgMonthlyIncome: 12000, avgMonthlySpend: 7400, incomeVolatilityPct: 1, salaryCreditDay: 27,
                    // The repayments the accounts show leaving every month (= the AECB obligation); the engine reads the total only
                    observedObligationsMonthly: 900, observedObligationsLabel: 'Credit-card repayment + personal-loan instalment',
@@ -396,7 +399,15 @@
       // identity HIGH, account-takeover risk NORMAL; the thin-file overlay is not eligible (AECB file).
       footprint: { vendorScore: 731, emailAgeYearsMin: 7, nameMatchSources: 2, phoneOnMessenger: true,
                    velocity: { emailSeenByLenders: 1 },
-                   breaches: { count: 1, includesCredentialStuffingCompilation: false } }
+                   breaches: { count: 1, includesCredentialStuffingCompilation: false } },
+      // v2.16 — what the Emirates ID scan reads (front + back). Fictitious employer; masked ID number.
+      // Minimised by design: the card's other fields are never captured into the data, and the photos
+      // are not kept. Date of birth 1995-03-14 → 31 as of TODAY. The employer, occupation and date of
+      // birth stay with Noor: never in the credit memo or the SFTP row.
+      emiratesId: {
+        front: { nameEn: 'Ravi Kumar', nameAr: 'رافي كومار', idMasked: '784-••••-•••••••-4', dob: '1995-03-14', expiry: '2028-02-09' },
+        back: { occupation: 'Warehouse Supervisor', employer: 'Dunecrest Logistics LLC', issuingPlace: 'Dubai' }
+      }
     }
   ];
 
@@ -590,6 +601,15 @@
     RC_STEP_UP_AUTH: {
       en: 'For your security, please sign in again with UAE PASS before the money is paid out.',
       ar: 'حرصاً على أمانك، يُرجى تسجيل الدخول مجدداً عبر الهوية الرقمية (UAE PASS) قبل صرف المبلغ.' },
+    // --- Emirates ID front + back (Addendum v2.16) ----------------------------------
+    // Refer only: never a decline, never a price change. Placed before the v2.9 block so
+    // the red-flag and SME codes keep their position at the end of the table.
+    RC_EMPLOYER_MISMATCH: {
+      en: 'Your salary comes from a different company than your Emirates ID shows — maybe you changed jobs? A salary certificate or employment letter will sort it out.',
+      ar: 'يصلك راتبك من شركة غير الشركة المذكورة في بطاقة هويتك الإماراتية — هل غيّرت عملك؟ شهادة راتب أو خطاب من جهة العمل يكفيان لحلّ الأمر.' },
+    RC_ID_EXPIRED: {
+      en: 'Your Emirates ID has expired — please renew it or scan your new card.',
+      ar: 'انتهت صلاحية بطاقة هويتك الإماراتية — يُرجى تجديدها أو مسح بطاقتك الجديدة.' },
     // --- UAE red flags and early warning (Addendum v2.9) ------------------------------
     // Customer-safe: each one is a change against the customer's own history, worded
     // so an analyst can read it to the customer. No values, no places, no services.

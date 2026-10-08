@@ -10,6 +10,7 @@
  * Group 20 = v2.13 contact preferences recorded after the loan is issued (JOURNEY-CONTACT-SPEC.md).
  * Group 21 = v2.14 the digital-footprint check covered by the accepted terms (JOURNEY-FOOTPRINT-TC-SPEC.md).
  * Group 22 = v2.15 j1's ENBD credit card and personal loan, same totals (JOURNEY-BANKAPP-SPEC.md).
+ * Group 23 = v2.16 the Emirates ID front + back, employer cross-checked against the salary payer (JOURNEY-EID-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -1244,15 +1245,34 @@ function rawValuesOf(rec) {
    f.instalmentBudgetFcf, f.instalmentBudgetDbr, f.maxInstalment, f.headroomMonthly].forEach(add);
   return out;
 }
+// v2.16 — the Emirates ID strings a memo must never contain (per record): the employer, the
+// occupation, the date of birth (in the usual formats), the salary payer and their distinctive words.
+function identityWordsOf(rec) {
+  const a = rec.applicantSnapshot || {}, id = a.emiratesId || {}, fr = id.front || {}, bk = id.back || {};
+  const chk = (rec.emiratesId && rec.emiratesId.check) || {}, em = chk.employerMatch || {};
+  const out = new Set();
+  const addStr = (v) => { if (typeof v === 'string' && v.trim()) out.add(v.trim()); };
+  [bk.employer, bk.occupation, (a.connected || {}).salaryPayer, em.idEmployer, em.salaryPayer].forEach(v => {
+    addStr(v);
+    for (const w of String(v || '').split(/[\s/]+/)) if (/^[A-Za-z]{4,}$/.test(w) && !/^(salary|llc|fzco|ltd)$/i.test(w)) out.add(w);
+  });
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fr.dob || '')) {
+    const [y, m, d] = fr.dob.split('-');
+    const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    [fr.dob, d + '/' + m + '/' + y, d + '-' + m + '-' + y, m + '/' + d + '/' + y, Number(d) + ' ' + MON3[Number(m) - 1] + ' ' + y].forEach(addStr);
+  }
+  return [...out];
+}
 // Recursive privacy scan: every leaf of the memo (and every SFTP cell). Strings are
 // checked for bank labels, merchant names, statement files and "transactions", and
 // every number inside them — like every numeric leaf — must not be a raw value.
 // Band fields are instead checked to equal the independently computed band.
+// v2.16 — strings are also checked for the Emirates ID employer, occupation, date of birth and the salary payer.
 function privacyScan(rec, memo, sftp, expect) {
   const raw = rawValuesOf(rec);
   const hits = [];
   const wordRe = (w) => new RegExp('(^|[^A-Za-z])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^A-Za-z])', 'i');
-  const words = BANK_LABELS.concat(MERCHANTS, STATEMENT_FILES).map(w => [w, wordRe(w)]);
+  const words = BANK_LABELS.concat(MERCHANTS, STATEMENT_FILES, identityWordsOf(rec)).map(w => [w, wordRe(w)]);
   const numHit = (n, where) => { const v = Math.round(Math.abs(n) * 100) / 100; if (raw.has(v)) hits.push(where + ' = ' + n); };
   function str(s, where) {
     if (/transactions/i.test(s)) hits.push(where + ' says "transactions"');
@@ -3149,6 +3169,213 @@ group('22. Addendum v2.15: j1’s ENBD card ••7702 and loan ••3317 — s
   ok(hits.length === 0, 'j1 memo with the card and the loan: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
   ok(forbiddenKeys(memo).length === 0, 'memo keys stay on the allowlist (no accounts)');
   ok(runOf(j).key === runOf(j).key, 'two fresh init() runs: identical');
+  E.init(D);
+});
+
+group('23. Addendum v2.16: the Emirates ID front + back — employer cross-checked against the WPS salary payer; refer only, every Ravi number unchanged', () => {
+  E.init(D);
+  const j = D.personasJourney[0], cn = j.connected, eidData = j.emiratesId;
+  const OF = { aecb: true, openFinance: true };
+  const TERMS = { basis: 'TERMS', termsVersion: 'T&C v1.0 · Privacy policy v1.0', acceptedAt: D.TODAY + 'T08:58:00.000Z' };
+  const FORBIDDEN_KEY = /nation|countr|destin|relig|service|merchant|carrier|city|airport/i;
+  const keysDeep = (x, out) => { out = out || []; if (x && typeof x === 'object') for (const k of Object.keys(x)) { out.push(k); keysDeep(x[k], out); } return out; };
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
+  const NEW_RULES = ['POL_ID_VALID', 'POL_EMPLOYER_MATCH'];
+  const ruleOf = (rec, id) => rec.rules.find(r => r.id === id) || {};
+  const decideJ = (applicant, over) => { const r = E.decide(Object.assign({ productId: 'personal_loan', applicant, amount: 15000, tenorMonths: 12, consents: OF, emiratesId: true }, over || {})); collect(r.reasonCodes); return r; };
+  const withPayer = (payer) => { const c = clone(j); if (payer === null) delete c.connected.salaryPayer; else c.connected.salaryPayer = payer; return c; };
+  const withExpiry = (iso) => { const c = clone(j); c.emiratesId.front.expiry = iso; return c; };
+  const PALMGATE = 'SALARY/WPS PALMGATE TRADING';
+  const addDays = (iso, n) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+
+  // ---- the data ----
+  eq(JSON.stringify(eidData.front), JSON.stringify({ nameEn: 'Ravi Kumar', nameAr: 'رافي كومار', idMasked: '784-••••-•••••••-4', dob: '1995-03-14', expiry: '2028-02-09' }), 'j1.emiratesId.front exactly as specified');
+  eq(JSON.stringify(eidData.back), JSON.stringify({ occupation: 'Warehouse Supervisor', employer: 'Dunecrest Logistics LLC', issuingPlace: 'Dubai' }), 'j1.emiratesId.back exactly as specified (a fictitious employer)');
+  eq(cn.salaryPayer, 'SALARY/WPS DUNECREST LOGISTICS', 'connected.salaryPayer is the WPS payer name on the salary credit');
+  ok(cn.accounts.length === 4 && cn.accounts.every(a => a.holderName === 'RAVI KUMAR'), 'every connected account carries holderName "RAVI KUMAR"');
+  const badK = keysDeep(eidData).concat(keysDeep(cn)).filter(k => FORBIDDEN_KEY.test(k) || /^(sex|gender)$/i.test(k));
+  ok(badK.length === 0 && !keysDeep(j).some(k => /^(nationality|sex|gender|country)$/i.test(k)) && !/nationalit|"sex"|"gender"|"country"/i.test(JSON.stringify(j)),
+     'no nationality, sex or country field: the v2.9 FORBIDDEN_KEY regex (+ sex/gender) is clean on j1.emiratesId and j1.connected, and j1 has no such key anywhere' + (badK.length ? ' (' + badK.join(', ') + ')' : ''));
+  const [dy, dm, dd] = eidData.front.dob.split('-').map(Number), [ty, tm, td] = D.TODAY.split('-').map(Number);
+  eq(ty - dy - ((tm < dm || (tm === dm && td < dd)) ? 1 : 0), j.age, 'date of birth 1995-03-14 → age 31 as of TODAY (' + D.TODAY + ') = j1.age');
+  eq(D.reasonCodes.RC_EMPLOYER_MISMATCH && D.reasonCodes.RC_EMPLOYER_MISMATCH.en, 'Your salary comes from a different company than your Emirates ID shows — maybe you changed jobs? A salary certificate or employment letter will sort it out.', 'RC_EMPLOYER_MISMATCH English wording');
+  eq(D.reasonCodes.RC_ID_EXPIRED && D.reasonCodes.RC_ID_EXPIRED.en, 'Your Emirates ID has expired — please renew it or scan your new card.', 'RC_ID_EXPIRED English wording');
+  for (const c of ['RC_EMPLOYER_MISMATCH', 'RC_ID_EXPIRED']) {
+    const rc = D.reasonCodes[c];
+    ok(rc && ARABIC.test(rc.ar || '') && !/\d/.test(rc.en) && !/dunecrest|palmgate|wps|nationalit|\bsex\b/i.test(rc.en + rc.ar), c + ': English + Arabic, customer-safe (no figures, no company, no payer)');
+  }
+
+  // ---- checkEmiratesId() for j1: pure ----
+  const before = E.listDecisions().length;
+  const t0 = E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: OF });
+  const ck = E.checkEmiratesId(j);
+  E.checkEmiratesId(j, true, { salaryPayer: PALMGATE });
+  const t1 = E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: OF });
+  ok(E.listDecisions().length === before + 2 && new Date(t1.createdAt) - new Date(t0.createdAt) === 37000, 'checkEmiratesId() is pure: no record, no clock tick (the what-if too)');
+  ok(ck.employerMatch.match === true && ck.employerMatch.score === 100 && ck.employerMatch.idEmployer === 'Dunecrest Logistics LLC' && ck.employerMatch.salaryPayer === 'SALARY/WPS DUNECREST LOGISTICS',
+     'j1: "Dunecrest Logistics LLC" ↔ "SALARY/WPS DUNECREST LOGISTICS" → match (100% of the employer’s words)');
+  ok(ck.nameMatch.match === true && ck.nameMatch.idName === 'Ravi Kumar' && ck.nameMatch.accountHolder === 'RAVI KUMAR', 'j1: the name on the ID matches the account holder ("Ravi Kumar" ↔ "RAVI KUMAR")');
+  ok(ck.expiryValid === true && ck.ageFromDob === 31, 'j1: the card is valid (expires 2028-02-09); age from the date of birth 31');
+  eq(JSON.stringify(ck.notRead), JSON.stringify(['nationality', 'sex', 'photos']), 'notRead lists nationality, sex and photos');
+  eq(JSON.stringify(E.EMIRATES_ID_NOT_READ), JSON.stringify(['nationality', 'sex', 'photos']), 'the engine exports the not-read list');
+  eq(ck.fieldsRead.join(','), 'nameEn,nameAr,idMasked,dob,expiry,occupation,employer', 'fieldsRead: name (EN + AR), masked ID, date of birth, expiry, occupation, employer — nothing else');
+  ok(['fieldsRead', 'notRead', 'expiryValid', 'ageFromDob', 'nameMatch', 'employerMatch'].every(k => k in ck) && ['idName', 'accountHolder', 'match'].every(k => k in ck.nameMatch) &&
+     ['idEmployer', 'salaryPayer', 'score', 'match'].every(k => k in ck.employerMatch), 'the result carries the specified shape');
+  eq(JSON.stringify(E.checkEmiratesId(j, { front: eidData.front, back: eidData.back })), JSON.stringify(ck), 'an explicit {front, back} gives the same result as the record (true)');
+  const pg = E.checkEmiratesId(j, true, { salaryPayer: PALMGATE });
+  ok(pg.employerMatch.match === false && pg.employerMatch.score === 0 && pg.employerMatch.salaryPayer === PALMGATE && pg.nameMatch.match === true,
+     'the what-if payer "SALARY/WPS PALMGATE TRADING" → no match (0%); the name still matches');
+  const noOf = E.checkEmiratesId(j, true, { openFinance: false });
+  ok(noOf.employerMatch.match === null && noOf.employerMatch.salaryPayer === null && noOf.nameMatch.match === null && noOf.expiryValid === true,
+     'without Open Finance nothing is read from the accounts: employer and name checks wait (null)');
+  throwsWith(() => E.checkEmiratesId(j, { front: eidData.front }), 'both sides', 'a scan without the back is refused');
+  throwsWith(() => E.checkEmiratesId(P.r1), 'no Emirates ID scan', 'a persona without a scan on file is refused');
+
+  // ---- normalisation: suffixes, payroll words, abbreviations, the 70% threshold ----
+  const em = (employer, payer) => E.checkEmiratesId(j, { front: eidData.front, back: { occupation: 'Clerk', employer } }, { salaryPayer: payer }).employerMatch;
+  const CASES = [
+    ['Dunecrest Logistics L.L.C.', 'SAL/DUNECREST LOG', true, 100, 'L.L.C. dropped; SAL and "/" dropped; LOG → LOGISTICS'],
+    ['dunecrest logistics llc', 'salary/wps dunecrest logistics', true, 100, 'case-insensitive'],
+    ['Palmgate Trdg FZCO', PALMGATE, true, 100, 'FZCO dropped; TRDG → TRADING'],
+    ['Oasis Facility Svcs Ltd', 'WPS OASIS FACILITY SERVICES CO', true, 100, 'LTD and CO dropped; SVCS → SERVICES'],
+    ['Saffron Bay FZE', 'SALARY SAFFRON BAY', true, 100, 'FZE dropped'],
+    ['Dunecrest Marine Logistics Services LLC', 'WPS/DUNECREST MARINE LOGISTICS', true, 75, '3 of 4 words = 75% ≥ 70% → match'],
+    ['Dunecrest Logistics Group LLC', 'SALARY/WPS DUNECREST LOGISTICS', false, 67, '2 of 3 words = 67% < 70% → no match'],
+    ['Dunecrest Logistics LLC', PALMGATE, false, 0, 'a different company → no match'],
+    ['LLC', 'SALARY/WPS LLC', false, 0, 'nothing left after the suffixes → no match']
+  ];
+  for (const [e1, p1, want, score, why] of CASES) {
+    const r = em(e1, p1);
+    ok(r.match === want && r.score === score, '"' + e1 + '" ↔ "' + p1 + '": ' + (want ? 'match' : 'no match') + ' ' + score + '% — ' + why + ' (got ' + r.match + ' ' + r.score + '%)');
+  }
+
+  // ---- decide() with the ID: the pull, both rules PASS, Ravi's numbers unchanged ----
+  E.init(D);
+  const base = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF });
+  E.init(D);
+  const r = decideJ(j);
+  eq(r.dataPulls.map(p => p.source).join(','), 'AECB_CONSUMER,OPEN_FINANCE,EMIRATES_ID', 'pulls: AECB, Open Finance, then EMIRATES_ID');
+  const pull = r.dataPulls[2];
+  ok(pull.status === 'SCANNED' && pull.summary.scan === 'front + back scanned' && /nationality · sex · photos/.test(pull.summary.notRead) && pull.summary.employerMatch === 'match — 100% (WPS salary payer)' &&
+     pull.summary.nameMatch === 'matches the account holder' && pull.summary.expiry === 'valid', 'the EMIRATES_ID pull: "front + back scanned", not read: nationality · sex · photos, employer match, name match, valid');
+  ok(!/dunecrest|warehouse|1995|palmgate/i.test(JSON.stringify(pull)), 'the pull summary carries flags only — no employer, payer, occupation or date of birth');
+  ok(ruleOf(r, 'POL_ID_VALID').result === 'PASS' && ruleOf(r, 'POL_EMPLOYER_MATCH').result === 'PASS' && ruleOf(r, 'POL_ID_VALID').category === 'POLICY',
+     'POL_ID_VALID PASS and POL_EMPLOYER_MATCH PASS');
+  ok(r.features.idExpiryValid === true && r.features.idNameMatch === true && r.features.employerMatch === true && r.features.employerMatchScore === 100,
+     'features: idExpiryValid, idNameMatch, employerMatch true; employerMatchScore 100');
+  ok(r.outcome === 'APPROVE' && r.limit.approved === 15000 && r.pricing.kfs.tenorMonths === 12 && r.pricing.kfs.rateMid === 0.0899 && r.pricing.kfs.monthlyInstalment === 1311.7 &&
+     r.score.points === 737 && r.score.grade === 'B' && r.noorScore.value === 737 && r.reasonCodes.length === 0, 'Ravi with a matching ID: APPROVE AED 15,000 · 12 months · 8.99% · AED 1,311.70 · NoorScore 737 (B), no reason codes');
+  eq(fingerprint(r), V27_FINGERPRINTS.j1, 'the v2.9 fingerprint for j1 still matches with the Emirates ID');
+  const same = (x) => JSON.stringify([x.outcome, x.limit, x.pricing, x.score, x.noorScore, x.reasonCodes, x.token, x.repayment, x.consents, x.status]);
+  eq(same(r), same(base), 'outcome, limit, pricing, score, reason codes, token, repayment and consents are identical with and without the scan');
+  const stripNew = (x) => { const o = clone(x); for (const k of ['idExpiryValid', 'idNameMatch', 'employerMatch', 'employerMatchScore']) delete o[k]; return JSON.stringify(o); };
+  ok(stripNew(r.features) === JSON.stringify(base.features) && JSON.stringify(r.rules.filter(x => !NEW_RULES.includes(x.id))) === JSON.stringify(base.rules),
+     'the other features and rules are unchanged; the two rules are added');
+  const big = decideJ(j, { amount: 110000, tenorMonths: 6 });
+  ok(big.limit.approved === 10000 && big.limit.bindingConstraint === 'FCF' && big.outcome === 'APPROVE', '110,000 / 6 months with the ID: still reduced to AED 10,000 (FCF binds)');
+  ok(r.emiratesId && r.emiratesId.scanned === 'FRONT_AND_BACK' && r.emiratesId.idMasked === '784-••••-•••••••-4' && r.emiratesId.check.employerMatch.match === true,
+     'the record keeps the check internally (record.emiratesId)');
+  throwsWith(() => E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: OF, emiratesId: true }), 'personal-loan decisions only', 'the scan feeds personal-loan decisions only');
+  throwsWith(() => E.decide({ productId: 'personal_loan', applicant: P.r1, amount: 50000, tenorMonths: 24, consents: OF, emiratesId: true }), 'no Emirates ID scan', 'emiratesId:true for a persona without a scan is refused');
+
+  // ---- the memo: the flag only ----
+  const memo = E.creditMemo(r.id), sftp = E.memoSftpRow(memo);
+  eq(memo.verification.identity, 'Verified (UAE PASS) · Emirates ID front + back · employer matches salary payer', 'memo identity flag: "Verified (UAE PASS) · Emirates ID front + back · employer matches salary payer"');
+  eq(memo.borrower.emiratesIdMasked, '784-••••-•••••••-4', 'the memo carries the scanned card’s masked ID only');
+  E.init(D);
+  const baseMemo = E.creditMemo(E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF }).id);
+  const shape = (x) => JSON.stringify(keysDeep(x));
+  const strip = (m) => { const o = clone(m); delete o.verification.identity; delete o.borrower.emiratesIdMasked; return JSON.stringify(o); };
+  ok(shape(memo) === shape(baseMemo) && strip(memo) === strip(baseMemo) && JSON.stringify(sftp.header) === JSON.stringify(E.memoSftpRow(baseMemo).header) &&
+     sftp.row.join('|') === E.memoSftpRow(baseMemo).row.join('|'), 'the memo shape and every other memo field and SFTP cell are unchanged');
+  const body = JSON.stringify(memo) + '\n' + sftp.row.join(',');
+  const leaked = ['Dunecrest', 'DUNECREST', 'Logistics', 'SALARY/WPS', 'WPS', 'Warehouse', 'Supervisor', '1995-03-14', '14/03/1995', '1995', '2028-02-09', 'Dubai', 'idEmployer', 'salaryPayer', 'occupation'].filter(w => body.includes(w));
+  ok(leaked.length === 0, 'memo + SFTP row: no employer, payer, occupation, date of birth, expiry or issuing place' + (leaked.length ? ' (found: ' + leaked.join(', ') + ')' : ''));
+  const expect = { incomeBand: T.income(12000), dbrBand: T.dbr(r.features.dbrPct), freeCashFlowBand: T.fcf(3700), instalmentToCashFlowBand: T.share(r.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) };
+  const words = identityWordsOf(r);
+  ok(['Dunecrest Logistics LLC', 'Warehouse Supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '1995-03-14', '14/03/1995', 'Dunecrest'].every(w => words.includes(w)),
+     'the privacy scan now also forbids the employer, the occupation, the salary payer and the date of birth');
+  let hits = privacyScan(r, memo, sftp, expect);
+  ok(hits.length === 0, 'j1 memo with the Emirates ID: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
+  for (const leak of ['Dunecrest Logistics LLC', 'warehouse supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '14/03/1995']) {
+    const m2 = clone(memo); m2.verification.identity += ' · ' + leak;
+    ok(privacyScan(r, m2, sftp, expect).length > 0, 'the extended scan catches "' + leak + '" planted in the memo');
+  }
+  ok(forbiddenKeys(memo).length === 0, 'memo keys stay on the allowlist');
+  E.init(D);
+  const rt = decideJ(j, { consents: { aecb: true, openFinance: true, digitalFootprint: TERMS } });
+  eq(E.creditMemo(rt.id).verification.identity, 'Verified (UAE PASS) · Emirates ID front + back · employer matches salary payer · digital footprint: high confidence',
+     'with the footprint check (covered by the terms) the footprint confidence follows the Emirates ID flag');
+  eq(rt.dataPulls.map(p => p.source).join(','), 'AECB_CONSUMER,OPEN_FINANCE,EMIRATES_ID,DIGITAL_FOOTPRINT', 'the journey’s pulls: AECB, Open Finance, Emirates ID, digital footprint');
+  ok(fingerprint(rt) === V27_FINGERPRINTS.j1, 'the journey decision (ID + footprint) keeps the j1 fingerprint');
+
+  // ---- a mismatch → REFER, never a decline, same price ----
+  E.init(D);
+  const mm = decideJ(withPayer(PALMGATE));
+  ok(mm.outcome === 'REFER' && mm.reasonCodes.join() === 'RC_EMPLOYER_MISMATCH' && ruleOf(mm, 'POL_EMPLOYER_MATCH').result === 'REFER' && ruleOf(mm, 'POL_ID_VALID').result === 'PASS',
+     'a Palmgate payer → REFER with RC_EMPLOYER_MISMATCH (POL_EMPLOYER_MATCH REFER)');
+  ok(mm.outcome !== 'DECLINE' && mm.limit.approved === 15000 && mm.pricing.band === 'B' && mm.pricing.kfs.rateMid === r.pricing.kfs.rateMid &&
+     mm.pricing.kfs.monthlyInstalment === 1311.7 && mm.score.points === 737 && mm.features.employerMatch === false && mm.features.employerMatchScore === 0,
+     'the mismatch is not a decline: the same amount, price band B, 8.99% and AED 1,311.70; score 737');
+  ok(!mm.token && E.referQueue().some(q => q.id === mm.id && q.reason === 'RC_EMPLOYER_MISMATCH'), 'the mismatch goes to the refer queue (a person looks at it)');
+  const mmMemo = E.creditMemo(mm.id), mmSftp = E.memoSftpRow(mmMemo);
+  ok(mmMemo.verification.identity === 'Verified (UAE PASS) · Emirates ID front + back · employer differs from salary payer' &&
+     mmMemo.decision.reasonCodes.map(c => c.code).join() === 'RC_EMPLOYER_MISMATCH' && ARABIC.test(mmMemo.decision.reasonCodes[0].ar),
+     'the mismatch memo: the flag says the employer differs; the reason code travels with its Arabic');
+  ok(!/palmgate|dunecrest|wps/i.test(JSON.stringify(mmMemo) + mmSftp.row.join(',')) && privacyScan(mm, mmMemo, mmSftp, Object.assign({}, expect, { dbrBand: T.dbr(mm.features.dbrPct), instalmentToCashFlowBand: T.share(mm.features.instalmentToFcfPct) })).length === 0,
+     'the mismatch memo names neither company nor the payer; the privacy scan stays clean');
+
+  // ---- an expired card → REFER with RC_ID_EXPIRED ----
+  E.init(D);
+  const ex = decideJ(withExpiry(addDays(D.TODAY, -1)));
+  ok(ex.outcome === 'REFER' && ex.reasonCodes.join() === 'RC_ID_EXPIRED' && ruleOf(ex, 'POL_ID_VALID').result === 'REFER' && ruleOf(ex, 'POL_EMPLOYER_MATCH').result === 'PASS' &&
+     ex.limit.approved === 15000 && ex.pricing.kfs.monthlyInstalment === 1311.7 && ex.features.idExpiryValid === false,
+     'a card that expired yesterday → REFER with RC_ID_EXPIRED; the same amount and price');
+  ok(/card expired/.test(E.creditMemo(ex.id).verification.identity), 'the expired memo flag says the card expired');
+  ok(decideJ(withExpiry(D.TODAY)).outcome === 'APPROVE', 'a card expiring today is still valid');
+  const both = decideJ((() => { const c = withPayer(PALMGATE); c.emiratesId.front.expiry = '2026-01-31'; return c; })());
+  ok(both.outcome === 'REFER' && both.reasonCodes.join() === 'RC_ID_EXPIRED,RC_EMPLOYER_MISMATCH' && both.pricing.kfs.monthlyInstalment === 1311.7, 'expired and mismatched → REFER with both codes, never a decline');
+
+  // ---- without Open Finance → INFO ----
+  E.init(D);
+  const nf = decideJ(j, { consents: { aecb: true, openFinance: false } });
+  ok(ruleOf(nf, 'POL_EMPLOYER_MATCH').result === 'INFO' && /checked once accounts are connected/.test(ruleOf(nf, 'POL_EMPLOYER_MATCH').observed) && nf.features.employerMatch === null &&
+     nf.dataPulls.some(p => p.source === 'EMIRATES_ID' && /checked once accounts are connected/.test(p.summary.employerMatch)) && !nf.reasonCodes.includes('RC_EMPLOYER_MISMATCH'),
+     'without Open Finance: POL_EMPLOYER_MATCH INFO ("checked once accounts are connected"), no reason code');
+  ok(/employer not yet checked/.test(E.creditMemo(nf.id).verification.identity), 'the memo flag says the employer is not yet checked');
+  E.init(D);
+  const nfBase = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: { aecb: true, openFinance: false } });
+  ok(nf.outcome === nfBase.outcome && JSON.stringify(nf.limit) === JSON.stringify(nfBase.limit) && JSON.stringify(nf.pricing) === JSON.stringify(nfBase.pricing),
+     'without Open Finance the scan changes neither the outcome nor the limit nor the price');
+  const np = decideJ(withPayer(null));
+  ok(ruleOf(np, 'POL_EMPLOYER_MATCH').result === 'INFO' && /no salary payer seen/.test(ruleOf(np, 'POL_EMPLOYER_MATCH').observed) && np.outcome === 'APPROVE',
+     'Open Finance without a salary payer → INFO, APPROVE');
+  const all = [r, mm, ex, both, nf, np];
+  ok(all.every(x => x.outcome !== 'DECLINE' && NEW_RULES.every(id => ['PASS', 'REFER', 'INFO'].includes(ruleOf(x, id).result))), 'the two rules only PASS, REFER or INFO — never FAIL, never a decline');
+
+  // ---- red-flag guardrail: nationality and sex are never read ----
+  const tagged = clone(j);
+  tagged.emiratesId.front.nationality = 'Testland'; tagged.emiratesId.front.sex = 'M'; tagged.emiratesId.back.nationality = 'Testland';
+  eq(JSON.stringify(E.checkEmiratesId(tagged)), JSON.stringify(ck), 'a scan carrying nationality and sex fields gives an identical checkEmiratesId() result');
+  E.init(D);
+  const rTag = decideJ(tagged);
+  const cmp = (x) => JSON.stringify([x.outcome, x.limit, x.pricing, x.score, x.reasonCodes, x.features, x.rules, x.dataPulls, x.emiratesId]);
+  ok(cmp(rTag) === cmp(r) && !/Testland/.test(JSON.stringify(rTag.emiratesId) + JSON.stringify(rTag.rules) + JSON.stringify(rTag.dataPulls) + JSON.stringify(E.creditMemo(rTag.id))),
+     'decide() with the tagged scan is identical; the nationality value reaches no rule, pull, check or memo');
+  const log = new Set();
+  const recorder = (obj) => new Proxy(obj, { get(t, prop, recv) { if (typeof prop === 'string') log.add(prop); const v = Reflect.get(t, prop, recv); return v && typeof v === 'object' ? recorder(v) : v; } });
+  E.checkEmiratesId(j, recorder(clone(tagged.emiratesId)));
+  const read = [...log];
+  ok(read.every(k => ['front', 'back', 'nameEn', 'nameAr', 'idMasked', 'dob', 'expiry', 'occupation', 'employer'].includes(k)) && !log.has('nationality') && !log.has('sex') && !log.has('issuingPlace'),
+     'checkEmiratesId() reads only the allowlisted card fields — never nationality or sex (read: ' + read.join(', ') + ')');
+
+  // ---- vocabulary, determinism ----
+  const v216Text = JSON.stringify([ck, pg, r.rules, r.dataPulls, mm.rules, ex.rules, nf.rules, memo, mmMemo, D.reasonCodes.RC_EMPLOYER_MISMATCH, D.reasonCodes.RC_ID_EXPIRED, j.emiratesId]);
+  ok(!banned.test(v216Text) && !mentionsSalaryTransfer(v216Text), 'no banned vocabulary or salary-transfer wording in the v2.16 data, checks, rules, pulls or memos');
+  const run = () => { E.init(D); const x = decideJ(j); const m = E.creditMemo(x.id); return JSON.stringify([E.checkEmiratesId(j), x, m, E.memoSftpRow(m)]); };
+  ok(run() === run(), 'two fresh init() runs: identical');
+  for (const x of E.listDecisions()) collect(x.reasonCodes);
+  ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. v2.16) exists with Arabic');
   E.init(D);
 });
 
