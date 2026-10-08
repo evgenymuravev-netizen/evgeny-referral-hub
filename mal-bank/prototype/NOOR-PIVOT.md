@@ -1351,3 +1351,99 @@ after payout" section). Decisions and deviations:
   - v2.12's "no engine change: src/ is untouched" is now "engine change is additive only" (`git diff --numstat
     8b62ec7 -- src`: no line removed, data.js untouched).
 - The Noor skin `<style>` block is byte-identical; v2.13 needed no CSS.
+
+### As built — v2.14
+
+Built as JOURNEY-FOOTPRINT-TC-SPEC.md specifies (selftest 1572 green, of which the 1544 earlier checks and 28 in group 21;
+acceptance 1038 green, of which the 1010 earlier checks and 28 in the new "v2.14 — footprint covered by the terms" section).
+Decisions and deviations:
+
+- **Engine.**
+  - `normalizeFootprintConsent` runs in decide() next to the communications check, before anything is pulled or
+    recorded.
+  - `true` becomes basis EXPLICIT. `{basis:'TERMS', termsVersion, acceptedAt}` becomes basis TERMS; the version is
+    trimmed, and acceptedAt is optional but must be an ISO date-time when given.
+  - Any other object throws: no `basis:'TERMS'`, a blank or non-string version, an array, or a bad acceptedAt. Other
+    primitives keep v2.8's "declined" meaning.
+  - The record's consent is `{granted, basis, termsVersion, at, scope, used}`. For TERMS, `at` is the time the terms
+    were accepted (the decision time if none was given), and the scope says the check is covered by the accepted terms
+    and that the Privacy policy says how to object.
+  - Outcome, score, price, features, rules and pull summaries are identical for either form. The memo is unchanged:
+    `CONSENT_CODES` never included the footprint consent.
+  - This is the first engine change that edits existing lines (the footprint gate and the consent record), so the
+    v2.13 "additive only" acceptance check was relaxed (see v2.15).
+- **Journey.**
+  - Step 2: "Privacy policy" and "Terms of Use" are inline link buttons (`button.ph-u`) that open a clause sheet
+    (`#jr-terms-sheet`, a dialog inside the phone). The sheet has the version line, the spec's clause in plain words
+    (curly apostrophe, as elsewhere in the UI) and the objection line.
+  - Continue records `S.terms = {version 'T&C v1.0 · Privacy policy v1.0', acceptedAt}`. acceptedAt is the demo day,
+    08:58Z, just before the engine's session clock starts.
+  - 3·1: the checkbox card is gone. A muted notice sits under "Email verified"; its "Privacy policy" opens the same
+    sheet.
+  - `assessFootprint()` runs on email verification, with no ticking, and decide() receives the TERMS object. The
+    "Mizan calls" line shows it.
+  - Step list: 3·1 is now "Your email — digital-footprint check (covered by the terms)".
+  - Behind the scenes for 3·1: the email line, the spec's four lines, then v2.8's two "Never used …" lines. Step 2
+    gains a line on the terms version; step 9 says the check runs on the accepted terms.
+  - Flow-map phase 2: its Customer / Mizan / Rule copy says the check is covered by the terms accepted at sign-up.
+  - Decision log: "Digital footprint — covered by the Terms (T&C v1.0 · Privacy policy v1.0)". The pull is labelled
+    "Digital footprint (covered by the Terms)" for TERMS records; v2.8 records keep their labels.
+- **Changed existing acceptance checks** (intent kept):
+  - B walk: "the footprint consent box appears" is now "the footprint notice appears".
+  - B walk: "the box is separate, optional and unticked" is now "no box; the notice line".
+  - B walk: "no footprint assessment until the customer agrees" is now "the assessment runs on verification, covered
+    by the terms", and the `check('#jr-fp')` click is removed.
+  - The Decision log check reads the terms line and the new pull label.
+  - Variant A: "left unticked — declined" is now "nothing to tick (notice line)", and "the declined check never
+    affects the application: no pull, 737" is now "covered by the terms: a pull, 737".
+  - The 390px walk drops the `check('#jr-fp')` click and its scroll-check label.
+  - v2.13's "Mizan calls" decide() regex has the TERMS form.
+- The Noor skin `<style>` block is byte-identical; the v2.14 CSS sits at the end of "Noor additions".
+
+### As built — v2.15
+
+Built as JOURNEY-BANKAPP-SPEC.md specifies (selftest 1587 green, of which the 1572 earlier checks and 15 in group 22;
+acceptance 1072 green, of which the 1039 earlier checks and 33 in the new "v2.15 — bank app: cards and loans" section).
+Every Mizan number for Ravi holds, and the v2.9 fingerprints still match. Decisions and deviations:
+
+- **Data.**
+  - j1 gains the two ENBD accounts exactly as specified, plus `observedObligations`. `aecb.activeLoans` is 1.
+  - `observedObligationsLabel` now reads "Credit-card repayment + personal-loan instalment". Only the car-loan path
+    reads it, and j1 never takes that path. The engine reads the totals only.
+  - Group 22 proves the totals point with j1 as of v2.14 (two deposit accounts, no loan). `prequalify()`, both
+    decisions (except the applicant snapshot), the memo and the SFTP row are byte-identical.
+- **Privacy.** The v2.5 scan's raw values gain each account's `limit` and `outstanding`. Only j1's accounts carry them.
+  The j1 memo regex also forbids 7702, 3317, 7,440, 6,200 and "credit card ••".
+- **Changed existing selftest checks:**
+  - "j1: … ENBD current ••••4821 + FAB savings ••••0193": the account list is now four entries.
+  - "j1 card totals …; 1 card, no loans" now says 1 loan.
+  - "j1 memo: no bank, account mask …" now covers the new masks and figures.
+- **Journey.**
+  - Step 4's read line is updated.
+  - 5·1 is the ENBD app and 5·2 the FAB app, built by `Journey.bankApp(bank)`. Accounts are grouped under Accounts /
+    Credit cards / Loans. Each row is a label with a real checkbox (the input covers the row, so a tap anywhere toggles
+    it), ticked by default.
+  - Unticking keeps Ravi's numbers. With nothing ticked, Approve waits ("Tick at least one account to share — or
+    decline").
+  - The Face ID beat is now a flag on the bank screen, not a sub-step. Approve shows it for 900 ms (instantly under
+    reduced motion), then opens the next bank or 6·0. "Open my bank" skips a bank deselected at step 4.
+  - 6·0 lists the approved accounts, cards and loans included. The botim tiles and the Insights total use the deposit
+    accounts only (`jrDeposits`).
+  - The card insight reads "Your credit card is 62% used — AED 400 a month on the card"; the credit state reads
+    "1 credit card · 1 loan · …".
+  - The budget view lists Credit card AED 400 and Personal loan AED 500 under the AED 900 total.
+  - Behind the scenes for step 5: the RFC 8252 / FAPI insight, the spec's two lines (they replace the old "two short
+    hops" line), and the unticking note as a callout. Step 7's reading line names the card and the loan.
+  - Flow-map phase 4: the Customer copy is updated; the detail stays "Leaves the web-view". The step list is unchanged:
+    5·1 and 5·2 sit under step 5.
+- **Changed existing acceptance checks** (intent kept):
+  - B walk: the step-4 read line.
+  - B walk: "Your bank’s app (simulated)" is now "ENBD app (simulated)".
+  - B walk: "bank app lists ENBD ••••4821 and FAB ••••0193" is now ENBD only on 5·1, plus a new 5·2 FAB check.
+  - B walk: the card insight (AED 400 on the card) and the credit-state insight ("1 loan").
+  - One more approve tap in: the B walk, variant A, the animated walk (which waits for 5·2 before the second tap, then
+    sees the Face ID beat), the v2.13 dark walk, the 390px walk, the v2.11 flow-map walk and screenshot walk, v2.12's
+    `WALK_TO_9`, v2.13's `BANK_TO_9` and the v2.14 walk.
+  - v2.12's src check (made "additive only" in v2.13) now reads: "src/ changes since v2.12 are confined to engine.js,
+    data.js and the selftest, which grew from 1503 checks". v2.14 and v2.15 edit existing lines on purpose.
+- The Noor skin `<style>` block is byte-identical; the v2.15 CSS sits at the end of "Noor additions".

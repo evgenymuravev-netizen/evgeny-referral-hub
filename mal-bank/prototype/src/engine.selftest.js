@@ -9,6 +9,7 @@
  * v2.10 SME working capital (SME-SPEC.md))
  * Group 20 = v2.13 contact preferences recorded after the loan is issued (JOURNEY-CONTACT-SPEC.md).
  * Group 21 = v2.14 the digital-footprint check covered by the accepted terms (JOURNEY-FOOTPRINT-TC-SPEC.md).
+ * Group 22 = v2.15 j1's ENBD credit card and personal loan, same totals (JOURNEY-BANKAPP-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -1235,7 +1236,7 @@ function rawValuesOf(rec) {
   [cn.avgMonthlyIncome, cn.avgMonthlySpend, cn.observedObligationsMonthly, bd.avgSalaryCredit, (a.employment || {}).salaryMonthly,
    (a.aecb || {}).obligationsMonthly, (a.homeBureau || {}).obligationsMonthlyAed].forEach(add);
   (cn.monthlyIncome || []).forEach(add); (cn.monthlySpend || []).forEach(add);
-  (cn.accounts || []).forEach(x => add(x.balance));
+  (cn.accounts || []).forEach(x => { add(x.balance); add(x.limit); add(x.outstanding); });   /* v2.15: a card's limit, a loan's outstanding */
   if (a.homeStatements) a.homeStatements.months.forEach(m => { add(m.avgBalance); add(m.emi); if (m.remittance) add(m.remittance.amount); });
   const st = rec.homeStatements;
   if (st) [st.obligationsMonthlyAed, st.avgBalanceAed, st.avgBalanceLocal, st.remittanceMedianAed].forEach(add);
@@ -1434,7 +1435,8 @@ group('15. Customer journey (v2.6): persona j1, prequalify() on Open Finance onl
      j.aecb.score === 712 && j.aecb.obligationsMonthly === 900 && j.aecb.chequeReturns12m === 0 && j.aecb.worstDelinquency === 'NONE',
      'j1 Ravi Kumar (رافي كومار): 31, 3 years in the UAE, salary 12,000, AECB 712, obligations 900, no returns, no delinquency');
   ok(j.bankData.source === 'ALTAREQ_TPP' && j.bankData.salaryDetected && cn.monthsAvailable === 12 && cn.banks.join(',') === 'ENBD,FAB' &&
-     cn.accounts.map(a => a.bank + ' ' + a.mask).join(',') === 'ENBD 4821,FAB 0193', 'j1: salary verified via connected accounts; 12 months, ENBD current ••••4821 + FAB savings ••••0193');
+     cn.accounts.map(a => a.bank + ' ' + a.mask).join(',') === 'ENBD 4821,FAB 0193,ENBD 7702,ENBD 3317',
+     'j1: salary verified via connected accounts; 12 months, ENBD current ••••4821 + FAB savings ••••0193 (+ the v2.15 ENBD card ••••7702 and loan ••••3317)');
   const meanOf = (a) => a.reduce((x, y) => x + y, 0) / a.length;
   ok(cn.monthlyIncome.length === 12 && meanOf(cn.monthlyIncome) === cn.avgMonthlyIncome && meanOf(cn.monthlySpend) === cn.avgMonthlySpend && cn.avgMonthlySpend === 7400,
      'j1 monthly series consistent: mean income 12,000, mean spend 7,400');
@@ -1503,7 +1505,8 @@ group('15. Customer journey (v2.6): persona j1, prequalify() on Open Finance onl
   const hits = privacyScan(rec, memo, E.memoSftpRow(memo), { incomeBand: T.income(12000), dbrBand: T.dbr(rec.features.dbrPct), freeCashFlowBand: T.fcf(3700),
     instalmentToCashFlowBand: T.share(rec.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) });
   ok(hits.length === 0, 'j1 memo: recursive privacy scan clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
-  ok(!/ENBD|FAB|4821|0193|12,000|12000|7,400|7400|wedding/i.test(JSON.stringify(memo)), 'j1 memo: no bank, account mask, exact income/spend or purpose');
+  ok(!/ENBD|FAB|4821|0193|7702|3317|12,000|12000|7,400|7400|7,440|7440|6,200|6200|credit card ••|wedding/i.test(JSON.stringify(memo)),
+     'j1 memo: no bank, account mask (incl. the v2.15 card ••7702 and loan ••3317), card limit/balance, loan outstanding, exact income/spend or purpose');
   ok(memo.affordability.incomeBand === 'AED 10,000–15,000 / month' && memo.affordability.freeCashFlowBand === 'AED 3,000–4,999 / month' &&
      memo.noorScore.value === 737 && memo.noorScore.band === 'Very good' && memo.terms.amount === 15000 && memo.terms.repaymentMethod === 'DIRECT_DEBIT' &&
      memo.lenderName === 'Partner Bank (lender of record)', 'j1 memo: income band 10–15k, FCF band 3–5k, NoorScore 737 Very good, AED 15,000, direct debit, Partner Bank');
@@ -1911,8 +1914,8 @@ group('17. Addendum v2.8: assessFootprint, the personal-loan FCF rule, contact p
   const fpWith = (patch) => Object.assign(clone(fpBase), patch);
 
   // ---- data ----
-  ok(j.aecb.cardLimitTotal === 12000 && j.aecb.cardBalanceTotal === 7440 && j.aecb.cards === 1 && j.aecb.activeLoans === 0 &&
-     Math.round(j.aecb.cardBalanceTotal / j.aecb.cardLimitTotal * 100) === 62, 'j1 card totals: limit 12,000, balance 7,440 → 62% used; 1 card, no loans');
+  ok(j.aecb.cardLimitTotal === 12000 && j.aecb.cardBalanceTotal === 7440 && j.aecb.cards === 1 && j.aecb.activeLoans === 1 &&
+     Math.round(j.aecb.cardBalanceTotal / j.aecb.cardLimitTotal * 100) === 62, 'j1 card totals: limit 12,000, balance 7,440 → 62% used; 1 card, 1 loan (v2.15)');
   ok(fpBase.vendorScore === 731 && fpBase.emailAgeYearsMin === 7 && fpBase.nameMatchSources === 2 && fpBase.phoneOnMessenger === true &&
      fpBase.velocity.emailSeenByLenders === 1 && fpBase.breaches.count === 1 && fpBase.breaches.includesCredentialStuffingCompilation === false,
      'j1.footprint: vendor 731, email 7 years, 2 name sources, phone on a messenger, 1 lender, 1 breach, no stuffing compilation');
@@ -3088,6 +3091,64 @@ group('21. Addendum v2.14: the footprint check on the basis of the accepted term
     return JSON.stringify([a, E.creditMemo(a.id), E.memoSftpRow(E.creditMemo(a.id))]);
   }
   ok(snap() === snap(), 'two fresh init() runs: identical TERMS-basis record, memo and SFTP row');
+  E.init(D);
+});
+
+// ---------------------------------------------------------------------------
+// v2.15 — Ravi's ENBD credit card and personal loan come through the same Al Tareq consent
+// (JOURNEY-BANKAPP-SPEC.md §1, §3, §4). Same totals (AED 900/month), so every Mizan number is unchanged.
+group('22. Addendum v2.15: j1’s ENBD card ••7702 and loan ••3317 — same AED 900 total, every Mizan number unchanged', () => {
+  E.init(D);
+  const j = D.personasJourney[0], cn = j.connected;
+  const OF = { aecb: true, openFinance: true };
+
+  // ---- the data shape ----
+  ok(cn.accounts.length === 4 && cn.accounts.map(a => a.type).join(',') === 'Current account,Savings account,Credit card,Personal loan' &&
+     cn.accounts.map(a => a.bank + ' ' + a.mask).join(',') === 'ENBD 4821,FAB 0193,ENBD 7702,ENBD 3317',
+     'j1 has four connected accounts: ENBD current ••4821, FAB savings ••0193, ENBD credit card ••7702, ENBD personal loan ••3317');
+  const card = cn.accounts[2], loan = cn.accounts[3];
+  ok(card.limit === 12000 && card.balance === 7440 && card.monthlyRepayment === 400 && Math.round(card.balance / card.limit * 100) === 62 &&
+     card.limit === j.aecb.cardLimitTotal && card.balance === j.aecb.cardBalanceTotal, 'the card: limit 12,000, balance 7,440 (62%, = the AECB card totals), AED 400 a month');
+  ok(loan.outstanding === 6200 && loan.instalment === 500 && loan.endsOn === '2027-03', 'the loan: outstanding 6,200, AED 500 a month, ends Mar 2027');
+  ok(card.monthlyRepayment + loan.instalment === 900 && cn.observedObligationsMonthly === 900 && j.aecb.obligationsMonthly === 900 &&
+     JSON.stringify(cn.observedObligations) === JSON.stringify([{ label: 'Credit-card repayment', amount: 400 }, { label: 'Personal-loan instalment', amount: 500 }]) &&
+     cn.observedObligations.reduce((s, o) => s + o.amount, 0) === 900, 'card 400 + loan 500 = 900 = observedObligationsMonthly = the AECB obligations');
+  ok(j.aecb.cards === 1 && j.aecb.activeLoans === 1 && j.aecb.tradelines === 2, 'AECB: 1 card, 1 active loan, 2 tradelines (now consistent)');
+  ok(cn.accounts.filter(a => /account$/i.test(a.type)).map(a => a.mask).join(',') === '4821,0193', 'the deposit accounts (the botim tiles) are still current + savings');
+
+  // ---- every Mizan number for Ravi is unchanged: the engine reads the totals only ----
+  const pre = JSON.parse(JSON.stringify(j));   // j1 as of v2.14: two deposit accounts, no loan on file
+  pre.connected.accounts = pre.connected.accounts.slice(0, 2); pre.aecb.activeLoans = 0;
+  delete pre.connected.observedObligations; pre.connected.observedObligationsLabel = 'Credit-card repayment';
+  const runOf = (applicant) => {
+    E.init(D);
+    const pq = E.prequalify(applicant, OF);
+    const r = E.decide({ productId: 'personal_loan', applicant, amount: 15000, tenorMonths: 12, consents: OF });
+    const big = E.decide({ productId: 'personal_loan', applicant, amount: 110000, tenorMonths: 6, consents: OF });
+    const rest = (x) => { const o = Object.assign({}, x); delete o.applicantSnapshot; return o; };
+    const memo = E.creditMemo(r.id);
+    return { pq, r, big, key: JSON.stringify([pq, rest(r), rest(big), memo, E.memoSftpRow(memo)]) };
+  };
+  const now = runOf(j), was = runOf(pre);
+  ok(now.pq.indicativeMin === 10000 && now.pq.indicativeMax === 40000 && now.pq.maxByTermMonths[6] === 10000 && now.pq.maxByTermMonths[12] === 21000 &&
+     now.pq.maxByTermMonths[24] === 40000, 'prequalify(): AED 10,000–40,000; caps 6 → 10,000 · 12 → 21,000 · 24 → 40,000');
+  ok(now.r.outcome === 'APPROVE' && now.r.limit.approved === 15000 && now.r.pricing.kfs.tenorMonths === 12 && now.r.pricing.kfs.rateMid === 0.0899 &&
+     now.r.pricing.kfs.monthlyInstalment === 1311.7 && now.r.score.points === 737 && now.r.score.grade === 'B' && now.r.features.existingObligations === 900,
+     'decide(): APPROVE AED 15,000 · 12 months · 8.99% · AED 1,311.70 · NoorScore 737 (B) · obligations AED 900');
+  ok(now.big.limit.approved === 10000 && now.big.limit.bindingConstraint === 'FCF', '110,000 / 6 months: still reduced to AED 10,000 (FCF binds)');
+  ok(now.key === was.key, 'with the card and the loan in the data, prequalify(), both decisions (all but the applicant snapshot), the memo and the SFTP row are identical to v2.14’s');
+
+  // ---- privacy: the new masks and figures never reach the memo ----
+  const memo = E.creditMemo((runOf(j)).r.id), sftp = E.memoSftpRow(memo), rec = E.listDecisions()[1];
+  const body = JSON.stringify(memo) + '\n' + sftp.row.join(',');
+  const bad = ['7702', '3317', '12,000', '12000', '7,440', '7440', '6,200', '6200', 'credit card ••', 'Credit card', 'Personal loan ••', 'Personal-loan instalment', 'Mar 2027', '2027-03'].filter(w => body.includes(w));
+  ok(bad.length === 0, 'memo + SFTP row: no card or loan mask, no limit, balance or outstanding, no "credit card ••"' + (bad.length ? ' (found: ' + bad.join(', ') + ')' : ''));
+  ok(rawValuesOf(rec).has(6200) && rawValuesOf(rec).has(12000) && rawValuesOf(rec).has(7440), 'the v2.5 privacy scan now also forbids the loan outstanding (6,200) and the card limit and balance (12,000 / 7,440)');
+  const hits = privacyScan(rec, memo, sftp, { incomeBand: T.income(12000), dbrBand: T.dbr(rec.features.dbrPct), freeCashFlowBand: T.fcf(3700),
+    instalmentToCashFlowBand: T.share(rec.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) });
+  ok(hits.length === 0, 'j1 memo with the card and the loan: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
+  ok(forbiddenKeys(memo).length === 0, 'memo keys stay on the allowlist (no accounts)');
+  ok(runOf(j).key === runOf(j).key, 'two fresh init() runs: identical');
   E.init(D);
 });
 

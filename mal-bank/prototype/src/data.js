@@ -366,18 +366,23 @@
       aecb: { hit: true, score: 712, esrPct: 8, obligationsMonthly: 900,
               tradelines: 2, chequeReturns12m: 0, worstDelinquency: 'NONE',
               creditPassportAvailable: false,
-              // v2.8 — card totals behind the journey's Noor insights (62% used); one card, no loans
-              cards: 1, activeLoans: 0, cardLimitTotal: 12000, cardBalanceTotal: 7440 },
+              // v2.8 — card totals behind the journey's Noor insights (62% used).
+              // v2.15 — one card and one loan (tradelines 2); obligations still AED 900/month (card 400 + loan 500)
+              cards: 1, activeLoans: 1, cardLimitTotal: 12000, cardBalanceTotal: 7440 },
       bankData: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
                   salaryDetected: true, avgSalaryCredit: 12000, salaryCreditDay: 27 },
       connected: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
                    accounts: [
                      { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true },
-                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false }
+                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false },
+                     // v2.15 — the ENBD credit card and personal loan come through the same Al Tareq consent
+                     { bank: 'ENBD', type: 'Credit card', mask: '7702', limit: 12000, balance: 7440, monthlyRepayment: 400 },
+                     { bank: 'ENBD', type: 'Personal loan', mask: '3317', outstanding: 6200, instalment: 500, endsOn: '2027-03' }
                    ],
                    avgMonthlyIncome: 12000, avgMonthlySpend: 7400, incomeVolatilityPct: 1, salaryCreditDay: 27,
-                   // The credit-card repayment the accounts show leaving every month (= the AECB obligation)
-                   observedObligationsMonthly: 900, observedObligationsLabel: 'Credit-card repayment',
+                   // The repayments the accounts show leaving every month (= the AECB obligation); the engine reads the total only
+                   observedObligationsMonthly: 900, observedObligationsLabel: 'Credit-card repayment + personal-loan instalment',
+                   observedObligations: [{ label: 'Credit-card repayment', amount: 400 }, { label: 'Personal-loan instalment', amount: 500 }],
                    // Salary 12,000 with small overtime swings; mean 12,000, vol 1.4%
                    monthlyIncome: [11800, 12000, 12200, 11900, 12000, 12400, 11700, 12000, 12100, 11900, 12000, 12000],
                    // mean 7,400 (December higher: travel home)
