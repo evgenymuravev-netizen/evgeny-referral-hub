@@ -1251,3 +1251,51 @@ earlier checks and 121 in the new "v2.11 — flow maps" section). Decisions and 
   `#sme-flow li.of .sme-fs-n`; it now reads `#sme-flow li.of:not(.done) .fm-n`. The class moved, and after Decide
   steps 2–3 are done and wear `--ok`, so the check reads step 10.
 - The Noor skin `<style>` block is byte-identical; all v2.11 CSS sits at the end of "Noor additions".
+
+### As built — v2.12
+
+Built as JOURNEY-HOME-SPEC.md specifies (selftest 1503 green, unchanged: no engine change; acceptance 951 green, of which
+the 885 earlier checks and 66 in the new "v2.12 — botim main screen" section). Decisions and deviations:
+
+- **The main screen (0·0).** `Journey.home()` renders botim's Home tab as a concept from the same dark host tokens: the
+  status bar, a header with the plain-text "botim" wordmark, the "Concept — illustrative host app" tag and the "RK" avatar,
+  the search pill, Noor's banner, the services grid, three generic recent chats (Family group, Office, Building
+  management) and the bottom nav with Home active. No botim logo, artwork or image. Ids use the `bh-` prefix
+  (`#bh-home`, `#bh-banner`, `#bh-noor-icon`, `#bh-svc-<key>`, `#bh-nav-<key>`), so botim money keeps its `bm-` ids.
+  - The banner and the Noor icon reuse the money page's classes and copy, so they look the same: Noor embeds with "by noor".
+    The icon sits in the services grid. The services glyphs are simple stroked paths; "money" is blue and "Noor" uses Noor's card.
+  - Once the loan is funded, the banner becomes a non-tappable embed: "Loan funded · managed in Noor", with the lender line
+    and no amount. The Noor icon stays an entry.
+  - The behind-the-scenes copy for 0·0 is the spec's, plus the variant's entry and the surface note. Noor's position shows
+    there too. The footnote says the team's frames show only botim money, so the main screen is a concept.
+- **Navigation.** The journey opens on 0·0 at load, on Restart and on a variant switch. "money" (grid or nav) opens botim
+  money on Pay (0·1). Botim money's bottom nav is now tappable too: Home returns to 0·0, so a funded customer can go back
+  to the main screen. Calls, Chats and All, the other services, the search pill and the chat rows show a small toast,
+  "Not part of this demo", above the nav for 2 s. It never navigates or calls the engine. The money page's ask bar still
+  opens the botim AI teaser.
+  - **Deviation (small):** ✕ / "Not now" before any bank is connected returns to the botim screen the customer left from
+    (`S.hostBack`): the main screen after its banner or icon, and botim money after "Add another +". Before, it always
+    returned to botim money, the only host screen. Once connected it still returns to botim money with the tiles (6·1).
+- **Events.** `emit(name, surface)`: impression and click carry `surface: 'home' | 'money'`, and are logged once per
+  journey per surface. The other events have no surface. "What botim receives" shows them as
+  `impression · surface home · variant B`; `data-ev` keeps the bare name and `data-surface` holds the surface.
+  The Experiment counters are unchanged. A second table, "Impressions by surface", splits impressions into main screen
+  and botim money. A journey that opens botim money now counts two impressions, one per surface. The primary metric's
+  denominator (entry impressions) therefore needs a surface choice when the real test is set up.
+- **Step list and flow map.** Both variants' paths start with `JR_ENTRY`: 0 "botim — main screen", then the sub-step
+  0·1 "botim money — Connected accounts". Variant A's path is 0 → 0·1 → 7 → 8·1 → 1–6 → 8·2 → 9–16. Flow-map phase 1
+  ("botim entry") still matches every step-0 entry (plus A's Loans screen), so it covers 0·0 and 0·1. Its detail reads
+  "Main screen · banner · Noor icon · money", and its Customer / Mizan / Rule copy names the main screen. "Go to this
+  step →" jumps to the phase's first entry, the main screen.
+- **Changed existing checks** (the walks now start on the main screen):
+  - Clicks only, no change to what is checked: a tap on `#bh-svc-money` before the money page is used. This is in the
+    B walk (opening checks, the Noor icon after Restart, Credit before connecting, entry 1, the AI teaser) and the A walk
+    (banner, icon). It is also in the animated walk, the dark-theme walk, the 390px walk (incl. variant A) and the v2.11
+    flow-map walk and its screenshot walk.
+  - "botim gets impression, click and journey_started — each carrying the variant": the exact-text match now allows the
+    `· surface home|money` part.
+  - "What botim receives: events only …": the pattern allows `impression · surface …` and `click · surface …`.
+  - "the step list renders variant A's own path": `0,0·1,7,8·1,…` (was `0,7,8·1,…`).
+  - "back to variant B (the default)" and "dark theme: … the botim main page shows the banner" look for the main screen's
+    `#bh-banner` (was the money page's `#bm-banner`).
+- The Noor skin `<style>` block is byte-identical; all v2.12 CSS sits at the end of "Noor additions".

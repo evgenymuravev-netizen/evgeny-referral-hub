@@ -1626,6 +1626,40 @@ details.tbl-view table { margin-top:6px; }
   .fm-step:last-child::before { display:none; }
   .fm-b { padding-top:5px; }
 }
+/* ---------- v2.12 — botim's main screen (Home): the journey starts here; Noor's banner and icon are Noor embeds (host tokens: the phone's dark botim concept in both themes) ---------- */
+.bh-search { padding:2px 18px 12px; }
+.bh-search .bm-ask-in { justify-content:flex-start; padding:11px 16px; }
+.bh-body { padding-top:0; }
+.bh-banner-funded { cursor:default; }
+.bh-svcs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px 6px; }
+.bh-svc { position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; gap:7px; border:0; background:none; padding:0; margin:0; cursor:pointer; color:var(--bm-ink); }
+.bh-svc-b { width:52px; height:52px; border-radius:50%; background:var(--bm-card); color:var(--bm-ink); display:inline-flex; align-items:center; justify-content:center; }
+.bh-svc-b .ji { width:22px; height:22px; }
+.bh-svc-money .bh-svc-b { background:var(--bm-blue); color:#fff; }
+.bh-svc-noor .bh-svc-b { background:var(--brand-card); box-shadow:0 0 0 1px rgba(255,255,255,.14) inset; }
+.bh-svc-noor .noor-icon { width:22px; vertical-align:0; display:block; }
+.bh-svc-noor .by-noor-sm { top:-6px; right:calc(50% - 40px); }
+.bh-svc-l { max-width:100%; font-size:12.5px; line-height:16px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bh-svc:focus-visible { outline:none; }
+.bh-svc:focus-visible .bh-svc-b { outline:2px solid var(--focus-ring); outline-offset:2px; }
+.bh-chats { background:var(--bm-card); border-radius:18px; padding:2px 14px; display:flex; flex-direction:column; }
+.bh-chat { display:flex; align-items:center; gap:12px; width:100%; min-width:0; padding:11px 0; border:0; border-bottom:1px solid var(--bm-line); background:none; color:var(--bm-ink); text-align:left; cursor:pointer; }
+.bh-chat:last-child { border-bottom:0; }
+.bh-chat-av { flex:0 0 40px; width:40px; height:40px; border-radius:50%; background:var(--bm-card-2); color:var(--bm-ink); display:inline-flex; align-items:center; justify-content:center;
+  font-family:var(--font-label); font-weight:500; font-size:13px; }
+.bh-chat-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.bh-chat-n { font-weight:600; font-size:15px; line-height:20px; }
+.bh-chat-s { font-size:13px; line-height:18px; color:var(--bm-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bh-chat-t { flex:0 0 auto; align-self:flex-start; margin-top:3px; font-family:var(--font-label); font-size:11.5px; color:var(--bm-muted); font-variant-numeric:tabular-nums; }
+/* botim's bottom nav is tappable since v2.12 (Home ↔ money; Calls, Chats and All toast) — same look as before */
+button.bm-nav-i { border:0; background:none; padding:0; margin:0; cursor:pointer; }
+button.bm-nav-i.on { cursor:default; }
+/* "Not part of this demo" — a small inline toast above the bottom nav; it never navigates */
+.bm-demo-toast { position:absolute; left:50%; bottom:104px; z-index:4; transform:translateX(-50%); max-width:calc(100% - 48px); white-space:nowrap; pointer-events:none;
+  background:var(--bm-card-2); color:var(--bm-ink); border:1px solid var(--bm-line); border-radius:var(--radius-pill); padding:7px 14px;
+  font-family:var(--font-label); font-size:12.5px; line-height:17px; box-shadow:0 10px 24px -12px rgba(0,0,0,.7); animation:bhToast 2s var(--ease-out) both; }
+@keyframes bhToast { 0% { opacity:0; transform:translate(-50%, 6px); } 10%, 82% { opacity:1; transform:translate(-50%, 0); } 100% { opacity:0; transform:translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .bm-demo-toast { animation:none; } }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -2854,10 +2888,11 @@ var FLOW_UPGRADE = [
 ];
 /* The customer journey: ten phases over the journey's own steps; each variant's path applies */
 var JR_FLOW = [
-  { t: 'botim entry', d: 'Banner · Noor icon · Credit · Loans', match: function (e, v) { return e.n === 0 || (v === 'A' && e.n === 7); },
-    c: 'Taps the Noor banner, the Noor icon or Credit. In variant A: the Noor tile on the Loans screen.',
-    m: 'Nothing is decided. botim receives events only (impression, click), each with the variant.',
-    r: 'Noor’s position (confirm with counsel): every Noor surface in botim is a Noor embed, and botim gets events only.' },
+  /* v2.12 — phase 1 covers botim's main screen (0·0) and botim money (0·1); "Go to this step" lands on the main screen */
+  { t: 'botim entry', d: 'Main screen · banner · Noor icon · money', match: function (e, v) { return e.n === 0 || (v === 'A' && e.n === 7); },
+    c: 'Lands on botim’s main screen and taps Noor’s banner or the Noor icon, or opens money to connect a bank first. In variant A, the entry leads to the Noor tile on the Loans screen.',
+    m: 'Nothing is decided. botim receives events only (impression, click), each with the variant and the surface: the main screen or botim money.',
+    r: 'Noor’s position (confirm with counsel): every Noor surface in botim, on the main screen and in botim money, is a Noor embed, and botim gets events only.' },
   { t: 'Noor opens in botim', d: 'Web-view · account · email · contact consent', match: function (e) { return e.n >= 1 && e.n <= 3; },
     c: 'Agrees to the hand-off, creates an account, verifies the phone and the email, and picks contact channels.',
     m: 'assessFootprint() runs only if the customer opts in. The contact choice goes to decide() as consents.communications.',
@@ -6764,7 +6799,10 @@ var JR_ICON = {
   phone: 'M4.5 2.5h2l1 3-1.4 1a7 7 0 0 0 3.4 3.4l1-1.4 3 1v2a1.5 1.5 0 0 1-1.5 1.5A9.5 9.5 0 0 1 3 4a1.5 1.5 0 0 1 1.5-1.5z',
   chat: 'M2.5 3.5h11v7.5H7l-3 2.5V11H2.5z', wallet: 'M2.5 5h11v7.5h-11zM10 8.5h3.5M3.5 5l7-2.5V5', grid: 'M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h4v4H9z',
   spark: 'M8 1.8l1.2 4 4 1.2-4 1.2L8 12.2 6.8 8.2l-4-1.2 4-1.2z', bot: 'M4 6h8v6H4zM8 3.5V6M6.3 9h.01M9.7 9h.01', shield: 'M8 2l5 2v4c0 3-2.2 5-5 6-2.8-1-5-3-5-6V4z',
-  face: 'M2.5 5.5v-2h2M11.5 3.5h2v2M13.5 10.5v2h-2M4.5 12.5h-2v-2M6 6.5v1M10 6.5v1M8 6.5v2.5h-.8M6.2 10.5a2.6 2.6 0 0 0 3.6 0', clock: 'M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM8 5v3.2l2 1.3'
+  face: 'M2.5 5.5v-2h2M11.5 3.5h2v2M13.5 10.5v2h-2M4.5 12.5h-2v-2M6 6.5v1M10 6.5v1M8 6.5v2.5h-.8M6.2 10.5a2.6 2.6 0 0 0 3.6 0', clock: 'M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM8 5v3.2l2 1.3',
+  /* v2.12 — neutral glyphs for botim's main screen (services grid, search) */
+  search: 'M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3l3.2 3.2', recharge: 'M5.5 2.5h5v11h-5zM7.3 11.5h1.4M8.6 4.8L7.2 7.4h1.6L7.4 9.6',
+  bills: 'M4 2.5h8v11l-1.6-1-1.2 1-1.2-1-1.2 1-1.2-1L4 13.5zM6 5.5h4M6 8h4M6 10.5h2.2', gold: 'M1.5 13l1.2-3h3.6l1.2 3zM8.5 13l1.2-3h3.6l1.2 3zM5 9l1.2-3h3.6L11 9z'
 };
 function jrSvg(d, cls, sw) {
   var svg = document.createElementNS(SVGNS, 'svg');
@@ -6816,16 +6854,18 @@ var JR_LOAN_STEPS = [
   { n: 16, title: 'Done — back in botim · Noor on your home screen', exec: [5] }
 ];
 function jrInGroup(g, list) { return list.map(function (s) { return Object.assign({ group: g }, s); }); }
+/* v2.12 — the journey starts on botim's main screen (step 0); botim money is its sub-step 0·1 */
+var JR_ENTRY = [{ n: 0, title: 'botim — main screen' }, { n: 0, sub: 1, title: 'botim money — Connected accounts' }];
 var JR_PATHS = {
-  B: [{ n: 0, group: 1, title: 'botim money — main page (banner · Noor icon)' }]
+  B: jrInGroup(1, JR_ENTRY)
     .concat(jrInGroup(1, JR_ONBOARD))
     .concat([{ n: 6, group: 1, title: 'Back in botim — tiles and insights (Noor embeds)' },
              { n: 7, group: 2, title: 'Credit → pre-qualified', engine: 'prequalify()' },
              { n: 8, group: 2, title: 'Choose your loan' }])
     .concat(jrInGroup(2, JR_LOAN_STEPS)),
-  A: [{ n: 0, group: 1, title: 'botim money — main page (banner · Noor icon)' },
-      { n: 7, group: 1, title: 'Credit → Loans (botim) → the Noor tile' },
-      { n: 8, sub: 1, group: 1, title: 'How much do you need?' }]
+  A: jrInGroup(1, JR_ENTRY)
+    .concat([{ n: 7, group: 1, title: 'Credit → Loans (botim) → the Noor tile' },
+             { n: 8, sub: 1, group: 1, title: 'How much do you need?' }])
     .concat(jrInGroup(1, JR_ONBOARD))
     .concat([{ n: 6, group: 1, title: 'Back in Noor — accounts connected' },
              { n: 8, sub: 2, group: 2, title: 'Affordability check', engine: 'prequalify() caps' }])
@@ -6840,7 +6880,7 @@ var JR_CHANNELS = [['EMAIL', 'Email'], ['SMS', 'SMS'], ['WHATSAPP', 'WhatsApp'],
 /* The experiment: 2.0% → 2.5% funded, 80% power, two-sided α 0.05 */
 var JR_EXP = { p1: 0.020, p2: 0.025, alpha: 0.05, power: 0.80 };
 function jrFresh(variant) {
-  return { variant: variant || 'B', step: 0, sub: 0, reachedIdx: 0, dir: 1, intent: null, account: false, phoneOk: false, connected: false, newTiles: false, hostTab: 'pay',
+  return { variant: variant || 'B', step: 0, sub: 0, reachedIdx: 0, dir: 1, intent: null, account: false, phoneOk: false, connected: false, newTiles: false, hostTab: 'pay', hostBack: 0,
            otp: '', otpErr: false, otpLeft: 24, banks: { ENBD: true, FAB: true }, bankDeclined: false,
            emailEdit: false, emailOther: '', emailErr: null, emailCode: '', emailCodeErr: false, emailOk: false, emailDone: false,
            footprint: false, fpa: null,
@@ -6893,14 +6933,14 @@ function jrFirstDue() {
   return { day: day, iso: d.toISOString().slice(0, 10) };
 }
 var Journey = {
-  S: null, persona: null, timer: null, otpTimer: null, map: null,
+  S: null, persona: null, timer: null, otpTimer: null, toastTimer: null, map: null,
   /* v2.8 — the A/B test: the variant survives restarts; the event log is this session's, across journeys */
   variant: 'B', eventLog: [], run: 0,
   build: function () {
     Journey.persona = (MD.personasJourney || [])[0] || null;
     var root = clear($('#scr-journey'));
     root.appendChild(screenHead('Botim user → Noor web-view → Partner Bank', 'Customer journey',
-      'Ravi Kumar (j1) meets Noor inside botim money — a banner, the Noor icon and Noor-rendered insights — connects his bank and applies for a personal loan, on the real Mizan engine: the decision lands in the Decision log and its credit memo in Lender view. Switch the entry experiment (A / B) in the Experiment panel.'));
+      'Ravi Kumar (j1) meets Noor inside botim — a banner and the Noor icon on botim’s main screen and in botim money, and Noor-rendered insights — connects his bank and applies for a personal loan, on the real Mizan engine: the decision lands in the Decision log and its credit memo in Lender view. Switch the entry experiment (A / B) in the Experiment panel.'));
     if (!Journey.persona) { root.appendChild(h('div', { class: 'panel', text: 'Journey persona j1 is missing from MizanData.personasJourney.' })); return; }
     /* v2.11 — the flow map above the phone: ten phases over the journey's own steps; "Go to this step" uses the journey's jump */
     Journey.map = FlowMap.create({ id: 'jr-flow', key: 'journey', label: 'The customer journey, ten phases', steps: JR_FLOW,
@@ -6931,13 +6971,15 @@ var Journey = {
   clearTimers: function () {
     if (Journey.timer) { clearTimeout(Journey.timer); Journey.timer = null; }
     if (Journey.otpTimer) { clearInterval(Journey.otpTimer); Journey.otpTimer = null; }
+    if (Journey.toastTimer) { clearTimeout(Journey.toastTimer); Journey.toastTimer = null; }
   },
   log: function (call, result) { Journey.S.calls.push({ call: call, result: result }); },
-  /* What botim receives: events only, each with the variant — never data. Logged once per journey. */
-  emit: function (name) {
-    var S = Journey.S;
-    if (!S.botim.some(function (b) { return b.key === name; })) S.botim.push({ key: name, text: name + ' · variant ' + S.variant });
-    if (!S.logged[name]) { S.logged[name] = true; Journey.eventLog.push({ name: name, variant: S.variant, run: Journey.run }); }
+  /* What botim receives: events only, each with the variant — never data. Logged once per journey.
+     v2.12 — impression and click also carry the surface they came from ('home' | 'money'), logged once per surface. */
+  emit: function (name, surface) {
+    var S = Journey.S, key = name + (surface ? '@' + surface : '');
+    if (!S.botim.some(function (b) { return b.key === key; })) S.botim.push({ key: key, name: name, surface: surface || null, text: name + (surface ? ' · surface ' + surface : '') + ' · variant ' + S.variant });
+    if (!S.logged[key]) { S.logged[key] = true; Journey.eventLog.push({ name: name, variant: S.variant, run: Journey.run, surface: surface || null }); }
   },
   rec: function () { try { return Journey.S.recId ? ME.getDecision(Journey.S.recId) : null; } catch (e) { return null; } },
   /* Transient screens advance on their own (instant under reduced motion) */
@@ -6954,6 +6996,8 @@ var Journey = {
     Journey.clearTimers();
     S.chat = false;
     sub = sub || 0;
+    /* v2.12 — remember which botim screen the customer left from (0·0 main screen, 0·1 botim money), so ✕ returns there */
+    if (S.step === 0) S.hostBack = S.sub;
     S.eventErr = null;
     S.dir = dir !== undefined ? dir : ((step > S.step || (step === S.step && sub >= S.sub)) ? 1 : -1);
     S.step = step; S.sub = sub;
@@ -7056,7 +7100,30 @@ var Journey = {
     afterEngineMutation();
     Journey.go(9, 1, 1);
   },
-  closeWebview: function () { Journey.S.hostTab = 'pay'; Journey.go(Journey.S.connected ? 6 : 0, Journey.S.connected ? 1 : 0, -1); },
+  /* ✕ / "Not now": back in botim — botim money with the tiles once connected; before that, the botim screen the customer came from */
+  closeWebview: function () {
+    var S = Journey.S;
+    S.hostTab = 'pay';
+    if (S.connected) Journey.go(6, 1, -1);
+    else Journey.go(0, S.hostBack === 0 ? 0 : 1, -1);
+  },
+  /* v2.12 — botim's main screen ↔ botim money: "money" (services grid or bottom nav) opens botim money on Pay; "Home" returns */
+  openMoney: function () { Journey.S.hostTab = 'pay'; Journey.go(0, 1, 1); },
+  goHome: function () { Journey.go(0, 0, -1); },
+  /* Services and nav items outside the demo: a small inline toast — never navigation, never the fatal banner */
+  demoToast: function (what) {
+    var scr = $('#jr-screen');
+    if (!scr) return;
+    var old = $('#bm-demo-toast');
+    if (old) old.parentNode.removeChild(old);
+    if (Journey.toastTimer) clearTimeout(Journey.toastTimer);
+    scr.appendChild(h('div', { class: 'bm-demo-toast', id: 'bm-demo-toast', role: 'status', dataset: { from: what || '' }, text: 'Not part of this demo' }));
+    Journey.toastTimer = setTimeout(function () {
+      Journey.toastTimer = null;
+      var t = $('#bm-demo-toast');
+      if (t) t.parentNode.removeChild(t);
+    }, 2000);
+  },
   hostTab: function (t) {
     var S = Journey.S;
     var onHome = S.step === 0 || (S.step === 6 && S.sub === 1);
@@ -7087,17 +7154,18 @@ var Journey = {
     if (!S.connected) { S.intent = 'loan'; Journey.resumeOnboarding(); return; }
     Journey.go(7, 1, 1);
   },
-  /* The banner, the Noor icon, the Credit-tab card and the credit insight: the active variant's credit entry */
-  entry: function () {
+  /* The banner, the Noor icon, the Credit-tab card and the credit insight: the active variant's credit entry.
+     v2.12 — the main screen's banner and Noor icon use it too; the click carries the surface ('home' | 'money'). */
+  entry: function (surface) {
     var S = Journey.S;
-    Journey.emit('click');
+    Journey.emit('click', surface || 'money');
     if (S.variant === 'A') { S.hostTab = 'credit'; Journey.go(7, 0, 1); return; }
     Journey.creditCta();
   },
   /* Variant A: the Noor tile on botim's Loans screen → "How much do you need?" */
   loansNoor: function () {
     var S = Journey.S;
-    Journey.emit('click');
+    Journey.emit('click', 'money');
     S.intent = 'loan';
     Journey.go(8, 1, 1);
   },
@@ -7198,11 +7266,81 @@ var Journey = {
     root.appendChild(body);
     root.appendChild(h('div', { class: 'bm-ask' }, h('button', { class: 'bm-ask-in', type: 'button', id: 'bm-ask', onclick: function () { Journey.S.chat = true; Journey.render(); } },
       jrSvg(JR_ICON.bot), 'Ask me anything or search')));
-    var nav = h('div', { class: 'bm-nav', 'aria-hidden': 'true' });
-    [['Home', JR_ICON.home], ['Calls', JR_ICON.phone], ['Chats', JR_ICON.chat], ['money', JR_ICON.wallet], ['All', JR_ICON.grid]].forEach(function (n) {
-      nav.appendChild(h('span', { class: 'bm-nav-i' + (n[0] === 'money' ? ' on' : '') }, jrSvg(n[1]), h('span', { text: n[0] })));
+    root.appendChild(Journey.hostNav('money'));
+    return root;
+  },
+  /* v2.12 — botim's bottom nav, shared by the main screen and botim money: Home ↔ money navigate; Calls, Chats and All
+     are outside the demo and only show the toast */
+  hostNav: function (active) {
+    var pre = active === 'home' ? 'bh' : 'bm';
+    var nav = h('div', { class: 'bm-nav', role: 'navigation', 'aria-label': 'botim' });
+    [['home', 'Home', JR_ICON.home], ['calls', 'Calls', JR_ICON.phone], ['chats', 'Chats', JR_ICON.chat], ['money', 'money', JR_ICON.wallet], ['all', 'All', JR_ICON.grid]].forEach(function (n) {
+      var on = n[0] === active;
+      var fn = on ? function () {} : n[0] === 'home' ? function () { Journey.goHome(); } : n[0] === 'money' ? function () { Journey.openMoney(); } : function () { Journey.demoToast(n[0]); };
+      nav.appendChild(h('button', { class: 'bm-nav-i' + (on ? ' on' : ''), type: 'button', id: pre + '-nav-' + n[0], 'aria-current': on ? 'page' : null, onclick: fn },
+        jrSvg(n[2]), h('span', { text: n[1] })));
     });
-    root.appendChild(nav);
+    return nav;
+  },
+  /* ---------- v2.12 — the host app: botim's main screen (Home, concept) ----------
+     Where botim users land, and where the journey starts (step 0·0). A concept drawn from neutral components: the
+     team's frames show only botim money. Noor's banner and the Noor icon are Noor embeds here too. */
+  home: function () {
+    var S = Journey.S, p = Journey.persona, r = Journey.rec();
+    var funded = !!(r && r.status === 'EXECUTED' && S.botim.some(function (b) { return b.key === 'funded'; }));
+    var toast = function (what) { return function () { Journey.demoToast(what); }; };
+    var root = h('div', { class: 'bm bh', id: 'bh-home', dataset: { surface: 'home' } });
+    root.appendChild(h('div', { class: 'bm-head' },
+      h('div', { class: 'bm-brand' }, h('span', { class: 'bm-word', id: 'bh-word' }, h('b', { text: 'botim' })),
+        h('span', { class: 'bm-tag', id: 'bh-host-tag', text: 'Concept — illustrative host app' })),
+      h('div', { class: 'bm-head-r' }, h('span', { class: 'bm-avatar', role: 'img', 'aria-label': p.name, text: 'RK' }))));
+    root.appendChild(h('div', { class: 'bh-search' }, h('button', { class: 'bm-ask-in', type: 'button', id: 'bh-search', onclick: toast('search') },
+      jrSvg(JR_ICON.search), 'Ask me anything or search')));
+    var body = h('div', { class: 'bm-body bh-body' });
+    /* Noor's banner (Max's ask) — a Noor embed in Noor's brand style; once funded it reads "Loan funded · managed in Noor", with no amount */
+    if (funded) {
+      body.appendChild(h('div', { class: 'bm-banner bh-banner bh-banner-funded noor-embed', id: 'bh-banner', dataset: { embed: 'banner', surface: 'home', state: 'funded' } },
+        Journey.byNoor(),
+        h('span', { class: 'noor-logo bm-banner-logo', role: 'img', 'aria-label': 'noor finance' }),
+        h('span', { class: 'bm-banner-t', text: 'Loan funded · managed in Noor' }),
+        h('span', { class: 'bm-banner-s', text: 'Lender: Partner Bank · arranged by noor finance' })));
+    } else {
+      body.appendChild(h('button', { class: 'bm-banner bh-banner noor-embed', type: 'button', id: 'bh-banner', dataset: { embed: 'banner', surface: 'home' }, onclick: function () { Journey.entry('home'); } },
+        Journey.byNoor(),
+        h('span', { class: 'noor-logo bm-banner-logo', role: 'img', 'aria-label': 'noor finance' }),
+        h('span', { class: 'bm-banner-t', text: 'How much could you borrow?' }),
+        h('span', { class: 'bm-banner-s', text: 'Check in 2 minutes — no impact on your credit score' }),
+        h('span', { class: 'bm-banner-go', 'aria-hidden': 'true' }, jrSvg(JR_ICON.arrowR, null, '1.9'))));
+    }
+    Journey.emit('impression', 'home');
+    /* Services: round icons with neutral glyphs. "money" opens botim money; "Noor" is the Noor icon (a Noor embed); the rest toast */
+    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Services' })));
+    var svcs = h('div', { class: 'bh-svcs', id: 'bh-services' });
+    [['send', 'Send money', JR_ICON.send], ['recharge', 'Recharge', JR_ICON.recharge], ['bills', 'Bills', JR_ICON.bills], ['gold', 'Gold', JR_ICON.gold],
+     ['cards', 'Cards', JR_ICON.card], ['money', 'money', JR_ICON.wallet], ['noor', 'Noor'], ['more', 'More', JR_ICON.more]].forEach(function (s) {
+      if (s[0] === 'noor') {
+        svcs.appendChild(h('button', { class: 'bh-svc bh-svc-noor noor-embed', type: 'button', id: 'bh-noor-icon', dataset: { embed: 'icon', surface: 'home', svc: 'noor' },
+          'aria-label': 'Noor — how much could you borrow?', onclick: function () { Journey.entry('home'); } },
+          h('span', { class: 'bh-svc-b' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' })), h('span', { class: 'bh-svc-l', text: 'Noor' }), Journey.byNoor(true)));
+        return;
+      }
+      svcs.appendChild(h('button', { class: 'bh-svc bh-svc-' + s[0], type: 'button', id: 'bh-svc-' + s[0], dataset: { svc: s[0] },
+        onclick: s[0] === 'money' ? function () { Journey.openMoney(); } : toast(s[0]) },
+        h('span', { class: 'bh-svc-b' }, jrSvg(s[2], null, s[0] === 'more' ? '2.6' : '1.7')), h('span', { class: 'bh-svc-l', text: s[1] })));
+    });
+    body.appendChild(svcs);
+    /* Recent chats: generic rows, no real people */
+    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Recent chats' })));
+    body.appendChild(h('div', { class: 'bh-chats', id: 'bh-chats' },
+      [['FG', 'Family group', 'Dinner at 8 on Friday?', '10:24'], ['OF', 'Office', 'The slides are in the shared folder', '09:12'],
+       ['BM', 'Building management', 'Water off on Sunday, 10:00–12:00', 'Yesterday']].map(function (c, i) {
+        return h('button', { class: 'bh-chat', type: 'button', id: 'bh-chat-' + i, onclick: toast('chat') },
+          h('span', { class: 'bh-chat-av', 'aria-hidden': 'true', text: c[0] }),
+          h('span', { class: 'bh-chat-main' }, h('span', { class: 'bh-chat-n', text: c[1] }), h('span', { class: 'bh-chat-s', text: c[2] })),
+          h('span', { class: 'bh-chat-t', text: c[3] }));
+      })));
+    root.appendChild(body);
+    root.appendChild(Journey.hostNav('home'));
     return root;
   },
   /* The Noor insights, from data and engine calls only: card totals and the repayment seen leaving the accounts,
@@ -7228,7 +7366,7 @@ var Journey = {
           h('span', { class: 'bm-ins-tag', text: 'noor' }),
           h('span', { class: 'bm-ins-card-t', text: 'Connect your bank accounts — securely, through Noor' }),
           h('span', { class: 'bm-ins-card-s', text: 'Your budget, your cards and what you could borrow — in one place.' }),
-          h('button', { class: 'bm-ins-cta', type: 'button', id: 'bm-ins-connect-cta', onclick: function () { Journey.emit('click'); Journey.addAccount(); } }, 'Connect', jrSvg(JR_ICON.arrowR)))));
+          h('button', { class: 'bm-ins-cta', type: 'button', id: 'bm-ins-connect-cta', onclick: function () { Journey.emit('click', 'money'); Journey.addAccount(); } }, 'Connect', jrSvg(JR_ICON.arrowR)))));
       return;
     }
     var d = Journey.insightData(), A = S.variant === 'A';
@@ -7240,12 +7378,12 @@ var Journey = {
     };
     var row = h('div', { class: 'bm-ins-row', id: 'bm-insights', role: 'list', 'aria-label': 'Insights from Noor' },
       card('card', 'Cards', d.cardText, 'See your options', 'bm-ins-card-cta', function () {
-        Journey.emit('click');
+        Journey.emit('click', 'money');
         if (A) { S.hostTab = 'credit'; Journey.go(7, 0, 1); } else Journey.go(7, 3, 1);
       }, { util: String(d.util), repay: String(d.repay) }),
-      card('budget', 'Budget', d.budgetText, 'See your budget', 'bm-ins-budget-cta', function () { Journey.emit('click'); Journey.go(7, 2, 1); },
+      card('budget', 'Budget', d.budgetText, 'See your budget', 'bm-ins-budget-cta', function () { Journey.emit('click', 'money'); Journey.go(7, 2, 1); },
         { spend: String(d.spend), left: String(d.left) }),
-      card('credit', 'Credit', d.creditText, 'How much could you borrow?', 'bm-ins-credit-cta', function () { Journey.entry(); },
+      card('credit', 'Credit', d.creditText, 'How much could you borrow?', 'bm-ins-credit-cta', function () { Journey.entry('money'); },
         { cards: String(d.cards), loans: String(d.loans), band: String(d.band || '') }));
     body.appendChild(h('div', { class: 'bm-ins-wrap' }, row,
       h('div', { class: 'bm-dots', 'aria-hidden': 'true' }, [0, 1, 2].map(function (i) { return h('span', { class: i === 0 ? 'on' : '' }); }))));
@@ -7257,13 +7395,13 @@ var Journey = {
       body.appendChild(h('div', { class: 'bm-toast', id: 'bm-toast' }, jrSvg(JR_ICON.check, 'bm-toast-ico', '2'), 'Accounts connected through Noor'));
     }
     /* v2.8 — Max's banner: a Noor embed above Connected accounts, in Noor's brand style */
-    body.appendChild(h('button', { class: 'bm-banner noor-embed', type: 'button', id: 'bm-banner', dataset: { embed: 'banner' }, onclick: function () { Journey.entry(); } },
+    body.appendChild(h('button', { class: 'bm-banner noor-embed', type: 'button', id: 'bm-banner', dataset: { embed: 'banner' }, onclick: function () { Journey.entry('money'); } },
       Journey.byNoor(),
       h('span', { class: 'noor-logo bm-banner-logo', role: 'img', 'aria-label': 'noor finance' }),
       h('span', { class: 'bm-banner-t', text: 'How much could you borrow?' }),
       h('span', { class: 'bm-banner-s', text: 'Check in 2 minutes — no impact on your credit score' }),
       h('span', { class: 'bm-banner-go', 'aria-hidden': 'true' }, jrSvg(JR_ICON.arrowR, null, '1.9'))));
-    Journey.emit('impression');
+    Journey.emit('impression', 'money');
     body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Connected accounts' }),
       h('button', { class: 'bm-link', type: 'button', id: 'bm-add-account', onclick: function () { Journey.addAccount(); } }, 'Add another', jrSvg(JR_ICON.plus, 'bm-link-ico'))));
     var strip = h('div', { class: 'bm-accts', id: 'bm-accts' });
@@ -7288,7 +7426,7 @@ var Journey = {
     });
     /* v2.8 — a fifth round action button, "Noor" (the Noor icon mask), a Noor embed like the banner */
     acts.appendChild(h('button', { class: 'bm-act bm-act-noor noor-embed', type: 'button', id: 'bm-noor-icon', dataset: { embed: 'icon' }, 'aria-label': 'Noor — how much could you borrow?',
-      onclick: function () { Journey.entry(); } },
+      onclick: function () { Journey.entry('money'); } },
       h('span', { class: 'bm-act-b bm-act-noorb' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' })), h('span', { class: 'bm-act-l', text: 'Noor' }), Journey.byNoor(true)));
     body.appendChild(acts);
     Journey.hostInsightsCarousel(body);
@@ -7322,18 +7460,18 @@ var Journey = {
           h('span', { class: 'bm-loan-ico' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' })),
           h('span', { class: 'bm-loan-main' }, h('span', { class: 'bm-loan-n', text: 'Personal loan · noor finance' }), h('span', { class: 'bm-loan-d', text: 'AED 1,000–50,000 · Apply in minutes' })),
           jrSvg(JR_ICON.arrowR, 'bm-chev'))));
-      Journey.emit('impression');
+      Journey.emit('impression', 'money');
       body.appendChild(h('div', { class: 'bm-muted', text: 'Loans in botim money come from partners. The Noor tile is served by noor finance; botim never sees your bank data or credit decision.' }));
       return;
     }
     body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: funded ? 'More from Noor' : 'Credit' })));
-    body.appendChild(h('button', { class: 'bm-noor noor-embed', type: 'button', id: 'bm-credit-cta', dataset: { embed: 'credit-card' }, onclick: function () { Journey.entry(); } },
+    body.appendChild(h('button', { class: 'bm-noor noor-embed', type: 'button', id: 'bm-credit-cta', dataset: { embed: 'credit-card' }, onclick: function () { Journey.entry('money'); } },
       Journey.byNoor(),
       h('span', { class: 'bm-noor-top' }, h('span', { class: 'noor-logo bm-noor-logo', role: 'img', 'aria-label': 'noor finance' })),
       h('span', { class: 'bm-noor-t', text: 'How much can you borrow?' }),
       h('span', { class: 'bm-noor-s', text: 'Check in 2 minutes — no impact on your credit score' }),
       h('span', { class: 'bm-noor-go' }, 'Check now', jrSvg(JR_ICON.arrowR))));
-    Journey.emit('impression');
+    Journey.emit('impression', 'money');
     body.appendChild(h('div', { class: 'bm-muted', text: 'Credit in botim money is arranged by noor finance; the lender is a licensed bank. botim never sees your bank data or credit decision.' }));
   },
   hostInsights: function (body, accts) {
@@ -7390,6 +7528,8 @@ var Journey = {
   /* ---------- the screen for the current step ---------- */
   view: function () {
     var S = Journey.S, p = Journey.persona, st = S.step, sub = S.sub, B = Journey.btn;
+    /* v2.12 — 0·0 is botim's main screen, where the journey starts; 0·1 is botim money */
+    if (st === 0 && sub === 0) return { kind: 'host', node: Journey.home() };
     var hostStep = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 1);
     if (hostStep && S.chat) return { kind: 'hostchat', node: Journey.chat() };
     if (hostStep) return { kind: 'host', node: Journey.host() };
@@ -8012,6 +8152,13 @@ var Journey = {
           'botim money’s Credit tab shows “Loan funded · managed in Noor” (a Noor embed) — no amount, no terms.']]
     };
     var b = B[st] || B[0];
+    /* v2.12 — 0·0, botim's main screen: where botim users land */
+    if (st === 0 && sub === 0) {
+      b = ['botim’s main screen — where the journey starts', [
+        'Where botim users land. Noor’s banner and icon sit on the main screen (Max’s ask) and on botim money — both are Noor embeds, so botim gets events only. Tap the banner or the Noor icon to go straight to Noor, or open money to connect a bank first.',
+        'Variant ' + S.variant + ': the banner and the Noor icon open ' + (A ? 'botim’s Loans screen with the Noor tile' : '“How much can you borrow?”') + '. A customer without a Noor account creates one first — account, email and contact choices.',
+        'Events: impression and click carry the surface they came from (home or money), so the experiment counts impressions by surface.']];
+    }
     var hostView = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 1);
     if (S.chat && hostView) {
       b = ['Next: split in chat — a read-only teaser', ['botim AI could offer to split recent card purchases right in the chat.',
@@ -8091,11 +8238,11 @@ var Journey = {
     S.calls.slice(-6).forEach(function (c) { calls.appendChild(h('div', { class: 'jr-call' }, h('code', { text: c.call }), h('span', { class: 'jr-call-r', text: '→ ' + c.result }))); });
     var bot = h('div', { class: 'jr-botim', id: 'jr-botim' });
     if (!S.botim.length) bot.appendChild(h('span', { class: 'small muted', text: 'Nothing yet.' }));
-    S.botim.forEach(function (b) { bot.appendChild(h('code', { class: 'jr-ev', dataset: { ev: b.key, variant: S.variant }, text: b.text })); });
+    S.botim.forEach(function (b) { bot.appendChild(h('code', { class: 'jr-ev', dataset: { ev: b.name || b.key, surface: b.surface || '', variant: S.variant }, text: b.text })); });
     box.appendChild(h('div', { class: 'jr-two' },
       h('div', null, h('div', { class: 'jr-sub-t', text: 'Mizan calls (this journey)' }), calls),
       h('div', null, h('div', { class: 'jr-sub-t', text: 'What botim receives — events only, each with the variant' }), bot)));
-    box.appendChild(h('div', { class: 'jr-foot', id: 'jr-footnote', text: 'Host-app screens are illustrative, not Botim’s actual interface — a concept of botim money drawn from neutral components, with no Botim logo or artwork. Every “by noor” surface is a Noor embed.' }));
+    box.appendChild(h('div', { class: 'jr-foot', id: 'jr-footnote', text: 'Host-app screens are illustrative, not Botim’s actual interface — concepts of botim’s main screen and botim money drawn from neutral components, with no Botim logo or artwork. The team’s frames show only botim money, so the main screen is a concept. Every “by noor” surface is a Noor embed.' }));
   },
   /* v2.8 §3 — the A/B test of the credit entry: the switch, the design and this session's counters from the event log */
   renderExperiment: function () {
@@ -8133,6 +8280,17 @@ var Journey = {
     });
     box.appendChild(h('div', { class: 'jr-sub-t jr-exp-sub', text: 'This session, from the event log' }));
     box.appendChild(h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl jr-exp-tbl', id: 'jr-exp-counts' }, h('thead', null, thead), tbody)));
+    /* v2.12 — impressions by surface: botim's main screen (home) and botim money */
+    var surf = [['home', 'Main screen'], ['money', 'botim money']];
+    var bySurface = function (v, s) { return Journey.eventLog.filter(function (e) { return e.variant === v && e.name === 'impression' && e.surface === s; }).length; };
+    var sbody = h('tbody');
+    ['A', 'B'].forEach(function (v) {
+      sbody.appendChild(h('tr', { dataset: { variant: v }, class: S.variant === v ? 'jr-exp-cur' : '' }, h('td', { text: v + (S.variant === v ? ' · now' : '') }),
+        surf.map(function (c) { return h('td', { class: 'num', dataset: { k: c[0] }, text: String(bySurface(v, c[0])) }); })));
+    });
+    box.appendChild(h('div', { class: 'jr-sub-t jr-exp-sub', text: 'Impressions by surface' }));
+    box.appendChild(h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl jr-exp-tbl', id: 'jr-exp-surface' },
+      h('thead', null, h('tr', null, h('th', { text: 'Variant' }), surf.map(function (c) { return h('th', { class: 'num', text: c[1] }); }))), sbody)));
   },
   renderSteps: function () {
     var box = clear($('#jr-steps')), S = Journey.S, r = Journey.rec();
