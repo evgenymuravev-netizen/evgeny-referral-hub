@@ -1447,3 +1447,191 @@ Every Mizan number for Ravi holds, and the v2.9 fingerprints still match. Decisi
   - v2.12's src check (made "additive only" in v2.13) now reads: "src/ changes since v2.12 are confined to engine.js,
     data.js and the selftest, which grew from 1503 checks". v2.14 and v2.15 edit existing lines on purpose.
 - The Noor skin `<style>` block is byte-identical; the v2.15 CSS sits at the end of "Noor additions".
+
+### As built — v2.16
+
+Built as JOURNEY-EID-SPEC.md specifies, including both 9 Oct amendments (selftest 1677 green after v2.16, of which the
+1587 earlier checks and 90 in group 23; acceptance 1120 green after v2.16, of which 1073 after updating the existing walks
+and 47 in the new "v2.16 — Emirates ID" section). Every Mizan number for Ravi holds with a matching employer, and the v2.9
+fingerprints still match. Decisions and deviations:
+
+- **Data (j1).**
+  - `emiratesId.front` is `{nameEn, nameAr, idMasked '784-••••-•••••••-4', dob '1995-03-14', nationality 'India', expiry
+    '2028-02-09'}` and `emiratesId.back` is `{occupation, employer 'Dunecrest Logistics LLC', issuingPlace 'Dubai'}`.
+    The date of birth gives 31 as of TODAY. There is no sex or country field.
+  - Nationality was first left out, as the original spec required. Amendment 1 (9 Oct) adds it to the front.
+  - `connected.salaryPayer` is 'SALARY/WPS DUNECREST LOGISTICS'. Every account carries `holderName 'RAVI KUMAR'`.
+  - Two reason codes, RC_EMPLOYER_MISMATCH and RC_ID_EXPIRED, have Arabic. They sit before the v2.9 block, so the v2.9
+    test that the red-flag and SME codes end the table holds.
+- **Engine (additive).**
+  - `checkEmiratesId(applicant, scan?, opts?)` is pure.
+    - It reads only an allowlist: the front's name (EN + AR), masked ID, date of birth, nationality and expiry; the
+      back's occupation and employer. The selftest proves this with a property recorder.
+    - `notRead` is `['sex']` and `retainedInsideNoor` is `true` (amendment 2).
+    - It returns the spec's shape, plus `idMasked`, `expiry`, `nationality`, `enrichment`, `openFinance` and `whatIf`.
+    - `enrichment` routes nationality to the corridor (India → Credit Passport and Indian statements; outside India,
+      Pakistan and Egypt, nothing is offered). Its `use` line says "identity and enrichment routing only — never a
+      NoorScore or decision input".
+    - `opts.salaryPayer` overrides the payer for the what-if. `opts.openFinance === false` reads nothing from the
+      accounts, so the employer and name checks are null.
+  - Employer matching follows the spec: uppercase; drop L.L.C / LLC / FZE / FZCO / LTD / CO, SALARY / WPS / SAL and
+    '/'; expand SVCS / TRDG / LOG. It matches when at least 70% of the employer's distinct words appear in the payer.
+    The score is that share as a whole percent.
+  - `decide()` accepts `emiratesId` (`true` or `{front, back}`) for the **personal loan only**; other products throw.
+    A persona without a scan throws.
+    - The EMIRATES_ID pull (status SCANNED) comes after OPEN_FINANCE and before DIGITAL_FOOTPRINT. Its summary holds
+      flags only: no employer, payer, date of birth, occupation or nationality value.
+    - The features are idExpiryValid, idNameMatch, employerMatch and employerMatchScore.
+    - POL_ID_VALID and POL_EMPLOYER_MATCH run in `evaluateLoan` after the FCF rule, so the limit and the price are
+      computed exactly as before.
+    - A mismatch or an expired card is REFER; without Open Finance, or without a salary payer, the result is INFO.
+  - `record.emiratesId = {scanned, idMasked, check, images}`. This is internal only. `images` holds the KYC references
+    (`KYC-<seq>-EID-FRONT.jpg` / `-BACK.jpg`), `retainedInsideNoor: true` and the AML purpose.
+  - The name match has no rule of its own, because the spec defines none. It is a feature, part of POL_ID_VALID's
+    observed text, a pull flag and a 7·2 row.
+  - **Memo.**
+    - The identity flag is "Verified (UAE PASS) · Emirates ID front + back · employer matches salary payer". It reads
+      "differs from" on a mismatch, "not yet checked" without Open Finance, and adds "· card expired".
+    - The v2.8 footprint confidence follows the flag. The journey's memo therefore reads "… · employer matches salary
+      payer · digital footprint: high confidence".
+    - **Deviation:** `borrower.emiratesIdMasked` is now the scanned card's mask ('784-…-4') when the decision has a
+      scan. The deterministic mask ('…-5' for j1) would have contradicted the card the customer just scanned.
+  - Selftest group 23 (90 checks):
+    - the data, the normalisation cases and the 70% boundary (67% vs 75%);
+    - Ravi unchanged, with his fingerprint;
+    - the mismatch, the expired card, both together, no Open Finance and no payer, as REFER or INFO and never a decline,
+      at the same price;
+    - the guardrail: a Pakistan clone with a sex field gives the same outcome, points, grade, price, limit, features,
+      rules and pulls;
+    - the image references and the privacy scan.
+
+  The scan is extended in place: `identityWordsOf()` adds the employer, occupation, payer, the date-of-birth formats,
+  the nationality and the image references. Records with a scan are also checked for any image reference
+  (.jpg / .png, EID-FRONT, "image", "photo").
+- **Journey.**
+  - 3·2 "Scan your Emirates ID" follows 3·1 in both variants. The email's Continue leads to 3·2, and
+    `resumeOnboarding` returns there until the scan is done.
+  - The scan screen:
+    - Two tiles show a neutral dashed card outline with field labels. There is no card design and no image.
+    - Tapping a tile shows a simulated camera frame ("Hold steady…", corner marks) for 1 s, instantly under reduced
+      motion. The other tile and Retake wait meanwhile.
+    - The captured fields show (front: name EN + AR, the masked ID, date of birth, nationality, expiry). Each side has
+      Retake.
+    - The muted line is amendment 2's. Continue is disabled until both sides are captured.
+  - Step 4 has the methodology line under the bank list.
+  - At 7·2, a card under the budget summary shows the spec's employer ↔ payer row and the name row. `checkEmiratesId()`
+    runs, pure, on entering 7·2, or 8·2 in variant A. Variant A has no 7·2, so its result shows behind the scenes at 8·2.
+  - Behind the scenes for 3·2 has the spec's lines as amended:
+    - minimisation, without the photos clause;
+    - the KYC images line;
+    - "Front and back is enough …" in place of the liveness sentence;
+    - the nationality line.
+
+    Its engine box shows read, not read, the images and the nationality-routing chips, and the check result at 7·2.
+  - The what-if button at 3·2, 7·2 and 8·2 runs a pure check with the Palmgate payer. It shows the spec's REFER line and
+    logs under "Mizan calls"; no record is made.
+  - decide() passes `emiratesId:true`. The offer's behind-the-scenes lists POL_ID_VALID PASS and POL_EMPLOYER_MATCH PASS.
+  - Flow-map phase 2 reads "Web-view · account · email · Emirates ID", with updated Customer / Mizan / Rule copy of two
+    sentences each.
+  - PULL_LABEL gains EMIRATES_ID.
+- **Changed existing acceptance checks** (intent kept): every onboarding walk now passes 3·2 (front, back, Continue):
+  - the B walk;
+  - variant A;
+  - the animated walk;
+  - the v2.8 dark walk;
+  - the 390px walk, which adds one scroll check at 3·2;
+  - the v2.11 flow-map walk and screenshot walk;
+  - v2.12's `WALK_TO_9`;
+  - v2.13's onboarding, variant A, dark and 390px walks;
+  - the v2.14 decision walk;
+  - v2.15's `TO_BANK`.
+
+  The other changed checks:
+  - The variant-A path string and v2.13's two step-list checks now include 3·2. "No 3·2" became "3·2 is the Emirates
+    ID, not a contact screen".
+  - v2.13 "the step list moves 3·1 → 4" now reads 3·2 → 4.
+  - v2.13's phase-2 detail string.
+  - v2.13's decide() call regex gains `emiratesId:{front, back}`, and `dataSources` for v2.17.
+  - The two memo identity regexes (v2.8, v2.14) read the new flag before the footprint confidence.
+- The Noor skin `<style>` block is byte-identical; the v2.16 CSS sits at the end of "Noor additions".
+
+### As built — v2.17 (revised 9 Oct, "Two steps to a score")
+
+Built as the revised JOURNEY-CONFIDENCE-SPEC.md specifies (the first draft was never built). With "Noor IP vs lender
+view", the lender sees no threshold, weights or bands. Selftest 1726 green: the 1677 earlier checks and 49 in group 24.
+Acceptance 1159 green: the 1120 earlier checks and 39 in the new "v2.17 — data completeness" section. Without
+`dataSources` nothing changes, and the v2.9 fingerprints match. Decisions and deviations:
+
+- **Engine (additive).**
+  - `dataCompleteness(applicant, approvedAccounts, opts?)` is pure. `approvedAccounts` takes masks or account
+    objects, and all connected accounts when omitted. The components are:
+    - a current account, 50, or 20 when almost empty (under 20 transactions a month, or under 3 months);
+    - salary credits in an approved account, 20;
+    - a card, 15;
+    - a loan, 15.
+
+    It returns the spec's shape, plus `scoreOverlay` (0 at ≥ 85%, −10 from the threshold to 84%, null below the
+    threshold), a `note` per component and `thresholdLabel`.
+  - j1's current account carries `txPerMonth: 46` (FAB savings 3). An account without it counts as regular.
+  - Ravi's results:
+
+    | Accounts | Completeness | Result |
+    |---|---|---|
+    | All four | 100% | 2 banks · 4 accounts · 12 months |
+    | Card and loan unticked | 70% | Ask: Credit cards, Loan accounts |
+    | Current unticked | 30% | Ask: Salary account |
+    | A non-salary current account only | 50% | — |
+    | Almost-empty current only | 20% | — |
+  - `completenessThresholdPct` is a personal-loan param: 70, bounds [50, 90], 4-eyes publish. The policy console shows
+    it as "illustrative".
+  - `prequalify(applicant, consents, opts?)`:
+    - With `opts.approvedAccounts` below the threshold, it returns `{productId, status:'NEEDS_DATA', completeness,
+      ask, eligible:null, note, sources}`. That is pure: no record, no clock tick.
+    - At or above the threshold it returns the unchanged range, plus `status:'OK'` and `completeness`.
+    - Without opts its output is byte-identical.
+    - The estimate band is never lowered by completeness: only `decide()` applies the overlay.
+  - `decide()` takes `dataSources: {approvedAccounts, months}`. It is personal loan only and needs Open Finance consent.
+    - The overlay "Data completeness 70–84%" (−10) enters `loanScore`. At 70%, Ravi scores 727, still grade B, with the
+      same mid-band rate, amounts and AED 1,311.70.
+    - The memo factor reads "Part of the financial picture not connected".
+    - POL_DATA_COMPLETENESS is PASS at or above the threshold. Below it the result is REFER with RC_DATA_INCOMPLETE
+      (EN + AR), placed with the v2.16 codes.
+    - Other additions: `record.dataCompleteness` (internal, threshold and components included), the feature
+      dataCompletenessPct and a DATA_COMPLETENESS audit line.
+    - **Interpretation:** the backstop REFER keeps the score on the internal record and the price unchanged. "No score
+      is issued" is enforced in the journey (NEEDS_DATA), where the spec places it.
+  - **Memo:**
+    - `dataCompleteness: {pct, banks, accounts, months}` is placed before `consents`, and appears only when the
+      decision had dataSources.
+    - The sharing list gains one line.
+    - The SFTP row gains `data_completeness_pct` and `data_sources` ("2 banks · 4 accounts · 12 months"). Other memos'
+      keys and SFTP header are unchanged.
+  - Selftest group 24 (49 checks): every case in the spec's test list. The privacy scan flags completeness-internal keys
+    and words (threshold, weights, bands, "illustrative") in memos of records with completeness. `forbiddenKeys()` now
+    accepts `memo.dataCompleteness.banks` and `.accounts` when they are counts. That is the only existing helper relaxed.
+- **Journey.**
+  - "Your data" (`#jr-data`) appears at 6·0, 7·2 (under the budget summary, above the v2.16 ID rows) and 7·3. It shows a
+    blue bar with a thin red line at the threshold, the percentage, "2 banks · 4 accounts · 12 months" and the checklist.
+    Everything comes from `Journey.approvedAccounts()`, so unticking in a bank's app is reflected.
+  - At 7·3, `prequalify()` runs on the approved accounts, and again when they change.
+    - At or above the threshold, "Based on {pct}% complete data · {banks} · {accounts}" sits under the range.
+    - Below it, 7·3 (and 8·0 / 8·2) becomes "Almost there", with the missing-only chips, "No score yet and nothing
+      recorded…" and the CTA "Connect another account" → 4·0. botim gets no "prequalified" event.
+  - Behind the scenes, from step 6 once connected, the "Two steps to a score" panel shows:
+    - the bar with the 70% line, the counts and threshold, the component table and the rule line;
+    - step 2, the score: before decide() what will run, after it this decision's NoorScore, DBR, free cash flow and
+      rule, with monitoring;
+    - the proxy line;
+    - the "Current account only (no salary)" what-if (50%, pure).
+
+    At 7·3 below the threshold the step copy explains NEEDS_DATA.
+  - The flow-map header note gains "· data completeness {pct}%" through a new optional `note` on FlowMap.
+  - decide() passes `dataSources`.
+  - The Lender view shows a conic-gradient ring with the percentage and the counts, without the threshold.
+  - The Decision log shows the internal line, with the threshold, and the component table.
+- **Changed existing acceptance checks:** only v2.13's decide() call regex (shared with v2.16) and the v2.16 section's
+  placement check, which now allows "Your data" between the budget summary and the ID rows.
+- **Open point:** the Lender view's NoorScore scale line (v2.5) still lists the band boundaries ("Excellent ≥ 740 …").
+  The revised spec says risk-band boundaries stay inside Noor. This build does not change that line; it is left for
+  the v2.18 lender-view work.
+- The Noor skin `<style>` block is byte-identical; the v2.17 CSS sits at the end of "Noor additions".

@@ -1721,30 +1721,28 @@ label.bk-acct { position:relative; cursor:pointer; }
 .ph-eid-mk .ji { width:13px; height:13px; }
 #jr-eid-out .btn { align-self:flex-start; }
 /* v2.17 — "Your data": a filled bar with a thin red threshold line, the percentage, the counts and the checklist */
-.ph-data { gap:8px; text-align:left; width:100%; }
+.ph-data { gap:8px; text-align:left; align-self:stretch; min-width:0; }
 .ph-data-h { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
 .ph-data-pct { font-family:var(--font-display); font-weight:800; font-size:22px; color:var(--ink); font-variant-numeric:tabular-nums; }
 .ph-data-bar { position:relative; height:10px; border-radius:5px; background:var(--ph-line); margin:4px 0 2px; }
-.ph-data-fill { position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:var(--brand-fill); }
+.ph-data-fill { position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:var(--ph-blue-b); }
 .ph-data-th, .jr-dc-th { position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:var(--bad); border-radius:1px; }
 .ph-data-counts { font-family:var(--font-label); font-size:14px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
 .ph-data-list { display:flex; flex-wrap:wrap; gap:6px; }
 .ph-data-c { display:inline-flex; align-items:center; gap:5px; border-radius:var(--radius-pill); padding:3px 10px 3px 4px; font-family:var(--font-label); font-size:13px; line-height:18px;
   color:var(--muted); background:var(--ph-ground); border:1px dashed var(--ph-line); }
-.ph-data-c.on { color:var(--ink); border-style:solid; }
+.ph-data-c.on { color:var(--ink); border-style:solid; border-color:var(--ok); background:var(--ok-soft); padding-left:10px; font-weight:500; }
 .ph-data-mk { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--ph-line); }
-.ph-data-c.on .ph-data-mk { background:var(--ok); border-color:var(--ok); color:#fff; }
-.ph-data-mk .ji { width:10px; height:10px; }
 .ph-data-n { margin-top:2px; }
 .ph-chips { display:flex; flex-wrap:wrap; gap:8px; }
 .ph-chip { display:inline-flex; align-items:center; border-radius:var(--radius-pill); padding:7px 14px; background:var(--panel); border:1.5px solid var(--brand); color:var(--brand-ink);
   font-family:var(--font-ui); font-weight:600; font-size:15px; line-height:20px; }
 /* v2.17 — behind the scenes: "Two steps to a score" */
-.jr-two { gap:10px; }
+.jr-twostep { gap:10px; }
 .jr-two-s { display:flex; flex-direction:column; gap:6px; }
 .jr-two-t { font-family:var(--font-label); font-weight:600; font-size:13px; color:var(--ink); }
 .jr-dc-bar { position:relative; height:8px; border-radius:4px; background:var(--hairline); margin:4px 0; }
-.jr-dc-fill { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--brand); }
+.jr-dc-fill { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--sky); }
 .jr-dc-tbl td, .jr-dc-tbl th { font-size:12.5px; }
 .jr-two-proxy { margin:0; color:var(--ink-2); }
 #jr-two-steps .btn { align-self:flex-start; }
@@ -7996,13 +7994,13 @@ var Journey = {
       return { kind: 'webview', node: Journey.wv(h('div', { id: 'jr-prequal', dataset: { min: String(pq.indicativeMin), max: String(pq.indicativeMax) } },
         h('h2', { class: 'ph-hero', id: 'jr-pq-head', text: 'You could borrow up to ' + fmtAED(pq.indicativeMax) }),
         h('p', { class: 'ph-p', id: 'jr-pq-range' }, 'Your range: ', h('strong', { text: fmtAED(pq.indicativeMin) + ' – ' + fmtAED(pq.indicativeMax).replace('AED ', '') })),
+        /* v2.17 — what the range rests on */
+        pqDc ? h('p', { class: 'ph-small', id: 'jr-pq-data', text: 'Based on ' + pqDc.pct + '% complete data · ' + pqDc.counts.banks + (pqDc.counts.banks === 1 ? ' bank' : ' banks') + ' · ' + pqDc.counts.accounts + (pqDc.counts.accounts === 1 ? ' account' : ' accounts') }) : null,
         h('div', { class: 'ph-tags' }, h('span', { class: 'ph-tag', id: 'jr-pq-band', text: 'NoorScore estimate · ' + pq.noorScoreEstimateBand }), h('span', { class: 'ph-tag', text: 'Personal loan' })),
         h('div', { class: 'ph-card ph-okline' }, h('span', { class: 'ph-okico ph-okico-sm', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.4')),
           h('span', null, h('strong', { text: 'Checking this didn’t affect your credit score' }), h('span', { class: 'ph-small ph-block', text: 'Worked out from your connected accounts only. Your exact limit is confirmed after a credit check — you can borrow any amount up to it.' }))),
         h('p', { class: 'ph-small', id: 'jr-pq-fcf', text: 'Up to ' + fmtAED(pq.indicativeMax) + ' over ' + pq.assumptions.tenorMonths + ' months — we keep the monthly payment within half of what’s left after your spending' +
           (pq.assumptions.instalmentBudgetMonthly ? ' (about ' + fmtAED(pq.assumptions.instalmentBudgetMonthly) + ' a month)' : '') + '. Shorter terms mean smaller amounts.' }),
-        /* v2.17 — what the range rests on */
-        pqDc ? h('p', { class: 'ph-small', id: 'jr-pq-data', text: 'Based on ' + pqDc.pct + '% complete data · ' + pqDc.counts.banks + (pqDc.counts.banks === 1 ? ' bank' : ' banks') + ' · ' + pqDc.counts.accounts + (pqDc.counts.accounts === 1 ? ' account' : ' accounts') }) : null,
         Journey.dataCard(pqDc),
         h('p', { class: 'ph-small ph-muted', text: 'Indicative for ' + pq.validForDays + ' days.' })),
         B('Choose your loan', function () { Journey.go(8, 0, 1); }, 'jr-cta')) };
@@ -8109,7 +8107,7 @@ var Journey = {
     if (!dc) return null;
     var list = h('div', { class: 'ph-data-list', id: 'jr-data-list' }, dc.components.map(function (c) {
       return h('span', { class: 'ph-data-c' + (c.have ? ' on' : ''), dataset: { key: c.key, have: String(!!c.have) } },
-        h('span', { class: 'ph-data-mk', 'aria-hidden': 'true' }, c.have ? jrSvg(JR_ICON.check, null, '2.4') : null), c.label + (c.have ? ' ✓' : ''));
+        c.have ? null : h('span', { class: 'ph-data-mk', 'aria-hidden': 'true' }), c.label + (c.have ? ' ✓' : ''));
     }));
     return h('div', { class: 'ph-card ph-data', id: 'jr-data', dataset: { pct: String(dc.pct), above: String(!!dc.aboveThreshold) } },
       h('div', { class: 'ph-data-h' }, h('span', { class: 'ph-h3', text: 'Your data' }), h('span', { class: 'ph-data-pct', id: 'jr-data-pct', text: dc.pct + '%' })),
@@ -8154,7 +8152,7 @@ var Journey = {
         ', with the affordability aggregates (DBR, free cash flow); monitoring follows the payout.';
     }
     var w = S.dcWhatIf;
-    return h('div', { class: 'jr-engine jr-two', id: 'jr-two-steps', dataset: { pct: String(use.pct), above: String(!!use.aboveThreshold) } },
+    return h('div', { class: 'jr-engine jr-twostep', id: 'jr-two-steps', dataset: { pct: String(use.pct), above: String(!!use.aboveThreshold) } },
       h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Two steps to a score' }), h('code', { text: 'dataCompleteness(j1, approved accounts)' }), h('span', { class: 'small muted', text: ' · pure — no record' })),
       h('div', { class: 'jr-two-s', id: 'jr-two-1' },
         h('div', { class: 'jr-two-t', text: 'Step 1 — data completeness' }),
@@ -8245,7 +8243,7 @@ var Journey = {
       S.eidCheck = ME.checkEmiratesId(p, true, { openFinance: true });
       var m = S.eidCheck.employerMatch, n = S.eidCheck.nameMatch;
       Journey.log('checkEmiratesId(j1, front + back)', 'employer ↔ WPS payer: ' + (m.match ? 'match' : 'mismatch') + ' (' + m.score + '%) · name ' + (n.match ? 'matches' : 'does not match') +
-        ' the account holder · nationality and sex not read · pure, no record');
+        ' the account holder · sex not read; nationality for identity and enrichment only · pure, no record');
     } catch (err) { S.eidCheck = null; }
   },
   /* The what-if: the same card, the salary from another company — a pure check, never a decision */
@@ -8726,6 +8724,12 @@ var Journey = {
           'botim money’s Credit tab shows “Loan funded · managed in Noor” (a Noor embed) — no amount, no terms.']]
     };
     var b = B[st] || B[0];
+    /* v2.17 — 7·3 below the completeness threshold: step 1 comes first, nothing is scored */
+    if (st === 7 && sub === 3 && S.pq && S.pq.status === 'NEEDS_DATA') {
+      b = ['prequalify() — step 1 first: not enough data to score yet', [
+        'The approved accounts show ' + S.pq.completeness.pct + '% of the financial picture, below the ' + S.pq.completeness.threshold + '% threshold (illustrative, completenessThresholdPct).',
+        'No range and no score estimate: nothing is recorded and there is no AECB inquiry. The customer is asked for ' + S.pq.ask.join(', ').toLowerCase() + ' — the salary account first.']];
+    }
     /* v2.12 — 0·0, botim's main screen: where botim users land */
     if (st === 0 && sub === 0) {
       b = ['botim’s main screen — where the journey starts', [
