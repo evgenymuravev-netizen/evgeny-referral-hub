@@ -1,0 +1,58 @@
+/* ============================================================
+   Mal — Iridescent gradient meshes (SIGNATURE brand asset)
+   CSS recreation of the mal.ai gradient meshes. The real site
+   uses raster PNG meshes; these variables reproduce the look
+   with layered radial gradients so they can be used live.
+
+   Usage:
+     .mal-mesh            → full periwinkle→rose→peach mesh
+     .mal-mesh--cool      → periwinkle/lavender only
+     .mal-mesh--warm      → rose/peach forward
+     background: var(--mesh-hero);  → as a background value
+   ============================================================ */
+:root {
+  --mesh-hero:
+    radial-gradient(60% 70% at 18% 22%, var(--iris-lilac) 0%, transparent 60%),
+    radial-gradient(55% 65% at 80% 18%, var(--iris-periwinkle) 0%, transparent 58%),
+    radial-gradient(70% 80% at 72% 82%, var(--iris-rose) 0%, transparent 60%),
+    radial-gradient(60% 70% at 30% 88%, var(--iris-peach) 0%, transparent 58%),
+    radial-gradient(90% 90% at 50% 50%, var(--iris-violet) 0%, var(--iris-lavender) 100%);
+
+  /* Cool variant — periwinkle & lavender (calm/product) */
+  --mesh-cool:
+    radial-gradient(65% 75% at 22% 25%, var(--iris-violet) 0%, transparent 60%),
+    radial-gradient(60% 70% at 78% 30%, var(--iris-blue) 0%, transparent 58%),
+    radial-gradient(70% 80% at 60% 85%, var(--iris-lilac) 0%, transparent 62%),
+    linear-gradient(135deg, var(--iris-lavender), var(--iris-periwinkle));
+
+  /* Warm variant — rose & peach forward */
+  --mesh-warm:
+    radial-gradient(60% 70% at 25% 25%, var(--iris-mauve) 0%, transparent 60%),
+    radial-gradient(65% 75% at 80% 35%, var(--iris-rose) 0%, transparent 58%),
+    radial-gradient(70% 80% at 55% 88%, var(--iris-peach) 0%, transparent 60%),
+    linear-gradient(140deg, var(--iris-lilac), var(--iris-coral));
+
+  --mesh-veil:
+    radial-gradient(50% 60% at 15% 10%, rgba(166,168,253,0.25) 0%, transparent 60%),
+    radial-gradient(50% 60% at 90% 20%, rgba(242,169,172,0.22) 0%, transparent 60%),
+    radial-gradient(60% 70% at 70% 95%, rgba(251,164,119,0.20) 0%, transparent 60%); /* @kind other */
+
+  /* Text-legibility protection scrim over a mesh */
+  --scrim-bottom: linear-gradient(to top, rgba(14,14,16,0.55) 0%, transparent 55%);  /* @kind other */
+  --scrim-soft:   linear-gradient(to bottom, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.65) 100%);  /* @kind other */
+}
+
+.mal-mesh        { background: var(--mesh-hero); background-size: cover; }
+.mal-mesh--cool  { background: var(--mesh-cool); background-size: cover; }
+.mal-mesh--warm  { background: var(--mesh-warm); background-size: cover; }
+.mal-mesh--veil  { background: var(--mesh-veil); background-color: var(--neutral-50); }
+
+/* Fine grain overlay to match the site's soft film texture */
+.mal-grain::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

@@ -1,0 +1,51 @@
+/* ============================================================
+   Mal — Typography tokens
+   Primary family: Onest (clean, contemporary grotesk) — SUBSTITUTE
+   for Mal's production webfont (real font files not provided).
+   Numerals: Onest tabular figures for money; Geist Mono for data.
+   ============================================================ */
+:root {
+  /* --- Families --- */
+  --font-sans: "Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* --- Weights --- */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* --- Fluid display sizes (marketing / hero) --- */
+  --text-display-xl: clamp(3rem, 6vw, 5rem);      /* 48 → 80 */
+  --text-display-lg: clamp(2.5rem, 4.5vw, 3.5rem); /* 40 → 56 */
+  --text-display-md: clamp(2rem, 3.5vw, 2.75rem);  /* 32 → 44 */
+
+  /* --- Static scale (product UI) --- */
+  --text-3xl: 2rem;     /* 32 */
+  --text-2xl: 1.5rem;   /* 24 */
+  --text-xl:  1.25rem;  /* 20 */
+  --text-lg:  1.125rem; /* 18 */
+  --text-md:  1rem;     /* 16 — base */
+  --text-sm:  0.875rem; /* 14 */
+  --text-xs:  0.75rem;  /* 12 */
+  --text-2xs: 0.6875rem;/* 11 — labels/overline */
+
+  /* --- Line heights --- */
+  --leading-tight: 1.05;   /* display */
+  --leading-snug: 1.2;     /* headings */
+  --leading-normal: 1.5;   /* body */
+  --leading-relaxed: 1.65; /* long-form */
+
+  /* --- Letter spacing --- */
+  --tracking-tighter: -0.03em; /* large display */
+  --tracking-tight: -0.015em;  /* headings */
+  --tracking-normal: 0em;
+  --tracking-wide: 0.02em;
+  --tracking-overline: 0.14em;  /* uppercase labels */
+
+  /* --- Semantic roles --- */
+  --font-heading: var(--font-display);
+  --font-body: var(--font-sans);
+  --font-numeric: var(--font-sans); /* use font-feature-settings: "tnum" for tabular */
+}

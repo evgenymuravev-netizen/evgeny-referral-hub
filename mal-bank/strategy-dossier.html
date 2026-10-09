@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mal — Credit Portfolio Strategy: The Cross-Border Underwriting Dossier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2F2EC;
+    --paper-2:#EBECE4;
+    --ink:#161D19;
+    --ink-2:#4E5A53;
+    --green:#0E6B4A;
+    --green-soft:#E2EAE2;
+    --oxide:#A63D2F;
+    --rule:#D6D8CC;
+    --maxw:700px;
+    --rail:190px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Source Serif 4',Georgia,serif;
+    font-size:17px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--green);text-decoration:none;border-bottom:1px solid var(--rule)}
+  a:hover{border-bottom-color:var(--green)}
+  a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+  ::selection{background:var(--green-soft)}
+
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  /* ---------- masthead ---------- */
+  header.masthead{
+    border-bottom:2px solid var(--ink);
+    padding:56px 24px 40px;
+  }
+  .masthead-inner{max-width:calc(var(--rail) + 48px + var(--maxw));margin:0 auto}
+  .doc-line{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+  .doc-line b{color:var(--green);font-weight:500}
+  h1{
+    font-family:'Fraunces',serif;font-weight:400;
+    font-size:clamp(40px,6vw,68px);line-height:1.02;letter-spacing:-.015em;
+    max-width:16ch;margin-bottom:22px;
+  }
+  h1 i{font-style:italic;color:var(--green)}
+  .standfirst{font-size:20px;line-height:1.55;color:var(--ink);max-width:62ch}
+  .standfirst i{color:var(--ink-2)}
+
+  /* ---------- TOC ---------- */
+  nav.toc{border-bottom:1px solid var(--rule);background:var(--paper-2);padding:20px 24px}
+  .toc-inner{max-width:calc(var(--rail) + 48px + var(--maxw));margin:0 auto;display:flex;flex-wrap:wrap;gap:6px 20px}
+  .toc-inner a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--ink-2);border-bottom:none;padding:2px 0}
+  .toc-inner a:hover{color:var(--green)}
+  .toc-inner a span{color:var(--green)}
+
+  /* ---------- sections ---------- */
+  main{padding:0 24px 80px}
+  section.sec{
+    max-width:calc(var(--rail) + 48px + var(--maxw));
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:var(--rail) minmax(0,var(--maxw));
+    gap:0 48px;
+    padding:52px 0 44px;
+    border-bottom:1px solid var(--rule);
+  }
+  section.sec:last-of-type{border-bottom:none}
+  .rail{position:relative}
+  .rail-stick{position:sticky;top:28px}
+  .sec-code{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:var(--green);text-transform:uppercase;margin-bottom:14px}
+  .fig{border-top:1px solid var(--rule);padding:12px 0 4px;margin-top:10px}
+  .fig .n{font-family:'Fraunces',serif;font-size:34px;line-height:1;color:var(--ink)}
+  .fig .l{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-top:4px;line-height:1.5}
+
+  .body h2{
+    font-family:'Fraunces',serif;font-weight:400;
+    font-size:clamp(28px,3.4vw,38px);line-height:1.08;letter-spacing:-.01em;
+    margin-bottom:20px;
+  }
+  .body h2 i{font-style:italic;color:var(--green)}
+  .body h3{font-family:'Source Serif 4',serif;font-weight:600;font-size:17px;margin:26px 0 8px}
+  .body p{margin-bottom:16px;max-width:66ch}
+  .body p:last-child{margin-bottom:0}
+  .body ul{list-style:none;margin:0 0 16px}
+  .body li{padding:9px 0 9px 22px;position:relative;max-width:64ch;border-bottom:1px dotted var(--rule)}
+  .body li:last-child{border-bottom:none}
+  .body li::before{content:"—";position:absolute;left:0;color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:13px}
+  .body li b{font-weight:600}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.04em;color:var(--ink-2)}
+
+  .position{
+    margin-top:26px;border-left:3px solid var(--green);
+    background:var(--green-soft);padding:12px 16px;
+    font-size:15px;max-width:66ch;
+  }
+  .position .lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--green);display:block;margin-bottom:4px}
+
+  .never{
+    margin-top:26px;border:1px solid var(--oxide);
+    padding:14px 16px;max-width:66ch;
+  }
+  .never .lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--oxide);display:block;margin-bottom:6px}
+  .never p{font-size:15px;color:var(--ink);margin:0}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0 18px}
+  th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);font-weight:500;text-align:left;padding:8px 12px 8px 0;border-bottom:1.5px solid var(--ink)}
+  td{padding:10px 12px 10px 0;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.5}
+  td:first-child{font-weight:600;white-space:nowrap}
+  td i{color:var(--ink-2)}
+
+  .seq{margin:8px 0 4px}
+  .seq-item{display:grid;grid-template-columns:92px 1fr;gap:18px;padding:14px 0;border-bottom:1px solid var(--rule)}
+  .seq-item:last-child{border-bottom:none}
+  .seq-ph{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);letter-spacing:.06em;padding-top:3px}
+  .seq-body b{font-weight:600;display:block;margin-bottom:2px}
+  .seq-body p{font-size:15px;color:var(--ink);margin:0;max-width:60ch}
+
+  blockquote{
+    font-family:'Fraunces',serif;font-style:italic;
+    font-size:22px;line-height:1.4;color:var(--ink);
+    border-left:3px solid var(--green);padding-left:20px;margin:22px 0;max-width:56ch;
+  }
+
+  footer{border-top:2px solid var(--ink);padding:28px 24px 64px}
+  .foot-inner{max-width:calc(var(--rail) + 48px + var(--maxw));margin:0 auto;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.8;color:var(--ink-2);letter-spacing:.03em}
+
+  @media (max-width:980px){
+    section.sec{grid-template-columns:1fr;gap:18px}
+    .rail-stick{position:static;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline}
+    .fig{border-top:none;padding:0;margin:0}
+    .fig .n{font-size:22px}
+    .sec-code{margin-bottom:0}
+  }
+  @media print{
+    nav.toc{display:none}
+    body{background:#fff;font-size:12.5px}
+    section.sec{page-break-inside:avoid;padding:24px 0}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="doc-line">
+      <span><b>MAL</b> · CREDIT PORTFOLIO STRATEGY · WORKING DOSSIER</span>
+      <span>PREPARED BY E.MURAVEV · 21.JUL.2026 · v3</span>
+    </div>
+    <h1>Underwriting the <i>whole</i> person.</h1>
+    <p class="standfirst">Sixty licensed banks compete for the UAE borrower, and each underwrites the half of a financial life that happens onshore. This dossier consolidates the full case for Mal's credit portfolio: the cross-border data thesis, why future intent is legitimate underwriting material, the product sequence, day-zero risk management, consent-first recourse, the telco question, and the competitive record of everyone who has tried any of it. <i>Companion to the 10-slide brief; this is the reference version.</i></p>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <div class="toc-inner">
+    <a href="#s00"><span>§00</span> Thesis</a>
+    <a href="#s01"><span>§01</span> Market</a>
+    <a href="#s02"><span>§02</span> The shift</a>
+    <a href="#s03"><span>§03</span> Strategy</a>
+    <a href="#s04"><span>§04</span> Future intent — consumer</a>
+    <a href="#s05"><span>§05</span> Future intent — SME</a>
+    <a href="#s06"><span>§06</span> Flywheel</a>
+    <a href="#s07"><span>§07</span> Sequence</a>
+    <a href="#s08"><span>§08</span> Early warning</a>
+    <a href="#s09"><span>§09</span> Recourse</a>
+    <a href="#s10"><span>§10</span> Telco data</a>
+    <a href="#s11"><span>§11</span> Competitive record</a>
+    <a href="#s12"><span>§12</span> Where incumbents win</a>
+    <a href="#s13"><span>§13</span> Caveats</a>
+    <a href="#s14"><span>§14</span> Bottom line</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- 00 -->
+<section class="sec" id="s00">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§00 · Thesis</div>
+  </div></div>
+  <div class="body">
+    <h2>The case in one <i>paragraph</i>.</h2>
+    <p>The single loss mechanism every UAE credit committee fears is the skip — borrow, board, vanish — and every incumbent prices it blind, as a margin tax on honest borrowers. Mal's edge is not "more data"; it is the specific data that prices and manages departure: consented cross-border visibility of income, obligations, credit history and intentions in both of the countries an expat's life actually spans. Domestic aggregation is commoditizing under Open Finance, so the moat sits at the border. The portfolio is sequenced by learning speed, not ticket size; risk is managed at day zero, not day thirty; recourse is designed at origination by consent, never improvised at delinquency through pressure. The concept is validated piecewise around the world — no bank anywhere runs it as its core engine, and none in the UAE despite the rails being live.</p>
+    <div class="position"><span class="lbl">POSITION</span>Cross-border underwriting for expats and cross-border SMEs, delivered through an agentic personal-finance platform that learns before it lends.</div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="sec" id="s01">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§01 · Market</div>
+    <div class="fig"><div class="n">~88%</div><div class="l">Residents who are expatriates (est.)</div></div>
+    <div class="fig"><div class="n">≈60</div><div class="l">Licensed banks onshore</div></div>
+    <div class="fig"><div class="n">#2</div><div class="l">Global remittance sender, after the US</div></div>
+  </div></div>
+  <div class="body">
+    <h2>Every bank here underwrites <i>half</i> a person.</h2>
+    <p>The UAE is a nation of arrivals. The typical borrower earns here and belongs somewhere else: salary in Dubai, mortgage in Mumbai, parents in Manila, plans split between the two. Incumbents see the onshore slice — the WPS salary (Wage Protection System, the mandated payroll rail), the AECB file (Al Etihad Credit Bureau, the national credit registry, refreshed monthly), local accounts. Home-country income, obligations and credit history are invisible, so they are priced as risk.</p>
+    <p>Two structural facts bound everything that follows. First, the WPS salary landing is the single most predictive signal in UAE retail credit and the anchor of all personal-loan pricing — whoever holds the salary account holds the anchor variable. Second, CBUAE consumer rules cap the portfolio's shape regardless of data ambition: debt-burden ratio (DBR, instalments over income) at 50%, personal financing at 20× salary, auto finance at 80% loan-to-value. Data sharpens pricing inside those walls; it does not move them.</p>
+    <p>The tail risk has a name and a mechanism: the skip. Average expat tenure is short — a two-to-five-year runway is normal — and a loan written without visibility of the borrower's other country is a loan written without visibility of the exit.</p>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="sec" id="s02">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§02 · The shift</div>
+    <div class="fig"><div class="n">2026</div><div class="l">Al Tareq Open Finance phase-in horizon</div></div>
+    <div class="fig"><div class="n">30d</div><div class="l">AECB refresh — the incumbent data speed limit</div></div>
+  </div></div>
+  <div class="body">
+    <h2>The moat moved to the <i>border</i>.</h2>
+    <p><b>Commoditizing:</b> Al Tareq — the CBUAE Open Finance programme — phases in through 2026 and gives every licensed bank consented, multi-bank visibility of UAE accounts. Domestic aggregation stops being an edge the day it ships. Building a strategy on "we connect your local accounts" is building on land the regulator is giving away.</p>
+    <p><b>White space:</b> the data that actually decides an expat's creditworthiness sits outside the UAE. The rails exist and are buyable: home-country bureaus via Nova Credit (already partnered with AECB in the UAE), India's Account Aggregator ecosystem, global open banking through Lean and Tarabut regionally and GoCardless, Plaid and Salt Edge internationally, and high-precision statement parsing via Perfios and Ocrolus. No incumbent is organizationally built to ingest any of it, because their underwriting was designed around a domestic salary and a domestic file.</p>
+    <blockquote>The sixty compete on the same domestic file. Mal underwrites the file that doesn't exist yet.</blockquote>
+    <div class="position"><span class="lbl">POSITION</span>Treat domestic Open Finance as table stakes to implement well, and cross-border ingestion as the differentiated asset to build first.</div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="sec" id="s03">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§03 · Strategy</div>
+  </div></div>
+  <div class="body">
+    <h2>Three layers, two <i>segments</i>.</h2>
+    <h3>Layer 1 — See more</h3>
+    <p>Consented cross-border data: home bureaus, accounts in both countries, parsed statements. Income the market never counts — rent from a flat back home, deposits abroad, side earnings, family flows — enters the affordability model instead of being ignored. Precedent exists: Prodigy Finance underwrites cross-border students on projected post-degree income with no local bureau at all; Shopify Capital advances against forecast sales.</p>
+    <h3>Layer 2 — Ask better</h3>
+    <p>An agentic PFM (personal-finance-management) copilot that earns data through utility rather than demanding it through forms: card and subscription optimization, cashback and miles routing, credit-card stacking for the affluent; invoice checks, supplier-price sanity and video walkthroughs for SMEs. Every answer is a service; every service is a signal. The conversation is the data-collection mechanism, and it only works if the service is genuinely worth having.</p>
+    <h3>Layer 3 — Underwrite the future</h3>
+    <p>A loan is a claim on a future self. Most people hold financial dreams, not financial goals; the agent's job is to crystallize dreams into dated, sized, prioritized goals — a forward plan spanning two countries, not an extrapolation of one country's past. Section §04 makes the underwriting case for why this is signal, not sentiment.</p>
+    <h3>Segments</h3>
+    <p>Expat earners on the India, Philippines, Egypt and Pakistan remittance corridors — chosen for corridor size, data-rail availability and enforcement reciprocity — and UAE SMEs with cross-border supply chains, where the same two-country visibility applies to trade flows instead of salaries.</p>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="sec" id="s04">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§04 · Future intent · Consumer</div>
+  </div></div>
+  <div class="body">
+    <h2>Why goals are <i>underwriting</i> data.</h2>
+    <p><b>The core mechanism:</b> a loan repayment is a series of scheduled sacrifices of present consumption for a future state. Goal pursuit is the same behavior, observed before you lend. Static underwriting infers capacity from stocks and history; pursuit dynamics let you watch the borrower perform the exact behavior the loan will require. Five channels:</p>
+    <ul>
+      <li><b>Costly signal vs cheap talk.</b> A stated goal is free; nine months of automatic transfers toward it is expensive and hard to fake. You never underwrite the goal — you underwrite the goal–behavior delta. This is what lets intent data survive the gaming objection.</li>
+      <li><b>Shadow instalment history.</b> Recurring voluntary saving is an unsecured loan the customer issues to their own future self; pursuit telemetry is its repayment record. For thin-file expats with no AECB depth, this is the substitute credit file.</li>
+      <li><b>Time preference measured, not asked.</b> Non-shock default is largely a present-bias phenomenon. Measured present bias predicts revolving-debt behavior (Meier &amp; Sprenger 2010); numeracy predicted mortgage default (Gerardi, Goette &amp; Meier, PNAS 2013); and application text alone predicted default beyond financials ("When Words Sweat", Netzer et al., JMR 2019). Contribution consistency, response to temptation weeks, recovery after slippage — revealed-preference psychometrics, uncoachable, unlike questionnaires.</li>
+      <li><b>True free cash flow.</b> A sustained AED 3k/month goal flow is demonstrated divertible surplus — the hardest affordability evidence there is. Product consequence: a goal-linked loan swaps a proven saving flow into an instalment flow one-for-one. No new burden; a proven one, redeployed. Same DBR arithmetic, radically lower uncertainty.</li>
+      <li><b>Earliest distress sensor.</b> In trouble, people default on their future self first: goal contributions stop weeks before any obligation slips. This stream feeds §08 with a signal that even open-banking balances lag.</li>
+    </ul>
+    <p>There is also a portfolio-level selection effect: goal-framed products attract planners, and planning behavior correlates with lower default. The book improves before any model runs.</p>
+    <div class="position"><span class="lbl">POSITION</span>Bureau data shows how someone treated their creditors. Goal-pursuit data shows how they treat their own future — which is who the loan is actually betting on.</div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="sec" id="s05">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§05 · Future intent · SME</div>
+  </div></div>
+  <div class="body">
+    <h2>For SMEs, goals are <i>plans</i> — and plans are telemetry.</h2>
+    <ul>
+      <li><b>Plan-vs-actual variance is management quality, instrumented.</b> SME default is mostly execution failure, and banks proxy unobservable competence with collateral. Milestone hit-rate, forecast accuracy and budget discipline over time measure competence directly; systematic over-projection is itself a flag — overconfidence predicts entrepreneurial failure.</li>
+      <li><b>Use-of-proceeds underwriting.</b> Knowing the plan means underwriting the deal, not the stale balance sheet: the margin, cycle time and counterparty of the buy-at-100-sell-at-120 trade the owner uploads as an invoice. The repayment source becomes identifiable — self-liquidating trade-finance logic at micro scale.</li>
+      <li><b>Diversion detection.</b> Working-capital-loan-becomes-owner's-car is the classic SME loss driver. Deviation is only detectable from a trajectory you know.</li>
+      <li><b>Tenor matched to cycle.</b> A Ramadan inventory build gets a facility sized and timed to the cycle. Tenor mismatch is a quiet SME killer that plan visibility eliminates.</li>
+      <li><b>Forward visibility vs lagging financials.</b> A stated expansion corroborated by supplier negotiations, fit-out invoices and hiring is pipeline; a stalled plan is distress before the P&amp;L shows it. This is Berger–Udell relationship lending — the soft information community bankers had and digital lenders lost — codified and scaled by the agent.</li>
+    </ul>
+    <p>The video walkthroughs and invoice-upload advice from §03 do double duty here: cheap fraud deterrence and underwriting data, disguised as — and genuinely functioning as — service.</p>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="sec" id="s06">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§06 · Flywheel</div>
+  </div></div>
+  <div class="body">
+    <h2>Credit is the <i>fourth</i> step.</h2>
+    <div class="seq">
+      <div class="seq-item"><div class="seq-ph">STEP 1</div><div class="seq-body"><b>Agent first</b><p>PFM utility from day one — quick wins that need no loan. Value earns permission; permission earns data.</p></div></div>
+      <div class="seq-item"><div class="seq-ph">STEP 2</div><div class="seq-body"><b>Salary next</b><p>Utility wins the WPS transfer — the incumbents' anchor variable, captured by giving a switching reason they cannot copy without cannibalizing branch economics.</p></div></div>
+      <div class="seq-item"><div class="seq-ph">STEP 3</div><div class="seq-body"><b>Funding + file</b><p>Salaries bring CASA (current-and-savings balances) — low-cost funding, the half of a bank strategy most credit answers forget — while consented data compounds the file.</p></div></div>
+      <div class="seq-item"><div class="seq-ph">STEP 4</div><div class="seq-body"><b>Then credit</b><p>Sharper limits, sharper pricing. Every repayment feeds the model, and the wheel turns again.</p></div></div>
+    </div>
+    <blockquote>A bank that must lend to learn loses to one that learns before it lends.</blockquote>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="sec" id="s07">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§07 · Sequence</div>
+    <div class="fig"><div class="n">≤50%</div><div class="l">CBUAE DBR cap</div></div>
+    <div class="fig"><div class="n">20×</div><div class="l">Personal financing cap vs salary</div></div>
+    <div class="fig"><div class="n">80%</div><div class="l">Auto LTV cap</div></div>
+  </div></div>
+  <div class="body">
+    <h2>Sequenced by <i>learning</i> speed.</h2>
+    <div class="seq">
+      <div class="seq-item"><div class="seq-ph">PHASE 0</div><div class="seq-body"><b>Agent + accounts</b><p>PFM agent, salary account, remittance rails. Funding and the data file build at zero credit risk while the flywheel spins.</p></div></div>
+      <div class="seq-item"><div class="seq-ph">PHASE 1</div><div class="seq-body"><b>Fast-seasoning credit</b><p>Salary-linked advance, covered card via Tawarruq (a Sharia-compliant cash-financing structure), SME receivables and invoice finance. Short duration: capital cycles in weeks, models season in months, and the book generates its own loss data fast.</p></div></div>
+      <div class="seq-item"><div class="seq-ph">PHASE 2</div><div class="seq-body"><b>Secured tickets</b><p>Auto Murabaha (cost-plus sale) and personal term financing — once early-warning and collections are proven on the fast book.</p></div></div>
+      <div class="seq-item"><div class="seq-ph">PHASE 3</div><div class="seq-body"><b>Ijara home refinance</b><p>Lease-based mortgage refinance ships last, as a retention product for known customers — never as an acquisition anchor.</p></div></div>
+    </div>
+    <p><b>Why the instinctive order is inverted.</b> The intuitive plan — open with mortgage refinance to put "big bones" in the book — fails on four counts. Refinance is a pure price war against incumbents funding at near-zero CASA cost, a war a de-novo bank loses by construction. It adverse-selects rate-shoppers with no loyalty. A mortgage book takes five-plus years to season, so it teaches the models nothing. And a few large tickets increase idiosyncratic risk — portfolio stability comes from granularity and collateral, not ticket size. Risk appetite is expressed as risk-adjusted return on capital inside the CBUAE bounds, never as "higher risk, higher profit."</p>
+    <div class="position"><span class="lbl">POSITION</span>The moat compounds fastest on high-frequency products; every phase is ordered by how quickly it teaches the models and cycles the capital.</div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="sec" id="s08">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§08 · Early warning</div>
+    <div class="fig"><div class="n">D+0</div><div class="l">Signal-to-action target</div></div>
+  </div></div>
+  <div class="body">
+    <h2>Act on day <i>zero</i>.</h2>
+    <p><b>The incumbent clock:</b> AECB refresh monthly; first hard signal a missed instalment at DPD 30 (days past due) or a returned direct debit; then committee, then a call — weeks after the borrower already knew they were in trouble.</p>
+    <p><b>The Mal clock:</b> consented cross-border rails surface distress the day it starts — a new credit line opened at home, salary interruption before payday, a remittance spike (the classic family-emergency tell), balance-depletion velocity, and from §04, the earliest signal of all: goal contributions stopping. Response is agentic and same-day: shift the instalment to salary landing, pre-emptive restructure before default, a repayment plan proposed while the problem is still small.</p>
+    <p>Cure rates collapse with every week of latency — pre-delinquency cures run at multiples of DPD-60 cures — so latency compounds directly into LGD (loss given default). The moat is not the signal; every bank will eventually see similar signals. The moat is signal-to-action time.</p>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="sec" id="s09">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§09 · Recourse</div>
+    <div class="fig"><div class="n">2020</div><div class="l">India–UAE judgment reciprocity notification</div></div>
+  </div></div>
+  <div class="body">
+    <h2>Recourse by <i>consent</i>, structured at origination.</h2>
+    <ul>
+      <li><b>Kafalah guarantor.</b> Family standing behind the loan, structured legally at origination — the co-signer agreed before the money moved. (Kafalah: a Sharia-compliant guarantee.)</li>
+      <li><b>Salary + EOSB assignment.</b> Wage and end-of-service-benefit (gratuity) assignment captured up front; the exit payout backstops the exposure precisely at the moment of departure.</li>
+      <li><b>Remittance-linked repayment.</b> The instalment settles before the home transfer leaves — in sequence with the borrower's obligations, not in competition with them.</li>
+      <li><b>Credit shield takaful.</b> Death, disability and job-loss cover priced into the book at origination (takaful: Sharia-compliant mutual insurance).</li>
+      <li><b>Cross-border enforcement.</b> UAE judgments are directly enforceable in India under the 2020 reciprocity notification; AECB reporting follows the returner, who usually comes back or keeps UAE ties. Flying home stops being an exit.</li>
+      <li><b>Servicing continuity.</b> Frictionless repayment from abroad over remittance rails. Most skip loss is friction and ability, not fraud — continuity recovers more than pressure ever does.</li>
+    </ul>
+    <div class="never"><span class="lbl">NEVER</span>
+      <p>Debt disclosure to family. Contact-graph leverage. Surveillance telemetry. CBUAE consumer-protection standards prohibit third-party disclosure and coercive collection; PDPL purpose limitation bars repurposing service data as pressure; the family-shaming pattern is precisely what triggered RBI's 2022 digital-lending rules and the Philippine SEC's license revocations; a Sharia supervisory board kills it independently. And strategically: one screenshot of the bank messaging a borrower's mother ends the trust flywheel the entire strategy depends on. Weaponized data is a churn event and a license event, not a moat.</p>
+    </div>
+    <div class="position"><span class="lbl">POSITION</span>The same insight — Mal uniquely sees and manages departure — expressed only in forms a CBUAE-regulated, Sharia-governed bank can run.</div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="sec" id="s10">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§10 · Telco data</div>
+  </div></div>
+  <div class="body">
+    <h2>Telco signal: right instinct, <i>wrong</i> channel — fixed.</h2>
+    <p><b>The precedent is real.</b> Russian MFOs (microfinance companies) and fintechs parsed Android SMS bank alerts in 2017–18 — a proto-open-banking built on the fact that every bank sent SMS notifications; operators sold subscriber scores to lenders; and banks literally built MVNOs (mobile virtual network operators): Tinkoff Mobile 2017, SberMobile 2018, VTB Mobile 2019. Globally, telco underwriting scaled: M-Shwari and Fuliza on Safaricom data, Tala and Branch on device and SMS metadata, TrustingSocial licensing call-detail-record scores to banks across Vietnam, Indonesia and India, FinScore in the Philippines, KT's K-Telco Score exported from Korea, CredoLab's consented on-device metadata SDK.</p>
+    <p><b>What killed the raw-harvest version:</b> Google Play's 2019 SMS and call-log lockdown, RBI's 2022 digital-lending rules banning contacts and call-log access, Kenya's 2022 digital-credit regulations — and iOS never permitted SMS reading at all. The UAE is iOS-heavy, so the Russian trick is structurally unavailable here regardless of law; banks also moved alerts to in-app push, closing the channel at the source.</p>
+    <p><b>Revolut is the product version, not the underwriting version.</b> Its 2024 travel eSIM became the company's top non-banking product by usage and grew into a full MVNO — Mobile Plans in the UK and Germany, eSIM-only, rolling out through 2026. Positioning is revenue and engagement; there is no disclosed underwriting use, and EU purpose-limitation rules would make traffic-data scoring radioactive.</p>
+    <p><b>The UAE-legal channel already exists and is better.</b> Etisalat and du furnish postpaid payment behavior to AECB, and AECB incorporates alternative data for thin-file scores — telco signal reaches Mal lawfully through the bureau. The compliant stack: bureau-mediated telco data, consented score partnerships on the corridors (FinScore-style for the Philippines), and eSIM shipped as a segment product — dual-country connectivity genuinely fits the expat life — with disclosed, minimal service-level data. The line to hold: telco payment behavior via bureau is standard practice; a bank-as-operator reading traffic is interception, a PDPL violation, a TDRA licensing problem, and a trust kill.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="sec" id="s11">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§11 · Competitive record</div>
+    <div class="fig"><div class="n">79%</div><div class="l">Lower risk vs domestic prime — Amex accounts approved via Credit Passport</div></div>
+    <div class="fig"><div class="n">~20</div><div class="l">Countries with Nova Credit bureau partnerships</div></div>
+  </div></div>
+  <div class="body">
+    <h2>Who already does cross-border <i>underwriting</i>.</h2>
+    <p>It exists — in narrow forms. Nobody runs it as the core engine of a full-stack bank, and nobody in the UAE despite the rails being live. The record, by layer:</p>
+    <table>
+      <tr><th>Player</th><th>What they prove</th></tr>
+      <tr><td>Nova Credit</td><td>The infrastructure. Bureau partnerships in ~20 countries (India, Philippines, Kenya, Nigeria, Mexico, Brazil among them); serves newcomers to the US, UK, Canada, Singapore and the UAE (via AECB). Amex reported a 54% approval-volume lift for immigrants, and accounts approved via Credit Passport were 79% less risky than domestic prime — newcomers underwritten on home data outperform locals. <i>(One 2026 source reports the Amex partnership ended in 2025 — single source, verify.)</i></td></tr>
+      <tr><td>HSBC</td><td>The only global bank doing it systematically: $10M HSBC Ventures investment in Nova, first deployment HSBC Singapore 2022, extended to HSBC UK international mortgages 2024; plus the offshore HSBC Expat franchise. Scotiabank runs the Canada-newcomer version. Other banks do it manually for affluent tiers only (Citi IPB, Standard Chartered international).</td></tr>
+      <tr><td>NRI lenders</td><td>The reverse direction at massive scale: ICICI, HDFC and SBI underwrite UAE and US salaries for NRI (non-resident Indian) mortgages on Indian property. The corridor's home side already does cross-border underwriting; nobody does the host side systematically.</td></tr>
+      <tr><td>Born-cross-border fintechs</td><td>Zolve (India→US cards and loans on Indian data pre-arrival; ~$51M raised 2025). Prodigy Finance and MPOWER (students: home data plus projected earnings). Pomelo (a US sponsor's credit converted into Philippine purchasing power — remittance-as-credit).</td></tr>
+      <tr><td>LemFi × Pillar</td><td>The competitive clock. A remittance platform acquired Pillar (June 2025, FCA-approved) to launch immigrant credit cards in the UK that import home-country credit standing, with a stated ambition of an in-platform credit passport so a Nigerian user's UK history follows them to Canada. Pillar's founders — Ashutosh Bhatt and Adam Lewis — are Revolut alumni.</td></tr>
+      <tr><td>Revolut</td><td>No. Lending is strictly market-by-market: personal loans in ~11 markets via the EU banking licence, US loans through the Cross River partner-bank model, UK only post-licence. No product uses country-A data to underwrite in country-B; the multi-country behavioral data sits unexploited. The sharpest evidence is personnel: Revolut's own credit people left to build cross-border underwriting elsewhere.</td></tr>
+    </table>
+    <div class="position"><span class="lbl">POSITION</span>Validated concept, unoccupied position. Rails live (Nova × AECB), unit economics proven (Amex 79%), remittance platforms converging from the payments side — and no licensed bank anywhere runs cross-border data as its core engine for mass-market expat credit.</div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="sec" id="s12">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§12 · Honesty</div>
+  </div></div>
+  <div class="body">
+    <h2>Where the sixty still <i>win</i>.</h2>
+    <table>
+      <tr><th>Their ground</th><th>Mal's answer</th></tr>
+      <tr><td>Funding</td><td>Near-zero CASA at scale; they can hold a price war on any refinance product indefinitely. → Don't fight it: sequence capital-heavy products last, win first on data-priced short duration.</td></tr>
+      <tr><td>Salary inertia</td><td>WPS flows land with them by default. → The agent is the switching reason they cannot copy without cannibalizing branch economics.</td></tr>
+      <tr><td>Seasoned data</td><td>Decades of loss curves across cycles Mal has never traded through. → A short-duration book generates its own loss data in months, not years.</td></tr>
+      <tr><td>Trust + presence</td><td>Brands, branches, long SME relationships with real repayment history. → Earn trust pre-credit: utility-first onboarding, consent-first data, on-device processing by default, and conversations at scale substituting for relationship managers.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="sec" id="s13">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§13 · Caveats</div>
+  </div></div>
+  <div class="body">
+    <h2>Caveats to volunteer <i>first</i>.</h2>
+    <ul>
+      <li><b>Goodhart's law.</b> Once pursuit is a known credit input, it gets simulated. Weight only costly-to-fake flows — actual transfers, actual supplier payments — and never disclose feature weights.</li>
+      <li><b>Never punish honesty.</b> Score inconsistency-without-cause, not goal changes; a declared departure earns a tenor-matched product, not a price penalty — or disclosure dies and the data poisons itself. Same for life shocks.</li>
+      <li><b>Model governance.</b> Behavioral and intent features stay as adjustments on an explainable core, not the core, under CBUAE model-explainability expectations. User-controlled imports (e.g. AI-chat profile exports) are onboarding personalization, never credit inputs — unverifiable and adverse-selecting.</li>
+      <li><b>Retention framing.</b> The moat is compounding personalization and utility, never data lock-in — Open Finance portability exists precisely to break hostage moats.</li>
+      <li><b>Numbers hygiene.</b> Expat share, bank count and remittance rank are estimates; DBR/multiple/LTV caps, the 30-day AECB cadence, Al Tareq phasing and the 2020 India notification are stable but should be re-verified the week of delivery; the Amex-ended-2025 claim is single-source.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="sec" id="s14">
+  <div class="rail"><div class="rail-stick">
+    <div class="sec-code">§14 · Bottom line</div>
+  </div></div>
+  <div class="body">
+    <h2>Three sentences to <i>land</i>.</h2>
+    <ul>
+      <li><b>For the portfolio:</b> sequence by learning speed — granular, short-duration, Sharia-native products first; mortgage refinance is a retention reward, not an acquisition anchor; stability comes from granularity and collateral, not ticket size.</li>
+      <li><b>For the customer:</b> one life, two countries, one bank — Mal underwrites the whole person, income, obligations and intentions across borders, and protects the credit identity they will one day return to.</li>
+      <li><b>For the moat:</b> trust is the asset and latency is the edge — consent-first data and day-zero action turn skip risk from a blind tax into a managed variable; weaponized data is a churn event, consented data compounds.</li>
+    </ul>
+    <blockquote>Bureau data shows how someone treated their creditors. Goal-pursuit data shows how they treat their own future — which is who the loan is actually betting on.</blockquote>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="foot-inner">
+    SOURCES — CBUAE consumer regulations · Al Tareq Open Finance programme · AECB data-furnishing and Nova Credit partnership disclosures · World Bank remittance data (est.) · India MoJ reciprocity notification (2020) · Nova Credit / HSBC / LemFi public announcements · Meier &amp; Sprenger (2010) · Gerardi, Goette &amp; Meier, PNAS (2013) · Netzer, Lemaire &amp; Herzenstein, JMR (2019) · Berger &amp; Udell relationship-lending literature.<br>
+    STATUS — Working dossier v3, 21.JUL.2026. Companion artifact: 10-slide TED-style brief. Figures marked (est.) require verification before external delivery.
+  </div>
+</footer>
+
+</body>
+</html>

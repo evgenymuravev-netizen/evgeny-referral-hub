@@ -1,0 +1,45 @@
+/* ============================================================
+   Mal — base element defaults (kept minimal, opt-in via tokens)
+   ============================================================ */
+:root {
+  color-scheme: light;
+  --link-color: var(--info-500);
+  --link-hover: var(--action-accent-hover);
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01" on;
+}
+
+a { color: var(--link-color); text-decoration: none; transition: color var(--dur-fast) var(--ease-standard); }
+a:hover { color: var(--link-hover); }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-snug);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+/* Tabular numerals helper for money/data */
+.tnum { font-feature-settings: "tnum" on, "ss01" on; font-variant-numeric: tabular-nums; }
+
+/* Uppercase overline label */
+.overline {
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-overline);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-muted);
+}
+
+* { box-sizing: border-box; }
