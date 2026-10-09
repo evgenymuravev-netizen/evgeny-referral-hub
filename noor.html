@@ -1677,6 +1677,83 @@ label.bk-acct { position:relative; cursor:pointer; }
 .ph-mini-lines { display:flex; flex-direction:column; gap:2px; margin:2px 0 0 10px; }
 .ph-mini-line .ph-mini-k { font-size:14px; }
 .ph-mini-line .ph-mini-v { font-weight:600; font-size:14px; color:var(--ink-2); }
+/* v2.16 — 3·2 the Emirates ID scan: a neutral card outline with field labels (no card design), the simulated camera frame, the fields read */
+.ph-eid-tiles { display:flex; flex-direction:column; gap:10px; }
+.ph-eid-tile { display:flex; align-items:center; gap:14px; width:100%; min-width:0; text-align:left; background:var(--panel); color:var(--ink); border:0; border-radius:var(--radius);
+  padding:14px; cursor:pointer; font:inherit; }
+.ph-eid-tile[disabled] { cursor:default; opacity:.6; }
+.ph-eid-tile:focus-visible, .ph-eid-retake:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+.ph-eid-shape { flex:0 0 132px; width:132px; height:84px; border:1.5px dashed var(--ph-line); border-radius:10px; padding:9px 10px; display:flex; flex-direction:column; justify-content:center; gap:5px; }
+.ph-eid-ln { display:flex; align-items:center; gap:6px; min-width:0; }
+.ph-eid-lk { flex:0 0 auto; font-family:var(--font-label); font-size:9.5px; line-height:12px; color:var(--muted); white-space:nowrap; }
+.ph-eid-lb { flex:1; min-width:8px; height:4px; border-radius:2px; background:var(--ph-line); }
+.ph-eid-tt { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+.ph-eid-side { font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--ink); }
+.ph-eid-go { display:inline-flex; align-items:center; gap:6px; font-family:var(--font-label); font-size:14px; color:var(--brand-ink); }
+.ph-eid-cam-ico { width:18px; height:18px; }
+.ph-eid-done { gap:8px; }
+.ph-eid-dh { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.ph-eid-ok { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-label); font-size:13.5px; font-weight:500; color:var(--ok); }
+.ph-eid-ok-ico { width:15px; height:15px; }
+.ph-eid-retake { margin-left:auto; font-size:14.5px; }
+.ph-eid-retake[disabled] { opacity:.4; cursor:default; }
+.ph-eid-fields .ph-li { font-size:15px; align-items:baseline; }
+.ph-eid-fields .ph-li-v { text-align:right; min-width:0; overflow-wrap:anywhere; }
+.ph-eid-v2 { display:flex; flex-direction:column; align-items:flex-end; color:var(--ink); font-weight:600; text-align:right; }
+.ph-eid-v2 .ar { font-family:var(--font-ar); font-weight:500; font-size:16px; color:var(--ink-2); }
+.ph-eid-camwrap { align-items:center; justify-content:center; background:rgba(8,8,14,.95); }
+.ph-eid-cam { display:flex; flex-direction:column; align-items:center; gap:12px; padding:0 24px; text-align:center; color:#fff; }
+.ph-eid-frame { position:relative; width:280px; max-width:100%; aspect-ratio:1.586; border:1.5px dashed rgba(255,255,255,.45); border-radius:14px; }
+.ph-eid-frame-c { position:absolute; width:26px; height:26px; border:3px solid #fff; }
+.ph-eid-frame-c.tl { top:-3px; left:-3px; border-right:0; border-bottom:0; border-radius:14px 0 0 0; }
+.ph-eid-frame-c.tr { top:-3px; right:-3px; border-left:0; border-bottom:0; border-radius:0 14px 0 0; }
+.ph-eid-frame-c.bl { bottom:-3px; left:-3px; border-right:0; border-top:0; border-radius:0 0 0 14px; }
+.ph-eid-frame-c.br { bottom:-3px; right:-3px; border-left:0; border-top:0; border-radius:0 0 14px 0; }
+.ph-eid-cam-t { font-family:var(--font-display); font-weight:700; font-size:20px; }
+.ph-eid-cam-s { font-size:14px; color:rgba(255,255,255,.8); }
+/* v2.16 — 7·2 the cross-check rows under the budget */
+.ph-eid-match { gap:10px; }
+.ph-eid-mh { font-size:16px; }
+.ph-eid-chk { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; line-height:21px; color:var(--ink-2); overflow-wrap:anywhere; }
+.ph-eid-chk strong { color:var(--ink); font-weight:600; }
+.ph-eid-mk { flex:0 0 22px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-top:0; color:#fff; background:var(--ok); }
+.ph-eid-mk.bad { background:var(--bad); }
+.ph-eid-mk .ji { width:13px; height:13px; }
+#jr-eid-out .btn { align-self:flex-start; }
+/* v2.17 — "Your data": a filled bar with a thin red threshold line, the percentage, the counts and the checklist */
+.ph-data { gap:8px; text-align:left; align-self:stretch; min-width:0; }
+.ph-data-h { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.ph-data-pct { font-family:var(--font-display); font-weight:800; font-size:22px; color:var(--ink); font-variant-numeric:tabular-nums; }
+.ph-data-bar { position:relative; height:10px; border-radius:5px; background:var(--ph-line); margin:4px 0 2px; }
+.ph-data-fill { position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:var(--ph-blue-b); }
+.ph-data-th, .jr-dc-th { position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:var(--bad); border-radius:1px; }
+.ph-data-counts { font-family:var(--font-label); font-size:14px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+.ph-data-list { display:flex; flex-wrap:wrap; gap:6px; }
+.ph-data-c { display:inline-flex; align-items:center; gap:5px; border-radius:var(--radius-pill); padding:3px 10px 3px 4px; font-family:var(--font-label); font-size:13px; line-height:18px;
+  color:var(--muted); background:var(--ph-ground); border:1px dashed var(--ph-line); }
+.ph-data-c.on { color:var(--ink); border-style:solid; border-color:var(--ok); background:var(--ok-soft); padding-left:10px; font-weight:500; }
+.ph-data-mk { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--ph-line); }
+.ph-data-n { margin-top:2px; }
+.ph-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.ph-chip { display:inline-flex; align-items:center; border-radius:var(--radius-pill); padding:7px 14px; background:var(--panel); border:1.5px solid var(--brand); color:var(--brand-ink);
+  font-family:var(--font-ui); font-weight:600; font-size:15px; line-height:20px; }
+/* v2.17 — behind the scenes: "Two steps to a score" */
+.jr-twostep { gap:10px; }
+.jr-two-s { display:flex; flex-direction:column; gap:6px; }
+.jr-two-t { font-family:var(--font-label); font-weight:600; font-size:13px; color:var(--ink); }
+.jr-dc-bar { position:relative; height:8px; border-radius:4px; background:var(--hairline); margin:4px 0; }
+.jr-dc-fill { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--sky); }
+.jr-dc-tbl td, .jr-dc-tbl th { font-size:12.5px; }
+.jr-two-proxy { margin:0; color:var(--ink-2); }
+#jr-two-steps .btn { align-self:flex-start; }
+/* v2.17 — the Lender view: completeness as a ring (conic gradient), the percentage and the counts — no threshold */
+.dc-wrap { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.dc-ring { --dc:0; width:84px; height:84px; flex:0 0 84px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  background:conic-gradient(var(--brand) calc(var(--dc) * 1%), var(--hairline) 0); }
+.dc-ring-v { width:64px; height:64px; border-radius:50%; background:var(--panel); display:inline-flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:800; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
+.dc-side { flex:1 1 180px; min-width:0; display:flex; flex-direction:column; gap:4px; }
+.dc-counts { font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -2089,12 +2166,16 @@ label.bk-acct { position:relative; cursor:pointer; }
                   salaryDetected: true, avgSalaryCredit: 12000, salaryCreditDay: 27 },
       connected: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
                    accounts: [
-                     { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true },
-                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false },
+                     // v2.17 — txPerMonth: the average number of transactions a month (regular activity ≥ 20 counts for data completeness)
+                     { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true, holderName: 'RAVI KUMAR', txPerMonth: 46 },
+                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false, holderName: 'RAVI KUMAR', txPerMonth: 3 },
                      // v2.15 — the ENBD credit card and personal loan come through the same Al Tareq consent
-                     { bank: 'ENBD', type: 'Credit card', mask: '7702', limit: 12000, balance: 7440, monthlyRepayment: 400 },
-                     { bank: 'ENBD', type: 'Personal loan', mask: '3317', outstanding: 6200, instalment: 500, endsOn: '2027-03' }
+                     { bank: 'ENBD', type: 'Credit card', mask: '7702', limit: 12000, balance: 7440, monthlyRepayment: 400, holderName: 'RAVI KUMAR' },
+                     { bank: 'ENBD', type: 'Personal loan', mask: '3317', outstanding: 6200, instalment: 500, endsOn: '2027-03', holderName: 'RAVI KUMAR' }
                    ],
+                   // v2.16 — the payer name on the monthly salary credit (a WPS transfer), as the salary account shows it.
+                   // Read only to cross-check the employer on the Emirates ID; never sent to the lender.
+                   salaryPayer: 'SALARY/WPS DUNECREST LOGISTICS',
                    avgMonthlyIncome: 12000, avgMonthlySpend: 7400, incomeVolatilityPct: 1, salaryCreditDay: 27,
                    // The repayments the accounts show leaving every month (= the AECB obligation); the engine reads the total only
                    observedObligationsMonthly: 900, observedObligationsLabel: 'Credit-card repayment + personal-loan instalment',
@@ -2112,7 +2193,17 @@ label.bk-acct { position:relative; cursor:pointer; }
       // identity HIGH, account-takeover risk NORMAL; the thin-file overlay is not eligible (AECB file).
       footprint: { vendorScore: 731, emailAgeYearsMin: 7, nameMatchSources: 2, phoneOnMessenger: true,
                    velocity: { emailSeenByLenders: 1 },
-                   breaches: { count: 1, includesCredentialStuffingCompilation: false } }
+                   breaches: { count: 1, includesCredentialStuffingCompilation: false } },
+      // v2.16 — what the Emirates ID scan reads (front + back). Fictitious employer; masked ID number.
+      // Minimised by design: sex is never captured. The ID images are kept inside Noor for its KYC records
+      // (amendment 2) and never shared with botim or the lender. Nationality (amendment
+      // 9 Oct) is read for identity checks and enrichment routing only — never a score or decision input.
+      // Date of birth 1995-03-14 → 31 as of TODAY. The employer, occupation, date of birth and nationality
+      // stay with Noor: never in the credit memo or the SFTP row.
+      emiratesId: {
+        front: { nameEn: 'Ravi Kumar', nameAr: 'رافي كومار', idMasked: '784-••••-•••••••-4', dob: '1995-03-14', nationality: 'India', expiry: '2028-02-09' },
+        back: { occupation: 'Warehouse Supervisor', employer: 'Dunecrest Logistics LLC', issuingPlace: 'Dubai' }
+      }
     }
   ];
 
@@ -2306,6 +2397,19 @@ label.bk-acct { position:relative; cursor:pointer; }
     RC_STEP_UP_AUTH: {
       en: 'For your security, please sign in again with UAE PASS before the money is paid out.',
       ar: 'حرصاً على أمانك، يُرجى تسجيل الدخول مجدداً عبر الهوية الرقمية (UAE PASS) قبل صرف المبلغ.' },
+    // --- Emirates ID front + back (Addendum v2.16) ----------------------------------
+    // Refer only: never a decline, never a price change. Placed before the v2.9 block so
+    // the red-flag and SME codes keep their position at the end of the table.
+    RC_EMPLOYER_MISMATCH: {
+      en: 'Your salary comes from a different company than your Emirates ID shows — maybe you changed jobs? A salary certificate or employment letter will sort it out.',
+      ar: 'يصلك راتبك من شركة غير الشركة المذكورة في بطاقة هويتك الإماراتية — هل غيّرت عملك؟ شهادة راتب أو خطاب من جهة العمل يكفيان لحلّ الأمر.' },
+    RC_ID_EXPIRED: {
+      en: 'Your Emirates ID has expired — please renew it or scan your new card.',
+      ar: 'انتهت صلاحية بطاقة هويتك الإماراتية — يُرجى تجديدها أو مسح بطاقتك الجديدة.' },
+    // --- Data completeness (Addendum v2.17) — a REFER backstop, never a decline --------
+    RC_DATA_INCOMPLETE: {
+      en: 'We need a fuller picture before we can calculate your score — connecting your salary account, credit cards and loans usually does it.',
+      ar: 'نحتاج إلى صورة أشمل قبل أن نتمكن من احتساب درجتك — وعادةً ما يكفي ربط حساب راتبك وبطاقاتك الائتمانية وقروضك.' },
     // --- UAE red flags and early warning (Addendum v2.9) ------------------------------
     // Customer-safe: each one is a change against the customer's own history, worded
     // so an analyst can read it to the customer. No values, no places, no services.
@@ -2883,6 +2987,21 @@ label.bk-acct { position:relative; cursor:pointer; }
  *    credit risk switches it LIVE with 4-eyes. Declining is never a decline reason.
  *  - Contact preferences (v2.8): recorded as a consent with a reference; never in
  *    the credit memo (data minimisation).
+ *  - Emirates ID front + back (v2.16, ../JOURNEY-EID-SPEC.md): the employer on the
+ *    card is matched against the WPS salary payer seen in Open Finance. A mismatch
+ *    or an expired card REFERs — never a decline, never a price change. Only the
+ *    name, masked ID number, date of birth, nationality, expiry, occupation and
+ *    employer are read (never sex). The ID images stay inside Noor for its KYC
+ *    records (amendment 2: never shared, never in the memo). Nationality routes
+ *    identity checks and enrichment only — never a score or decision input. The
+ *    memo carries a flag only.
+ *  - Data completeness (v2.17, ../JOURNEY-CONFIDENCE-SPEC.md, "Two steps to a score"):
+ *    how much of the customer's financial picture Noor sees through Open Finance
+ *    (current account 50 · salary 20 · cards 15 · loans 15). Below the
+ *    completenessThresholdPct (illustrative, 70) no score is issued — the journey
+ *    asks for more accounts and decide() REFERs as a backstop (never a decline,
+ *    never a price change); 70–84% lowers NoorScore by 10. The lender sees the
+ *    percentage and counts only — never the threshold, the weights or the bands.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -3025,7 +3144,9 @@ label.bk-acct { position:relative; cursor:pointer; }
                   instalmentToFcfMaxPct: 50,
                   // v2.8 — digital-footprint thin-file overlay: SHADOW (logged, not applied) until LIVE
                   footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20,
-                  tokenValidityDays: 14 }
+                  tokenValidityDays: 14,
+                  // v2.17 — data completeness (illustrative): below it no score is issued (journey) / REFER (decide)
+                  completenessThresholdPct: 70 }
       },
       // Starter loan → upgrade (Addendum v2.1). `starter` is the entry offer (for
       // reference); `tiers` are the two upgrade offers. Every tier is an APR curve
@@ -3108,7 +3229,7 @@ label.bk-acct { position:relative; cursor:pointer; }
                      scoreDecline: [550, 720], scoreRefer: [600, 780], maxEsrPct: [30, 90],
                      minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5], productCap: [100000, 2000000],
                      instalmentToFcfMaxPct: [10, 80], footprintOverlayCap: [0, 30],
-                     tokenValidityDays: [3, 30] },
+                     tokenValidityDays: [3, 30], completenessThresholdPct: [50, 90] },
     salary_advance: { pctOfSalary: [50, 90], capAmount: [5000, 25000], flatFee: [25, 300],
                       minSalary: [3000, 15000], scoreDecline: [550, 700], tokenValidityDays: [3, 14] },
     starter_loan: { minAmount: [100, 2000], amountStep: [50, 500], instalmentToFcfMaxPct: [10, 80],
@@ -3739,6 +3860,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     'Employment tenure ≥ 24m': 'Long employment tenure',
     'ESR > 40%': 'High existing repayments on the bureau file',
     'Cross-border conservatism': 'Home-country credit file, conservative adjustment',
+    // v2.17 — the completeness overlay (70–84%); the lender sees the direction, never the band boundaries
+    'Data completeness 70–84%': 'Part of the financial picture not connected',
     'Home statements — account open ≥ 5 years': 'Long-standing home-country bank account',
     'Home statements — clean conduct (0 returned items, 0 overdraft days)': 'Clean home-country account conduct',
     'Home statements — buffer ≥ half a month of income': 'Savings buffer',
@@ -3894,7 +4017,7 @@ label.bk-acct { position:relative; cursor:pointer; }
   // Personal loan / salary advance — scorecard v0 (CONTRACT §2.2), with the
   // connected-account salary verification overlay (+15) replacing the v1
   // in-house payroll overlay.
-  function loanScore(p, crossBorder, connectedSalary, st, fpOverlay) {
+  function loanScore(p, crossBorder, connectedSalary, st, fpOverlay, dcOverlay) {
     // Cross-border path: consented home-bureau score is the base, with a flat
     // conservatism overlay; grade capped at B. Verified home-country statements
     // (v2.4) on an AECB no-hit: proxy base 640 plus evidence overlays, grade capped at B.
@@ -3921,6 +4044,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     if (p.tenureMonths >= 24) overlays.push({ name: 'Employment tenure ≥ 24m', delta: 10 });
     // v2.8 — the digital-footprint overlay, only when decide() applies it (LIVE mode, thin / no-hit file).
     if (fpOverlay && fpOverlay.delta > 0) overlays.push({ name: fpOverlay.name, delta: fpOverlay.delta });
+    // v2.17 — data completeness: low data lowers the score (70–84% → −10; ≥ 85% → nothing to add)
+    if (dcOverlay && dcOverlay.delta < 0) overlays.push({ name: 'Data completeness 70–84%', delta: dcOverlay.delta });
     const points = base + overlays.reduce((s, o) => s + o.delta, 0);
     let grade = pointsToGrade(points);
     if ((crossBorder || stPath) && grade === 'A') grade = 'B';
@@ -4049,6 +4174,202 @@ label.bk-acct { position:relative; cursor:pointer; }
   }
 
   // ---------------------------------------------------------------------------
+  // Emirates ID front + back (Addendum v2.16, JOURNEY-EID-SPEC.md) — pure.
+  // The back of a resident's card shows the employer; Open Finance shows who pays
+  // the salary (the payer name on the monthly salary credit, usually WPS). Mizan
+  // matches the two and checks that the name on the card is the account holder's.
+  // A match strengthens income verification; a mismatch REFERs (usually a job
+  // change) — never a decline, never a price change. Data minimisation (PDPL):
+  // only the fields in EID_FIELDS are read — sex never is (the selftest proves it
+  // with a property recorder). Amendment 2 (9 Oct, "Noor IP vs lender view"): the ID
+  // images are kept inside Noor for its KYC records (AML record-keeping) and never
+  // shared with botim or the lender. Amendment 9 Oct: nationality is
+  // read from the front for identity checks and to route enrichment (which
+  // home-country data Noor can offer: the Credit Passport and statements corridors
+  // India / Pakistan / Egypt). It is never a score or decision input: no rule,
+  // feature, pull summary or memo field carries it.
+  // ---------------------------------------------------------------------------
+  const EID_FIELDS = { front: ['nameEn', 'nameAr', 'idMasked', 'dob', 'nationality', 'expiry'], back: ['occupation', 'employer'] };
+  const EID_NOT_READ = ['sex'];
+  const EID_IMAGES_PURPOSE = 'KYC record-keeping (AML) inside Noor — never shared with botim or the lender';
+  const EID_NATIONALITY_USE = 'identity and enrichment routing only — never a NoorScore or decision input';
+  // Enrichment routing: the home-country data Noor can offer for this nationality (null outside the corridors).
+  function eidEnrichment(nationality) {
+    if (typeof nationality !== 'string' || !nationality.trim()) return null;
+    const up = nationality.trim().toUpperCase();
+    const cc = STATEMENT_CORRIDORS.find(c => up === c || up === CORRIDORS[c].name.toUpperCase()) || null;
+    if (!cc) return { corridor: null, offer: [], use: EID_NATIONALITY_USE };
+    return { corridor: cc, offer: ['Credit Passport — the ' + CORRIDORS[cc].adjective + ' credit bureau file', CORRIDORS[cc].adjective + ' bank statements (6 months)'], use: EID_NATIONALITY_USE };
+  }
+  const EID_MATCH_MIN = 0.7;   // match when ≥ 70% of the employer's tokens appear in the payer
+  const EID_DROP = ['LLC', 'FZE', 'FZCO', 'LTD', 'CO', 'SALARY', 'WPS', 'SAL'];   // legal suffixes + payroll words
+  const EID_ABBREV = { SVCS: 'SERVICES', TRDG: 'TRADING', LOG: 'LOGISTICS' };
+  // Uppercase; drop L.L.C / LLC / FZE / FZCO / LTD / CO, SALARY / WPS / SAL and '/'; expand
+  // SVCS / TRDG / LOG; split into distinct tokens.
+  function employerTokens(s) {
+    const t = String(s || '').toUpperCase()
+      .replace(/(^|[^A-Z0-9])L\.\s?L\.\s?C\.?(?=$|[^A-Z0-9])/g, '$1 ')
+      .replace(/\//g, ' ').replace(/[^A-Z0-9&\s]/g, ' ').replace(/&/g, ' ');
+    const out = [];
+    for (const raw of t.split(/\s+/)) {
+      if (!raw) continue;
+      const tok = EID_ABBREV[raw] || raw;
+      if (EID_DROP.includes(tok) || out.includes(tok)) continue;
+      out.push(tok);
+    }
+    return out;
+  }
+  function employerMatch(employer, payer) {
+    const e = employerTokens(employer), p = employerTokens(payer);
+    const hits = e.filter(x => p.includes(x)).length;
+    const ratio = e.length ? hits / e.length : 0;
+    return { employerTokens: e, payerTokens: p, score: Math.round(ratio * 100), match: e.length > 0 && ratio >= EID_MATCH_MIN };
+  }
+  function wholeYearsBetween(fromIso, toIso) {
+    const a = String(fromIso).slice(0, 10), b = String(toIso).slice(0, 10);
+    let y = Number(b.slice(0, 4)) - Number(a.slice(0, 4));
+    if (b.slice(5) < a.slice(5)) y -= 1;
+    return y;
+  }
+  // The persona's scan when `scan` is missing or true; otherwise {front, back}.
+  function eidScanOf(applicant, scan) {
+    const s = scan === undefined || scan === null || scan === true ? (applicant && applicant.emiratesId) : scan;
+    if (!s || typeof s !== 'object' || Array.isArray(s) || !s.front || !s.back || typeof s.front !== 'object' || typeof s.back !== 'object') {
+      throw err(scan === undefined || scan === null || scan === true
+        ? 'applicant ' + ((applicant && applicant.id) || '') + ' has no Emirates ID scan on file — pass {front, back}'
+        : 'the Emirates ID scan needs both sides: {front, back}');
+    }
+    return s;
+  }
+  // checkEmiratesId(applicant, scan?, opts?) — pure. opts.salaryPayer overrides the payer (the
+  // what-if); opts.openFinance === false reads nothing from the connected accounts; opts.asOf
+  // (default TODAY) dates the expiry and age checks.
+  function checkEmiratesId(applicant, scan, opts) {
+    ensureInit();
+    const s = eidScanOf(applicant, scan);
+    const o = opts || {};
+    const f = {}, b = {};
+    for (const k of EID_FIELDS.front) f[k] = s.front[k];
+    for (const k of EID_FIELDS.back) b[k] = s.back[k];
+    const fieldsRead = EID_FIELDS.front.filter(k => f[k] !== undefined && f[k] !== null && f[k] !== '')
+      .concat(EID_FIELDS.back.filter(k => b[k] !== undefined && b[k] !== null && b[k] !== ''));
+    const asOf = String(o.asOf || D.TODAY).slice(0, 10);
+    const expiry = typeof f.expiry === 'string' ? f.expiry.slice(0, 10) : null;
+    const expiryValid = !!expiry && expiry >= asOf;
+    const ageFromDob = typeof f.dob === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.dob) ? wholeYearsBetween(f.dob, asOf) : null;
+    // Open Finance side: the account holder (the salary account first) and the salary payer.
+    const of = o.openFinance !== false;
+    const cn = of && applicant && applicant.connected ? applicant.connected : null;
+    const accts = cn && Array.isArray(cn.accounts) ? cn.accounts : [];
+    const holderAcct = accts.find(a => a && a.salaryAccount && a.holderName) || accts.find(a => a && a.holderName) || null;
+    const accountHolder = holderAcct ? holderAcct.holderName : null;
+    const salaryPayer = o.salaryPayer !== undefined && o.salaryPayer !== null ? String(o.salaryPayer) : (cn && cn.salaryPayer ? cn.salaryPayer : null);
+    const idName = f.nameEn || null;
+    const em = b.employer && salaryPayer ? employerMatch(b.employer, salaryPayer) : null;
+    return {
+      fieldsRead,
+      notRead: EID_NOT_READ.slice(),
+      retainedInsideNoor: true,   // amendment 2 — the front and back images are Noor's KYC records
+      idMasked: f.idMasked || null,
+      // Amendment 9 Oct — identity and enrichment routing only; nothing downstream scores or decides on it.
+      nationality: typeof f.nationality === 'string' && f.nationality.trim() ? f.nationality.trim() : null,
+      enrichment: eidEnrichment(f.nationality),
+      expiry, expiryValid, ageFromDob,
+      nameMatch: { idName, accountHolder, match: idName && accountHolder ? normName(idName) === normName(accountHolder) : null },
+      employerMatch: { idEmployer: b.employer || null, salaryPayer, score: em ? em.score : null, match: em ? em.match : null,
+                       threshold: Math.round(EID_MATCH_MIN * 100) + '% of the employer’s words in the payer name' },
+      openFinance: !!cn,
+      whatIf: o.salaryPayer !== undefined && o.salaryPayer !== null
+    };
+  }
+  // POL_ID_VALID + POL_EMPLOYER_MATCH (personal loan). REFER or INFO only — never a FAIL.
+  function emiratesIdRules(rs, ec) {
+    if (!ec) return;
+    rs.add('POL_ID_VALID', 'Emirates ID valid (front + back scanned; refer only — never a decline)', 'POLICY',
+           ec.expiryValid ? 'PASS' : 'REFER',
+           (ec.expiryValid ? 'valid until ' + ec.expiry : (ec.expiry ? 'expired ' + ec.expiry : 'expiry not read')) +
+           ' · name on the card ' + (ec.nameMatch.match === true ? 'matches' : (ec.nameMatch.match === false ? 'does not match' : 'not yet checked against')) + ' the account holder',
+           'not expired', 'RC_ID_EXPIRED');
+    const m = ec.employerMatch;
+    const checked = ec.openFinance && m.salaryPayer && m.match !== null;
+    rs.add('POL_EMPLOYER_MATCH', 'Employer on the Emirates ID matches the salary payer in Open Finance (refer only — never a decline, never a price change)', 'POLICY',
+           checked ? (m.match ? 'PASS' : 'REFER') : 'INFO',
+           checked ? (m.match ? 'match' : 'mismatch') + ' — ' + m.score + '% of the employer’s words in the WPS payer name'
+                   : (ec.openFinance ? 'no salary payer seen in the connected accounts' : 'checked once accounts are connected'),
+           '≥ ' + Math.round(EID_MATCH_MIN * 100) + '% of the employer’s words', checked && !m.match ? 'RC_EMPLOYER_MISMATCH' : null);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Data completeness (Addendum v2.17, revised 9 Oct — "Two steps to a score") — pure.
+  // Step 1: how full is the customer's financial picture, from the accounts they
+  // approved through Open Finance? Current account 50 (≥ 3 months of regular
+  // activity, ≥ 20 transactions a month; an almost-empty one counts 20) · salary
+  // credits visible 20 · a credit card 15 · a loan 15. Below the threshold
+  // (completenessThresholdPct, illustrative 70) no score is issued: the customer is
+  // asked for the salary account, cards and loans. Step 2, at or above it: Mizan
+  // scores — and 70–84% lowers NoorScore by 10 (illustrative). Identity checks
+  // (Emirates ID, email, phone) are verification, not completeness.
+  // ---------------------------------------------------------------------------
+  const DC_COMPONENTS = [['current', 'Current account', 50], ['salary', 'Salary account', 20], ['cards', 'Credit cards', 15], ['loans', 'Loan accounts', 15]];
+  const DC_ALMOST_EMPTY_POINTS = 20, DC_REGULAR_TX_PER_MONTH = 20, DC_REGULAR_MONTHS = 3, DC_NO_OVERLAY_FROM = 85, DC_OVERLAY = -10;
+  const DC_ASK = ['salary', 'cards', 'loans'];
+  function dcKind(a) {
+    const t = String((a && a.type) || '');
+    return /card/i.test(t) ? 'card' : (/loan/i.test(t) ? 'loan' : (/current/i.test(t) ? 'current' : (/savings/i.test(t) ? 'savings' : 'other')));
+  }
+  // The approved accounts: masks (resolved against the applicant's connected accounts) or account objects; default all.
+  function dcAccounts(applicant, approved) {
+    const all = (applicant.connected && Array.isArray(applicant.connected.accounts)) ? applicant.connected.accounts : [];
+    if (approved === undefined || approved === null) return all.slice();
+    if (!Array.isArray(approved)) throw err('approved accounts must be an array of account masks or account objects');
+    return approved.map(x => {
+      if (x && typeof x === 'object') return x;
+      const a = all.find(y => y.mask === String(x));
+      if (!a) throw err('unknown account ••••' + x + ' — not among the applicant’s connected accounts');
+      return a;
+    });
+  }
+  function dataCompleteness(applicant, approvedAccounts, opts) {
+    ensureInit();
+    if (!applicant || typeof applicant !== 'object') throw err('dataCompleteness(applicant, approvedAccounts) needs an applicant');
+    const o = opts || {};
+    const accts = dcAccounts(applicant, approvedAccounts);
+    const cn = applicant.connected || {};
+    const months = accts.length ? (Number.isFinite(o.months) ? o.months : (cn.monthsAvailable || 0)) : 0;
+    const threshold = Number.isFinite(o.threshold) ? o.threshold : getPolicyRef('personal_loan').params.completenessThresholdPct;
+    const currents = accts.filter(a => dcKind(a) === 'current');
+    const regular = currents.some(a => months >= DC_REGULAR_MONTHS && (!Number.isFinite(a.txPerMonth) || a.txPerMonth >= DC_REGULAR_TX_PER_MONTH));
+    const salaryIn = accts.find(a => a.salaryAccount === true) || null;
+    const have = { current: currents.length > 0, salary: !!salaryIn, cards: accts.some(a => dcKind(a) === 'card'), loans: accts.some(a => dcKind(a) === 'loan') };
+    const pts = { current: !have.current ? 0 : (regular ? 50 : DC_ALMOST_EMPTY_POINTS), salary: have.salary ? 20 : 0, cards: have.cards ? 15 : 0, loans: have.loans ? 15 : 0 };
+    const note = {
+      current: !have.current ? 'not connected' : (regular ? 'regular activity (≥ ' + DC_REGULAR_TX_PER_MONTH + ' transactions a month, ' + months + ' months)' : 'almost empty — counts ' + DC_ALMOST_EMPTY_POINTS + '%'),
+      salary: have.salary ? 'salary credits seen in the ' + String(salaryIn.type || 'account').toLowerCase() : 'no salary credits in the accounts shared',
+      cards: have.cards ? accts.filter(a => dcKind(a) === 'card').length + ' connected' : 'none connected',
+      loans: have.loans ? accts.filter(a => dcKind(a) === 'loan').length + ' connected' : 'none connected'
+    };
+    const components = DC_COMPONENTS.map(([key, label, weight]) => ({ key, label, weight, have: have[key], points: pts[key], note: note[key] }));
+    const pct = components.reduce((s, c) => s + c.points, 0);
+    const aboveThreshold = pct >= threshold;
+    const label = (k) => DC_COMPONENTS.find(c => c[0] === k)[1];
+    return {
+      pct, threshold, aboveThreshold, components,
+      ask: DC_ASK.filter(k => !have[k]).map(label),
+      counts: { banks: new Set(accts.map(a => a.bank)).size, accounts: accts.length, months },
+      // Step 2 — the score: ≥ 85% nothing to add, 70–84% −10 (illustrative); below the threshold no score is issued.
+      scoreOverlay: !aboveThreshold ? null : (pct >= DC_NO_OVERLAY_FROM ? 0 : DC_OVERLAY),
+      thresholdLabel: 'illustrative'
+    };
+  }
+  // decide()'s dataSources: { approvedAccounts:[masks | accounts], months? }
+  function dcFromSources(applicant, ds) {
+    if (!ds || typeof ds !== 'object' || Array.isArray(ds)) throw err('application.dataSources must be { approvedAccounts:[…], months }');
+    if (!Array.isArray(ds.approvedAccounts)) throw err('application.dataSources.approvedAccounts must list the accounts the customer approved');
+    if (ds.months !== undefined && (!Number.isFinite(ds.months) || ds.months < 0)) throw err('application.dataSources.months must be a number of months');
+    return dataCompleteness(applicant, ds.approvedAccounts, { months: ds.months });
+  }
+
+  // ---------------------------------------------------------------------------
   // Rule helpers — every rule evaluated is recorded, pass or fail.
   // ---------------------------------------------------------------------------
   function makeRuleSet() {
@@ -4163,7 +4484,9 @@ label.bk-acct { position:relative; cursor:pointer; }
     }
 
     // Scorecard v0
-    const score = loanScore(p, crossBorder, connectedSalary, statementsPath ? st : null, extra && extra.footprintOverlay);
+    const dc = extra && extra.dataCompleteness;   // v2.17 — only when decide() is given dataSources
+    const score = loanScore(p, crossBorder, connectedSalary, statementsPath ? st : null, extra && extra.footprintOverlay,
+                            dc && Number.isFinite(dc.scoreOverlay) ? { delta: dc.scoreOverlay } : null);
     const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
     if (score.points !== null) {
       const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
@@ -4257,6 +4580,17 @@ label.bk-acct { position:relative; cursor:pointer; }
              '≤ ' + prm.instalmentToFcfMaxPct + '%', 'RC_FREE_CASH_FLOW');
     }
 
+    // v2.16 — the Emirates ID scan, when the application carries one: POL_ID_VALID and
+    // POL_EMPLOYER_MATCH (REFER or INFO only — never a FAIL; the limit and price above are untouched).
+    emiratesIdRules(rs, extra && extra.emiratesId);
+    // v2.17 — POL_DATA_COMPLETENESS: the backstop when the journey did not ask first (REFER only)
+    if (dc) {
+      rs.add('POL_DATA_COMPLETENESS', 'Data completeness at or above the threshold (refer only — never a decline, never a price change)', 'POLICY',
+             dc.aboveThreshold ? 'PASS' : 'REFER',
+             dc.pct + '% complete · ' + dc.counts.banks + (dc.counts.banks === 1 ? ' bank · ' : ' banks · ') + dc.counts.accounts + (dc.counts.accounts === 1 ? ' account · ' : ' accounts · ') + dc.counts.months + ' months' +
+               (dc.aboveThreshold ? (dc.scoreOverlay ? ' · NoorScore ' + dc.scoreOverlay : '') : ' · missing: ' + dc.ask.join(', ')),
+             '≥ ' + dc.threshold + '% (illustrative)', 'RC_DATA_INCOMPLETE');
+    }
     redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
     const outcome = outcomeFromRules(rs.rules);
     if (outcome === 'DECLINE') approved = 0;
@@ -4287,6 +4621,15 @@ label.bk-acct { position:relative; cursor:pointer; }
       homeStatementsUsed: stUsable,
       statementsHaircutPct
     };
+    if (dc) features.dataCompletenessPct = dc.pct;   // v2.17
+    if (extra && extra.emiratesId) {
+      // v2.16 — flags and a score only: the employer, the payer, the date of birth and the occupation stay on record.emiratesId.
+      const ec = extra.emiratesId;
+      features.idExpiryValid = ec.expiryValid;
+      features.idNameMatch = ec.nameMatch.match;
+      features.employerMatch = ec.employerMatch.match;
+      features.employerMatchScore = ec.employerMatch.score;
+    }
     const limit = {
       requested: amount, approved: outcome === 'DECLINE' ? 0 : approved,
       bindingConstraint: binding,
@@ -6273,8 +6616,28 @@ label.bk-acct { position:relative; cursor:pointer; }
     // v2.14 — the footprint consent's basis (EXPLICIT or TERMS), validated here too.
     const fpc = normalizeFootprintConsent(consents.digitalFootprint);
 
+    // v2.16 — the Emirates ID scan (front + back): {front, back}, or true for the applicant's own
+    // record. Personal loan only. The employer is matched against the salary payer only with
+    // Open Finance consent; without it the check waits until the accounts are connected (INFO).
+    let eid = null;
+    if (application.emiratesId !== undefined && application.emiratesId !== null && application.emiratesId !== false) {
+      if (productId !== 'personal_loan') throw err('the Emirates ID scan feeds personal-loan decisions only (not ' + productId + ')');
+      eid = checkEmiratesId(applicant, application.emiratesId, { openFinance: consents.openFinance === true });
+    }
+    // v2.17 — data completeness from the accounts the customer approved (personal loan, Open Finance only).
+    let dcmp = null;
+    if (application.dataSources !== undefined && application.dataSources !== null) {
+      if (productId !== 'personal_loan') throw err('data completeness feeds personal-loan decisions only (not ' + productId + ')');
+      if (consents.openFinance !== true) throw err('data completeness is measured on connected accounts — Open Finance consent is required with dataSources');
+      dcmp = dcFromSources(applicant, application.dataSources);
+    }
+    const evExtra = {};
+    if (eid) evExtra.emiratesId = eid;
+    if (dcmp) evExtra.dataCompleteness = dcmp;
+
     const pol = getPolicyRef(productId);
-    let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements, vehicle ? { vehicle } : undefined);
+    let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
+                      vehicle ? { vehicle } : (Object.keys(evExtra).length ? evExtra : undefined));
 
     // v2.8 — digital footprint: only with its own consent, only when the applicant has a
     // footprint, only on the packs that carry the overlay params (split, personal loan,
@@ -6292,7 +6655,7 @@ label.bk-acct { position:relative; cursor:pointer; }
                       note: co.applied && !scored ? 'Not applied — no scorecard on this decision' : co.status };
         if (fpOverlay.applied) {
           ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
-                        { footprintOverlay: { name: fpOverlay.name, delta: fpOverlay.delta } });
+                        Object.assign({ footprintOverlay: { name: fpOverlay.name, delta: fpOverlay.delta } }, evExtra));
         }
       }
     }
@@ -6302,6 +6665,15 @@ label.bk-acct { position:relative; cursor:pointer; }
     const createdAt = nowIso();
     const consentAt = createdAt;
     const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
+    if (eid) {
+      // v2.16 — what the scan read, as flags: never the employer, the payer, the date of birth, the occupation or the nationality.
+      pulls.push({ source: 'EMIRATES_ID', status: 'SCANNED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
+                   summary: { scan: 'front + back scanned', fieldsRead: 'name (EN + AR), ID number (masked), date of birth, nationality (identity and enrichment routing only), expiry, occupation, employer',
+                              notRead: 'sex', images: 'front + back kept inside Noor (KYC records) — never shared', expiry: eid.expiryValid ? 'valid' : 'expired',
+                              nameMatch: eid.nameMatch.match === null ? 'checked once accounts are connected' : (eid.nameMatch.match ? 'matches the account holder' : 'does not match the account holder'),
+                              employerMatch: eid.employerMatch.match === null ? (eid.openFinance ? 'no salary payer seen' : 'checked once accounts are connected')
+                                : (eid.employerMatch.match ? 'match' : 'mismatch') + ' — ' + eid.employerMatch.score + '% (WPS salary payer)' } });
+    }
     if (fpa) {
       ev.features.footprintIdentity = fpa.identity.confidence;
       ev.features.footprintAtoRisk = fpa.security.atoRisk;
@@ -6383,6 +6755,20 @@ label.bk-acct { position:relative; cursor:pointer; }
       record.consents.digitalFootprint = { granted: fpc.granted, basis: fpc.basis, termsVersion: fpc.termsVersion,
                                            at: fpc.granted ? (fpc.acceptedAt || consentAt) : null,
                                            scope: fpc.basis === 'TERMS' ? FOOTPRINT_SCOPE_TERMS : FOOTPRINT_SCOPE, used: !!fpa };
+    }
+    if (dcmp) {
+      // v2.17 — internal: the threshold, the weights and the components stay inside Noor (the memo carries the percentage and counts only).
+      record.dataCompleteness = clone(dcmp);
+      record.audit.push({ at: createdAt, actor: 'engine', action: 'DATA_COMPLETENESS',
+                          detail: dcmp.pct + '% complete · ' + dcmp.counts.banks + ' banks · ' + dcmp.counts.accounts + ' accounts · ' + dcmp.counts.months + ' months · threshold ' + dcmp.threshold + '% (illustrative) · ' +
+                                  (dcmp.aboveThreshold ? 'scored' + (dcmp.scoreOverlay ? ' (NoorScore ' + dcmp.scoreOverlay + ')' : ' (nothing to add)') : 'below the threshold — REFER (' + dcmp.ask.join(', ') + ' missing)') });
+    }
+    if (eid) {
+      // v2.16 — internal only (the Decision log, an underwriter on a REFER). The memo carries one flag and the masked ID.
+      // Amendment 2 — the images stay inside Noor as KYC records: internal references only, never in the memo or the SFTP row.
+      record.emiratesId = { scanned: 'FRONT_AND_BACK', idMasked: eid.idMasked, check: clone(eid),
+                            images: { retainedInsideNoor: true, purpose: EID_IMAGES_PURPOSE,
+                                      refs: ['KYC-' + id.slice(4) + '-EID-FRONT.jpg', 'KYC-' + id.slice(4) + '-EID-BACK.jpg'] } };
     }
     if (comms) {
       record.consents.communications = { granted: true, at: consentAt, reference: 'CNS-' + id.slice(4) + '-COMMS',
@@ -6517,6 +6903,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     // v2.8 — contact preferences joined the raw contact details: one group, still 7 in all.
     { group: 'Contact details and preferences', reason: 'Not needed to book the loan — Noor stays the customer\'s point of contact; the email, phone and chosen channels stay with Noor (PDPL data minimisation)' }
   ];
+  // v2.17 — a memo with data completeness adds this line (the percentage and counts only).
+  const MEMO_SHARED_DC = 'Data completeness — the share of the financial picture Noor sees, with the number of banks, accounts and months';
   // Car loan (v2.7) memos add these lines; other products' memos are unchanged.
   const MEMO_SHARED_CAR = [
     'Vehicle quote — category, condition, model year, price, loan-to-value and down payment (dealer-quote data, not Open Finance)',
@@ -6544,6 +6932,7 @@ label.bk-acct { position:relative; cursor:pointer; }
       reason: 'Shared by the owner as an individual, under the owner’s own Al Tareq consent, for the guarantee assessment — it cannot be passed on (CBUAE Open Finance framework, PDPL purpose limitation)' }
   ];
   const MEMO_SFTP_HEADER_SME_EXTRA = ['revenue_band', 'dscr_band', 'guarantee_status'];
+  const MEMO_SFTP_HEADER_DC_EXTRA = ['data_completeness_pct', 'data_sources'];   // v2.17
   const MEMO_SFTP_HEADER = ['memo_id', 'noor_ref', 'product', 'outcome', 'amount', 'tenor', 'apr_or_fee', 'monthly_payment',
                             'repayment_method', 'noorscore', 'noorscore_band', 'income_band', 'dbr_band', 'aecb_band',
                             'reason_codes', 'created_at'];
@@ -6783,6 +7172,14 @@ label.bk-acct { position:relative; cursor:pointer; }
   // ownerOpenFinance (v2.10) is the owner's own consent: its REFERENCE is shared (the guarantee flag rests on it), never its content.
   const CONSENT_CODES = [['aecb', 'AECB'], ['openFinance', 'ALTAREQ'], ['ownerOpenFinance', 'ALTAREQ-OWNER'], ['creditPassport', 'CPASS'], ['homeStatements', 'STMT'], ['shareWithLender', 'LENDER']];
   const FOOTPRINT_CONFIDENCE_WORD = { HIGH: 'high', MEDIUM: 'medium', LOW: 'low' };
+  // v2.16 — the Emirates ID part of the identity flag ('' when the decision had no scan).
+  function memoEmiratesIdFlag(rec) {
+    if (!rec.emiratesId) return '';
+    const f = rec.features || {};
+    return ' · Emirates ID front + back' + (f.idExpiryValid === false ? ' · card expired' : '') +
+      (f.employerMatch === true ? ' · employer matches salary payer'
+        : (f.employerMatch === false ? ' · employer differs from salary payer' : ' · employer not yet checked against salary credits'));
+  }
   function creditMemo(decisionId, opts) {
     ensureInit();
     const rec = getDecisionRef(decisionId);
@@ -6806,7 +7203,8 @@ label.bk-acct { position:relative; cursor:pointer; }
       product: { productId: rec.productId, nameEn: man.nameEn || rec.productId },
       policyVersion: rec.policyVersion,
       engineVersion: rec.engineVersion,
-      borrower: { name: a.name || null, nameAr: a.nameAr || null, emiratesIdMasked: maskedEmiratesId(a.id), kycSource: 'UAE PASS (onboarding)' },
+      borrower: { name: a.name || null, nameAr: a.nameAr || null,
+                  emiratesIdMasked: (rec.emiratesId && rec.emiratesId.idMasked) || maskedEmiratesId(a.id), kycSource: 'UAE PASS (onboarding)' },
       decision: {
         outcome: rec.outcome,
         status: rec.status,
@@ -6840,17 +7238,22 @@ label.bk-acct { position:relative; cursor:pointer; }
       },
       verification: Object.assign({
         // v2.8 — a consented digital-footprint check adds its confidence level, never its data.
-        identity: 'Verified (UAE PASS)' + (FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] && rec.consents && rec.consents.digitalFootprint && rec.consents.digitalFootprint.granted
+        // v2.16 — an Emirates ID scan adds a flag only: never the employer, the payer, the date of birth or the occupation.
+        identity: 'Verified (UAE PASS)' + memoEmiratesIdFlag(rec) +
+          (FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] && rec.consents && rec.consents.digitalFootprint && rec.consents.digitalFootprint.granted
           ? ' · digital footprint: ' + FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] + ' confidence' : ''),
         homeStatements: memoStatementsFlag(rec.homeStatements),
         purchaseVerified: rec.productId === 'split'
           ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
           : null
       }, car ? memoCarFlags(rec) : {}),
+      // v2.17 — completeness as the lender sees it: the percentage and counts only (no threshold, weights or bands)
+      ...(rec.dataCompleteness ? { dataCompleteness: { pct: rec.dataCompleteness.pct, banks: rec.dataCompleteness.counts.banks,
+                                                       accounts: rec.dataCompleteness.counts.accounts, months: rec.dataCompleteness.counts.months } } : {}),
       consents: CONSENT_CODES
         .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
         .map(([k, code]) => ({ type: k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + code })),
-      sharing: { shared: MEMO_SHARED.concat(car ? MEMO_SHARED_CAR : []),
+      sharing: { shared: MEMO_SHARED.concat(car ? MEMO_SHARED_CAR : [], rec.dataCompleteness ? [MEMO_SHARED_DC] : []),
                  withheld: MEMO_WITHHELD.concat(car ? MEMO_WITHHELD_CAR : []).map(w => ({ group: w.group, reason: w.reason })) }
     };
   }
@@ -6876,6 +7279,12 @@ label.bk-acct { position:relative; cursor:pointer; }
                  s(t.monthlyPayment), s(t.repaymentMethod), s(memo.noorScore.value), s(memo.noorScore.band),
                  s(memo.affordability.incomeBand), s(memo.affordability.dbrBand), s(memo.bureau.aecbScoreBand),
                  memo.decision.reasonCodes.map(r => r.code).join('|'), memo.createdAt];
+    // v2.17 — a memo with data completeness adds two columns (the percentage and the counts); other rows are unchanged.
+    if (memo.dataCompleteness) {
+      const dcm = memo.dataCompleteness;
+      return { header: MEMO_SFTP_HEADER.concat(MEMO_SFTP_HEADER_DC_EXTRA),
+               row: row.concat([String(dcm.pct), dcm.banks + ' banks · ' + dcm.accounts + ' accounts · ' + dcm.months + ' months']) };
+    }
     // v2.10 — SME memos add three business columns (bands and the guarantee flag); other products' rows are unchanged.
     if (memo.product.productId === 'sme_working_capital') {
       const b = t.business || {};
@@ -6995,11 +7404,19 @@ label.bk-acct { position:relative; cursor:pointer; }
   // ---------------------------------------------------------------------------
   const PREQUAL = { productId: 'personal_loan', tenorMonths: 24, band: 'B', minShareOfMax: 0.25,
                     instalmentToFcfMaxPct: 50, termsMonths: [6, 12, 24], validForDays: 7 };
-  function prequalify(applicant, consents) {
+  // v2.17 — opts.approvedAccounts (masks or accounts): step 1, data completeness, first. Below the threshold
+  // no range and no score estimate: { status:'NEEDS_DATA', completeness, ask } (no record, no AECB).
+  function prequalify(applicant, consents, opts) {
     ensureInit();
     if (!applicant || typeof applicant !== 'object') throw err('prequalify(applicant, consents) needs an applicant');
     if (!consents || consents.openFinance !== true) {
       throw err('pre-qualification reads connected accounts only — Open Finance consent (connected accounts via Al Tareq) is required');
+    }
+    const dcq = opts && opts.approvedAccounts !== undefined ? dataCompleteness(applicant, opts.approvedAccounts, { months: opts.months }) : null;
+    if (dcq && !dcq.aboveThreshold) {
+      return { productId: PREQUAL.productId, status: 'NEEDS_DATA', completeness: dcq, ask: dcq.ask.slice(), eligible: null,
+               note: 'No score yet — add your salary account, credit cards and loans so we can calculate it. Nothing was recorded and no credit bureau check was made.',
+               sources: ['OPEN_FINANCE'] };
     }
     const cn = applicant.connected || null, bd = applicant.bankData || null;
     const income = cn && Number.isFinite(cn.avgMonthlyIncome) ? cn.avgMonthlyIncome
@@ -7062,7 +7479,8 @@ label.bk-acct { position:relative; cursor:pointer; }
                      instalmentBudgetMonthly: fcf === null ? Math.max(0, headroom) : Math.min(Math.max(0, headroom), fcfBudget) },
       // Indicative pricing for the estimated band (the loan screen's "from X% APR").
       indicativePricing: { band: estBand, aprMin: bandRange[0], aprMax: bandRange[1], aprMid: round4((bandRange[0] + bandRange[1]) / 2),
-                           termsMonths: [6, 12, 24] }
+                           termsMonths: [6, 12, 24] },
+      ...(dcq ? { status: 'OK', completeness: dcq } : {})
     };
   }
   // Pure: the reducing-balance instalment Mizan uses for personal-loan KFS figures
@@ -8014,6 +8432,10 @@ label.bk-acct { position:relative; cursor:pointer; }
     assessFootprint, FOOTPRINT_MODES: FOOTPRINT_MODES.slice(), COMMS_CHANNELS: COMMS_CHANNELS.slice(),
     // v2.13 — contact preferences recorded on the funded loan (asked after disbursal)
     recordCommunications,
+    // v2.16 — the Emirates ID front + back, cross-checked against the salary payer in Open Finance (pure)
+    checkEmiratesId, EMIRATES_ID_NOT_READ: EID_NOT_READ.slice(),
+    // v2.17 — "Two steps to a score": data completeness first (pure), then the score
+    dataCompleteness,
     // v2.7 — car loan: a pure live quote (documents path vs Open Finance path) for the car screen
     quoteCar,
     lenders: function () { ensureInit(); return clone(lendersList()); },
@@ -8129,6 +8551,8 @@ var PULL_LABEL = {
   PRIOR_DECISION: 'Prior decision — the starter loan and how it was repaid',
   HOME_STATEMENTS: 'Home-country bank statements — parsed: integrity, name match, conduct, EMIs, buffer, remittances',
   DIGITAL_FOOTPRINT: 'Digital footprint (consented, optional) — identity and account security; the thin-file overlay in shadow',
+  /* v2.16 — the Emirates ID scan in the journey */
+  EMIRATES_ID: 'Emirates ID — front + back scanned: name, ID number, date of birth, nationality (identity and enrichment only), expiry, occupation, employer (never sex); the images stay inside Noor (KYC)',
   /* v2.10 — the SME route */
   AECB_COMMERCIAL: 'AECB commercial report — the company',
   KYB: 'Trade licence + UBO (KYB) — the company',
@@ -8926,8 +9350,10 @@ var FlowMap = {
       ol.appendChild(li);
     });
     var detail = h('div', { class: 'fm-detail', id: detailId, role: 'region', 'aria-labelledby': detailId + '-h', hidden: 'hidden' });
+    var baseNote = '— ' + (NUM_WORD[n] || String(n)) + ' steps' + (anyOf ? '; the highlighted ones use Open Finance (Al Tareq)' : '');
+    var noteEl = h('span', { class: 'h3-note', text: baseNote });
     var panel = h('div', { class: 'panel fm-panel', id: id + '-panel', dataset: { flow: cfg.key || id } },
-      h('h3', null, 'The flow ', h('span', { class: 'h3-note', text: '— ' + (NUM_WORD[n] || String(n)) + ' steps' + (anyOf ? '; the highlighted ones use Open Finance (Al Tareq)' : '') })),
+      h('h3', null, 'The flow ', noteEl),
       ol, detail);
     self.el = panel; self.detail = detail;
 
@@ -8998,6 +9424,8 @@ var FlowMap = {
     };
     self.toggle = function (i) { if (self.sel === i) self.close(); else self.select(i); };
     self.refresh = function () {
+      /* v2.17 — an optional live suffix on the header note (the journey: "· data completeness 100%") */
+      if (cfg.note) noteEl.textContent = baseNote + (cfg.note() || '');
       var res = cfg.status ? cfg.status() : null;
       self.states = res ? res.steps : null;
       self.shown = !!(res && res.shown);
@@ -9228,10 +9656,11 @@ var JR_FLOW = [
     r: 'Noor’s position (confirm with counsel): every Noor surface in botim, on the main screen and in botim money, is a Noor embed, and botim gets events only.' },
   /* v2.13 — the contact preferences moved to phase 10 (after the payout) */
   /* v2.14 — the footprint check is covered by the terms accepted at sign-up (no checkbox) */
-  { t: 'Noor opens in botim', d: 'Web-view · account · email', match: function (e) { return e.n >= 1 && e.n <= 3; },
-    c: 'Agrees to the hand-off, creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — and verifies the phone and the email.',
-    m: 'assessFootprint() runs for every applicant, covered by the terms accepted at sign-up. No contact preferences yet: they are asked once the loan is issued.',
-    r: 'PDPL purpose limitation: identity and account security only, and the Privacy policy says how to object (Noor’s position — confirm the terms-based basis with counsel).' },
+  /* v2.16 — the Emirates ID, front and back (3·2) */
+  { t: 'Noor opens in botim', d: 'Web-view · account · email · Emirates ID', match: function (e) { return e.n >= 1 && e.n <= 3; },
+    c: 'Agrees to the hand-off, creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — and verifies the phone and the email. Then scans the front and back of the Emirates ID.',
+    m: 'The Emirates ID is checked once the accounts are read (checkEmiratesId(): ID employer ↔ WPS salary payer, ID name ↔ account holder; POL_ID_VALID and POL_EMPLOYER_MATCH in decide(), refer only), and assessFootprint() runs for every applicant, covered by the terms accepted at sign-up. No contact preferences yet: they are asked once the loan is issued.',
+    r: 'PDPL purpose limitation: identity and account security only, and the Privacy policy says how to object (Noor’s position — confirm the terms-based basis with counsel). Sex is never read and the ID images stay inside Noor as KYC records; nationality routes identity and enrichment only, never the score (CBUAE fair treatment).' },
   { t: 'Connect banks', d: 'Al Tareq consent', of: true, match: function (e) { return e.n === 4; },
     c: 'Picks banks and reads what Noor will read, why and for how long. Cancel any time in the Al Tareq dashboard.',
     m: 'No engine call yet: the consent sets what later pulls may read.',
@@ -11838,7 +12267,9 @@ var PARAM_META = {
     instalmentToFcfMaxPct: ['Max instalment as % of free cash flow (when spending is seen)', 10, 80, 5],
     footprintOverlayMode: ['Digital-footprint thin-file overlay — SHADOW logs it, LIVE applies it', null, null, null],
     footprintOverlayCap: ['Digital-footprint overlay cap (points, positive-only)', 0, 30, 5],
-    tokenValidityDays: ['Offer validity (days)', 3, 30, 1]
+    tokenValidityDays: ['Offer validity (days)', 3, 30, 1],
+    /* v2.17 — "Two steps to a score" */
+    completenessThresholdPct: ['Data-completeness threshold (%, illustrative) — below it no score is issued and decide() refers', 50, 90, 5]
   },
   starter_loan: {
     minAmount: ['Minimum upgrade amount (AED)', 100, 2000, 100],
@@ -12828,6 +13259,15 @@ var LogScreen = {
       panel.appendChild(h('div', { style: 'margin:0 0 12px;' }, h('h3', { text: 'What the evidence was worth — same application, each path' }), evidenceStrip(rec, { id: 'lg-evidence' })));
     }
     if (rec.redFlags) panel.appendChild(h('div', { style: 'margin:0 0 12px;' }, RedFlagsUI.tripped(rec.redFlags, { id: 'lg-rf-trip', title: 'Red flags read at origination (internal)' })));   /* v2.9 */
+    if (rec.dataCompleteness) {
+      /* v2.17 — internal: the threshold and the components (the memo carries the percentage and counts only) */
+      var ldc = rec.dataCompleteness, ltb = h('tbody');
+      ldc.components.forEach(function (c) { ltb.appendChild(h('tr', { dataset: { key: c.key } }, h('td', { text: c.label }), h('td', { class: 'small', text: c.note }), h('td', { class: 'num', text: c.points + ' / ' + c.weight }))); });
+      panel.appendChild(h('div', { id: 'lg-dc', style: 'margin:0 0 12px;' }, h('h3', { text: 'Data completeness — step 1 of the score (internal)' }),
+        h('div', { class: 'small', id: 'lg-dc-line', text: ldc.pct + '% complete · ' + ldc.counts.banks + ' banks · ' + ldc.counts.accounts + ' accounts · ' + ldc.counts.months + ' months · threshold ' + ldc.threshold + '% (illustrative) · ' +
+          (ldc.aboveThreshold ? 'scored' + (ldc.scoreOverlay ? ' — NoorScore ' + ldc.scoreOverlay : ' — nothing to add') : 'below the threshold — referred (' + ldc.ask.join(', ') + ' missing)') }),
+        h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'What we have' }), h('th', { class: 'num', text: 'Points / weight' }))), ltb))));
+    }
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
@@ -13015,6 +13455,17 @@ function memoDoc(m) {
       ['Home-country statements', ve.homeStatements, 'statements'], ['Purchase', ve.purchaseVerified, 'purchase'],
       ['Other income', ve.otherIncome, 'otherIncome'], ['Down-payment source', ve.downPaymentSource, 'downPaymentSource']])));
   }
+  /* v2.17 — data completeness as the lender sees it: a ring with the percentage and the counts (no threshold, no weights) */
+  if (m.dataCompleteness) {
+    var mdc = m.dataCompleteness;
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-dc', dataset: { pct: String(mdc.pct) } }, h('h4', { text: 'Data completeness' }),
+      h('div', { class: 'dc-wrap' },
+        h('div', { class: 'dc-ring', id: 'lv-dc-ring', role: 'img', 'aria-label': mdc.pct + '% data completeness', style: '--dc:' + Math.max(0, Math.min(100, mdc.pct)) + ';' },
+          h('span', { class: 'dc-ring-v', text: mdc.pct + '%' })),
+        h('div', { class: 'dc-side' },
+          h('div', { class: 'dc-counts', id: 'lv-dc-counts', text: mdc.banks + (mdc.banks === 1 ? ' bank' : ' banks') + ' · ' + mdc.accounts + (mdc.accounts === 1 ? ' account' : ' accounts') + ' · ' + mdc.months + ' months' }),
+          h('div', { class: 'small muted', text: 'How much of the customer’s financial picture Noor sees through Open Finance — counts only, never the accounts.' })))));
+  }
   var rc = h('div', { class: 'memo-rc' });
   if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
   d.reasonCodes.forEach(function (c) {
@@ -13148,7 +13599,9 @@ var JR_ICON = {
   face: 'M2.5 5.5v-2h2M11.5 3.5h2v2M13.5 10.5v2h-2M4.5 12.5h-2v-2M6 6.5v1M10 6.5v1M8 6.5v2.5h-.8M6.2 10.5a2.6 2.6 0 0 0 3.6 0', clock: 'M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM8 5v3.2l2 1.3',
   /* v2.12 — neutral glyphs for botim's main screen (services grid, search) */
   search: 'M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3l3.2 3.2', recharge: 'M5.5 2.5h5v11h-5zM7.3 11.5h1.4M8.6 4.8L7.2 7.4h1.6L7.4 9.6',
-  bills: 'M4 2.5h8v11l-1.6-1-1.2 1-1.2-1-1.2 1-1.2-1L4 13.5zM6 5.5h4M6 8h4M6 10.5h2.2', gold: 'M1.5 13l1.2-3h3.6l1.2 3zM8.5 13l1.2-3h3.6l1.2 3zM5 9l1.2-3h3.6L11 9z'
+  bills: 'M4 2.5h8v11l-1.6-1-1.2 1-1.2-1-1.2 1-1.2-1L4 13.5zM6 5.5h4M6 8h4M6 10.5h2.2', gold: 'M1.5 13l1.2-3h3.6l1.2 3zM8.5 13l1.2-3h3.6l1.2 3zM5 9l1.2-3h3.6L11 9z',
+  /* v2.16 — a neutral camera glyph for the Emirates ID scan */
+  camera: 'M2.5 5.5h2.6l1.1-1.6h3.6l1.1 1.6h2.6v7h-11zM8 6.9a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2z'
 };
 function jrSvg(d, cls, sw) {
   var svg = document.createElementNS(SVGNS, 'svg');
@@ -13180,12 +13633,14 @@ var JR_HOST = {
 var JR_BANKS = [['ENBD', 'EN'], ['FAB', 'FA'], ['ADCB', 'AD'], ['Mashreq', 'MQ'], ['RAKBANK', 'RK'], ['Other bank', '··']];
 /* v2.8 — each experiment variant renders its own path through the shared steps. Top-level numbers 0–16 are the
    shared steps; the v2.8 additions are sub-steps (3·1 email; variant A's 8·1 and 8·2).
-   v2.13 — "How should we contact you?" moved from onboarding (3·2) to right after the payout (16·1). */
+   v2.13 — "How should we contact you?" moved from onboarding (3·2) to right after the payout (16·1).
+   v2.16 — 3·2 is now "Scan your Emirates ID" (front + back), in both variants. */
 var JR_ONBOARD = [
   { n: 1, title: 'Noor opens inside botim (web-view)' },
   { n: 2, title: 'Create your account' },
   { n: 3, title: 'Enter the code' },
   { n: 3, sub: 1, title: 'Your email — digital-footprint check (covered by the terms)', engine: 'assessFootprint()' },
+  { n: 3, sub: 2, title: 'Scan your Emirates ID' },
   { n: 4, title: 'Connect your bank accounts — Al Tareq' },
   { n: 5, title: 'Approve in your bank — leaves the web-view' }
 ];
@@ -13233,6 +13688,10 @@ var JR_TERMS = {
   clause: 'to confirm it’s you and protect your account, we check your email and mobile number with a fraud-prevention provider. We use it for identity and security — and, only if we switch it on after testing, to help when you have little credit history. We never use your gender, the apps or services you use, or where a data breach came from.',
   object: 'Contact us in the app to ask about or object to this check.'
 };
+/* v2.17 — "Two steps to a score": the proxy line behind the scenes */
+var JR_DC_PROXY = 'Noor is the proxy: Partner Bank relies on Noor’s data and verification. Completeness is how much of the customer’s financial picture Noor actually sees — the threshold is the minimum before Noor puts a score on it.';
+/* v2.16 — the what-if: the same card, with the salary paid by another (fictitious) company */
+var JR_EID_WHATIF_PAYER = 'SALARY/WPS PALMGATE TRADING';
 /* When the terms were accepted: the demo's day (MizanData.TODAY), just before the engine's session clock starts (09:00) */
 function jrTermsAt() { return new Date(new Date(MD.TODAY + 'T09:00:00Z').getTime() - 120000).toISOString(); }
 /* The experiment: 2.0% → 2.5% funded, 80% power, two-sided α 0.05 */
@@ -13242,6 +13701,8 @@ function jrFresh(variant) {
            otp: '', otpErr: false, otpLeft: 24, banks: { ENBD: true, FAB: true }, bankDeclined: false, bankSel: {}, faceId: null,
            emailEdit: false, emailOther: '', emailErr: null, emailCode: '', emailCodeErr: false, emailOk: false, emailDone: false,
            footprint: false, fpa: null, terms: null, termsSheet: null,
+           eid: { front: false, back: false }, eidCam: null, eidDone: false, eidCheck: null, eidWhatIf: null,
+           pqKey: null, dcWhatIf: null,
            comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
            commsTouched: false, commsDone: false, commsErr: null,
            insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
@@ -13254,6 +13715,12 @@ function jrDayNth(d) { var s = ['th', 'st', 'nd', 'rd'], v = d % 100; return d +
 function jrMaskEmail(e) {
   var m = String(e || '').match(/^([^@\s])[^@\s]*@[^@\s]+?(\.[A-Za-z]{2,})$/);
   return m ? m[1] + '•••••@•••' + m[2].toLowerCase() : '•••••@•••';
+}
+/* v2.17 — months of history seen in the connected accounts, and the counts as the customer reads them */
+function jrMonthsSeen() { var p = Journey.persona; return (p && p.connected && p.connected.monthsAvailable) || 12; }
+function jrDcCounts(dc) {
+  var c = dc.counts;
+  return c.banks + (c.banks === 1 ? ' bank' : ' banks') + ' · ' + c.accounts + (c.accounts === 1 ? ' account' : ' accounts') + ' · ' + c.months + ' months';
 }
 /* v2.15 — the connected accounts by kind: deposit accounts (the botim tiles), credit cards and loans (the bank app, the budget) */
 function jrDeposits(list) { return (list || []).filter(function (a) { return /account$/i.test(a.type); }); }
@@ -13310,6 +13777,8 @@ var Journey = {
     if (!Journey.persona) { root.appendChild(h('div', { class: 'panel', text: 'Journey persona j1 is missing from MizanData.personasJourney.' })); return; }
     /* v2.11 — the flow map above the phone: ten phases over the journey's own steps; "Go to this step" uses the journey's jump */
     Journey.map = FlowMap.create({ id: 'jr-flow', key: 'journey', label: 'The customer journey, ten phases', steps: JR_FLOW,
+      /* v2.17 — once the accounts are read, the header note carries the data completeness */
+      note: function () { var dc = Journey.dataNow(); return dc ? ' · data completeness ' + dc.pct + '%' : ''; },
       doneText: 'Reached', todoText: 'Not reached yet',
       status: function () { return Journey.flowStatus(); }, go: function (i) { return Journey.flowGo(i); }, run: function (i) { Journey.flowRun(i); } });
     root.appendChild(Journey.map.el);
@@ -13359,7 +13828,7 @@ var Journey = {
   go: function (step, sub, dir) {
     var S = Journey.S;
     Journey.clearTimers();
-    S.chat = false; S.faceId = null;
+    S.chat = false; S.faceId = null; S.eidCam = null;   /* v2.16 — leaving a step drops an unfinished Emirates ID capture */
     sub = sub || 0;
     /* v2.12 — remember which botim screen the customer left from (0·0 main screen, 0·1 botim money), so ✕ returns there */
     if (S.step === 0) S.hostBack = S.sub;
@@ -13392,19 +13861,31 @@ var Journey = {
       }
     }
     if (S.step === 7 && S.sub === 0) S.hostTab = 'credit';
+    /* v2.16 — the Emirates ID cross-check, once the accounts are read: the employer on the card against the WPS payer on the
+       salary credits, and the name on the card against the account holder (pure: no record) */
+    if (((S.step === 7 && S.sub === 2) || (S.step === 8 && S.sub === 2)) && S.eidDone && S.connected && !S.eidCheck) Journey.runEidCheck();
     var pqStep = (S.step === 7 && S.sub === 3) || (S.step === 8 && S.sub === 2);
-    if (pqStep && !S.pq) {
+    /* v2.17 — step 1 first: prequalify() takes the approved accounts; below the threshold it returns NEEDS_DATA (no range, no score) */
+    var pqKey = Journey.dcMasks().join(',');
+    if (pqStep && (!S.pq || S.pqKey !== pqKey)) {
       try {
-        S.pq = ME.prequalify(p, { openFinance: true });
+        S.pq = ME.prequalify(p, { openFinance: true }, { approvedAccounts: Journey.dcMasks(), months: jrMonthsSeen() });
+        S.pqKey = pqKey;
         S.pqErr = null;
-        Journey.log('prequalify(j1, {openFinance:true})', S.step === 8
-          ? 'affordability check · caps 6 → ' + fmtAED(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtAED(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtAED(S.pq.maxByTermMonths[24]) + ' · no record, no AECB pull'
-          : fmtAED(S.pq.indicativeMin) + ' – ' + fmtAED(S.pq.indicativeMax) + ' · NoorScore estimate ' + S.pq.noorScoreEstimateBand + ' · no record, no AECB pull');
-        /* variant B shows the approvable amount first, so the slider starts inside it; variant A keeps the customer's ask for the check */
-        if (S.step === 7 && S.amount > S.pq.indicativeMax) S.amount = S.pq.indicativeMax;
+        var pqCall = 'prequalify(j1, {openFinance:true}, {approvedAccounts:' + Journey.dcMasks().length + '})';
+        if (S.pq.status === 'NEEDS_DATA') {
+          Journey.log(pqCall, 'NEEDS_DATA · data ' + S.pq.completeness.pct + '% — below the threshold · ask: ' + S.pq.ask.join(', ') + ' · no score, no record, no AECB pull');
+        } else {
+          Journey.log(pqCall, (S.step === 8
+            ? 'affordability check · caps 6 → ' + fmtAED(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtAED(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtAED(S.pq.maxByTermMonths[24])
+            : fmtAED(S.pq.indicativeMin) + ' – ' + fmtAED(S.pq.indicativeMax) + ' · NoorScore estimate ' + S.pq.noorScoreEstimateBand) +
+            ' · data ' + S.pq.completeness.pct + '% · no record, no AECB pull');
+          /* variant B shows the approvable amount first, so the slider starts inside it; variant A keeps the customer's ask for the check */
+          if (S.step === 7 && S.amount > S.pq.indicativeMax) S.amount = S.pq.indicativeMax;
+        }
       } catch (err) { S.pqErr = err && err.message ? err.message : String(err); }
     }
-    if (pqStep && S.pq) Journey.emit('prequalified');
+    if (pqStep && S.pq && S.pq.status !== 'NEEDS_DATA') Journey.emit('prequalified');
     if (S.step === 11 && S.sub === 1 && S.recId && S.memoSent !== S.recId) {
       try { var m = ME.creditMemo(S.recId, { lenderId: 'partner-bank' }); S.memoSent = S.recId; Journey.log('creditMemo(' + S.recId + ')', m.memoId + ' → ' + m.lenderName + ' (UI · API · SFTP)'); } catch (e) {}
     }
@@ -13567,12 +14048,20 @@ var Journey = {
     S.applyErr = null;
     /* v2.14 — the footprint check rests on the terms accepted at step 2 */
     var fpc = S.terms ? { basis: 'TERMS', termsVersion: S.terms.version, acceptedAt: S.terms.acceptedAt } : undefined;
+    /* v2.16 — the Emirates ID scanned at 3·2 (front + back): POL_ID_VALID and POL_EMPLOYER_MATCH, refer only */
+    var eid = S.eidDone && S.eid.front && S.eid.back;
+    /* v2.17 — dataSources: the accounts approved in the banks' apps (step 1, data completeness) */
+    var dsMasks = Journey.dcMasks();
     var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true' +
-      (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}})';
+      (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}' + (eid ? ', emiratesId:{front, back}' : '') +
+      (dsMasks.length ? ', dataSources:{' + dsMasks.length + ' accounts, ' + jrMonthsSeen() + ' months}' : '') + '})';
     var cons = { aecb: !!S.aecb, openFinance: true };
     if (fpc) cons.digitalFootprint = fpc;
     try {
-      rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' });
+      var app = { productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' };
+      if (eid) app.emiratesId = true;
+      if (dsMasks.length) app.dataSources = { approvedAccounts: dsMasks, months: jrMonthsSeen() };
+      rec = ME.decide(app);
     } catch (err) {
       /* Expected: no AECB consent → the engine refuses. Shown in the phone, calmly. */
       S.applyErr = err && err.message ? err.message : String(err);
@@ -13583,7 +14072,9 @@ var Journey = {
     S.recId = rec.id; S.reachedIdx = jrIdx(9, 0); S.kfsLang = 'en'; S.kfsSheet = false; S.waive = false; S.eventErr = null; S.pwaOpen = false; S.commsDone = false; S.commsErr = null;
     S.botim = S.botim.filter(function (b) { return b.key !== 'funded'; });
     Journey.emit('applied');
-    Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : ''));
+    Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : '') +
+      (eid ? ' · ' + (rec.rules || []).filter(function (x) { return x.id === 'POL_ID_VALID' || x.id === 'POL_EMPLOYER_MATCH'; }).map(function (x) { return x.id + ' ' + x.result; }).join(' · ') : '') +
+      (rec.dataCompleteness ? ' · POL_DATA_COMPLETENESS ' + ((rec.rules || []).filter(function (x) { return x.id === 'POL_DATA_COMPLETENESS'; }).map(function (x) { return x.result; })[0] || '—') + ' (' + rec.dataCompleteness.pct + '%)' : ''));
     afterEngineMutation();
     Journey.go(9, 1, 1);
   },
@@ -13620,13 +14111,14 @@ var Journey = {
     S.hostTab = t;
     Journey.render();
   },
-  /* Onboarding picks up where it stopped: hand-off → account → code → email → banks
-     (v2.13 — the contact preferences are asked after the payout, not here) */
+  /* Onboarding picks up where it stopped: hand-off → account → code → email → Emirates ID → banks
+     (v2.13 — the contact preferences are asked after the payout, not here; v2.16 — the Emirates ID scan is 3·2) */
   resumeOnboarding: function () {
     var S = Journey.S;
     if (!S.account) { Journey.go(1, 0, 1); return; }
     if (!S.phoneOk) { Journey.go(3, 0, 1); return; }
     if (!S.emailDone) { Journey.go(3, 1, 1); return; }
+    if (!S.eidDone) { Journey.go(3, 2, 1); return; }
     Journey.go(4, 0, 1);
   },
   /* botim money → "Add another +": entry 1 (both variants) */
@@ -14054,6 +14546,7 @@ var Journey = {
           B('Continue', function () { Journey.acceptTerms(); Journey.go(3, 0, 1); }, 'jr-cta'))) };
     }
     if (st === 3 && sub === 1) return { kind: 'webview', node: Journey.emailView() };
+    if (st === 3 && sub === 2) return { kind: 'webview', node: Journey.eidView() };
     if (st === 3) {
       var cells = h('div', { class: 'ph-otp', id: 'jr-otp', role: 'group', 'aria-label': '6-digit code' });
       for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.otp[i] ? ' on' : (i === S.otp.length ? ' cur' : '')), text: S.otp[i] || '' }));
@@ -14082,6 +14575,8 @@ var Journey = {
         h('h2', { class: 'ph-h1', text: 'Connect your bank accounts' }),
         h('p', { class: 'ph-p ph-strong', text: 'Connection is secure — we can’t touch your money' }),
         list,
+        /* v2.16 (methodology, 9 Oct) — what helps most, said once under the bank list */
+        h('p', { class: 'ph-small', id: 'jr-bank-tip', text: 'Link your salary account, credit cards and loans first — nothing improves your result more.' }),
         S.bankDeclined ? h('p', { class: 'ph-err', text: 'You declined in your bank’s app — nothing was shared. You can try again.' }) : null),
         B(n ? 'Continue' + (n > 1 ? ' — ' + n + ' banks' : '') : 'Choose a bank', function () { if (n) Journey.go(4, 1, 1); }, 'jr-cta', { disabled: !n })) };
     }
@@ -14117,6 +14612,8 @@ var Journey = {
         h('h2', { class: 'ph-h1', text: 'Your accounts are connected' }),
         h('div', { class: 'ph-card ph-acctlist' }, ac.map(function (a) {
           return h('div', { class: 'ph-acct' }, Journey.mono(a.bank.slice(0, 2)), h('span', { class: 'ph-acct-n', text: a.bank + ' ' + a.type.toLowerCase() }), h('span', { class: 'ph-acct-m', text: '••••' + a.mask })); })),
+        /* v2.17 — "Your data": how much of the financial picture the approved accounts show */
+        Journey.dataCard(Journey.dataNow(), 'From the accounts you shared through Open Finance. A fuller picture lets us decide without asking for more.'),
         h('p', { class: 'ph-small', text: 'Your bank returned you to Botim and Noor picked up where you left off.' })),
         loan ? (S.variant === 'A' ? B('Check it fits my budget', function () { Journey.go(8, 2, 1); }, 'jr-cta') : B('See what you could borrow', function () { Journey.go(7, 1, 1); }, 'jr-cta'))
              : B('Done', function () { Journey.go(6, 1, 1); }, 'jr-cta')) };
@@ -14143,25 +14640,36 @@ var Journey = {
           /* v2.15 — the card and the loan, each from the connected accounts (they add up to the total) */
           Journey.budgetRepayments(cn),
           h('div', { class: 'ph-mini-r ph-mini-sep' }, h('span', { class: 'ph-mini-k', text: 'Left after spending and repayments' }),
-            h('span', { class: 'ph-mini-v', text: '≈ ' + fmtAED(cn.avgMonthlyIncome - cn.avgMonthlySpend - (cn.observedObligationsMonthly || 0)) + ' / month' })))),
+            h('span', { class: 'ph-mini-v', text: '≈ ' + fmtAED(cn.avgMonthlyIncome - cn.avgMonthlySpend - (cn.observedObligationsMonthly || 0)) + ' / month' }))),
+        /* v2.17 — "Your data", under the budget summary */
+        Journey.dataCard(Journey.dataNow()),
+        /* v2.16 — the Emirates ID cross-check: the employer on the card ↔ the WPS payer on the salary credits; the name ↔ the account holder */
+        Journey.eidMatchCard()),
         S.variant === 'A' ? B('Apply for a personal loan', function () { Journey.S.intent = 'loan'; Journey.go(8, 1, 1); }, 'jr-cta')
                           : B('See what you could borrow', function () { Journey.go(7, 3, 1); }, 'jr-cta')) };
     }
     if (st === 7 && sub === 3) {
       var pq = S.pq;
       if (!pq) return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-center' }, h('h2', { class: 'ph-h1', text: 'We couldn’t check right now' }), h('p', { class: 'ph-small', text: S.pqErr || '' })), null) };
+      if (pq.status === 'NEEDS_DATA') return { kind: 'webview', node: Journey.almostView(pq) };   /* v2.17 */
+      var pqDc = pq.completeness || null;
       return { kind: 'webview', node: Journey.wv(h('div', { id: 'jr-prequal', dataset: { min: String(pq.indicativeMin), max: String(pq.indicativeMax) } },
         h('h2', { class: 'ph-hero', id: 'jr-pq-head', text: 'You could borrow up to ' + fmtAED(pq.indicativeMax) }),
         h('p', { class: 'ph-p', id: 'jr-pq-range' }, 'Your range: ', h('strong', { text: fmtAED(pq.indicativeMin) + ' – ' + fmtAED(pq.indicativeMax).replace('AED ', '') })),
+        /* v2.17 — what the range rests on */
+        pqDc ? h('p', { class: 'ph-small', id: 'jr-pq-data', text: 'Based on ' + pqDc.pct + '% complete data · ' + pqDc.counts.banks + (pqDc.counts.banks === 1 ? ' bank' : ' banks') + ' · ' + pqDc.counts.accounts + (pqDc.counts.accounts === 1 ? ' account' : ' accounts') }) : null,
         h('div', { class: 'ph-tags' }, h('span', { class: 'ph-tag', id: 'jr-pq-band', text: 'NoorScore estimate · ' + pq.noorScoreEstimateBand }), h('span', { class: 'ph-tag', text: 'Personal loan' })),
         h('div', { class: 'ph-card ph-okline' }, h('span', { class: 'ph-okico ph-okico-sm', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.4')),
           h('span', null, h('strong', { text: 'Checking this didn’t affect your credit score' }), h('span', { class: 'ph-small ph-block', text: 'Worked out from your connected accounts only. Your exact limit is confirmed after a credit check — you can borrow any amount up to it.' }))),
         h('p', { class: 'ph-small', id: 'jr-pq-fcf', text: 'Up to ' + fmtAED(pq.indicativeMax) + ' over ' + pq.assumptions.tenorMonths + ' months — we keep the monthly payment within half of what’s left after your spending' +
           (pq.assumptions.instalmentBudgetMonthly ? ' (about ' + fmtAED(pq.assumptions.instalmentBudgetMonthly) + ' a month)' : '') + '. Shorter terms mean smaller amounts.' }),
+        Journey.dataCard(pqDc),
         h('p', { class: 'ph-small ph-muted', text: 'Indicative for ' + pq.validForDays + ' days.' })),
         B('Choose your loan', function () { Journey.go(8, 0, 1); }, 'jr-cta')) };
     }
     if (st === 8 && sub === 1) return { kind: 'webview', node: Journey.needView() };
+    /* v2.17 — below the completeness threshold there is no range to choose from: "Almost there" */
+    if (st === 8 && S.pq && S.pq.status === 'NEEDS_DATA') return { kind: 'webview', node: Journey.almostView(S.pq) };
     if (st === 8 && sub === 2) return { kind: 'webview', node: Journey.affordView() };
     if (st === 8) return { kind: 'webview', node: Journey.chooseView() };
     if (st === 9 && sub === 0) return { kind: 'webview', node: Journey.checksView() };
@@ -14247,7 +14755,222 @@ var Journey = {
       h('p', { class: 'ph-small ph-muted ph-fp-notice', id: 'jr-fp-notice' }, 'We verify your email and phone to protect your account — see our ',
         Journey.termsLink('privacy', 'Privacy policy', 'jr-fp-privacy'), '.'),
       Journey.termsSheet()),
-      B('Continue', function () { S.emailDone = true; Journey.go(4, 0, 1); }, 'jr-cta'));   /* v2.13 — straight to the bank: contact preferences come after the payout */
+      B('Continue', function () { S.emailDone = true; Journey.go(3, 2, 1); }, 'jr-cta'));   /* v2.16 — then the Emirates ID (3·2); contact preferences still come after the payout (v2.13) */
+  },
+  /* v2.17 — the accounts the customer approved (masks) and step 1, data completeness, on them (pure; null before the accounts are read) */
+  dcMasks: function () { return Journey.S && Journey.S.connected ? Journey.approvedAccounts().map(function (a) { return a.mask; }) : []; },
+  dataNow: function () {
+    var S = Journey.S;
+    if (!S || !S.connected) return null;
+    try { return ME.dataCompleteness(Journey.persona, Journey.dcMasks(), { months: jrMonthsSeen() }); } catch (e) { return null; }
+  },
+  /* "Your data" — the customer's card: a bar with the threshold line, the percentage, the counts and the checklist */
+  dataCard: function (dc, extra) {
+    if (!dc) return null;
+    var list = h('div', { class: 'ph-data-list', id: 'jr-data-list' }, dc.components.map(function (c) {
+      return h('span', { class: 'ph-data-c' + (c.have ? ' on' : ''), dataset: { key: c.key, have: String(!!c.have) } },
+        c.have ? null : h('span', { class: 'ph-data-mk', 'aria-hidden': 'true' }), c.label + (c.have ? ' ✓' : ''));
+    }));
+    return h('div', { class: 'ph-card ph-data', id: 'jr-data', dataset: { pct: String(dc.pct), above: String(!!dc.aboveThreshold) } },
+      h('div', { class: 'ph-data-h' }, h('span', { class: 'ph-h3', text: 'Your data' }), h('span', { class: 'ph-data-pct', id: 'jr-data-pct', text: dc.pct + '%' })),
+      h('div', { class: 'ph-data-bar', role: 'img', 'aria-label': dc.pct + '% of your financial picture connected' },
+        h('span', { class: 'ph-data-fill', style: 'width:' + Math.max(0, Math.min(100, dc.pct)) + '%;' }),
+        h('span', { class: 'ph-data-th', style: 'left:' + dc.threshold + '%;', title: 'Needed before we calculate a score' })),
+      h('div', { class: 'ph-data-counts', id: 'jr-data-counts', text: jrDcCounts(dc) }),
+      list,
+      extra ? h('p', { class: 'ph-small ph-data-n', text: extra }) : null);
+  },
+  /* 7·3 (and 8·2 in variant A) below the threshold: "Almost there" — no range, no score; the deck's chips; back to step 4 */
+  almostView: function (pq) {
+    var B = Journey.btn, dc = pq.completeness;
+    return Journey.wv(h('div', { id: 'jr-almost', dataset: { pct: String(dc.pct) } },
+      h('h2', { class: 'ph-h1', text: 'Almost there' }),
+      h('p', { class: 'ph-p', id: 'jr-almost-lead', text: 'Add your salary account, credit cards and loans so we can calculate your score' }),
+      h('div', { class: 'ph-chips', id: 'jr-almost-chips' }, pq.ask.map(function (a) { return h('span', { class: 'ph-chip', dataset: { ask: a }, text: a }); })),
+      Journey.dataCard(dc),
+      h('p', { class: 'ph-small', id: 'jr-almost-note', text: 'No score yet and nothing recorded — checking didn’t affect your credit score.' })),
+      B('Connect another account', function () { Journey.S.bankDeclined = false; Journey.go(4, 0, -1); }, 'jr-cta'));
+  },
+  /* Behind the scenes, from step 6: "Two steps to a score" — completeness, then the score; the proxy line; the 50% what-if */
+  twoSteps: function () {
+    var S = Journey.S, dc = Journey.dataNow(), r = Journey.rec();
+    if (!dc) return null;
+    var rdc = r && r.dataCompleteness ? r.dataCompleteness : null, use = rdc || dc;
+    var tb = h('tbody');
+    use.components.forEach(function (c) {
+      tb.appendChild(h('tr', { dataset: { key: c.key } }, h('td', { text: c.label }), h('td', { class: 'small', text: c.note }), h('td', { class: 'num', text: c.points + ' / ' + c.weight })));
+    });
+    var step2;
+    if (r && rdc) {
+      var f = r.features || {};
+      step2 = 'This decision: NoorScore ' + r.score.points + ' (grade ' + r.score.grade + ')' + (rdc.scoreOverlay ? ' — completeness ' + rdc.scoreOverlay + ' points' : ' — completeness adds nothing') +
+        ' · DBR ' + f.dbrPct + '% · free cash flow ' + fmtAED(f.freeCashFlowMonthly) + '/month (instalment ' + f.instalmentToFcfPct + '% of it) · POL_DATA_COMPLETENESS ' +
+        ((r.rules || []).filter(function (x) { return x.id === 'POL_DATA_COMPLETENESS'; }).map(function (x) { return x.result; })[0] || '—') +
+        '. Monitoring: while the loan is open, the Al Tareq consent lets Noor spot early if repayments might become hard.';
+    } else if (!use.aboveThreshold) {
+      step2 = 'Not issued — below the threshold Noor asks for more data first (decide() would refer as a backstop: POL_DATA_COMPLETENESS, never a decline).';
+    } else {
+      step2 = 'Runs at decide(), after the AECB pull: NoorScore' + (use.scoreOverlay ? ' (' + use.scoreOverlay + ' points for completeness under 85%, illustrative)' : '') +
+        ', with the affordability aggregates (DBR, free cash flow); monitoring follows the payout.';
+    }
+    var w = S.dcWhatIf;
+    return h('div', { class: 'jr-engine jr-twostep', id: 'jr-two-steps', dataset: { pct: String(use.pct), above: String(!!use.aboveThreshold) } },
+      h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Two steps to a score' }), h('code', { text: 'dataCompleteness(j1, approved accounts)' }), h('span', { class: 'small muted', text: ' · pure — no record' })),
+      h('div', { class: 'jr-two-s', id: 'jr-two-1' },
+        h('div', { class: 'jr-two-t', text: 'Step 1 — data completeness' }),
+        h('div', { class: 'jr-dc-bar', role: 'img', 'aria-label': use.pct + '% complete, threshold ' + use.threshold + '%' },
+          h('span', { class: 'jr-dc-fill', style: 'width:' + Math.max(0, Math.min(100, use.pct)) + '%;' }), h('span', { class: 'jr-dc-th', style: 'left:' + use.threshold + '%;' })),
+        h('div', { class: 'small', id: 'jr-two-pct', text: use.pct + '% · ' + jrDcCounts(use) + ' · threshold ' + use.threshold + '% (illustrative, completenessThresholdPct)' }),
+        h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl jr-dc-tbl', id: 'jr-two-tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'What we have' }), h('th', { class: 'num', text: 'Points / weight' }))), tb)),
+        h('div', { class: 'small muted', id: 'jr-two-rule', text: 'Below the threshold: the customer is asked to act. Above: we score.' })),
+      h('div', { class: 'jr-two-s', id: 'jr-two-2' }, h('div', { class: 'jr-two-t', text: 'Step 2 — the score itself' }), h('div', { class: 'small', id: 'jr-two-score', text: step2 })),
+      h('p', { class: 'small jr-two-proxy', id: 'jr-two-proxy', text: JR_DC_PROXY }),
+      h('button', { class: 'btn', type: 'button', id: 'jr-dc-whatif', text: 'Current account only (no salary)', onclick: function () { Journey.dcWhatIfRun(); } }),
+      w ? h('div', { class: 'callout callout-info', id: 'jr-dc-whatif-out', dataset: { pct: String(w.pct) } },
+            h('div', { class: 'co-title', text: w.pct + '% — ' + (w.aboveThreshold ? 'at or above the threshold' : 'below the threshold: no score') }),
+            h('div', { class: 'co-body', text: 'A current account without the salary, nothing else. Ask: ' + w.ask.join(' · ') + '. Pure check — no record.' })) : null);
+  },
+  dcWhatIfRun: function () {
+    var S = Journey.S, p = Journey.persona;
+    var cur = ((p.connected && p.connected.accounts) || []).filter(function (a) { return /current/i.test(a.type); })[0];
+    if (!cur) return;
+    try {
+      S.dcWhatIf = ME.dataCompleteness(p, [Object.assign({}, cur, { salaryAccount: false })], { months: jrMonthsSeen() });
+      Journey.log('dataCompleteness(j1, [current account, no salary])', 'what-if · ' + S.dcWhatIf.pct + '% · ' + (S.dcWhatIf.aboveThreshold ? 'scored' : 'below the threshold, no score') + ' · ask: ' + S.dcWhatIf.ask.join(', ') + ' · pure, no record');
+    } catch (err) { S.dcWhatIf = null; }
+    Journey.render();
+  },
+  /* v2.16 — sub-step 3·2: the Emirates ID, front and back. A neutral card outline with field labels (never a real card
+     design); tapping a side shows a simulated camera frame for about a second (instant under reduced motion), then the
+     fields read. Amendment 9 Oct: nationality is read (identity and enrichment routing only, never a score input);
+     sex is never read. Amendment 2: the ID images stay inside Noor for its KYC records, never shared. */
+  eidView: function () {
+    var S = Journey.S, p = Journey.persona, B = Journey.btn, id = p.emiratesId || { front: {}, back: {} };
+    var both = S.eid.front && S.eid.back;
+    var tile = function (side) {
+      var done = !!S.eid[side], f = id[side] || {}, title = side === 'front' ? 'Front' : 'Back';
+      var labels = side === 'front' ? ['Name', 'ID number', 'Date of birth', 'Nationality', 'Expiry'] : ['Occupation', 'Employer'];
+      if (!done) {
+        return h('button', { class: 'ph-eid-tile', type: 'button', id: 'jr-eid-' + side, dataset: { side: side, captured: 'false' },
+          disabled: S.eidCam ? 'disabled' : null, 'aria-label': 'Scan the ' + side + ' of your Emirates ID',
+          onclick: function () { Journey.eidCapture(side); } },
+          h('span', { class: 'ph-eid-shape', 'aria-hidden': 'true' }, labels.map(function (l) { return h('span', { class: 'ph-eid-ln' }, h('span', { class: 'ph-eid-lk', text: l }), h('span', { class: 'ph-eid-lb' })); })),
+          h('span', { class: 'ph-eid-tt' }, h('span', { class: 'ph-eid-side', text: title }), h('span', { class: 'ph-eid-go' }, jrSvg(JR_ICON.camera, 'ph-eid-cam-ico', '1.5'), 'Tap to scan')));
+      }
+      var rows = side === 'front'
+        ? [['name', 'Name', h('span', { class: 'ph-eid-v2' }, h('span', { text: f.nameEn || '—' }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: f.nameAr || '' }))],
+           ['id', 'ID number', f.idMasked || '—'], ['dob', 'Date of birth', fmtLongDate(f.dob)], ['nationality', 'Nationality', f.nationality || '—'], ['expiry', 'Expiry', fmtLongDate(f.expiry)]]
+        : [['occupation', 'Occupation', f.occupation || '—'], ['employer', 'Employer', f.employer || '—']];
+      return h('div', { class: 'ph-card ph-eid-done', id: 'jr-eid-' + side + '-done', dataset: { side: side, captured: 'true' } },
+        h('div', { class: 'ph-eid-dh' }, h('span', { class: 'ph-eid-side', text: title }),
+          h('span', { class: 'ph-eid-ok', id: 'jr-eid-' + side + '-ok' }, jrSvg(JR_ICON.check, 'ph-eid-ok-ico', '2.2'), 'Captured'),
+          h('button', { class: 'ph-textlink ph-eid-retake', type: 'button', id: 'jr-eid-retake-' + side, disabled: S.eidCam ? 'disabled' : null,
+            onclick: function () { S.eid[side] = false; S.eidDone = false; S.eidCheck = null; Journey.render(); } }, 'Retake')),
+        h('div', { class: 'ph-list ph-eid-fields', id: 'jr-eid-fields-' + side }, rows.map(function (r) {
+          return h('div', { class: 'ph-li', dataset: { field: r[0] } }, h('span', { class: 'ph-li-k', text: r[1] }), typeof r[2] === 'string' ? h('span', { class: 'ph-li-v', text: r[2] }) : r[2]);
+        })));
+    };
+    var cam = S.eidCam ? h('div', { class: 'ph-overlay ph-eid-camwrap', id: 'jr-eid-cam', dataset: { side: S.eidCam }, role: 'status', 'aria-live': 'polite' },
+      h('div', { class: 'ph-eid-cam' },
+        h('span', { class: 'ph-eid-frame', 'aria-hidden': 'true' }, h('span', { class: 'ph-eid-frame-c tl' }), h('span', { class: 'ph-eid-frame-c tr' }),
+          h('span', { class: 'ph-eid-frame-c bl' }), h('span', { class: 'ph-eid-frame-c br' })),
+        h('span', { class: 'ph-eid-cam-t', text: 'Hold steady…' }),
+        h('span', { class: 'ph-eid-cam-s', text: (S.eidCam === 'front' ? 'Front' : 'Back') + ' of your Emirates ID — inside the frame' }))) : null;
+    return Journey.wv(h('div', { id: 'jr-eid', dataset: { front: String(!!S.eid.front), back: String(!!S.eid.back) } },
+      h('h2', { class: 'ph-h1', text: 'Scan your Emirates ID' }),
+      h('p', { class: 'ph-small', id: 'jr-eid-lead', text: 'Front and back — we read your name, ID number, expiry and, from the back, your employer.' }),
+      h('div', { class: 'ph-eid-tiles' }, tile('front'), tile('back')),
+      h('p', { class: 'ph-small ph-muted', id: 'jr-eid-notread', text: 'Your ID images stay with Noor for our records — never shared with botim or the lender. We don’t read your sex. Your nationality is used to confirm your identity and offer the right home-country data — never to score you.' }),
+      cam),
+      B('Continue', function () { if (!(S.eid.front && S.eid.back)) return; S.eidDone = true; Journey.go(4, 0, 1); }, 'jr-cta', { disabled: !both || !!S.eidCam }));
+  },
+  /* The simulated camera: "Hold steady…" for about a second, then the side is captured (instant under reduced motion) */
+  eidCapture: function (side) {
+    var S = Journey.S;
+    if (S.eidCam || S.eid[side]) return;
+    var done = function () {
+      S.eid[side] = true; S.eidCam = null;   /* a capture, not an engine call: nothing is logged under "Mizan calls" */
+      Journey.render();
+    };
+    if (REDUCED) { done(); return; }
+    S.eidCam = side;
+    Journey.render();
+    if (Journey.timer) clearTimeout(Journey.timer);
+    Journey.timer = setTimeout(function () { Journey.timer = null; if (Journey.S === S && S.step === 3 && S.sub === 2) done(); }, 1000);
+  },
+  /* checkEmiratesId(): pure — no record. Run once the accounts are read (7·2, or 8·2 in variant A). */
+  runEidCheck: function () {
+    var S = Journey.S, p = Journey.persona;
+    try {
+      S.eidCheck = ME.checkEmiratesId(p, true, { openFinance: true });
+      var m = S.eidCheck.employerMatch, n = S.eidCheck.nameMatch;
+      Journey.log('checkEmiratesId(j1, front + back)', 'employer ↔ WPS payer: ' + (m.match ? 'match' : 'mismatch') + ' (' + m.score + '%) · name ' + (n.match ? 'matches' : 'does not match') +
+        ' the account holder · sex not read; nationality for identity and enrichment only · pure, no record');
+    } catch (err) { S.eidCheck = null; }
+  },
+  /* The what-if: the same card, the salary from another company — a pure check, never a decision */
+  eidWhatIf: function () {
+    var S = Journey.S, p = Journey.persona;
+    try {
+      var w = ME.checkEmiratesId(p, true, { salaryPayer: JR_EID_WHATIF_PAYER, openFinance: !!S.connected });
+      S.eidWhatIf = w;
+      Journey.log('checkEmiratesId(j1, front + back, {salaryPayer:‘' + JR_EID_WHATIF_PAYER + '’})',
+        'what-if · ' + (w.employerMatch.match ? 'match' : 'mismatch') + ' (' + w.employerMatch.score + '%)' + (w.employerMatch.match ? '' : ' → POL_EMPLOYER_MATCH would REFER (RC_EMPLOYER_MISMATCH)') + ' · pure, no record');
+    } catch (err) { S.eidWhatIf = { err: err && err.message ? err.message : String(err) }; }
+    Journey.render();
+  },
+  /* 7·2 — the cross-check rows under the budget (only once the ID was scanned and the accounts read) */
+  eidMatchCard: function () {
+    var S = Journey.S, c = S.eidCheck;
+    if (!c) return null;
+    var m = c.employerMatch, n = c.nameMatch;
+    var mark = function (ok) { return h('span', { class: 'ph-eid-mk' + (ok ? ' ok' : ' bad'), 'aria-hidden': 'true' }, jrSvg(ok ? JR_ICON.check : JR_ICON.close, null, '2.2')); };
+    return h('div', { class: 'ph-card ph-eid-match', id: 'jr-eid-match', dataset: { employer: m.match ? 'match' : 'mismatch', name: n.match ? 'match' : 'mismatch', score: String(m.score) } },
+      h('div', { class: 'ph-h3 ph-eid-mh', text: 'Checked against your Emirates ID' }),
+      h('div', { class: 'ph-eid-chk', id: 'jr-eid-employer' }, mark(m.match),
+        h('span', null, 'Employer · Emirates ID: ', h('strong', { text: m.idEmployer }), ' ↔ salary credits: ', h('strong', { class: 'ph-eid-payer', text: '‘' + m.salaryPayer + '’' }),
+          ' — ' + (m.match ? 'match ✓' : 'no match'))),
+      h('div', { class: 'ph-eid-chk', id: 'jr-eid-name' }, mark(n.match), h('span', { text: n.match ? 'Name on ID matches the account holder ✓' : 'Name on ID doesn’t match the account holder' })));
+  },
+  /* Amendment 9 Oct — nationality routes enrichment only: which home-country data Noor can offer (never a score input) */
+  eidEnrichChip: function () {
+    var c;
+    try { c = ME.checkEmiratesId(Journey.persona, true, { openFinance: false }); } catch (e) { return null; }
+    var en = c.enrichment;
+    if (!en) return null;
+    return h('span', { class: 'jr-chip', id: 'jr-eid-enrich', dataset: { chip: 'enrichment', corridor: en.corridor || '' },
+      text: 'Nationality → ' + (en.corridor ? 'can offer ' + en.offer.join(' · ') : 'no home-country data to offer') + ' · never a score input' });
+  },
+  /* Behind the scenes (3·2, 7·2 and variant A's 8·2): what the scan read, the cross-check, and the what-if */
+  eidEngineBox: function () {
+    var S = Journey.S, c = S.eidCheck, w = S.eidWhatIf;
+    var box = h('div', { class: 'jr-engine', id: 'jr-eid-out' },
+      h('div', { class: 'jr-engine-h' }, h('code', { text: 'checkEmiratesId(j1, front + back)' }), h('span', { class: 'small muted', text: ' · pure — no record' })));
+    if (c) {
+      box.appendChild(h('div', { class: 'jr-chips', id: 'jr-eid-chips' },
+        h('span', { class: 'jr-chip' + (c.employerMatch.match ? ' ok' : ' warn'), dataset: { chip: 'employer' }, text: 'Employer ↔ WPS payer: ' + (c.employerMatch.match ? 'match' : 'mismatch') + ' · ' + c.employerMatch.score + '%' }),
+        h('span', { class: 'jr-chip' + (c.nameMatch.match ? ' ok' : ' warn'), dataset: { chip: 'name' }, text: 'Name ↔ account holder: ' + (c.nameMatch.match ? 'match' : 'no match') }),
+        h('span', { class: 'jr-chip' + (c.expiryValid ? ' ok' : ' warn'), dataset: { chip: 'expiry' }, text: c.expiryValid ? 'Card valid' : 'Card expired' }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'notread' }, text: 'Not read: ' + c.notRead.join(' · ') }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'images' }, text: 'ID images: kept inside Noor (KYC) · never shared' }),
+        Journey.eidEnrichChip()));
+    } else {
+      box.appendChild(h('div', { class: 'jr-chips', id: 'jr-eid-chips' },
+        h('span', { class: 'jr-chip', dataset: { chip: 'read' }, text: 'Read: name · ID number (masked) · date of birth · nationality · expiry · occupation · employer' }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'notread' }, text: 'Not read: ' + (ME.EMIRATES_ID_NOT_READ || ['sex']).join(' · ') }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'images' }, text: 'ID images: kept inside Noor (KYC) · never shared' }),
+        Journey.eidEnrichChip()));
+      box.appendChild(h('div', { class: 'small muted', text: 'The employer ↔ salary-payer and name checks run once the accounts are connected and read (step 7).' }));
+    }
+    box.appendChild(h('button', { class: 'btn', type: 'button', id: 'jr-eid-whatif', text: 'What if the salary came from another company?', onclick: function () { Journey.eidWhatIf(); } }));
+    if (w) {
+      box.appendChild(w.err ? h('div', { class: 'small', id: 'jr-eid-whatif-out', text: w.err })
+        : h('div', { class: 'callout ' + (w.employerMatch.match ? 'callout-info' : 'callout-warn'), id: 'jr-eid-whatif-out', dataset: { match: String(!!w.employerMatch.match) } },
+            h('div', { class: 'co-title', text: w.employerMatch.match ? 'Still a match → PASS' : 'Mismatch → REFER (RC_EMPLOYER_MISMATCH): we’d ask for a salary certificate or an employment letter.' }),
+            h('div', { class: 'co-body', text: '‘' + w.employerMatch.idEmployer + '’ ↔ ‘' + w.employerMatch.salaryPayer + '’ — ' + w.employerMatch.score + '% of the employer’s words (a match needs 70%). ' +
+              'Never a decline and never a price change: a person looks at it — usually a job change. Pure check: no record, nothing in the Decision log.' })));
+    }
+    return box;
   },
   /* v2.8 — contact preferences; at least one channel for the account and the loan.
      v2.13 — asked at 16·1, once the loan is issued (no longer in onboarding): the same copy, toggles, defaults and
@@ -14578,7 +15301,17 @@ var Journey = {
             : 'Entry 1: the customer tapped “Add another +” in Connected accounts.']],
       2: ['Noor’s own account', ['The number comes from the hand-off; the customer confirms it and accepts Noor’s Terms and Privacy policy — Noor is responsible for the data that follows.',
           'The Terms of Use and Privacy policy (' + JR_TERMS.version + ') cover the digital-footprint check — there is no separate checkbox later. Continuing records the acceptance with its version and time; decide() receives it as the check’s basis.']],
-      3: sub === 1 ? ['Your email — and the digital-footprint check, covered by the terms', [
+      /* v2.16 — 3·2, the Emirates ID front + back (JOURNEY-EID-SPEC.md §1) */
+      3: sub === 2 ? ['Your Emirates ID — front and back, checked against the salary payer', [
+            'The back of a resident’s Emirates ID shows the employer. Once the accounts are connected, Mizan checks that the salary credits come from the same company (the WPS payer name) and that the name on the card matches the account holder.',
+            'A match strengthens income verification. A mismatch refers the application to a person — usually it’s a job change, solved with a salary certificate — never an automatic decline.',
+            'Data minimisation (PDPL): Noor extracts name, ID number, date of birth, nationality, expiry, occupation and employer; sex is on the card but not read.',
+            /* amendment 2 — "Noor IP vs lender view": the images are Noor's KYC records */
+            'ID images are kept inside Noor for KYC record-keeping (AML) and never leave Noor — like transactions, balances and account details (Noor IP vs lender view).',
+            /* amendment 9 Oct — replaces the liveness sentence; nationality is read for identity and enrichment routing */
+            'Front and back is enough: the Open Finance match (ID name ↔ account holder, employer ↔ salary payer) does the work a liveness check would — confirm with compliance.',
+            'Nationality: identity and enrichment routing only; never a NoorScore input (CBUAE fair treatment and the AI/ML guidance).']]
+        : sub === 1 ? ['Your email — and the digital-footprint check, covered by the terms', [
             'botim shared the email at hand-off; Noor confirms it with its own 6-digit code before using it. The customer can use a different one.',
             /* v2.14 — no separate checkbox (JOURNEY-FOOTPRINT-TC-SPEC.md §1) */
             'No separate checkbox: the check is covered by the Terms of Use and Privacy policy accepted when the account was created (step 2).',
@@ -14607,7 +15340,8 @@ var Journey = {
             'botim’s Credit tab shows a generic Loans list: a neutral row for the current partner’s cash loan and the Noor tile, a Noor embed. Nothing here copies botim’s real product UI.',
             'Tapping the Noor tile opens the Noor web-view at “How much do you need?” — amount first, no pre-qualification yet.']]
           : ['Entry 2 — Credit in botim money', ['botim’s Credit tab carries Noor’s card (a Noor embed). Tapping it reopens the Noor web-view; the accounts are already connected, so no new consent is needed.']])
-        : (sub < 3 ? ['Noor reads the connected accounts', ['Mizan reads 12 months across the current and savings accounts, plus the ENBD card and loan: salary credits, spending and the repayments already going out (AED 400 on the card + AED 500 on the loan = AED 900, the same total as the AECB report). This data stays in Noor.']]
+        : (sub < 3 ? ['Noor reads the connected accounts', ['Mizan reads 12 months across the current and savings accounts, plus the ENBD card and loan: salary credits, spending and the repayments already going out (AED 400 on the card + AED 500 on the loan = AED 900, the same total as the AECB report). This data stays in Noor.']
+            .concat(S.eidDone ? ['The Emirates ID cross-check runs now: the employer on the card against the WPS payer name on the salary credits, and the name on the card against the account holder — checkEmiratesId(), pure, no record. decide() repeats it as POL_EMPLOYER_MATCH and POL_ID_VALID (refer only).'] : [])]
         : ['prequalify() — Open Finance only', [
             'No AECB inquiry and no decision record: indicative only, so it can’t affect the credit score.',
             'Two affordability tests, the stricter wins: the CBUAE DBR cap (50% of income − repayments already going out = AED 5,100/month) and Noor’s cash-flow budget (50% of what’s left after spending and repayments: AED 3,700 → AED 1,850/month). Here the cash-flow budget binds — the DBR cap alone would have said “up to AED 110,000”, a payment Ravi’s budget can’t carry.',
@@ -14652,11 +15386,17 @@ var Journey = {
           'botim money’s Credit tab shows “Loan funded · managed in Noor” (a Noor embed) — no amount, no terms.']]
     };
     var b = B[st] || B[0];
+    /* v2.17 — 7·3 below the completeness threshold: step 1 comes first, nothing is scored */
+    if (st === 7 && sub === 3 && S.pq && S.pq.status === 'NEEDS_DATA') {
+      b = ['prequalify() — step 1 first: not enough data to score yet', [
+        'The approved accounts show ' + S.pq.completeness.pct + '% of the financial picture, below the ' + S.pq.completeness.threshold + '% threshold (illustrative, completenessThresholdPct).',
+        'No range and no score estimate: nothing is recorded and there is no AECB inquiry. The customer is asked for ' + S.pq.ask.join(', ').toLowerCase() + ' — the salary account first.']];
+    }
     /* v2.12 — 0·0, botim's main screen: where botim users land */
     if (st === 0 && sub === 0) {
       b = ['botim’s main screen — where the journey starts', [
         'Where botim users land. Noor’s banner and icon sit on the main screen (Max’s ask) and on botim money — both are Noor embeds, so botim gets events only. Tap the banner or the Noor icon to go straight to Noor, or open money to connect a bank first.',
-        'Variant ' + S.variant + ': the banner and the Noor icon open ' + (A ? 'botim’s Loans screen with the Noor tile' : '“How much can you borrow?”') + '. A customer without a Noor account creates one first — account and email; contact choices come after the payout.',
+        'Variant ' + S.variant + ': the banner and the Noor icon open ' + (A ? 'botim’s Loans screen with the Noor tile' : '“How much can you borrow?”') + '. A customer without a Noor account creates one first — account, email and the Emirates ID (front + back); contact choices come after the payout.',
         'Events: impression and click carry the surface they came from (home or money), so the experiment counts impressions by surface.']];
     }
     var hostView = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 3);
@@ -14691,7 +15431,9 @@ var Journey = {
               h('span', { class: 'jr-chip', dataset: { chip: 'excluded' }, text: fa.excluded.length + ' item types dropped at ingestion' }))
            : h('div', { class: 'small muted', text: 'Runs once the email is verified — covered by the terms accepted at sign-up (step 2).' })));
     }
-    if (st === 7 && sub === 3 && S.pq) {
+    /* v2.16 — the Emirates ID: what the scan read (3·2); the cross-check once the accounts are read (7·2; 8·2 in variant A); the what-if */
+    if ((st === 3 && sub === 2) || (S.eidDone && ((st === 7 && sub === 2) || (st === 8 && sub === 2)))) wrap.appendChild(Journey.eidEngineBox());
+    if (st === 7 && sub === 3 && S.pq && S.pq.status !== 'NEEDS_DATA') {
       var pq = S.pq;
       wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-pq-out' },
         h('div', { class: 'jr-engine-h' }, h('code', { text: 'prequalify(j1, {openFinance:true})' })),
@@ -14706,8 +15448,12 @@ var Journey = {
     if (st === 5) wrap.appendChild(h('div', { class: 'callout callout-warn jr-risk', id: 'jr-build-risk' }, h('div', { class: 'co-title', text: 'Build risk to agree with Botim' }),
       h('div', { class: 'co-body', text: 'App-to-app redirect out of the web-view and a registered return URL (universal link / app link) back into botim — prove both on iOS and Android early.' })));
     if (r && st >= 9 && st <= 10 && !(st === 9 && sub === 0 && !S.recId)) {
+      /* v2.16 — the two Emirates ID rules on the record (refer only) */
+      var eidRules = (r.rules || []).filter(function (x) { return x.id === 'POL_ID_VALID' || x.id === 'POL_EMPLOYER_MATCH'; });
       wrap.appendChild(h('div', { class: 'jr-engine' }, h('div', { class: 'jr-engine-h' }, h('code', { text: r.id }), ' ', outcomeChip(r.outcome),
         r.score && isNum(r.score.points) ? h('span', { class: 'small muted', text: ' NoorScore ' + r.score.points + ' · grade ' + r.score.grade }) : null),
+        eidRules.length ? h('div', { class: 'jr-chips', id: 'jr-eid-rules' }, eidRules.map(function (x) {
+          return h('span', { class: 'jr-chip' + (x.result === 'PASS' ? ' ok' : (x.result === 'REFER' ? ' warn' : '')), dataset: { rule: x.id, result: x.result }, text: x.id + ' ' + x.result }); })) : null,
         link('Open it in the Decision log →', 'jr-open-log', function () { showScreen('log'); LogScreen.select(r.id); })));
     }
     if (r && st === 11) {
@@ -14743,6 +15489,8 @@ var Journey = {
     var e = jrPath()[jrIdx(S.step, S.sub)] || { n: S.step };
     box.appendChild(h('h3', null, 'Behind the scenes ', h('span', { class: 'h3-note', text: '— step ' + e.n + (e.sub ? '·' + e.sub : '') + ' of 16 · variant ' + S.variant })));
     box.appendChild(Journey.behind());
+    /* v2.17 — "Two steps to a score", from step 6 on (once the accounts are read) */
+    if (S.step >= 6 && S.connected) { var ts = Journey.twoSteps(); if (ts) box.appendChild(ts); }
     var calls = h('div', { class: 'jr-calls', id: 'jr-calls' });
     if (!S.calls.length) calls.appendChild(h('div', { class: 'small muted', text: 'No engine calls yet — they start once the accounts are connected.' }));
     S.calls.slice(-6).forEach(function (c) { calls.appendChild(h('div', { class: 'jr-call' }, h('code', { text: c.call }), h('span', { class: 'jr-call-r', text: '→ ' + c.result }))); });
@@ -14876,7 +15624,8 @@ var RC_SHORT = {
   RC_PURCHASE_UNVERIFIED: 'Purchase not verified', RC_AGE: 'Age outside range', RC_THIN_FILE: 'Thin credit file',
   RC_INCOME_VOLATILITY: 'Income too volatile', RC_CONNECTED_HISTORY: 'Too little connected history', RC_INCOME_UNVERIFIED: 'Income not verified',
   RC_TENOR_CAP: 'Term outside permitted', RC_MANUAL_REVIEW: 'Manual review', RC_LIMIT_REDUCED: 'Amount reduced',
-  RC_LTV_CAP: 'Limited to 80% of vehicle value', RC_VEHICLE_INELIGIBLE: 'Vehicle not eligible', RC_BELOW_MIN_AMOUNT: 'Below product minimum'
+  RC_LTV_CAP: 'Limited to 80% of vehicle value', RC_VEHICLE_INELIGIBLE: 'Vehicle not eligible', RC_BELOW_MIN_AMOUNT: 'Below product minimum',
+  RC_EMPLOYER_MISMATCH: 'Employer ≠ salary payer', RC_ID_EXPIRED: 'Emirates ID expired', RC_DATA_INCOMPLETE: 'Data incomplete'
 };
 var Monitoring = {
   map: null,
