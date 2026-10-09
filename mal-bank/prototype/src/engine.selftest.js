@@ -11,6 +11,7 @@
  * Group 21 = v2.14 the digital-footprint check covered by the accepted terms (JOURNEY-FOOTPRINT-TC-SPEC.md).
  * Group 22 = v2.15 j1's ENBD credit card and personal loan, same totals (JOURNEY-BANKAPP-SPEC.md).
  * Group 23 = v2.16 the Emirates ID front + back, employer cross-checked against the salary payer (JOURNEY-EID-SPEC.md).
+ * Group 24 = v2.17 "Two steps to a score": data completeness first, then the score (JOURNEY-CONFIDENCE-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -1262,6 +1263,7 @@ function identityWordsOf(rec) {
     [fr.dob, d + '/' + m + '/' + y, d + '-' + m + '-' + y, m + '/' + d + '/' + y, Number(d) + ' ' + MON3[Number(m) - 1] + ' ' + y].forEach(addStr);
   }
   addStr(fr.nationality);   /* amendment 9 Oct: read for identity and enrichment routing — never in the memo */
+  ((rec.emiratesId && rec.emiratesId.images && rec.emiratesId.images.refs) || []).forEach(addStr);   /* amendment 2: the KYC image references */
   return [...out];
 }
 // Recursive privacy scan: every leaf of the memo (and every SFTP cell). Strings are
@@ -1278,10 +1280,13 @@ function privacyScan(rec, memo, sftp, expect) {
   function str(s, where) {
     if (/transactions/i.test(s)) hits.push(where + ' says "transactions"');
     for (const [w, re] of words) if (re.test(s)) hits.push(where + ' names "' + w + '"');
+    if (rec.emiratesId && /\.(jpe?g|png|heic|webp)\b|EID-(FRONT|BACK)|\bimages?\b|\bphotos?\b/i.test(s)) hits.push(where + ' references an ID image');   /* v2.16 amendment 2 */
+    if (rec.dataCompleteness && /threshold|illustrative|\bweights?\b|aboveThreshold|scoreOverlay|70–84|≥ ?85/i.test(s)) hits.push(where + ' shows the completeness threshold, weights or bands');   /* v2.17 */
     for (const tok of s.match(/\d[\d,]*(?:\.\d+)?/g) || []) numHit(parseFloat(tok.replace(/,/g, '')), where + ' ("' + tok + '")');
   }
   (function walk(x, path, key) {
     if (x === null || x === undefined) return;
+    if (rec.dataCompleteness && /^(threshold|aboveThreshold|components|weight|scoreOverlay|ask|thresholdLabel)$/.test(key)) hits.push(path + ' — an internal completeness field');   /* v2.17 */
     if (BAND_KEYS[key]) { if (x !== expect[key]) hits.push(path + ' band "' + x + '" ≠ expected "' + expect[key] + '"'); return; }
     if (Array.isArray(x)) { x.forEach((v, i) => walk(v, path + '[' + i + ']', key)); return; }
     if (typeof x === 'object') { for (const k of Object.keys(x)) walk(x[k], path + '.' + k, k); return; }
@@ -1303,7 +1308,11 @@ function forbiddenKeys(memo) {
   const found = [];
   (function walk(x, path) {
     if (!x || typeof x !== 'object') return;
-    for (const k of Object.keys(x)) { if (bad.includes(k)) found.push(path + '.' + k); walk(x[k], path + '.' + k); }
+    for (const k of Object.keys(x)) {
+      /* v2.17 — memo.dataCompleteness.banks / .accounts are counts (numbers), not the bank or account lists */
+      if (bad.includes(k) && !(path === 'memo.dataCompleteness' && (k === 'accounts' || k === 'banks') && typeof x[k] === 'number')) found.push(path + '.' + k);
+      walk(x[k], path + '.' + k);
+    }
   })(memo, 'memo');
   return found;
 }
@@ -3220,8 +3229,9 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
      'j1: "Dunecrest Logistics LLC" ↔ "SALARY/WPS DUNECREST LOGISTICS" → match (100% of the employer’s words)');
   ok(ck.nameMatch.match === true && ck.nameMatch.idName === 'Ravi Kumar' && ck.nameMatch.accountHolder === 'RAVI KUMAR', 'j1: the name on the ID matches the account holder ("Ravi Kumar" ↔ "RAVI KUMAR")');
   ok(ck.expiryValid === true && ck.ageFromDob === 31, 'j1: the card is valid (expires 2028-02-09); age from the date of birth 31');
-  eq(JSON.stringify(ck.notRead), JSON.stringify(['sex', 'photos']), 'notRead lists sex and photos (amendment 9 Oct: nationality is read)');
-  eq(JSON.stringify(E.EMIRATES_ID_NOT_READ), JSON.stringify(['sex', 'photos']), 'the engine exports the not-read list');
+  eq(JSON.stringify(ck.notRead), JSON.stringify(['sex']), 'notRead lists sex only (amendments 9 Oct: nationality is read; the images are kept inside Noor)');
+  eq(ck.retainedInsideNoor, true, 'retainedInsideNoor: true — the ID images are Noor’s KYC records (amendment 2)');
+  eq(JSON.stringify(E.EMIRATES_ID_NOT_READ), JSON.stringify(['sex']), 'the engine exports the not-read list');
   eq(ck.fieldsRead.join(','), 'nameEn,nameAr,idMasked,dob,nationality,expiry,occupation,employer', 'fieldsRead: name (EN + AR), masked ID, date of birth, nationality, expiry, occupation, employer — nothing else');
   ok(ck.nationality === 'India' && ck.enrichment && ck.enrichment.corridor === 'IN' && ck.enrichment.offer.length === 2 && /Credit Passport/.test(ck.enrichment.offer[0]) && /statements/.test(ck.enrichment.offer[1]) &&
      /identity and enrichment routing only — never a NoorScore or decision input/.test(ck.enrichment.use),
@@ -3266,9 +3276,9 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   const r = decideJ(j);
   eq(r.dataPulls.map(p => p.source).join(','), 'AECB_CONSUMER,OPEN_FINANCE,EMIRATES_ID', 'pulls: AECB, Open Finance, then EMIRATES_ID');
   const pull = r.dataPulls[2];
-  ok(pull.status === 'SCANNED' && pull.summary.scan === 'front + back scanned' && pull.summary.notRead === 'sex · photos (not kept)' && pull.summary.employerMatch === 'match — 100% (WPS salary payer)' &&
+  ok(pull.status === 'SCANNED' && pull.summary.scan === 'front + back scanned' && pull.summary.notRead === 'sex' && /kept inside Noor \(KYC records\) — never shared/.test(pull.summary.images) && pull.summary.employerMatch === 'match — 100% (WPS salary payer)' &&
      pull.summary.nameMatch === 'matches the account holder' && pull.summary.expiry === 'valid' && /nationality \(identity and enrichment routing only\)/.test(pull.summary.fieldsRead),
-     'the EMIRATES_ID pull: "front + back scanned", not read: sex · photos, nationality for identity and enrichment routing only, employer match, name match, valid');
+     'the EMIRATES_ID pull: "front + back scanned", not read: sex, images kept inside Noor, nationality for identity and enrichment routing only, employer match, name match, valid');
   ok(!/dunecrest|warehouse|1995|palmgate|india/i.test(JSON.stringify(pull)), 'the pull summary carries flags only — no employer, payer, occupation, date of birth or nationality value');
   ok(!Object.keys(r.features).some(k => /nation|enrich|corridor/i.test(k)) && !/india|nationality/i.test(JSON.stringify(r.rules) + JSON.stringify(r.score) + JSON.stringify(r.features)),
      'no feature, rule or score field carries the nationality');
@@ -3288,6 +3298,9 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   ok(big.limit.approved === 10000 && big.limit.bindingConstraint === 'FCF' && big.outcome === 'APPROVE', '110,000 / 6 months with the ID: still reduced to AED 10,000 (FCF binds)');
   ok(r.emiratesId && r.emiratesId.scanned === 'FRONT_AND_BACK' && r.emiratesId.idMasked === '784-••••-•••••••-4' && r.emiratesId.check.employerMatch.match === true,
      'the record keeps the check internally (record.emiratesId)');
+  ok(r.emiratesId.images.retainedInsideNoor === true && /KYC record-keeping \(AML\)/.test(r.emiratesId.images.purpose) &&
+     r.emiratesId.images.refs.join() === 'KYC-' + r.id.slice(4) + '-EID-FRONT.jpg,KYC-' + r.id.slice(4) + '-EID-BACK.jpg',
+     'the ID images are kept inside Noor as KYC records (internal references on the record, amendment 2)');
   throwsWith(() => E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: OF, emiratesId: true }), 'personal-loan decisions only', 'the scan feeds personal-loan decisions only');
   throwsWith(() => E.decide({ productId: 'personal_loan', applicant: P.r1, amount: 50000, tenorMonths: 24, consents: OF, emiratesId: true }), 'no Emirates ID scan', 'emiratesId:true for a persona without a scan is refused');
 
@@ -3311,7 +3324,8 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
      'the privacy scan now also forbids the employer, the occupation, the salary payer, the date of birth and the nationality');
   let hits = privacyScan(r, memo, sftp, expect);
   ok(hits.length === 0, 'j1 memo with the Emirates ID: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
-  for (const leak of ['Dunecrest Logistics LLC', 'warehouse supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '14/03/1995', 'India']) {
+  ok(words.includes(r.emiratesId.images.refs[0]) && words.includes(r.emiratesId.images.refs[1]), 'the privacy scan also forbids the ID image references (amendment 2)');
+  for (const leak of ['Dunecrest Logistics LLC', 'warehouse supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '14/03/1995', 'India', r.emiratesId.images.refs[0], 'scan of the ID: eid-front.png', 'ID images on file']) {
     const m2 = clone(memo); m2.verification.identity += ' · ' + leak;
     ok(privacyScan(r, m2, sftp, expect).length > 0, 'the extended scan catches "' + leak + '" planted in the memo');
   }
@@ -3395,6 +3409,149 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   ok(run() === run(), 'two fresh init() runs: identical');
   for (const x of E.listDecisions()) collect(x.reasonCodes);
   ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. v2.16) exists with Arabic');
+  E.init(D);
+});
+
+group('24. Addendum v2.17 (revised 9 Oct): two steps to a score — data completeness first (threshold 70, illustrative), then NoorScore', () => {
+  E.init(D);
+  const j = D.personasJourney[0];
+  const OF = { aecb: true, openFinance: true };
+  const ALL = ['4821', '0193', '7702', '3317'], NO_CARD_LOAN = ['4821', '0193'], NO_CURRENT = ['0193', '7702', '3317'];
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|salary transfer assignment|transfer (your|their) salary to/i;
+  const decideDs = (approved, over) => { const r = E.decide(Object.assign({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF,
+    dataSources: { approvedAccounts: approved, months: 12 } }, over || {})); collect(r.reasonCodes); return r; };
+  const comp = (dc) => dc.components.map(c => c.key + ':' + c.points + '/' + c.weight).join(' ');
+  const rule = (r) => r.rules.find(x => x.id === 'POL_DATA_COMPLETENESS') || {};
+
+  // ---- the param ----
+  const prm = E.getPolicy('personal_loan').params;
+  eq(prm.completenessThresholdPct, 70, 'personal_loan.completenessThresholdPct = 70 by default (illustrative)');
+  throwsWith(() => E.simulateBook('personal_loan', { completenessThresholdPct: 49 }), 'outside allowed bounds', 'completenessThresholdPct below 50 is refused');
+  throwsWith(() => E.simulateBook('personal_loan', { completenessThresholdPct: 91 }), 'outside allowed bounds', 'completenessThresholdPct above 90 is refused');
+  throwsWith(() => E.publishPolicy('personal_loan', { completenessThresholdPct: 80 }, { author: 'risk.lead', approver: 'risk.lead' }), '4-eyes', 'publishing the threshold needs 4-eyes (author ≠ approver)');
+  eq(RC_TEXT(), 'We need a fuller picture before we can calculate your score — connecting your salary account, credit cards and loans usually does it.', 'RC_DATA_INCOMPLETE English wording');
+  function RC_TEXT() { return D.reasonCodes.RC_DATA_INCOMPLETE && D.reasonCodes.RC_DATA_INCOMPLETE.en; }
+  ok(ARABIC.test(D.reasonCodes.RC_DATA_INCOMPLETE.ar) && !/\d/.test(D.reasonCodes.RC_DATA_INCOMPLETE.en), 'RC_DATA_INCOMPLETE: Arabic, no figures (no threshold) in the customer text');
+
+  // ---- step 1 for Ravi ----
+  const full = E.dataCompleteness(j, ALL);
+  ok(full.pct === 100 && full.threshold === 70 && full.aboveThreshold && full.scoreOverlay === 0 && comp(full) === 'current:50/50 salary:20/20 cards:15/15 loans:15/15' && full.ask.length === 0,
+     'Ravi, everything approved: 100% (current 50 + salary 20 + cards 15 + loans 15), above the threshold, overlay 0, nothing to ask');
+  eq(JSON.stringify(full.counts), JSON.stringify({ banks: 2, accounts: 4, months: 12 }), 'counts: 2 banks · 4 accounts · 12 months');
+  eq(JSON.stringify(E.dataCompleteness(j)), JSON.stringify(full), 'no approved list = every connected account');
+  const noSav = E.dataCompleteness(j, ['4821', '7702', '3317']);
+  ok(noSav.pct === 100 && noSav.counts.accounts === 3 && noSav.counts.banks === 1, 'the FAB savings adds visibility (a bank, an account) but no points');
+  const cl = E.dataCompleteness(j, NO_CARD_LOAN);
+  ok(cl.pct === 70 && cl.aboveThreshold && cl.scoreOverlay === -10 && JSON.stringify(cl.ask) === '["Credit cards","Loan accounts"]' && cl.counts.accounts === 2 && cl.counts.banks === 2,
+     'card and loan unticked: 70% — at the threshold, scored with −10; ask: Credit cards, Loan accounts; 2 banks · 2 accounts');
+  const nc = E.dataCompleteness(j, NO_CURRENT);
+  ok(nc.pct === 30 && !nc.aboveThreshold && nc.scoreOverlay === null && JSON.stringify(nc.ask) === '["Salary account"]' && comp(nc) === 'current:0/50 salary:0/20 cards:15/15 loans:15/15',
+     'the ENBD current unticked: 30% (the salary lands only there: 0 + 0 + 15 + 15) — below the threshold, no score; ask: Salary account first');
+  const whatIf = E.dataCompleteness(j, [{ bank: 'ENBD', type: 'Current account', mask: '9999', salaryAccount: false, txPerMonth: 40 }]);
+  ok(whatIf.pct === 50 && JSON.stringify(whatIf.ask) === '["Salary account","Credit cards","Loan accounts"]' && !whatIf.aboveThreshold,
+     'the deck’s what-if, a non-salary current account only: 50%; ask Salary account, Credit cards, Loan accounts');
+  const empty = E.dataCompleteness(j, [{ bank: 'ENBD', type: 'Current account', mask: '9998', salaryAccount: false, txPerMonth: 4 }]);
+  ok(empty.pct === 20 && empty.components[0].points === 20 && /almost empty/.test(empty.components[0].note), 'an almost-empty current account (< 20 transactions a month) counts 20%');
+  ok(E.dataCompleteness(j, [{ bank: 'ENBD', type: 'Current account', mask: '9997', salaryAccount: false, txPerMonth: 40 }], { months: 2 }).pct === 20, 'under 3 months of activity the current account counts as almost empty (20%)');
+  const jEmpty = clone(j); jEmpty.connected.accounts[0].txPerMonth = 5;
+  eq(E.dataCompleteness(jEmpty, ALL).pct, 70, 'Ravi with an almost-empty ENBD current account: 20 + 20 + 15 + 15 = 70%');
+  eq(E.dataCompleteness(j, []).pct, 0, 'nothing approved: 0%');
+  throwsWith(() => E.dataCompleteness(j, ['1234']), 'unknown account', 'an unknown mask is refused');
+
+  // ---- prequalify: NEEDS_DATA below the threshold (pure) ----
+  const n0 = E.listDecisions().length;
+  const t0 = E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: OF });
+  const pqNeed = E.prequalify(j, OF, { approvedAccounts: NO_CURRENT });
+  const t1 = E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: OF });
+  ok(pqNeed.status === 'NEEDS_DATA' && pqNeed.ask[0] === 'Salary account' && pqNeed.completeness.pct === 30 && !('indicativeMax' in pqNeed) && !('noorScoreEstimateBand' in pqNeed),
+     'prequalify() with the current account unticked: NEEDS_DATA, ask[0] "Salary account" — no range, no score estimate');
+  ok(E.listDecisions().length === n0 + 2 && new Date(t1.createdAt) - new Date(t0.createdAt) === 37000, 'NEEDS_DATA is pure: no record, no clock tick');
+  const pqBase = E.prequalify(j, OF), pqAll = E.prequalify(j, OF, { approvedAccounts: ALL }), pqCl = E.prequalify(j, OF, { approvedAccounts: NO_CARD_LOAN });
+  ok(!('status' in pqBase) && !('completeness' in pqBase), 'prequalify() without approved accounts is unchanged (no status, no completeness)');
+  const strip = (x) => { const o = clone(x); delete o.status; delete o.completeness; return JSON.stringify(o); };
+  ok(pqAll.status === 'OK' && pqAll.completeness.pct === 100 && strip(pqAll) === JSON.stringify(pqBase) && pqCl.status === 'OK' && pqCl.completeness.pct === 70 && strip(pqCl) === JSON.stringify(pqBase),
+     'at or above the threshold prequalify() returns the same range (AED 10,000–40,000) with status OK and the completeness');
+
+  // ---- decide(): 100% → 737 unchanged ----
+  E.init(D);
+  const base = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF });
+  E.init(D);
+  const r = decideDs(ALL);
+  ok(r.outcome === 'APPROVE' && r.score.points === 737 && r.score.grade === 'B' && r.limit.approved === 15000 && r.pricing.kfs.monthlyInstalment === 1311.7 && rule(r).result === 'PASS',
+     'decide() with dataSources at 100%: APPROVE AED 15,000 · AED 1,311.70 · NoorScore 737 (B); POL_DATA_COMPLETENESS PASS');
+  eq(fingerprint(r), V27_FINGERPRINTS.j1, 'the j1 fingerprint holds at 100% completeness');
+  ok(JSON.stringify([r.outcome, r.limit, r.pricing, r.score, r.reasonCodes, r.token]) === JSON.stringify([base.outcome, base.limit, base.pricing, base.score, base.reasonCodes, base.token]),
+     'at 100%: outcome, limit, pricing, score, reasons and token identical to the decision without dataSources');
+  ok(r.dataCompleteness && r.dataCompleteness.pct === 100 && r.dataCompleteness.threshold === 70 && r.features.dataCompletenessPct === 100,
+     'the record keeps the completeness (internal: threshold and components) and the feature dataCompletenessPct');
+  const au = r.audit.find(a => a.action === 'DATA_COMPLETENESS');
+  ok(au && au.detail === '100% complete · 2 banks · 4 accounts · 12 months · threshold 70% (illustrative) · scored (nothing to add)', 'a DATA_COMPLETENESS audit line (' + (au && au.detail) + ')');
+
+  // ---- 70% → 727, still grade B, same amounts and APR band ----
+  E.init(D);
+  const r70 = decideDs(NO_CARD_LOAN);
+  ok(r70.outcome === 'APPROVE' && r70.score.points === 727 && r70.score.grade === 'B' && r70.score.overlays.some(o => o.name === 'Data completeness 70–84%' && o.delta === -10) && rule(r70).result === 'PASS',
+     'card and loan unticked: 70% → overlay −10 → NoorScore 727, still grade B; POL_DATA_COMPLETENESS PASS');
+  ok(r70.limit.approved === 15000 && r70.pricing.band === 'B' && r70.pricing.kfs.rateMid === r.pricing.kfs.rateMid && r70.pricing.kfs.monthlyInstalment === 1311.7 && JSON.stringify(r70.limit.trace) === JSON.stringify(r.limit.trace),
+     'at 70%: the same amounts, APR band B, 8.99% and AED 1,311.70 (low data lowers the score, not the price)');
+  ok(E.creditMemo(r70.id).noorScore.factors.includes('Part of the financial picture not connected') && E.creditMemo(r70.id).noorScore.value === 727, 'the 70% memo: NoorScore 727 with the factor "Part of the financial picture not connected"');
+
+  // ---- 30% → REFER backstop, never a decline, same price ----
+  const r30 = decideDs(NO_CURRENT);
+  ok(r30.outcome === 'REFER' && r30.reasonCodes.join() === 'RC_DATA_INCOMPLETE' && rule(r30).result === 'REFER' && /missing: Salary account/.test(rule(r30).observed) &&
+     r30.limit.approved === 15000 && r30.pricing.kfs.monthlyInstalment === 1311.7 && r30.pricing.band === 'B',
+     'the current account unticked: decide() REFERs with RC_DATA_INCOMPLETE — not a decline, the same price');
+  ok(E.referQueue().some(q => q.id === r30.id && q.reason === 'RC_DATA_INCOMPLETE'), 'the backstop REFER goes to the refer queue');
+  E.publishPolicy('personal_loan', { completenessThresholdPct: 80 }, { author: 'risk.lead', approver: 'cro' });
+  const r70at80 = decideDs(NO_CARD_LOAN);
+  ok(E.getPolicy('personal_loan').params.completenessThresholdPct === 80 && r70at80.outcome === 'REFER' && r70at80.reasonCodes.includes('RC_DATA_INCOMPLETE') && r70at80.dataCompleteness.threshold === 80,
+     'published to 80% under 4-eyes: the same 70% application now REFERs (threshold recorded as 80)');
+  E.init(D);
+
+  // ---- without dataSources nothing changes ----
+  const plain = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF });
+  ok(!('dataCompleteness' in plain) && !plain.rules.some(x => x.id === 'POL_DATA_COMPLETENESS') && !plain.audit.some(a => a.action === 'DATA_COMPLETENESS') && !('dataCompletenessPct' in plain.features) &&
+     fingerprint(plain) === V27_FINGERPRINTS.j1 && !('dataCompleteness' in E.creditMemo(plain.id)) && E.memoSftpRow(E.creditMemo(plain.id)).header.join() === SFTP_HEADER.join(),
+     'without dataSources: no record field, no rule, no audit line, no overlay; the fingerprint, the memo keys and the SFTP header are unchanged');
+  throwsWith(() => E.decide({ productId: 'split', applicant: P.c1, amount: 12000, tenorMonths: 6, consents: OF, dataSources: { approvedAccounts: [] } }), 'personal-loan decisions only', 'dataSources feed personal-loan decisions only');
+  throwsWith(() => E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: { aecb: true, openFinance: false }, dataSources: { approvedAccounts: ALL } }), 'Open Finance', 'dataSources need Open Finance consent');
+  throwsWith(() => E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF, dataSources: ALL }), 'dataSources', 'dataSources must be { approvedAccounts, months }');
+
+  // ---- the memo: the percentage and counts only ----
+  E.init(D);
+  const rm = decideDs(ALL), memo = E.creditMemo(rm.id), sftp = E.memoSftpRow(memo);
+  eq(JSON.stringify(memo.dataCompleteness), JSON.stringify({ pct: 100, banks: 2, accounts: 4, months: 12 }), 'memo.dataCompleteness = { pct, banks, accounts, months } — counts only');
+  ok(Object.keys(memo).join(',') === MEMO_KEYS.slice(0, MEMO_KEYS.indexOf('consents')).concat(['dataCompleteness'], MEMO_KEYS.slice(MEMO_KEYS.indexOf('consents'))).join(','),
+     'the memo’s top-level keys: the allowlist plus dataCompleteness');
+  ok(sftp.header.slice(-2).join() === 'data_completeness_pct,data_sources' && sftp.row.slice(-2).join('|') === '100|2 banks · 4 accounts · 12 months' && sftp.header.slice(0, -2).join() === SFTP_HEADER.join(),
+     'SFTP: two more columns — data_completeness_pct 100, data_sources "2 banks · 4 accounts · 12 months"');
+  const body = JSON.stringify(memo) + '\n' + sftp.row.join(',');
+  ok(!/threshold|illustrative|weight|aboveThreshold|components|scoreOverlay|70–84|"ask"/i.test(body) && !/ENBD|FAB|4821|0193|7702|3317/.test(body),
+     'memo + SFTP row: no threshold, no weights, no bands, no bank names, no masks');
+  const expect = { incomeBand: T.income(12000), dbrBand: T.dbr(rm.features.dbrPct), freeCashFlowBand: T.fcf(3700), instalmentToCashFlowBand: T.share(rm.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) };
+  let hits = privacyScan(rm, memo, sftp, expect);
+  ok(hits.length === 0, 'the privacy scan stays clean with completeness in the memo' + (hits.length ? ' (' + hits.slice(0, 3).join('; ') + ')' : ''));
+  const leak = clone(memo); leak.dataCompleteness.threshold = 70;
+  const leak2 = clone(memo); leak2.verification.identity += ' · completeness threshold 70%';
+  ok(privacyScan(rm, leak, sftp, expect).some(h => /internal completeness field/.test(h)) && privacyScan(rm, leak2, sftp, expect).some(h => /threshold, weights or bands/.test(h)),
+     'the extended privacy scan catches a threshold planted in the memo (as a field or as text)');
+  ok(forbiddenKeys(memo).length === 0, 'memo keys stay on the allowlist (no accounts, no features)');
+  ok(memo.sharing.shared.some(x => /^Data completeness — the share of the financial picture Noor sees/.test(x)), 'the memo’s sharing list names the completeness line');
+
+  // ---- with the Emirates ID and the footprint: the journey decision ----
+  E.init(D);
+  const rj = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: Object.assign({ digitalFootprint: { basis: 'TERMS', termsVersion: 'T&C v1.0 · Privacy policy v1.0' } }, OF),
+                        emiratesId: true, dataSources: { approvedAccounts: ALL, months: 12 } });
+  ok(fingerprint(rj) === V27_FINGERPRINTS.j1 && rj.rules.filter(x => /^POL_(ID_VALID|EMPLOYER_MATCH|DATA_COMPLETENESS)$/.test(x.id)).every(x => x.result === 'PASS'),
+     'the full journey decision (Emirates ID, footprint, completeness): the j1 fingerprint, three PASSes');
+
+  // ---- vocabulary, determinism ----
+  const txt17 = JSON.stringify([full, cl, nc, whatIf, pqNeed, r.rules, r30.rules, memo, D.reasonCodes.RC_DATA_INCOMPLETE]);
+  ok(!banned.test(txt17) && !mentionsSalaryTransfer(txt17), 'no banned vocabulary or salary-transfer wording in the v2.17 outputs');
+  const run = () => { E.init(D); const x = decideDs(NO_CARD_LOAN); const m = E.creditMemo(x.id); return JSON.stringify([E.dataCompleteness(j, NO_CURRENT), x, m, E.memoSftpRow(m)]); };
+  ok(run() === run(), 'two fresh init() runs: identical');
+  for (const x of E.listDecisions()) collect(x.reasonCodes);
+  ok([...emittedCodes].every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodes[c].ar)), 'every reason code emitted (incl. v2.17) exists with Arabic');
   E.init(D);
 });
 

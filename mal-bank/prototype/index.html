@@ -1701,7 +1701,7 @@ label.bk-acct { position:relative; cursor:pointer; }
 .ph-eid-fields .ph-li-v { text-align:right; min-width:0; overflow-wrap:anywhere; }
 .ph-eid-v2 { display:flex; flex-direction:column; align-items:flex-end; color:var(--ink); font-weight:600; text-align:right; }
 .ph-eid-v2 .ar { font-family:var(--font-ar); font-weight:500; font-size:16px; color:var(--ink-2); }
-.ph-eid-camwrap { align-items:center; justify-content:center; background:rgba(8,8,14,.86); }
+.ph-eid-camwrap { align-items:center; justify-content:center; background:rgba(8,8,14,.95); }
 .ph-eid-cam { display:flex; flex-direction:column; align-items:center; gap:12px; padding:0 24px; text-align:center; color:#fff; }
 .ph-eid-frame { position:relative; width:280px; max-width:100%; aspect-ratio:1.586; border:1.5px dashed rgba(255,255,255,.45); border-radius:14px; }
 .ph-eid-frame-c { position:absolute; width:26px; height:26px; border:3px solid #fff; }
@@ -1856,7 +1856,7 @@ var PULL_LABEL = {
   HOME_STATEMENTS: 'Home-country bank statements — parsed: integrity, name match, conduct, EMIs, buffer, remittances',
   DIGITAL_FOOTPRINT: 'Digital footprint (consented, optional) — identity and account security; the thin-file overlay in shadow',
   /* v2.16 — the Emirates ID scan in the journey */
-  EMIRATES_ID: 'Emirates ID — front + back scanned: name, ID number, date of birth, nationality (identity and enrichment only), expiry, occupation, employer (never sex)',
+  EMIRATES_ID: 'Emirates ID — front + back scanned: name, ID number, date of birth, nationality (identity and enrichment only), expiry, occupation, employer (never sex); the images stay inside Noor (KYC)',
   /* v2.10 — the SME route */
   AECB_COMMERCIAL: 'AECB commercial report — the company',
   KYB: 'Trade licence + UBO (KYB) — the company',
@@ -2961,7 +2961,7 @@ var JR_FLOW = [
   { t: 'Noor opens in botim', d: 'Web-view · account · email · Emirates ID', match: function (e) { return e.n >= 1 && e.n <= 3; },
     c: 'Agrees to the hand-off, creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — and verifies the phone and the email. Then scans the front and back of the Emirates ID.',
     m: 'The Emirates ID is checked once the accounts are read (checkEmiratesId(): ID employer ↔ WPS salary payer, ID name ↔ account holder; POL_ID_VALID and POL_EMPLOYER_MATCH in decide(), refer only), and assessFootprint() runs for every applicant, covered by the terms accepted at sign-up. No contact preferences yet: they are asked once the loan is issued.',
-    r: 'PDPL purpose limitation: identity and account security only, and the Privacy policy says how to object (Noor’s position — confirm the terms-based basis with counsel). Sex is never read and the photos are not kept; nationality routes identity and enrichment only, never the score (CBUAE fair treatment).' },
+    r: 'PDPL purpose limitation: identity and account security only, and the Privacy policy says how to object (Noor’s position — confirm the terms-based basis with counsel). Sex is never read and the ID images stay inside Noor as KYC records; nationality routes identity and enrichment only, never the score (CBUAE fair treatment).' },
   { t: 'Connect banks', d: 'Al Tareq consent', of: true, match: function (e) { return e.n === 4; },
     c: 'Picks banks and reads what Noor will read, why and for how long. Cancel any time in the Al Tareq dashboard.',
     m: 'No engine call yet: the consent sets what later pulls may read.',
@@ -8004,7 +8004,7 @@ var Journey = {
   /* v2.16 — sub-step 3·2: the Emirates ID, front and back. A neutral card outline with field labels (never a real card
      design); tapping a side shows a simulated camera frame for about a second (instant under reduced motion), then the
      fields read. Amendment 9 Oct: nationality is read (identity and enrichment routing only, never a score input);
-     sex is never read and the photos are not kept. */
+     sex is never read. Amendment 2: the ID images stay inside Noor for its KYC records, never shared. */
   eidView: function () {
     var S = Journey.S, p = Journey.persona, B = Journey.btn, id = p.emiratesId || { front: {}, back: {} };
     var both = S.eid.front && S.eid.back;
@@ -8041,7 +8041,7 @@ var Journey = {
       h('h2', { class: 'ph-h1', text: 'Scan your Emirates ID' }),
       h('p', { class: 'ph-small', id: 'jr-eid-lead', text: 'Front and back — we read your name, ID number, expiry and, from the back, your employer.' }),
       h('div', { class: 'ph-eid-tiles' }, tile('front'), tile('back')),
-      h('p', { class: 'ph-small ph-muted', id: 'jr-eid-notread', text: 'We don’t keep the photos or read your sex. Your nationality is used to confirm your identity and offer the right home-country data — never to score you.' }),
+      h('p', { class: 'ph-small ph-muted', id: 'jr-eid-notread', text: 'Your ID images stay with Noor for our records — never shared with botim or the lender. We don’t read your sex. Your nationality is used to confirm your identity and offer the right home-country data — never to score you.' }),
       cam),
       B('Continue', function () { if (!(S.eid.front && S.eid.back)) return; S.eidDone = true; Journey.go(4, 0, 1); }, 'jr-cta', { disabled: !both || !!S.eidCam }));
   },
@@ -8113,11 +8113,13 @@ var Journey = {
         h('span', { class: 'jr-chip' + (c.nameMatch.match ? ' ok' : ' warn'), dataset: { chip: 'name' }, text: 'Name ↔ account holder: ' + (c.nameMatch.match ? 'match' : 'no match') }),
         h('span', { class: 'jr-chip' + (c.expiryValid ? ' ok' : ' warn'), dataset: { chip: 'expiry' }, text: c.expiryValid ? 'Card valid' : 'Card expired' }),
         h('span', { class: 'jr-chip', dataset: { chip: 'notread' }, text: 'Not read: ' + c.notRead.join(' · ') }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'images' }, text: 'ID images: kept inside Noor (KYC) · never shared' }),
         Journey.eidEnrichChip()));
     } else {
       box.appendChild(h('div', { class: 'jr-chips', id: 'jr-eid-chips' },
         h('span', { class: 'jr-chip', dataset: { chip: 'read' }, text: 'Read: name · ID number (masked) · date of birth · nationality · expiry · occupation · employer' }),
-        h('span', { class: 'jr-chip', dataset: { chip: 'notread' }, text: 'Not read: ' + (ME.EMIRATES_ID_NOT_READ || ['sex', 'photos']).join(' · ') }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'notread' }, text: 'Not read: ' + (ME.EMIRATES_ID_NOT_READ || ['sex']).join(' · ') }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'images' }, text: 'ID images: kept inside Noor (KYC) · never shared' }),
         Journey.eidEnrichChip()));
       box.appendChild(h('div', { class: 'small muted', text: 'The employer ↔ salary-payer and name checks run once the accounts are connected and read (step 7).' }));
     }
@@ -8464,7 +8466,9 @@ var Journey = {
       3: sub === 2 ? ['Your Emirates ID — front and back, checked against the salary payer', [
             'The back of a resident’s Emirates ID shows the employer. Once the accounts are connected, Mizan checks that the salary credits come from the same company (the WPS payer name) and that the name on the card matches the account holder.',
             'A match strengthens income verification. A mismatch refers the application to a person — usually it’s a job change, solved with a salary certificate — never an automatic decline.',
-            'Data minimisation (PDPL): Noor extracts name, ID number, date of birth, nationality, expiry, occupation and employer; sex is on the card but not read, and the photos aren’t kept.',
+            'Data minimisation (PDPL): Noor extracts name, ID number, date of birth, nationality, expiry, occupation and employer; sex is on the card but not read.',
+            /* amendment 2 — "Noor IP vs lender view": the images are Noor's KYC records */
+            'ID images are kept inside Noor for KYC record-keeping (AML) and never leave Noor — like transactions, balances and account details (Noor IP vs lender view).',
             /* amendment 9 Oct — replaces the liveness sentence; nationality is read for identity and enrichment routing */
             'Front and back is enough: the Open Finance match (ID name ↔ account holder, employer ↔ salary payer) does the work a liveness check would — confirm with compliance.',
             'Nationality: identity and enrichment routing only; never a NoorScore input (CBUAE fair treatment and the AI/ML guidance).']]

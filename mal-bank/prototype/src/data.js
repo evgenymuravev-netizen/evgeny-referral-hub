@@ -373,8 +373,9 @@
                   salaryDetected: true, avgSalaryCredit: 12000, salaryCreditDay: 27 },
       connected: { source: 'ALTAREQ_TPP', banks: ['ENBD', 'FAB'], monthsAvailable: 12,
                    accounts: [
-                     { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true, holderName: 'RAVI KUMAR' },
-                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false, holderName: 'RAVI KUMAR' },
+                     // v2.17 — txPerMonth: the average number of transactions a month (regular activity ≥ 20 counts for data completeness)
+                     { bank: 'ENBD', type: 'Current account', mask: '4821', balance: 6240.35, salaryAccount: true, holderName: 'RAVI KUMAR', txPerMonth: 46 },
+                     { bank: 'FAB', type: 'Savings account', mask: '0193', balance: 9860.00, salaryAccount: false, holderName: 'RAVI KUMAR', txPerMonth: 3 },
                      // v2.15 — the ENBD credit card and personal loan come through the same Al Tareq consent
                      { bank: 'ENBD', type: 'Credit card', mask: '7702', limit: 12000, balance: 7440, monthlyRepayment: 400, holderName: 'RAVI KUMAR' },
                      { bank: 'ENBD', type: 'Personal loan', mask: '3317', outstanding: 6200, instalment: 500, endsOn: '2027-03', holderName: 'RAVI KUMAR' }
@@ -401,7 +402,8 @@
                    velocity: { emailSeenByLenders: 1 },
                    breaches: { count: 1, includesCredentialStuffingCompilation: false } },
       // v2.16 — what the Emirates ID scan reads (front + back). Fictitious employer; masked ID number.
-      // Minimised by design: sex is never captured and the photos are not kept. Nationality (amendment
+      // Minimised by design: sex is never captured. The ID images are kept inside Noor for its KYC records
+      // (amendment 2) and never shared with botim or the lender. Nationality (amendment
       // 9 Oct) is read for identity checks and enrichment routing only — never a score or decision input.
       // Date of birth 1995-03-14 → 31 as of TODAY. The employer, occupation, date of birth and nationality
       // stay with Noor: never in the credit memo or the SFTP row.
@@ -611,6 +613,10 @@
     RC_ID_EXPIRED: {
       en: 'Your Emirates ID has expired — please renew it or scan your new card.',
       ar: 'انتهت صلاحية بطاقة هويتك الإماراتية — يُرجى تجديدها أو مسح بطاقتك الجديدة.' },
+    // --- Data completeness (Addendum v2.17) — a REFER backstop, never a decline --------
+    RC_DATA_INCOMPLETE: {
+      en: 'We need a fuller picture before we can calculate your score — connecting your salary account, credit cards and loans usually does it.',
+      ar: 'نحتاج إلى صورة أشمل قبل أن نتمكن من احتساب درجتك — وعادةً ما يكفي ربط حساب راتبك وبطاقاتك الائتمانية وقروضك.' },
     // --- UAE red flags and early warning (Addendum v2.9) ------------------------------
     // Customer-safe: each one is a change against the customer's own history, worded
     // so an analyst can read it to the customer. No values, no places, no services.

@@ -73,9 +73,17 @@
  *    card is matched against the WPS salary payer seen in Open Finance. A mismatch
  *    or an expired card REFERs — never a decline, never a price change. Only the
  *    name, masked ID number, date of birth, nationality, expiry, occupation and
- *    employer are read (never sex; the photos are not kept). Nationality routes
+ *    employer are read (never sex). The ID images stay inside Noor for its KYC
+ *    records (amendment 2: never shared, never in the memo). Nationality routes
  *    identity checks and enrichment only — never a score or decision input. The
  *    memo carries a flag only.
+ *  - Data completeness (v2.17, ../JOURNEY-CONFIDENCE-SPEC.md, "Two steps to a score"):
+ *    how much of the customer's financial picture Noor sees through Open Finance
+ *    (current account 50 · salary 20 · cards 15 · loans 15). Below the
+ *    completenessThresholdPct (illustrative, 70) no score is issued — the journey
+ *    asks for more accounts and decide() REFERs as a backstop (never a decline,
+ *    never a price change); 70–84% lowers NoorScore by 10. The lender sees the
+ *    percentage and counts only — never the threshold, the weights or the bands.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -218,7 +226,9 @@
                   instalmentToFcfMaxPct: 50,
                   // v2.8 — digital-footprint thin-file overlay: SHADOW (logged, not applied) until LIVE
                   footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20,
-                  tokenValidityDays: 14 }
+                  tokenValidityDays: 14,
+                  // v2.17 — data completeness (illustrative): below it no score is issued (journey) / REFER (decide)
+                  completenessThresholdPct: 70 }
       },
       // Starter loan → upgrade (Addendum v2.1). `starter` is the entry offer (for
       // reference); `tiers` are the two upgrade offers. Every tier is an APR curve
@@ -301,7 +311,7 @@
                      scoreDecline: [550, 720], scoreRefer: [600, 780], maxEsrPct: [30, 90],
                      minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5], productCap: [100000, 2000000],
                      instalmentToFcfMaxPct: [10, 80], footprintOverlayCap: [0, 30],
-                     tokenValidityDays: [3, 30] },
+                     tokenValidityDays: [3, 30], completenessThresholdPct: [50, 90] },
     salary_advance: { pctOfSalary: [50, 90], capAmount: [5000, 25000], flatFee: [25, 300],
                       minSalary: [3000, 15000], scoreDecline: [550, 700], tokenValidityDays: [3, 14] },
     starter_loan: { minAmount: [100, 2000], amountStep: [50, 500], instalmentToFcfMaxPct: [10, 80],
@@ -932,6 +942,8 @@
     'Employment tenure ≥ 24m': 'Long employment tenure',
     'ESR > 40%': 'High existing repayments on the bureau file',
     'Cross-border conservatism': 'Home-country credit file, conservative adjustment',
+    // v2.17 — the completeness overlay (70–84%); the lender sees the direction, never the band boundaries
+    'Data completeness 70–84%': 'Part of the financial picture not connected',
     'Home statements — account open ≥ 5 years': 'Long-standing home-country bank account',
     'Home statements — clean conduct (0 returned items, 0 overdraft days)': 'Clean home-country account conduct',
     'Home statements — buffer ≥ half a month of income': 'Savings buffer',
@@ -1087,7 +1099,7 @@
   // Personal loan / salary advance — scorecard v0 (CONTRACT §2.2), with the
   // connected-account salary verification overlay (+15) replacing the v1
   // in-house payroll overlay.
-  function loanScore(p, crossBorder, connectedSalary, st, fpOverlay) {
+  function loanScore(p, crossBorder, connectedSalary, st, fpOverlay, dcOverlay) {
     // Cross-border path: consented home-bureau score is the base, with a flat
     // conservatism overlay; grade capped at B. Verified home-country statements
     // (v2.4) on an AECB no-hit: proxy base 640 plus evidence overlays, grade capped at B.
@@ -1114,6 +1126,8 @@
     if (p.tenureMonths >= 24) overlays.push({ name: 'Employment tenure ≥ 24m', delta: 10 });
     // v2.8 — the digital-footprint overlay, only when decide() applies it (LIVE mode, thin / no-hit file).
     if (fpOverlay && fpOverlay.delta > 0) overlays.push({ name: fpOverlay.name, delta: fpOverlay.delta });
+    // v2.17 — data completeness: low data lowers the score (70–84% → −10; ≥ 85% → nothing to add)
+    if (dcOverlay && dcOverlay.delta < 0) overlays.push({ name: 'Data completeness 70–84%', delta: dcOverlay.delta });
     const points = base + overlays.reduce((s, o) => s + o.delta, 0);
     let grade = pointsToGrade(points);
     if ((crossBorder || stPath) && grade === 'A') grade = 'B';
@@ -1248,15 +1262,18 @@
   // matches the two and checks that the name on the card is the account holder's.
   // A match strengthens income verification; a mismatch REFERs (usually a job
   // change) — never a decline, never a price change. Data minimisation (PDPL):
-  // only the fields in EID_FIELDS are read — sex and the photos never are (the
-  // selftest proves it with a property recorder). Amendment 9 Oct: nationality is
+  // only the fields in EID_FIELDS are read — sex never is (the selftest proves it
+  // with a property recorder). Amendment 2 (9 Oct, "Noor IP vs lender view"): the ID
+  // images are kept inside Noor for its KYC records (AML record-keeping) and never
+  // shared with botim or the lender. Amendment 9 Oct: nationality is
   // read from the front for identity checks and to route enrichment (which
   // home-country data Noor can offer: the Credit Passport and statements corridors
   // India / Pakistan / Egypt). It is never a score or decision input: no rule,
   // feature, pull summary or memo field carries it.
   // ---------------------------------------------------------------------------
   const EID_FIELDS = { front: ['nameEn', 'nameAr', 'idMasked', 'dob', 'nationality', 'expiry'], back: ['occupation', 'employer'] };
-  const EID_NOT_READ = ['sex', 'photos'];
+  const EID_NOT_READ = ['sex'];
+  const EID_IMAGES_PURPOSE = 'KYC record-keeping (AML) inside Noor — never shared with botim or the lender';
   const EID_NATIONALITY_USE = 'identity and enrichment routing only — never a NoorScore or decision input';
   // Enrichment routing: the home-country data Noor can offer for this nationality (null outside the corridors).
   function eidEnrichment(nationality) {
@@ -1334,6 +1351,7 @@
     return {
       fieldsRead,
       notRead: EID_NOT_READ.slice(),
+      retainedInsideNoor: true,   // amendment 2 — the front and back images are Noor's KYC records
       idMasked: f.idMasked || null,
       // Amendment 9 Oct — identity and enrichment routing only; nothing downstream scores or decides on it.
       nationality: typeof f.nationality === 'string' && f.nationality.trim() ? f.nationality.trim() : null,
@@ -1361,6 +1379,76 @@
            checked ? (m.match ? 'match' : 'mismatch') + ' — ' + m.score + '% of the employer’s words in the WPS payer name'
                    : (ec.openFinance ? 'no salary payer seen in the connected accounts' : 'checked once accounts are connected'),
            '≥ ' + Math.round(EID_MATCH_MIN * 100) + '% of the employer’s words', checked && !m.match ? 'RC_EMPLOYER_MISMATCH' : null);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Data completeness (Addendum v2.17, revised 9 Oct — "Two steps to a score") — pure.
+  // Step 1: how full is the customer's financial picture, from the accounts they
+  // approved through Open Finance? Current account 50 (≥ 3 months of regular
+  // activity, ≥ 20 transactions a month; an almost-empty one counts 20) · salary
+  // credits visible 20 · a credit card 15 · a loan 15. Below the threshold
+  // (completenessThresholdPct, illustrative 70) no score is issued: the customer is
+  // asked for the salary account, cards and loans. Step 2, at or above it: Mizan
+  // scores — and 70–84% lowers NoorScore by 10 (illustrative). Identity checks
+  // (Emirates ID, email, phone) are verification, not completeness.
+  // ---------------------------------------------------------------------------
+  const DC_COMPONENTS = [['current', 'Current account', 50], ['salary', 'Salary account', 20], ['cards', 'Credit cards', 15], ['loans', 'Loan accounts', 15]];
+  const DC_ALMOST_EMPTY_POINTS = 20, DC_REGULAR_TX_PER_MONTH = 20, DC_REGULAR_MONTHS = 3, DC_NO_OVERLAY_FROM = 85, DC_OVERLAY = -10;
+  const DC_ASK = ['salary', 'cards', 'loans'];
+  function dcKind(a) {
+    const t = String((a && a.type) || '');
+    return /card/i.test(t) ? 'card' : (/loan/i.test(t) ? 'loan' : (/current/i.test(t) ? 'current' : (/savings/i.test(t) ? 'savings' : 'other')));
+  }
+  // The approved accounts: masks (resolved against the applicant's connected accounts) or account objects; default all.
+  function dcAccounts(applicant, approved) {
+    const all = (applicant.connected && Array.isArray(applicant.connected.accounts)) ? applicant.connected.accounts : [];
+    if (approved === undefined || approved === null) return all.slice();
+    if (!Array.isArray(approved)) throw err('approved accounts must be an array of account masks or account objects');
+    return approved.map(x => {
+      if (x && typeof x === 'object') return x;
+      const a = all.find(y => y.mask === String(x));
+      if (!a) throw err('unknown account ••••' + x + ' — not among the applicant’s connected accounts');
+      return a;
+    });
+  }
+  function dataCompleteness(applicant, approvedAccounts, opts) {
+    ensureInit();
+    if (!applicant || typeof applicant !== 'object') throw err('dataCompleteness(applicant, approvedAccounts) needs an applicant');
+    const o = opts || {};
+    const accts = dcAccounts(applicant, approvedAccounts);
+    const cn = applicant.connected || {};
+    const months = accts.length ? (Number.isFinite(o.months) ? o.months : (cn.monthsAvailable || 0)) : 0;
+    const threshold = Number.isFinite(o.threshold) ? o.threshold : getPolicyRef('personal_loan').params.completenessThresholdPct;
+    const currents = accts.filter(a => dcKind(a) === 'current');
+    const regular = currents.some(a => months >= DC_REGULAR_MONTHS && (!Number.isFinite(a.txPerMonth) || a.txPerMonth >= DC_REGULAR_TX_PER_MONTH));
+    const salaryIn = accts.find(a => a.salaryAccount === true) || null;
+    const have = { current: currents.length > 0, salary: !!salaryIn, cards: accts.some(a => dcKind(a) === 'card'), loans: accts.some(a => dcKind(a) === 'loan') };
+    const pts = { current: !have.current ? 0 : (regular ? 50 : DC_ALMOST_EMPTY_POINTS), salary: have.salary ? 20 : 0, cards: have.cards ? 15 : 0, loans: have.loans ? 15 : 0 };
+    const note = {
+      current: !have.current ? 'not connected' : (regular ? 'regular activity (≥ ' + DC_REGULAR_TX_PER_MONTH + ' transactions a month, ' + months + ' months)' : 'almost empty — counts ' + DC_ALMOST_EMPTY_POINTS + '%'),
+      salary: have.salary ? 'salary credits seen in the ' + String(salaryIn.type || 'account').toLowerCase() : 'no salary credits in the accounts shared',
+      cards: have.cards ? accts.filter(a => dcKind(a) === 'card').length + ' connected' : 'none connected',
+      loans: have.loans ? accts.filter(a => dcKind(a) === 'loan').length + ' connected' : 'none connected'
+    };
+    const components = DC_COMPONENTS.map(([key, label, weight]) => ({ key, label, weight, have: have[key], points: pts[key], note: note[key] }));
+    const pct = components.reduce((s, c) => s + c.points, 0);
+    const aboveThreshold = pct >= threshold;
+    const label = (k) => DC_COMPONENTS.find(c => c[0] === k)[1];
+    return {
+      pct, threshold, aboveThreshold, components,
+      ask: DC_ASK.filter(k => !have[k]).map(label),
+      counts: { banks: new Set(accts.map(a => a.bank)).size, accounts: accts.length, months },
+      // Step 2 — the score: ≥ 85% nothing to add, 70–84% −10 (illustrative); below the threshold no score is issued.
+      scoreOverlay: !aboveThreshold ? null : (pct >= DC_NO_OVERLAY_FROM ? 0 : DC_OVERLAY),
+      thresholdLabel: 'illustrative'
+    };
+  }
+  // decide()'s dataSources: { approvedAccounts:[masks | accounts], months? }
+  function dcFromSources(applicant, ds) {
+    if (!ds || typeof ds !== 'object' || Array.isArray(ds)) throw err('application.dataSources must be { approvedAccounts:[…], months }');
+    if (!Array.isArray(ds.approvedAccounts)) throw err('application.dataSources.approvedAccounts must list the accounts the customer approved');
+    if (ds.months !== undefined && (!Number.isFinite(ds.months) || ds.months < 0)) throw err('application.dataSources.months must be a number of months');
+    return dataCompleteness(applicant, ds.approvedAccounts, { months: ds.months });
   }
 
   // ---------------------------------------------------------------------------
@@ -1478,7 +1566,9 @@
     }
 
     // Scorecard v0
-    const score = loanScore(p, crossBorder, connectedSalary, statementsPath ? st : null, extra && extra.footprintOverlay);
+    const dc = extra && extra.dataCompleteness;   // v2.17 — only when decide() is given dataSources
+    const score = loanScore(p, crossBorder, connectedSalary, statementsPath ? st : null, extra && extra.footprintOverlay,
+                            dc && Number.isFinite(dc.scoreOverlay) ? { delta: dc.scoreOverlay } : null);
     const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
     if (score.points !== null) {
       const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
@@ -1575,6 +1665,14 @@
     // v2.16 — the Emirates ID scan, when the application carries one: POL_ID_VALID and
     // POL_EMPLOYER_MATCH (REFER or INFO only — never a FAIL; the limit and price above are untouched).
     emiratesIdRules(rs, extra && extra.emiratesId);
+    // v2.17 — POL_DATA_COMPLETENESS: the backstop when the journey did not ask first (REFER only)
+    if (dc) {
+      rs.add('POL_DATA_COMPLETENESS', 'Data completeness at or above the threshold (refer only — never a decline, never a price change)', 'POLICY',
+             dc.aboveThreshold ? 'PASS' : 'REFER',
+             dc.pct + '% complete · ' + dc.counts.banks + (dc.counts.banks === 1 ? ' bank · ' : ' banks · ') + dc.counts.accounts + (dc.counts.accounts === 1 ? ' account · ' : ' accounts · ') + dc.counts.months + ' months' +
+               (dc.aboveThreshold ? (dc.scoreOverlay ? ' · NoorScore ' + dc.scoreOverlay : '') : ' · missing: ' + dc.ask.join(', ')),
+             '≥ ' + dc.threshold + '% (illustrative)', 'RC_DATA_INCOMPLETE');
+    }
     redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
     const outcome = outcomeFromRules(rs.rules);
     if (outcome === 'DECLINE') approved = 0;
@@ -1605,6 +1703,7 @@
       homeStatementsUsed: stUsable,
       statementsHaircutPct
     };
+    if (dc) features.dataCompletenessPct = dc.pct;   // v2.17
     if (extra && extra.emiratesId) {
       // v2.16 — flags and a score only: the employer, the payer, the date of birth and the occupation stay on record.emiratesId.
       const ec = extra.emiratesId;
@@ -3607,10 +3706,20 @@
       if (productId !== 'personal_loan') throw err('the Emirates ID scan feeds personal-loan decisions only (not ' + productId + ')');
       eid = checkEmiratesId(applicant, application.emiratesId, { openFinance: consents.openFinance === true });
     }
+    // v2.17 — data completeness from the accounts the customer approved (personal loan, Open Finance only).
+    let dcmp = null;
+    if (application.dataSources !== undefined && application.dataSources !== null) {
+      if (productId !== 'personal_loan') throw err('data completeness feeds personal-loan decisions only (not ' + productId + ')');
+      if (consents.openFinance !== true) throw err('data completeness is measured on connected accounts — Open Finance consent is required with dataSources');
+      dcmp = dcFromSources(applicant, application.dataSources);
+    }
+    const evExtra = {};
+    if (eid) evExtra.emiratesId = eid;
+    if (dcmp) evExtra.dataCompleteness = dcmp;
 
     const pol = getPolicyRef(productId);
     let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
-                      vehicle ? { vehicle } : (eid ? { emiratesId: eid } : undefined));
+                      vehicle ? { vehicle } : (Object.keys(evExtra).length ? evExtra : undefined));
 
     // v2.8 — digital footprint: only with its own consent, only when the applicant has a
     // footprint, only on the packs that carry the overlay params (split, personal loan,
@@ -3628,7 +3737,7 @@
                       note: co.applied && !scored ? 'Not applied — no scorecard on this decision' : co.status };
         if (fpOverlay.applied) {
           ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
-                        Object.assign({ footprintOverlay: { name: fpOverlay.name, delta: fpOverlay.delta } }, eid ? { emiratesId: eid } : {}));
+                        Object.assign({ footprintOverlay: { name: fpOverlay.name, delta: fpOverlay.delta } }, evExtra));
         }
       }
     }
@@ -3642,7 +3751,7 @@
       // v2.16 — what the scan read, as flags: never the employer, the payer, the date of birth, the occupation or the nationality.
       pulls.push({ source: 'EMIRATES_ID', status: 'SCANNED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
                    summary: { scan: 'front + back scanned', fieldsRead: 'name (EN + AR), ID number (masked), date of birth, nationality (identity and enrichment routing only), expiry, occupation, employer',
-                              notRead: 'sex · photos (not kept)', expiry: eid.expiryValid ? 'valid' : 'expired',
+                              notRead: 'sex', images: 'front + back kept inside Noor (KYC records) — never shared', expiry: eid.expiryValid ? 'valid' : 'expired',
                               nameMatch: eid.nameMatch.match === null ? 'checked once accounts are connected' : (eid.nameMatch.match ? 'matches the account holder' : 'does not match the account holder'),
                               employerMatch: eid.employerMatch.match === null ? (eid.openFinance ? 'no salary payer seen' : 'checked once accounts are connected')
                                 : (eid.employerMatch.match ? 'match' : 'mismatch') + ' — ' + eid.employerMatch.score + '% (WPS salary payer)' } });
@@ -3729,9 +3838,19 @@
                                            at: fpc.granted ? (fpc.acceptedAt || consentAt) : null,
                                            scope: fpc.basis === 'TERMS' ? FOOTPRINT_SCOPE_TERMS : FOOTPRINT_SCOPE, used: !!fpa };
     }
+    if (dcmp) {
+      // v2.17 — internal: the threshold, the weights and the components stay inside Noor (the memo carries the percentage and counts only).
+      record.dataCompleteness = clone(dcmp);
+      record.audit.push({ at: createdAt, actor: 'engine', action: 'DATA_COMPLETENESS',
+                          detail: dcmp.pct + '% complete · ' + dcmp.counts.banks + ' banks · ' + dcmp.counts.accounts + ' accounts · ' + dcmp.counts.months + ' months · threshold ' + dcmp.threshold + '% (illustrative) · ' +
+                                  (dcmp.aboveThreshold ? 'scored' + (dcmp.scoreOverlay ? ' (NoorScore ' + dcmp.scoreOverlay + ')' : ' (nothing to add)') : 'below the threshold — REFER (' + dcmp.ask.join(', ') + ' missing)') });
+    }
     if (eid) {
       // v2.16 — internal only (the Decision log, an underwriter on a REFER). The memo carries one flag and the masked ID.
-      record.emiratesId = { scanned: 'FRONT_AND_BACK', idMasked: eid.idMasked, check: clone(eid) };
+      // Amendment 2 — the images stay inside Noor as KYC records: internal references only, never in the memo or the SFTP row.
+      record.emiratesId = { scanned: 'FRONT_AND_BACK', idMasked: eid.idMasked, check: clone(eid),
+                            images: { retainedInsideNoor: true, purpose: EID_IMAGES_PURPOSE,
+                                      refs: ['KYC-' + id.slice(4) + '-EID-FRONT.jpg', 'KYC-' + id.slice(4) + '-EID-BACK.jpg'] } };
     }
     if (comms) {
       record.consents.communications = { granted: true, at: consentAt, reference: 'CNS-' + id.slice(4) + '-COMMS',
@@ -3866,6 +3985,8 @@
     // v2.8 — contact preferences joined the raw contact details: one group, still 7 in all.
     { group: 'Contact details and preferences', reason: 'Not needed to book the loan — Noor stays the customer\'s point of contact; the email, phone and chosen channels stay with Noor (PDPL data minimisation)' }
   ];
+  // v2.17 — a memo with data completeness adds this line (the percentage and counts only).
+  const MEMO_SHARED_DC = 'Data completeness — the share of the financial picture Noor sees, with the number of banks, accounts and months';
   // Car loan (v2.7) memos add these lines; other products' memos are unchanged.
   const MEMO_SHARED_CAR = [
     'Vehicle quote — category, condition, model year, price, loan-to-value and down payment (dealer-quote data, not Open Finance)',
@@ -3893,6 +4014,7 @@
       reason: 'Shared by the owner as an individual, under the owner’s own Al Tareq consent, for the guarantee assessment — it cannot be passed on (CBUAE Open Finance framework, PDPL purpose limitation)' }
   ];
   const MEMO_SFTP_HEADER_SME_EXTRA = ['revenue_band', 'dscr_band', 'guarantee_status'];
+  const MEMO_SFTP_HEADER_DC_EXTRA = ['data_completeness_pct', 'data_sources'];   // v2.17
   const MEMO_SFTP_HEADER = ['memo_id', 'noor_ref', 'product', 'outcome', 'amount', 'tenor', 'apr_or_fee', 'monthly_payment',
                             'repayment_method', 'noorscore', 'noorscore_band', 'income_band', 'dbr_band', 'aecb_band',
                             'reason_codes', 'created_at'];
@@ -4207,10 +4329,13 @@
           ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
           : null
       }, car ? memoCarFlags(rec) : {}),
+      // v2.17 — completeness as the lender sees it: the percentage and counts only (no threshold, weights or bands)
+      ...(rec.dataCompleteness ? { dataCompleteness: { pct: rec.dataCompleteness.pct, banks: rec.dataCompleteness.counts.banks,
+                                                       accounts: rec.dataCompleteness.counts.accounts, months: rec.dataCompleteness.counts.months } } : {}),
       consents: CONSENT_CODES
         .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
         .map(([k, code]) => ({ type: k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + code })),
-      sharing: { shared: MEMO_SHARED.concat(car ? MEMO_SHARED_CAR : []),
+      sharing: { shared: MEMO_SHARED.concat(car ? MEMO_SHARED_CAR : [], rec.dataCompleteness ? [MEMO_SHARED_DC] : []),
                  withheld: MEMO_WITHHELD.concat(car ? MEMO_WITHHELD_CAR : []).map(w => ({ group: w.group, reason: w.reason })) }
     };
   }
@@ -4236,6 +4361,12 @@
                  s(t.monthlyPayment), s(t.repaymentMethod), s(memo.noorScore.value), s(memo.noorScore.band),
                  s(memo.affordability.incomeBand), s(memo.affordability.dbrBand), s(memo.bureau.aecbScoreBand),
                  memo.decision.reasonCodes.map(r => r.code).join('|'), memo.createdAt];
+    // v2.17 — a memo with data completeness adds two columns (the percentage and the counts); other rows are unchanged.
+    if (memo.dataCompleteness) {
+      const dcm = memo.dataCompleteness;
+      return { header: MEMO_SFTP_HEADER.concat(MEMO_SFTP_HEADER_DC_EXTRA),
+               row: row.concat([String(dcm.pct), dcm.banks + ' banks · ' + dcm.accounts + ' accounts · ' + dcm.months + ' months']) };
+    }
     // v2.10 — SME memos add three business columns (bands and the guarantee flag); other products' rows are unchanged.
     if (memo.product.productId === 'sme_working_capital') {
       const b = t.business || {};
@@ -4355,11 +4486,19 @@
   // ---------------------------------------------------------------------------
   const PREQUAL = { productId: 'personal_loan', tenorMonths: 24, band: 'B', minShareOfMax: 0.25,
                     instalmentToFcfMaxPct: 50, termsMonths: [6, 12, 24], validForDays: 7 };
-  function prequalify(applicant, consents) {
+  // v2.17 — opts.approvedAccounts (masks or accounts): step 1, data completeness, first. Below the threshold
+  // no range and no score estimate: { status:'NEEDS_DATA', completeness, ask } (no record, no AECB).
+  function prequalify(applicant, consents, opts) {
     ensureInit();
     if (!applicant || typeof applicant !== 'object') throw err('prequalify(applicant, consents) needs an applicant');
     if (!consents || consents.openFinance !== true) {
       throw err('pre-qualification reads connected accounts only — Open Finance consent (connected accounts via Al Tareq) is required');
+    }
+    const dcq = opts && opts.approvedAccounts !== undefined ? dataCompleteness(applicant, opts.approvedAccounts, { months: opts.months }) : null;
+    if (dcq && !dcq.aboveThreshold) {
+      return { productId: PREQUAL.productId, status: 'NEEDS_DATA', completeness: dcq, ask: dcq.ask.slice(), eligible: null,
+               note: 'No score yet — add your salary account, credit cards and loans so we can calculate it. Nothing was recorded and no credit bureau check was made.',
+               sources: ['OPEN_FINANCE'] };
     }
     const cn = applicant.connected || null, bd = applicant.bankData || null;
     const income = cn && Number.isFinite(cn.avgMonthlyIncome) ? cn.avgMonthlyIncome
@@ -4422,7 +4561,8 @@
                      instalmentBudgetMonthly: fcf === null ? Math.max(0, headroom) : Math.min(Math.max(0, headroom), fcfBudget) },
       // Indicative pricing for the estimated band (the loan screen's "from X% APR").
       indicativePricing: { band: estBand, aprMin: bandRange[0], aprMax: bandRange[1], aprMid: round4((bandRange[0] + bandRange[1]) / 2),
-                           termsMonths: [6, 12, 24] }
+                           termsMonths: [6, 12, 24] },
+      ...(dcq ? { status: 'OK', completeness: dcq } : {})
     };
   }
   // Pure: the reducing-balance instalment Mizan uses for personal-loan KFS figures
@@ -5376,6 +5516,8 @@
     recordCommunications,
     // v2.16 — the Emirates ID front + back, cross-checked against the salary payer in Open Finance (pure)
     checkEmiratesId, EMIRATES_ID_NOT_READ: EID_NOT_READ.slice(),
+    // v2.17 — "Two steps to a score": data completeness first (pure), then the score
+    dataCompleteness,
     // v2.7 — car loan: a pure live quote (documents path vs Open Finance path) for the car screen
     quoteCar,
     lenders: function () { ensureInit(); return clone(lendersList()); },
