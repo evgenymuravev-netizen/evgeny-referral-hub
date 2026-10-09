@@ -8,7 +8,7 @@ the architecture and API conventions; THIS file overrides it wherever they confl
 
 - "noor finance". Noor means "light" in Arabic. Positioning: **"a reliable, calm, self-assured
   fintech"** — "the person we're building for already has four banking apps shouting at them; we're
-  not going to be the fifth one shouting." Tagline: **"Noor for your better financial sleep."**
+  not going to be the fifth one shouting." (The brand-book tagline is not used in the prototype — product decision, 9 Oct.)
   Direction: **"AI-driven Installments to Agentic Bank — Know. Think. Act."**
 - Core consumer product: **Split a big purchase** — Noor sees a large purchase the customer ALREADY
   made (detected from their connected bank accounts via UAE Open Finance / Al Tareq) and offers to

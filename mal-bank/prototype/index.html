@@ -1720,6 +1720,42 @@ label.bk-acct { position:relative; cursor:pointer; }
 .ph-eid-mk.bad { background:var(--bad); }
 .ph-eid-mk .ji { width:13px; height:13px; }
 #jr-eid-out .btn { align-self:flex-start; }
+/* v2.17 — "Your data": a filled bar with a thin red threshold line, the percentage, the counts and the checklist */
+.ph-data { gap:8px; text-align:left; width:100%; }
+.ph-data-h { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.ph-data-pct { font-family:var(--font-display); font-weight:800; font-size:22px; color:var(--ink); font-variant-numeric:tabular-nums; }
+.ph-data-bar { position:relative; height:10px; border-radius:5px; background:var(--ph-line); margin:4px 0 2px; }
+.ph-data-fill { position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:var(--brand-fill); }
+.ph-data-th, .jr-dc-th { position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:var(--bad); border-radius:1px; }
+.ph-data-counts { font-family:var(--font-label); font-size:14px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+.ph-data-list { display:flex; flex-wrap:wrap; gap:6px; }
+.ph-data-c { display:inline-flex; align-items:center; gap:5px; border-radius:var(--radius-pill); padding:3px 10px 3px 4px; font-family:var(--font-label); font-size:13px; line-height:18px;
+  color:var(--muted); background:var(--ph-ground); border:1px dashed var(--ph-line); }
+.ph-data-c.on { color:var(--ink); border-style:solid; }
+.ph-data-mk { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--ph-line); }
+.ph-data-c.on .ph-data-mk { background:var(--ok); border-color:var(--ok); color:#fff; }
+.ph-data-mk .ji { width:10px; height:10px; }
+.ph-data-n { margin-top:2px; }
+.ph-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.ph-chip { display:inline-flex; align-items:center; border-radius:var(--radius-pill); padding:7px 14px; background:var(--panel); border:1.5px solid var(--brand); color:var(--brand-ink);
+  font-family:var(--font-ui); font-weight:600; font-size:15px; line-height:20px; }
+/* v2.17 — behind the scenes: "Two steps to a score" */
+.jr-two { gap:10px; }
+.jr-two-s { display:flex; flex-direction:column; gap:6px; }
+.jr-two-t { font-family:var(--font-label); font-weight:600; font-size:13px; color:var(--ink); }
+.jr-dc-bar { position:relative; height:8px; border-radius:4px; background:var(--hairline); margin:4px 0; }
+.jr-dc-fill { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--brand); }
+.jr-dc-tbl td, .jr-dc-tbl th { font-size:12.5px; }
+.jr-two-proxy { margin:0; color:var(--ink-2); }
+#jr-two-steps .btn { align-self:flex-start; }
+/* v2.17 — the Lender view: completeness as a ring (conic gradient), the percentage and the counts — no threshold */
+.dc-wrap { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.dc-ring { --dc:0; width:84px; height:84px; flex:0 0 84px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  background:conic-gradient(var(--brand) calc(var(--dc) * 1%), var(--hairline) 0); }
+.dc-ring-v { width:64px; height:64px; border-radius:50%; background:var(--panel); display:inline-flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:800; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
+.dc-side { flex:1 1 180px; min-width:0; display:flex; flex-direction:column; gap:4px; }
+.dc-counts { font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -2154,8 +2190,7 @@ var Overview = {
         h('strong', { text: 'Split a purchase, Personal loan, Car loan, Starter loan, Salary advance — and, for business owners, SME working capital' }),
         ') for approve / refer / decline + limit + pricing, with consent, AECB, connected-account (Open Finance / Al Tareq) data, policy and scoring behind one API — and every decision replayable for CBUAE model-risk and consumer-protection audit.'),
       h('p', { class: 'lead', id: 'ov-pack-line' }, h('strong', { text: 'A new product is a policy pack, not a new engine. ' }),
-        'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.'),
-      h('div', { class: 'tagline-quiet', text: 'Noor for your better financial sleep.' })));
+        'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.')));
 
     var positions = [
       ['Share the pipes, not the brain', 'One platform, one data layer, one decision store — with product-specific policy packs. Split underwrites on connected-account cash flow; the personal loan on salary + bureau. No unified scoring model.'],
@@ -2655,8 +2690,10 @@ var FlowMap = {
       ol.appendChild(li);
     });
     var detail = h('div', { class: 'fm-detail', id: detailId, role: 'region', 'aria-labelledby': detailId + '-h', hidden: 'hidden' });
+    var baseNote = '— ' + (NUM_WORD[n] || String(n)) + ' steps' + (anyOf ? '; the highlighted ones use Open Finance (Al Tareq)' : '');
+    var noteEl = h('span', { class: 'h3-note', text: baseNote });
     var panel = h('div', { class: 'panel fm-panel', id: id + '-panel', dataset: { flow: cfg.key || id } },
-      h('h3', null, 'The flow ', h('span', { class: 'h3-note', text: '— ' + (NUM_WORD[n] || String(n)) + ' steps' + (anyOf ? '; the highlighted ones use Open Finance (Al Tareq)' : '') })),
+      h('h3', null, 'The flow ', noteEl),
       ol, detail);
     self.el = panel; self.detail = detail;
 
@@ -2727,6 +2764,8 @@ var FlowMap = {
     };
     self.toggle = function (i) { if (self.sel === i) self.close(); else self.select(i); };
     self.refresh = function () {
+      /* v2.17 — an optional live suffix on the header note (the journey: "· data completeness 100%") */
+      if (cfg.note) noteEl.textContent = baseNote + (cfg.note() || '');
       var res = cfg.status ? cfg.status() : null;
       self.states = res ? res.steps : null;
       self.shown = !!(res && res.shown);
@@ -5568,7 +5607,9 @@ var PARAM_META = {
     instalmentToFcfMaxPct: ['Max instalment as % of free cash flow (when spending is seen)', 10, 80, 5],
     footprintOverlayMode: ['Digital-footprint thin-file overlay — SHADOW logs it, LIVE applies it', null, null, null],
     footprintOverlayCap: ['Digital-footprint overlay cap (points, positive-only)', 0, 30, 5],
-    tokenValidityDays: ['Offer validity (days)', 3, 30, 1]
+    tokenValidityDays: ['Offer validity (days)', 3, 30, 1],
+    /* v2.17 — "Two steps to a score" */
+    completenessThresholdPct: ['Data-completeness threshold (%, illustrative) — below it no score is issued and decide() refers', 50, 90, 5]
   },
   starter_loan: {
     minAmount: ['Minimum upgrade amount (AED)', 100, 2000, 100],
@@ -6558,6 +6599,15 @@ var LogScreen = {
       panel.appendChild(h('div', { style: 'margin:0 0 12px;' }, h('h3', { text: 'What the evidence was worth — same application, each path' }), evidenceStrip(rec, { id: 'lg-evidence' })));
     }
     if (rec.redFlags) panel.appendChild(h('div', { style: 'margin:0 0 12px;' }, RedFlagsUI.tripped(rec.redFlags, { id: 'lg-rf-trip', title: 'Red flags read at origination (internal)' })));   /* v2.9 */
+    if (rec.dataCompleteness) {
+      /* v2.17 — internal: the threshold and the components (the memo carries the percentage and counts only) */
+      var ldc = rec.dataCompleteness, ltb = h('tbody');
+      ldc.components.forEach(function (c) { ltb.appendChild(h('tr', { dataset: { key: c.key } }, h('td', { text: c.label }), h('td', { class: 'small', text: c.note }), h('td', { class: 'num', text: c.points + ' / ' + c.weight }))); });
+      panel.appendChild(h('div', { id: 'lg-dc', style: 'margin:0 0 12px;' }, h('h3', { text: 'Data completeness — step 1 of the score (internal)' }),
+        h('div', { class: 'small', id: 'lg-dc-line', text: ldc.pct + '% complete · ' + ldc.counts.banks + ' banks · ' + ldc.counts.accounts + ' accounts · ' + ldc.counts.months + ' months · threshold ' + ldc.threshold + '% (illustrative) · ' +
+          (ldc.aboveThreshold ? 'scored' + (ldc.scoreOverlay ? ' — NoorScore ' + ldc.scoreOverlay : ' — nothing to add') : 'below the threshold — referred (' + ldc.ask.join(', ') + ' missing)') }),
+        h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'What we have' }), h('th', { class: 'num', text: 'Points / weight' }))), ltb))));
+    }
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
@@ -6744,6 +6794,17 @@ function memoDoc(m) {
       ['Returned cheques', bu.chequeReturnsFlag, 'cheques'], ['Home-country bureau', bu.homeCountryFile, 'cpass'], ['Identity', ve.identity, 'identity'],
       ['Home-country statements', ve.homeStatements, 'statements'], ['Purchase', ve.purchaseVerified, 'purchase'],
       ['Other income', ve.otherIncome, 'otherIncome'], ['Down-payment source', ve.downPaymentSource, 'downPaymentSource']])));
+  }
+  /* v2.17 — data completeness as the lender sees it: a ring with the percentage and the counts (no threshold, no weights) */
+  if (m.dataCompleteness) {
+    var mdc = m.dataCompleteness;
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-dc', dataset: { pct: String(mdc.pct) } }, h('h4', { text: 'Data completeness' }),
+      h('div', { class: 'dc-wrap' },
+        h('div', { class: 'dc-ring', id: 'lv-dc-ring', role: 'img', 'aria-label': mdc.pct + '% data completeness', style: '--dc:' + Math.max(0, Math.min(100, mdc.pct)) + ';' },
+          h('span', { class: 'dc-ring-v', text: mdc.pct + '%' })),
+        h('div', { class: 'dc-side' },
+          h('div', { class: 'dc-counts', id: 'lv-dc-counts', text: mdc.banks + (mdc.banks === 1 ? ' bank' : ' banks') + ' · ' + mdc.accounts + (mdc.accounts === 1 ? ' account' : ' accounts') + ' · ' + mdc.months + ' months' }),
+          h('div', { class: 'small muted', text: 'How much of the customer’s financial picture Noor sees through Open Finance — counts only, never the accounts.' })))));
   }
   var rc = h('div', { class: 'memo-rc' });
   if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
@@ -6967,6 +7028,8 @@ var JR_TERMS = {
   clause: 'to confirm it’s you and protect your account, we check your email and mobile number with a fraud-prevention provider. We use it for identity and security — and, only if we switch it on after testing, to help when you have little credit history. We never use your gender, the apps or services you use, or where a data breach came from.',
   object: 'Contact us in the app to ask about or object to this check.'
 };
+/* v2.17 — "Two steps to a score": the proxy line behind the scenes */
+var JR_DC_PROXY = 'Noor is the proxy: Partner Bank relies on Noor’s data and verification. Completeness is how much of the customer’s financial picture Noor actually sees — the threshold is the minimum before Noor puts a score on it.';
 /* v2.16 — the what-if: the same card, with the salary paid by another (fictitious) company */
 var JR_EID_WHATIF_PAYER = 'SALARY/WPS PALMGATE TRADING';
 /* When the terms were accepted: the demo's day (MizanData.TODAY), just before the engine's session clock starts (09:00) */
@@ -6979,6 +7042,7 @@ function jrFresh(variant) {
            emailEdit: false, emailOther: '', emailErr: null, emailCode: '', emailCodeErr: false, emailOk: false, emailDone: false,
            footprint: false, fpa: null, terms: null, termsSheet: null,
            eid: { front: false, back: false }, eidCam: null, eidDone: false, eidCheck: null, eidWhatIf: null,
+           pqKey: null, dcWhatIf: null,
            comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
            commsTouched: false, commsDone: false, commsErr: null,
            insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
@@ -6991,6 +7055,12 @@ function jrDayNth(d) { var s = ['th', 'st', 'nd', 'rd'], v = d % 100; return d +
 function jrMaskEmail(e) {
   var m = String(e || '').match(/^([^@\s])[^@\s]*@[^@\s]+?(\.[A-Za-z]{2,})$/);
   return m ? m[1] + '•••••@•••' + m[2].toLowerCase() : '•••••@•••';
+}
+/* v2.17 — months of history seen in the connected accounts, and the counts as the customer reads them */
+function jrMonthsSeen() { var p = Journey.persona; return (p && p.connected && p.connected.monthsAvailable) || 12; }
+function jrDcCounts(dc) {
+  var c = dc.counts;
+  return c.banks + (c.banks === 1 ? ' bank' : ' banks') + ' · ' + c.accounts + (c.accounts === 1 ? ' account' : ' accounts') + ' · ' + c.months + ' months';
 }
 /* v2.15 — the connected accounts by kind: deposit accounts (the botim tiles), credit cards and loans (the bank app, the budget) */
 function jrDeposits(list) { return (list || []).filter(function (a) { return /account$/i.test(a.type); }); }
@@ -7047,6 +7117,8 @@ var Journey = {
     if (!Journey.persona) { root.appendChild(h('div', { class: 'panel', text: 'Journey persona j1 is missing from MizanData.personasJourney.' })); return; }
     /* v2.11 — the flow map above the phone: ten phases over the journey's own steps; "Go to this step" uses the journey's jump */
     Journey.map = FlowMap.create({ id: 'jr-flow', key: 'journey', label: 'The customer journey, ten phases', steps: JR_FLOW,
+      /* v2.17 — once the accounts are read, the header note carries the data completeness */
+      note: function () { var dc = Journey.dataNow(); return dc ? ' · data completeness ' + dc.pct + '%' : ''; },
       doneText: 'Reached', todoText: 'Not reached yet',
       status: function () { return Journey.flowStatus(); }, go: function (i) { return Journey.flowGo(i); }, run: function (i) { Journey.flowRun(i); } });
     root.appendChild(Journey.map.el);
@@ -7133,18 +7205,27 @@ var Journey = {
        salary credits, and the name on the card against the account holder (pure: no record) */
     if (((S.step === 7 && S.sub === 2) || (S.step === 8 && S.sub === 2)) && S.eidDone && S.connected && !S.eidCheck) Journey.runEidCheck();
     var pqStep = (S.step === 7 && S.sub === 3) || (S.step === 8 && S.sub === 2);
-    if (pqStep && !S.pq) {
+    /* v2.17 — step 1 first: prequalify() takes the approved accounts; below the threshold it returns NEEDS_DATA (no range, no score) */
+    var pqKey = Journey.dcMasks().join(',');
+    if (pqStep && (!S.pq || S.pqKey !== pqKey)) {
       try {
-        S.pq = ME.prequalify(p, { openFinance: true });
+        S.pq = ME.prequalify(p, { openFinance: true }, { approvedAccounts: Journey.dcMasks(), months: jrMonthsSeen() });
+        S.pqKey = pqKey;
         S.pqErr = null;
-        Journey.log('prequalify(j1, {openFinance:true})', S.step === 8
-          ? 'affordability check · caps 6 → ' + fmtAED(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtAED(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtAED(S.pq.maxByTermMonths[24]) + ' · no record, no AECB pull'
-          : fmtAED(S.pq.indicativeMin) + ' – ' + fmtAED(S.pq.indicativeMax) + ' · NoorScore estimate ' + S.pq.noorScoreEstimateBand + ' · no record, no AECB pull');
-        /* variant B shows the approvable amount first, so the slider starts inside it; variant A keeps the customer's ask for the check */
-        if (S.step === 7 && S.amount > S.pq.indicativeMax) S.amount = S.pq.indicativeMax;
+        var pqCall = 'prequalify(j1, {openFinance:true}, {approvedAccounts:' + Journey.dcMasks().length + '})';
+        if (S.pq.status === 'NEEDS_DATA') {
+          Journey.log(pqCall, 'NEEDS_DATA · data ' + S.pq.completeness.pct + '% — below the threshold · ask: ' + S.pq.ask.join(', ') + ' · no score, no record, no AECB pull');
+        } else {
+          Journey.log(pqCall, (S.step === 8
+            ? 'affordability check · caps 6 → ' + fmtAED(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtAED(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtAED(S.pq.maxByTermMonths[24])
+            : fmtAED(S.pq.indicativeMin) + ' – ' + fmtAED(S.pq.indicativeMax) + ' · NoorScore estimate ' + S.pq.noorScoreEstimateBand) +
+            ' · data ' + S.pq.completeness.pct + '% · no record, no AECB pull');
+          /* variant B shows the approvable amount first, so the slider starts inside it; variant A keeps the customer's ask for the check */
+          if (S.step === 7 && S.amount > S.pq.indicativeMax) S.amount = S.pq.indicativeMax;
+        }
       } catch (err) { S.pqErr = err && err.message ? err.message : String(err); }
     }
-    if (pqStep && S.pq) Journey.emit('prequalified');
+    if (pqStep && S.pq && S.pq.status !== 'NEEDS_DATA') Journey.emit('prequalified');
     if (S.step === 11 && S.sub === 1 && S.recId && S.memoSent !== S.recId) {
       try { var m = ME.creditMemo(S.recId, { lenderId: 'partner-bank' }); S.memoSent = S.recId; Journey.log('creditMemo(' + S.recId + ')', m.memoId + ' → ' + m.lenderName + ' (UI · API · SFTP)'); } catch (e) {}
     }
@@ -7309,13 +7390,17 @@ var Journey = {
     var fpc = S.terms ? { basis: 'TERMS', termsVersion: S.terms.version, acceptedAt: S.terms.acceptedAt } : undefined;
     /* v2.16 — the Emirates ID scanned at 3·2 (front + back): POL_ID_VALID and POL_EMPLOYER_MATCH, refer only */
     var eid = S.eidDone && S.eid.front && S.eid.back;
+    /* v2.17 — dataSources: the accounts approved in the banks' apps (step 1, data completeness) */
+    var dsMasks = Journey.dcMasks();
     var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true' +
-      (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}' + (eid ? ', emiratesId:{front, back}' : '') + '})';
+      (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}' + (eid ? ', emiratesId:{front, back}' : '') +
+      (dsMasks.length ? ', dataSources:{' + dsMasks.length + ' accounts, ' + jrMonthsSeen() + ' months}' : '') + '})';
     var cons = { aecb: !!S.aecb, openFinance: true };
     if (fpc) cons.digitalFootprint = fpc;
     try {
       var app = { productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' };
       if (eid) app.emiratesId = true;
+      if (dsMasks.length) app.dataSources = { approvedAccounts: dsMasks, months: jrMonthsSeen() };
       rec = ME.decide(app);
     } catch (err) {
       /* Expected: no AECB consent → the engine refuses. Shown in the phone, calmly. */
@@ -7328,7 +7413,8 @@ var Journey = {
     S.botim = S.botim.filter(function (b) { return b.key !== 'funded'; });
     Journey.emit('applied');
     Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : '') +
-      (eid ? ' · ' + (rec.rules || []).filter(function (x) { return x.id === 'POL_ID_VALID' || x.id === 'POL_EMPLOYER_MATCH'; }).map(function (x) { return x.id + ' ' + x.result; }).join(' · ') : ''));
+      (eid ? ' · ' + (rec.rules || []).filter(function (x) { return x.id === 'POL_ID_VALID' || x.id === 'POL_EMPLOYER_MATCH'; }).map(function (x) { return x.id + ' ' + x.result; }).join(' · ') : '') +
+      (rec.dataCompleteness ? ' · POL_DATA_COMPLETENESS ' + ((rec.rules || []).filter(function (x) { return x.id === 'POL_DATA_COMPLETENESS'; }).map(function (x) { return x.result; })[0] || '—') + ' (' + rec.dataCompleteness.pct + '%)' : ''));
     afterEngineMutation();
     Journey.go(9, 1, 1);
   },
@@ -7773,8 +7859,7 @@ var Journey = {
     var phone = JR_HOST.phoneMasked;
     if (st === 1) {
       return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-splash' },
-        h('div', { class: 'ph-splash-mid' }, h('span', { class: 'noor-logo ph-splash-logo', role: 'img', 'aria-label': 'noor finance' }),
-          h('div', { class: 'ph-splash-tag', text: 'Noor for your better financial sleep.' })),
+        h('div', { class: 'ph-splash-mid' }, h('span', { class: 'noor-logo ph-splash-logo', role: 'img', 'aria-label': 'noor finance' })),
         h('div', { class: 'ph-sheet', id: 'jr-handoff' },
           Journey.connectFirst(),
           h('div', { class: 'ph-sheet-t', text: 'Continue with your botim details?' }),
@@ -7867,6 +7952,8 @@ var Journey = {
         h('h2', { class: 'ph-h1', text: 'Your accounts are connected' }),
         h('div', { class: 'ph-card ph-acctlist' }, ac.map(function (a) {
           return h('div', { class: 'ph-acct' }, Journey.mono(a.bank.slice(0, 2)), h('span', { class: 'ph-acct-n', text: a.bank + ' ' + a.type.toLowerCase() }), h('span', { class: 'ph-acct-m', text: '••••' + a.mask })); })),
+        /* v2.17 — "Your data": how much of the financial picture the approved accounts show */
+        Journey.dataCard(Journey.dataNow(), 'From the accounts you shared through Open Finance. A fuller picture lets us decide without asking for more.'),
         h('p', { class: 'ph-small', text: 'Your bank returned you to Botim and Noor picked up where you left off.' })),
         loan ? (S.variant === 'A' ? B('Check it fits my budget', function () { Journey.go(8, 2, 1); }, 'jr-cta') : B('See what you could borrow', function () { Journey.go(7, 1, 1); }, 'jr-cta'))
              : B('Done', function () { Journey.go(6, 1, 1); }, 'jr-cta')) };
@@ -7894,6 +7981,8 @@ var Journey = {
           Journey.budgetRepayments(cn),
           h('div', { class: 'ph-mini-r ph-mini-sep' }, h('span', { class: 'ph-mini-k', text: 'Left after spending and repayments' }),
             h('span', { class: 'ph-mini-v', text: '≈ ' + fmtAED(cn.avgMonthlyIncome - cn.avgMonthlySpend - (cn.observedObligationsMonthly || 0)) + ' / month' }))),
+        /* v2.17 — "Your data", under the budget summary */
+        Journey.dataCard(Journey.dataNow()),
         /* v2.16 — the Emirates ID cross-check: the employer on the card ↔ the WPS payer on the salary credits; the name ↔ the account holder */
         Journey.eidMatchCard()),
         S.variant === 'A' ? B('Apply for a personal loan', function () { Journey.S.intent = 'loan'; Journey.go(8, 1, 1); }, 'jr-cta')
@@ -7902,6 +7991,8 @@ var Journey = {
     if (st === 7 && sub === 3) {
       var pq = S.pq;
       if (!pq) return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-center' }, h('h2', { class: 'ph-h1', text: 'We couldn’t check right now' }), h('p', { class: 'ph-small', text: S.pqErr || '' })), null) };
+      if (pq.status === 'NEEDS_DATA') return { kind: 'webview', node: Journey.almostView(pq) };   /* v2.17 */
+      var pqDc = pq.completeness || null;
       return { kind: 'webview', node: Journey.wv(h('div', { id: 'jr-prequal', dataset: { min: String(pq.indicativeMin), max: String(pq.indicativeMax) } },
         h('h2', { class: 'ph-hero', id: 'jr-pq-head', text: 'You could borrow up to ' + fmtAED(pq.indicativeMax) }),
         h('p', { class: 'ph-p', id: 'jr-pq-range' }, 'Your range: ', h('strong', { text: fmtAED(pq.indicativeMin) + ' – ' + fmtAED(pq.indicativeMax).replace('AED ', '') })),
@@ -7910,10 +8001,15 @@ var Journey = {
           h('span', null, h('strong', { text: 'Checking this didn’t affect your credit score' }), h('span', { class: 'ph-small ph-block', text: 'Worked out from your connected accounts only. Your exact limit is confirmed after a credit check — you can borrow any amount up to it.' }))),
         h('p', { class: 'ph-small', id: 'jr-pq-fcf', text: 'Up to ' + fmtAED(pq.indicativeMax) + ' over ' + pq.assumptions.tenorMonths + ' months — we keep the monthly payment within half of what’s left after your spending' +
           (pq.assumptions.instalmentBudgetMonthly ? ' (about ' + fmtAED(pq.assumptions.instalmentBudgetMonthly) + ' a month)' : '') + '. Shorter terms mean smaller amounts.' }),
+        /* v2.17 — what the range rests on */
+        pqDc ? h('p', { class: 'ph-small', id: 'jr-pq-data', text: 'Based on ' + pqDc.pct + '% complete data · ' + pqDc.counts.banks + (pqDc.counts.banks === 1 ? ' bank' : ' banks') + ' · ' + pqDc.counts.accounts + (pqDc.counts.accounts === 1 ? ' account' : ' accounts') }) : null,
+        Journey.dataCard(pqDc),
         h('p', { class: 'ph-small ph-muted', text: 'Indicative for ' + pq.validForDays + ' days.' })),
         B('Choose your loan', function () { Journey.go(8, 0, 1); }, 'jr-cta')) };
     }
     if (st === 8 && sub === 1) return { kind: 'webview', node: Journey.needView() };
+    /* v2.17 — below the completeness threshold there is no range to choose from: "Almost there" */
+    if (st === 8 && S.pq && S.pq.status === 'NEEDS_DATA') return { kind: 'webview', node: Journey.almostView(S.pq) };
     if (st === 8 && sub === 2) return { kind: 'webview', node: Journey.affordView() };
     if (st === 8) return { kind: 'webview', node: Journey.chooseView() };
     if (st === 9 && sub === 0) return { kind: 'webview', node: Journey.checksView() };
@@ -8000,6 +8096,89 @@ var Journey = {
         Journey.termsLink('privacy', 'Privacy policy', 'jr-fp-privacy'), '.'),
       Journey.termsSheet()),
       B('Continue', function () { S.emailDone = true; Journey.go(3, 2, 1); }, 'jr-cta'));   /* v2.16 — then the Emirates ID (3·2); contact preferences still come after the payout (v2.13) */
+  },
+  /* v2.17 — the accounts the customer approved (masks) and step 1, data completeness, on them (pure; null before the accounts are read) */
+  dcMasks: function () { return Journey.S && Journey.S.connected ? Journey.approvedAccounts().map(function (a) { return a.mask; }) : []; },
+  dataNow: function () {
+    var S = Journey.S;
+    if (!S || !S.connected) return null;
+    try { return ME.dataCompleteness(Journey.persona, Journey.dcMasks(), { months: jrMonthsSeen() }); } catch (e) { return null; }
+  },
+  /* "Your data" — the customer's card: a bar with the threshold line, the percentage, the counts and the checklist */
+  dataCard: function (dc, extra) {
+    if (!dc) return null;
+    var list = h('div', { class: 'ph-data-list', id: 'jr-data-list' }, dc.components.map(function (c) {
+      return h('span', { class: 'ph-data-c' + (c.have ? ' on' : ''), dataset: { key: c.key, have: String(!!c.have) } },
+        h('span', { class: 'ph-data-mk', 'aria-hidden': 'true' }, c.have ? jrSvg(JR_ICON.check, null, '2.4') : null), c.label + (c.have ? ' ✓' : ''));
+    }));
+    return h('div', { class: 'ph-card ph-data', id: 'jr-data', dataset: { pct: String(dc.pct), above: String(!!dc.aboveThreshold) } },
+      h('div', { class: 'ph-data-h' }, h('span', { class: 'ph-h3', text: 'Your data' }), h('span', { class: 'ph-data-pct', id: 'jr-data-pct', text: dc.pct + '%' })),
+      h('div', { class: 'ph-data-bar', role: 'img', 'aria-label': dc.pct + '% of your financial picture connected' },
+        h('span', { class: 'ph-data-fill', style: 'width:' + Math.max(0, Math.min(100, dc.pct)) + '%;' }),
+        h('span', { class: 'ph-data-th', style: 'left:' + dc.threshold + '%;', title: 'Needed before we calculate a score' })),
+      h('div', { class: 'ph-data-counts', id: 'jr-data-counts', text: jrDcCounts(dc) }),
+      list,
+      extra ? h('p', { class: 'ph-small ph-data-n', text: extra }) : null);
+  },
+  /* 7·3 (and 8·2 in variant A) below the threshold: "Almost there" — no range, no score; the deck's chips; back to step 4 */
+  almostView: function (pq) {
+    var B = Journey.btn, dc = pq.completeness;
+    return Journey.wv(h('div', { id: 'jr-almost', dataset: { pct: String(dc.pct) } },
+      h('h2', { class: 'ph-h1', text: 'Almost there' }),
+      h('p', { class: 'ph-p', id: 'jr-almost-lead', text: 'Add your salary account, credit cards and loans so we can calculate your score' }),
+      h('div', { class: 'ph-chips', id: 'jr-almost-chips' }, pq.ask.map(function (a) { return h('span', { class: 'ph-chip', dataset: { ask: a }, text: a }); })),
+      Journey.dataCard(dc),
+      h('p', { class: 'ph-small', id: 'jr-almost-note', text: 'No score yet and nothing recorded — checking didn’t affect your credit score.' })),
+      B('Connect another account', function () { Journey.S.bankDeclined = false; Journey.go(4, 0, -1); }, 'jr-cta'));
+  },
+  /* Behind the scenes, from step 6: "Two steps to a score" — completeness, then the score; the proxy line; the 50% what-if */
+  twoSteps: function () {
+    var S = Journey.S, dc = Journey.dataNow(), r = Journey.rec();
+    if (!dc) return null;
+    var rdc = r && r.dataCompleteness ? r.dataCompleteness : null, use = rdc || dc;
+    var tb = h('tbody');
+    use.components.forEach(function (c) {
+      tb.appendChild(h('tr', { dataset: { key: c.key } }, h('td', { text: c.label }), h('td', { class: 'small', text: c.note }), h('td', { class: 'num', text: c.points + ' / ' + c.weight })));
+    });
+    var step2;
+    if (r && rdc) {
+      var f = r.features || {};
+      step2 = 'This decision: NoorScore ' + r.score.points + ' (grade ' + r.score.grade + ')' + (rdc.scoreOverlay ? ' — completeness ' + rdc.scoreOverlay + ' points' : ' — completeness adds nothing') +
+        ' · DBR ' + f.dbrPct + '% · free cash flow ' + fmtAED(f.freeCashFlowMonthly) + '/month (instalment ' + f.instalmentToFcfPct + '% of it) · POL_DATA_COMPLETENESS ' +
+        ((r.rules || []).filter(function (x) { return x.id === 'POL_DATA_COMPLETENESS'; }).map(function (x) { return x.result; })[0] || '—') +
+        '. Monitoring: while the loan is open, the Al Tareq consent lets Noor spot early if repayments might become hard.';
+    } else if (!use.aboveThreshold) {
+      step2 = 'Not issued — below the threshold Noor asks for more data first (decide() would refer as a backstop: POL_DATA_COMPLETENESS, never a decline).';
+    } else {
+      step2 = 'Runs at decide(), after the AECB pull: NoorScore' + (use.scoreOverlay ? ' (' + use.scoreOverlay + ' points for completeness under 85%, illustrative)' : '') +
+        ', with the affordability aggregates (DBR, free cash flow); monitoring follows the payout.';
+    }
+    var w = S.dcWhatIf;
+    return h('div', { class: 'jr-engine jr-two', id: 'jr-two-steps', dataset: { pct: String(use.pct), above: String(!!use.aboveThreshold) } },
+      h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Two steps to a score' }), h('code', { text: 'dataCompleteness(j1, approved accounts)' }), h('span', { class: 'small muted', text: ' · pure — no record' })),
+      h('div', { class: 'jr-two-s', id: 'jr-two-1' },
+        h('div', { class: 'jr-two-t', text: 'Step 1 — data completeness' }),
+        h('div', { class: 'jr-dc-bar', role: 'img', 'aria-label': use.pct + '% complete, threshold ' + use.threshold + '%' },
+          h('span', { class: 'jr-dc-fill', style: 'width:' + Math.max(0, Math.min(100, use.pct)) + '%;' }), h('span', { class: 'jr-dc-th', style: 'left:' + use.threshold + '%;' })),
+        h('div', { class: 'small', id: 'jr-two-pct', text: use.pct + '% · ' + jrDcCounts(use) + ' · threshold ' + use.threshold + '% (illustrative, completenessThresholdPct)' }),
+        h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl jr-dc-tbl', id: 'jr-two-tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'What we have' }), h('th', { class: 'num', text: 'Points / weight' }))), tb)),
+        h('div', { class: 'small muted', id: 'jr-two-rule', text: 'Below the threshold: the customer is asked to act. Above: we score.' })),
+      h('div', { class: 'jr-two-s', id: 'jr-two-2' }, h('div', { class: 'jr-two-t', text: 'Step 2 — the score itself' }), h('div', { class: 'small', id: 'jr-two-score', text: step2 })),
+      h('p', { class: 'small jr-two-proxy', id: 'jr-two-proxy', text: JR_DC_PROXY }),
+      h('button', { class: 'btn', type: 'button', id: 'jr-dc-whatif', text: 'Current account only (no salary)', onclick: function () { Journey.dcWhatIfRun(); } }),
+      w ? h('div', { class: 'callout callout-info', id: 'jr-dc-whatif-out', dataset: { pct: String(w.pct) } },
+            h('div', { class: 'co-title', text: w.pct + '% — ' + (w.aboveThreshold ? 'at or above the threshold' : 'below the threshold: no score') }),
+            h('div', { class: 'co-body', text: 'A current account without the salary, nothing else. Ask: ' + w.ask.join(' · ') + '. Pure check — no record.' })) : null);
+  },
+  dcWhatIfRun: function () {
+    var S = Journey.S, p = Journey.persona;
+    var cur = ((p.connected && p.connected.accounts) || []).filter(function (a) { return /current/i.test(a.type); })[0];
+    if (!cur) return;
+    try {
+      S.dcWhatIf = ME.dataCompleteness(p, [Object.assign({}, cur, { salaryAccount: false })], { months: jrMonthsSeen() });
+      Journey.log('dataCompleteness(j1, [current account, no salary])', 'what-if · ' + S.dcWhatIf.pct + '% · ' + (S.dcWhatIf.aboveThreshold ? 'scored' : 'below the threshold, no score') + ' · ask: ' + S.dcWhatIf.ask.join(', ') + ' · pure, no record');
+    } catch (err) { S.dcWhatIf = null; }
+    Journey.render();
   },
   /* v2.16 — sub-step 3·2: the Emirates ID, front and back. A neutral card outline with field labels (never a real card
      design); tapping a side shows a simulated camera frame for about a second (instant under reduced motion), then the
@@ -8588,7 +8767,7 @@ var Journey = {
     }
     /* v2.16 — the Emirates ID: what the scan read (3·2); the cross-check once the accounts are read (7·2; 8·2 in variant A); the what-if */
     if ((st === 3 && sub === 2) || (S.eidDone && ((st === 7 && sub === 2) || (st === 8 && sub === 2)))) wrap.appendChild(Journey.eidEngineBox());
-    if (st === 7 && sub === 3 && S.pq) {
+    if (st === 7 && sub === 3 && S.pq && S.pq.status !== 'NEEDS_DATA') {
       var pq = S.pq;
       wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-pq-out' },
         h('div', { class: 'jr-engine-h' }, h('code', { text: 'prequalify(j1, {openFinance:true})' })),
@@ -8644,6 +8823,8 @@ var Journey = {
     var e = jrPath()[jrIdx(S.step, S.sub)] || { n: S.step };
     box.appendChild(h('h3', null, 'Behind the scenes ', h('span', { class: 'h3-note', text: '— step ' + e.n + (e.sub ? '·' + e.sub : '') + ' of 16 · variant ' + S.variant })));
     box.appendChild(Journey.behind());
+    /* v2.17 — "Two steps to a score", from step 6 on (once the accounts are read) */
+    if (S.step >= 6 && S.connected) { var ts = Journey.twoSteps(); if (ts) box.appendChild(ts); }
     var calls = h('div', { class: 'jr-calls', id: 'jr-calls' });
     if (!S.calls.length) calls.appendChild(h('div', { class: 'small muted', text: 'No engine calls yet — they start once the accounts are connected.' }));
     S.calls.slice(-6).forEach(function (c) { calls.appendChild(h('div', { class: 'jr-call' }, h('code', { text: c.call }), h('span', { class: 'jr-call-r', text: '→ ' + c.result }))); });
@@ -8778,7 +8959,7 @@ var RC_SHORT = {
   RC_INCOME_VOLATILITY: 'Income too volatile', RC_CONNECTED_HISTORY: 'Too little connected history', RC_INCOME_UNVERIFIED: 'Income not verified',
   RC_TENOR_CAP: 'Term outside permitted', RC_MANUAL_REVIEW: 'Manual review', RC_LIMIT_REDUCED: 'Amount reduced',
   RC_LTV_CAP: 'Limited to 80% of vehicle value', RC_VEHICLE_INELIGIBLE: 'Vehicle not eligible', RC_BELOW_MIN_AMOUNT: 'Below product minimum',
-  RC_EMPLOYER_MISMATCH: 'Employer ≠ salary payer', RC_ID_EXPIRED: 'Emirates ID expired'
+  RC_EMPLOYER_MISMATCH: 'Employer ≠ salary payer', RC_ID_EXPIRED: 'Emirates ID expired', RC_DATA_INCOMPLETE: 'Data incomplete'
 };
 var Monitoring = {
   map: null,
