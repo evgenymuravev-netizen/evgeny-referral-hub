@@ -158,3 +158,17 @@ says a liveness check is likely not needed, given the Open Finance matching. Thi
   - Add: "Nationality: identity and enrichment routing only; never a NoorScore input (CBUAE fair treatment and
     the AI/ML guidance)."
 - **The ID step is mandatory:** Continue is blocked until both sides are captured, as specified.
+
+## Amendment 2, 9 Oct — "Noor IP vs lender view" (methodology slide 6)
+
+Raw customer data, **including the Emirates ID images**, stays inside Noor and never leaves it. Noor keeps the
+images securely for its KYC records (anti-money-laundering record-keeping). They are never shared with botim or
+the lender. This supersedes "we don't keep the photos":
+
+- `notRead` becomes `['sex']`. The images are captured and stored inside Noor (`retainedInsideNoor: true`).
+- **The screen line becomes:** "Your ID images stay with Noor for our records — never shared with botim or the
+  lender. We don't read your sex. Your nationality is used to confirm your identity and offer the right
+  home-country data — never to score you."
+- **Behind the scenes:** "ID images are kept inside Noor for KYC record-keeping (AML) and never leave Noor —
+  like transactions, balances and account details (Noor IP vs lender view)."
+- **The memo and SFTP row** must contain no image reference or file name. Extend the privacy scan.

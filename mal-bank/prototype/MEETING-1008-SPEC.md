@@ -36,6 +36,60 @@ five buckets:
 **Deep link:** opening the page with `#lender` (and `#log`) lands on that screen with the most recent journey
 decision selected, so the link can be circulated. Without a decision, show a seeded example.
 
+## 1b. Noor IP vs lender view (methodology slide 6) — what the memo may and may not carry
+
+**What stays inside Noor**, never in the memo, the SFTP row or the lender-facing UI:
+- **the methodology:** features, component weights, how the components combine, and (later) the trained model;
+- **thresholds and cut-offs:** the completeness threshold, the risk-band boundaries and the rules behind each
+  flag;
+- **the data-source mix:** which alternative data sources are used, when, and how much each counts;
+- **raw customer data:** transactions, balances, account details and Emirates ID images.
+
+**What is shared outside Noor:** scores, reason codes and derived aggregates only. The exact set is agreed with
+each partner.
+
+**Changes to the memo and the Lender view:**
+1. **Drop the NoorScore band boundaries.** Remove "Excellent ≥ 740 · Very good 680–739 …". Keep the band word
+   and the value.
+2. **Make the flags agnostic about data sources:**
+   - the identity flag becomes "Identity verified" (no "digital footprint", no "UAE PASS / Emirates ID" detail
+     beyond verified / not verified);
+   - "Rental income verified via Open Finance — counted at 75%" becomes "Additional income verified";
+   - "6 of 6 months verified · conduct clean" becomes "Additional evidence verified";
+   - the purchase flag keeps its category only.
+
+   Open Finance as the core source may be named; it is Noor's external line.
+3. **The component bars** (§1) use level words and reason-code-style factor words ("Strong cash flow", "Stable
+   income", "Recent changes in account activity"). No feature names, no thresholds.
+4. **Per-partner sharing agreements.**
+   - `creditMemo(decisionId, { lenderId })` builds the allowlist from `MizanData.sharingAgreements[lenderId]`.
+     The agreement is versioned and lists which groups go out: score + band, reason codes, the four component
+     levels, affordability aggregates, completeness, the monitoring status, consent references.
+   - Partner Bank gets the full set, v1.
+   - Add an illustrative second lender, "Lender B (illustrative)", with a narrower set: score + band, reason
+     codes and affordability aggregates only.
+   - The Lender view shows "Sharing agreement: Partner Bank v1" and a lender switch.
+   - The selftest asserts that Lender B's memo omits the groups it hasn't agreed to.
+5. **The "Shared vs withheld" panel becomes the slide's two columns:**
+   - **Stays inside Noor:** methodology · thresholds and cut-offs · data-source mix · raw customer data.
+   - **Shared outside Noor:** the external line, what lenders receive (per agreement), and "why the methodology
+     stays private: it protects NoorScore from being copied by competitors and from being gamed by applicants".
+
+   Label the panel "Noor-only explanation — not part of the memo".
+6. **The external line, verbatim,** goes in the Lender view header and in the Overview: "NoorScore works with
+   Open Finance data as its core component. For enrichment, we use different types of alternative data where
+   available."
+
+**Tests:**
+- recursive scans of every persona's memo and SFTP row for:
+  - band-boundary strings ("≥ 740", "680–739");
+  - "threshold";
+  - "footprint", "statement", "75%" or "counted at";
+  - any weight or point value of a component;
+  - EID image fields;
+- Lender B's narrower memo;
+- update existing memo assertions that expected the old flag texts, and list them.
+
 ## 2. botim placements: main page and menu page
 
 The main page already has Noor (v2.12). The bottom-nav **All** (menu) currently shows a toast. Make it a

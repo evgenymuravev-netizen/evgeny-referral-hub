@@ -101,10 +101,13 @@ It appears at 6·0 (back from the banks), at 7·2 (the budget view) and at 7·3:
 **Flow map.** The journey map's header note gains "· data completeness {pct}%" once the accounts are read.
 
 **Lender view and memo:**
-- Show completeness as a **circular indicator** (a CSS conic-gradient ring) with the percentage and "threshold
-  70%", plus the counts (banks, accounts, months).
-- The memo carries `dataCompleteness: { pct, threshold, banks, accounts, months }`, counts only: no bank
-  names, no masks. Add the SFTP columns `data_completeness_pct` and `data_sources`.
+- Show completeness as a **circular indicator** (a CSS conic-gradient ring) with the percentage, plus the counts
+  (banks, accounts, months).
+- **The threshold is NOT shown to the lender.** Per "Noor IP vs lender view" (methodology slide 6), the
+  completeness threshold, the risk-band boundaries and the rules behind each flag stay inside Noor.
+- The memo carries `dataCompleteness: { pct, banks, accounts, months }`: no threshold, no component weights,
+  no bank names, no masks. Add the SFTP columns `data_completeness_pct` and `data_sources`.
+- The internal Decision log does show the threshold and the components.
 
 **Decision log.** It shows the completeness line and the component table for journey decisions.
 
@@ -127,6 +130,6 @@ It appears at 6·0 (back from the banks), at 7·2 (the budget view) and at 7·3:
 - unticking the current account → 7·3 "Almost there" with the Salary account chip first, and "Connect another
   account" → step 4;
 - the behind-the-scenes "Two steps" panel and the 50% what-if;
-- the Lender view's circular indicator shows 100%;
+- the Lender view's circular indicator shows 100% and the memo contains no threshold and no weights;
 - update existing checks minimally and list them;
 - 390px; zero page errors; light and dark themes.
