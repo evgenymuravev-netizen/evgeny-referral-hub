@@ -401,11 +401,12 @@
                    velocity: { emailSeenByLenders: 1 },
                    breaches: { count: 1, includesCredentialStuffingCompilation: false } },
       // v2.16 — what the Emirates ID scan reads (front + back). Fictitious employer; masked ID number.
-      // Minimised by design: the card's other fields are never captured into the data, and the photos
-      // are not kept. Date of birth 1995-03-14 → 31 as of TODAY. The employer, occupation and date of
-      // birth stay with Noor: never in the credit memo or the SFTP row.
+      // Minimised by design: sex is never captured and the photos are not kept. Nationality (amendment
+      // 9 Oct) is read for identity checks and enrichment routing only — never a score or decision input.
+      // Date of birth 1995-03-14 → 31 as of TODAY. The employer, occupation, date of birth and nationality
+      // stay with Noor: never in the credit memo or the SFTP row.
       emiratesId: {
-        front: { nameEn: 'Ravi Kumar', nameAr: 'رافي كومار', idMasked: '784-••••-•••••••-4', dob: '1995-03-14', expiry: '2028-02-09' },
+        front: { nameEn: 'Ravi Kumar', nameAr: 'رافي كومار', idMasked: '784-••••-•••••••-4', dob: '1995-03-14', nationality: 'India', expiry: '2028-02-09' },
         back: { occupation: 'Warehouse Supervisor', employer: 'Dunecrest Logistics LLC', issuingPlace: 'Dubai' }
       }
     }

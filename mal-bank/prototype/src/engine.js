@@ -72,8 +72,10 @@
  *  - Emirates ID front + back (v2.16, ../JOURNEY-EID-SPEC.md): the employer on the
  *    card is matched against the WPS salary payer seen in Open Finance. A mismatch
  *    or an expired card REFERs — never a decline, never a price change. Only the
- *    name, masked ID number, date of birth, expiry, occupation and employer are
- *    read; the memo carries a flag only.
+ *    name, masked ID number, date of birth, nationality, expiry, occupation and
+ *    employer are read (never sex; the photos are not kept). Nationality routes
+ *    identity checks and enrichment only — never a score or decision input. The
+ *    memo carries a flag only.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -1246,11 +1248,24 @@
   // matches the two and checks that the name on the card is the account holder's.
   // A match strengthens income verification; a mismatch REFERs (usually a job
   // change) — never a decline, never a price change. Data minimisation (PDPL):
-  // only the fields in EID_FIELDS are read — the card's other personal fields and
-  // the photos never are (the selftest proves it with a property recorder).
+  // only the fields in EID_FIELDS are read — sex and the photos never are (the
+  // selftest proves it with a property recorder). Amendment 9 Oct: nationality is
+  // read from the front for identity checks and to route enrichment (which
+  // home-country data Noor can offer: the Credit Passport and statements corridors
+  // India / Pakistan / Egypt). It is never a score or decision input: no rule,
+  // feature, pull summary or memo field carries it.
   // ---------------------------------------------------------------------------
-  const EID_FIELDS = { front: ['nameEn', 'nameAr', 'idMasked', 'dob', 'expiry'], back: ['occupation', 'employer'] };
-  const EID_NOT_READ = ['nationality', 'sex', 'photos'];
+  const EID_FIELDS = { front: ['nameEn', 'nameAr', 'idMasked', 'dob', 'nationality', 'expiry'], back: ['occupation', 'employer'] };
+  const EID_NOT_READ = ['sex', 'photos'];
+  const EID_NATIONALITY_USE = 'identity and enrichment routing only — never a NoorScore or decision input';
+  // Enrichment routing: the home-country data Noor can offer for this nationality (null outside the corridors).
+  function eidEnrichment(nationality) {
+    if (typeof nationality !== 'string' || !nationality.trim()) return null;
+    const up = nationality.trim().toUpperCase();
+    const cc = STATEMENT_CORRIDORS.find(c => up === c || up === CORRIDORS[c].name.toUpperCase()) || null;
+    if (!cc) return { corridor: null, offer: [], use: EID_NATIONALITY_USE };
+    return { corridor: cc, offer: ['Credit Passport — the ' + CORRIDORS[cc].adjective + ' credit bureau file', CORRIDORS[cc].adjective + ' bank statements (6 months)'], use: EID_NATIONALITY_USE };
+  }
   const EID_MATCH_MIN = 0.7;   // match when ≥ 70% of the employer's tokens appear in the payer
   const EID_DROP = ['LLC', 'FZE', 'FZCO', 'LTD', 'CO', 'SALARY', 'WPS', 'SAL'];   // legal suffixes + payroll words
   const EID_ABBREV = { SVCS: 'SERVICES', TRDG: 'TRADING', LOG: 'LOGISTICS' };
@@ -1320,6 +1335,9 @@
       fieldsRead,
       notRead: EID_NOT_READ.slice(),
       idMasked: f.idMasked || null,
+      // Amendment 9 Oct — identity and enrichment routing only; nothing downstream scores or decides on it.
+      nationality: typeof f.nationality === 'string' && f.nationality.trim() ? f.nationality.trim() : null,
+      enrichment: eidEnrichment(f.nationality),
       expiry, expiryValid, ageFromDob,
       nameMatch: { idName, accountHolder, match: idName && accountHolder ? normName(idName) === normName(accountHolder) : null },
       employerMatch: { idEmployer: b.employer || null, salaryPayer, score: em ? em.score : null, match: em ? em.match : null,
@@ -3621,10 +3639,10 @@
     const consentAt = createdAt;
     const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
     if (eid) {
-      // v2.16 — what the scan read, as flags: never the employer, the payer, the date of birth or the occupation.
+      // v2.16 — what the scan read, as flags: never the employer, the payer, the date of birth, the occupation or the nationality.
       pulls.push({ source: 'EMIRATES_ID', status: 'SCANNED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
-                   summary: { scan: 'front + back scanned', fieldsRead: 'name (EN + AR), ID number (masked), date of birth, expiry, occupation, employer',
-                              notRead: 'nationality · sex · photos (not kept)', expiry: eid.expiryValid ? 'valid' : 'expired',
+                   summary: { scan: 'front + back scanned', fieldsRead: 'name (EN + AR), ID number (masked), date of birth, nationality (identity and enrichment routing only), expiry, occupation, employer',
+                              notRead: 'sex · photos (not kept)', expiry: eid.expiryValid ? 'valid' : 'expired',
                               nameMatch: eid.nameMatch.match === null ? 'checked once accounts are connected' : (eid.nameMatch.match ? 'matches the account holder' : 'does not match the account holder'),
                               employerMatch: eid.employerMatch.match === null ? (eid.openFinance ? 'no salary payer seen' : 'checked once accounts are connected')
                                 : (eid.employerMatch.match ? 'match' : 'mismatch') + ' — ' + eid.employerMatch.score + '% (WPS salary payer)' } });
