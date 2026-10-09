@@ -1246,7 +1246,7 @@ function rawValuesOf(rec) {
   return out;
 }
 // v2.16 — the Emirates ID strings a memo must never contain (per record): the employer, the
-// occupation, the date of birth (in the usual formats), the salary payer and their distinctive words.
+// occupation, the date of birth (in the usual formats), the nationality, the salary payer and their distinctive words.
 function identityWordsOf(rec) {
   const a = rec.applicantSnapshot || {}, id = a.emiratesId || {}, fr = id.front || {}, bk = id.back || {};
   const chk = (rec.emiratesId && rec.emiratesId.check) || {}, em = chk.employerMatch || {};
@@ -1261,13 +1261,14 @@ function identityWordsOf(rec) {
     const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     [fr.dob, d + '/' + m + '/' + y, d + '-' + m + '-' + y, m + '/' + d + '/' + y, Number(d) + ' ' + MON3[Number(m) - 1] + ' ' + y].forEach(addStr);
   }
+  addStr(fr.nationality);   /* amendment 9 Oct: read for identity and enrichment routing — never in the memo */
   return [...out];
 }
 // Recursive privacy scan: every leaf of the memo (and every SFTP cell). Strings are
 // checked for bank labels, merchant names, statement files and "transactions", and
 // every number inside them — like every numeric leaf — must not be a raw value.
 // Band fields are instead checked to equal the independently computed band.
-// v2.16 — strings are also checked for the Emirates ID employer, occupation, date of birth and the salary payer.
+// v2.16 — strings are also checked for the Emirates ID employer, occupation, date of birth, nationality and the salary payer.
 function privacyScan(rec, memo, sftp, expect) {
   const raw = rawValuesOf(rec);
   const hits = [];
@@ -3189,13 +3190,16 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   const addDays = (iso, n) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
 
   // ---- the data ----
-  eq(JSON.stringify(eidData.front), JSON.stringify({ nameEn: 'Ravi Kumar', nameAr: 'رافي كومار', idMasked: '784-••••-•••••••-4', dob: '1995-03-14', expiry: '2028-02-09' }), 'j1.emiratesId.front exactly as specified');
+  eq(JSON.stringify(eidData.front), JSON.stringify({ nameEn: 'Ravi Kumar', nameAr: 'رافي كومار', idMasked: '784-••••-•••••••-4', dob: '1995-03-14', nationality: 'India', expiry: '2028-02-09' }),
+     'j1.emiratesId.front exactly as specified (amendment 9 Oct: nationality India read from the front)');
   eq(JSON.stringify(eidData.back), JSON.stringify({ occupation: 'Warehouse Supervisor', employer: 'Dunecrest Logistics LLC', issuingPlace: 'Dubai' }), 'j1.emiratesId.back exactly as specified (a fictitious employer)');
   eq(cn.salaryPayer, 'SALARY/WPS DUNECREST LOGISTICS', 'connected.salaryPayer is the WPS payer name on the salary credit');
   ok(cn.accounts.length === 4 && cn.accounts.every(a => a.holderName === 'RAVI KUMAR'), 'every connected account carries holderName "RAVI KUMAR"');
-  const badK = keysDeep(eidData).concat(keysDeep(cn)).filter(k => FORBIDDEN_KEY.test(k) || /^(sex|gender)$/i.test(k));
-  ok(badK.length === 0 && !keysDeep(j).some(k => /^(nationality|sex|gender|country)$/i.test(k)) && !/nationalit|"sex"|"gender"|"country"/i.test(JSON.stringify(j)),
-     'no nationality, sex or country field: the v2.9 FORBIDDEN_KEY regex (+ sex/gender) is clean on j1.emiratesId and j1.connected, and j1 has no such key anywhere' + (badK.length ? ' (' + badK.join(', ') + ')' : ''));
+  /* amendment 9 Oct: the one nationality field is the ID front's (identity and enrichment routing); no sex or country field anywhere */
+  const badK = keysDeep(eidData.back).concat(keysDeep(cn), Object.keys(eidData.front).filter(k => k !== 'nationality')).filter(k => FORBIDDEN_KEY.test(k) || /^(sex|gender)$/i.test(k));
+  const natKeys = []; (function walk(x, at) { if (x && typeof x === 'object') for (const k of Object.keys(x)) { if (/nation/i.test(k)) natKeys.push(at + k); walk(x[k], at + k + '.'); } })(j, '');
+  ok(badK.length === 0 && !keysDeep(j).some(k => /^(sex|gender|country)$/i.test(k)) && !/"sex"|"gender"|"country"/i.test(JSON.stringify(j)) && natKeys.join() === 'emiratesId.front.nationality',
+     'no sex or country field on j1; the v2.9 FORBIDDEN_KEY regex is clean on the ID back, the rest of the front and j1.connected; the only nationality field is emiratesId.front.nationality' + (badK.length ? ' (' + badK.join(', ') + ')' : ''));
   const [dy, dm, dd] = eidData.front.dob.split('-').map(Number), [ty, tm, td] = D.TODAY.split('-').map(Number);
   eq(ty - dy - ((tm < dm || (tm === dm && td < dd)) ? 1 : 0), j.age, 'date of birth 1995-03-14 → age 31 as of TODAY (' + D.TODAY + ') = j1.age');
   eq(D.reasonCodes.RC_EMPLOYER_MISMATCH && D.reasonCodes.RC_EMPLOYER_MISMATCH.en, 'Your salary comes from a different company than your Emirates ID shows — maybe you changed jobs? A salary certificate or employment letter will sort it out.', 'RC_EMPLOYER_MISMATCH English wording');
@@ -3216,9 +3220,15 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
      'j1: "Dunecrest Logistics LLC" ↔ "SALARY/WPS DUNECREST LOGISTICS" → match (100% of the employer’s words)');
   ok(ck.nameMatch.match === true && ck.nameMatch.idName === 'Ravi Kumar' && ck.nameMatch.accountHolder === 'RAVI KUMAR', 'j1: the name on the ID matches the account holder ("Ravi Kumar" ↔ "RAVI KUMAR")');
   ok(ck.expiryValid === true && ck.ageFromDob === 31, 'j1: the card is valid (expires 2028-02-09); age from the date of birth 31');
-  eq(JSON.stringify(ck.notRead), JSON.stringify(['nationality', 'sex', 'photos']), 'notRead lists nationality, sex and photos');
-  eq(JSON.stringify(E.EMIRATES_ID_NOT_READ), JSON.stringify(['nationality', 'sex', 'photos']), 'the engine exports the not-read list');
-  eq(ck.fieldsRead.join(','), 'nameEn,nameAr,idMasked,dob,expiry,occupation,employer', 'fieldsRead: name (EN + AR), masked ID, date of birth, expiry, occupation, employer — nothing else');
+  eq(JSON.stringify(ck.notRead), JSON.stringify(['sex', 'photos']), 'notRead lists sex and photos (amendment 9 Oct: nationality is read)');
+  eq(JSON.stringify(E.EMIRATES_ID_NOT_READ), JSON.stringify(['sex', 'photos']), 'the engine exports the not-read list');
+  eq(ck.fieldsRead.join(','), 'nameEn,nameAr,idMasked,dob,nationality,expiry,occupation,employer', 'fieldsRead: name (EN + AR), masked ID, date of birth, nationality, expiry, occupation, employer — nothing else');
+  ok(ck.nationality === 'India' && ck.enrichment && ck.enrichment.corridor === 'IN' && ck.enrichment.offer.length === 2 && /Credit Passport/.test(ck.enrichment.offer[0]) && /statements/.test(ck.enrichment.offer[1]) &&
+     /identity and enrichment routing only — never a NoorScore or decision input/.test(ck.enrichment.use),
+     'nationality India routes enrichment: the Indian corridor (Credit Passport, home-country statements) — identity and enrichment only, never a score input');
+  ok(E.checkEmiratesId(j, { front: Object.assign({}, eidData.front, { nationality: 'Philippines' }), back: eidData.back }).enrichment.corridor === null &&
+     E.checkEmiratesId(j, { front: Object.assign({}, eidData.front, { nationality: 'Egypt' }), back: eidData.back }).enrichment.corridor === 'EG',
+     'outside the India / Pakistan / Egypt corridors no home-country data is offered (Philippines → none; Egypt → EG)');
   ok(['fieldsRead', 'notRead', 'expiryValid', 'ageFromDob', 'nameMatch', 'employerMatch'].every(k => k in ck) && ['idName', 'accountHolder', 'match'].every(k => k in ck.nameMatch) &&
      ['idEmployer', 'salaryPayer', 'score', 'match'].every(k => k in ck.employerMatch), 'the result carries the specified shape');
   eq(JSON.stringify(E.checkEmiratesId(j, { front: eidData.front, back: eidData.back })), JSON.stringify(ck), 'an explicit {front, back} gives the same result as the record (true)');
@@ -3256,9 +3266,12 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   const r = decideJ(j);
   eq(r.dataPulls.map(p => p.source).join(','), 'AECB_CONSUMER,OPEN_FINANCE,EMIRATES_ID', 'pulls: AECB, Open Finance, then EMIRATES_ID');
   const pull = r.dataPulls[2];
-  ok(pull.status === 'SCANNED' && pull.summary.scan === 'front + back scanned' && /nationality · sex · photos/.test(pull.summary.notRead) && pull.summary.employerMatch === 'match — 100% (WPS salary payer)' &&
-     pull.summary.nameMatch === 'matches the account holder' && pull.summary.expiry === 'valid', 'the EMIRATES_ID pull: "front + back scanned", not read: nationality · sex · photos, employer match, name match, valid');
-  ok(!/dunecrest|warehouse|1995|palmgate/i.test(JSON.stringify(pull)), 'the pull summary carries flags only — no employer, payer, occupation or date of birth');
+  ok(pull.status === 'SCANNED' && pull.summary.scan === 'front + back scanned' && pull.summary.notRead === 'sex · photos (not kept)' && pull.summary.employerMatch === 'match — 100% (WPS salary payer)' &&
+     pull.summary.nameMatch === 'matches the account holder' && pull.summary.expiry === 'valid' && /nationality \(identity and enrichment routing only\)/.test(pull.summary.fieldsRead),
+     'the EMIRATES_ID pull: "front + back scanned", not read: sex · photos, nationality for identity and enrichment routing only, employer match, name match, valid');
+  ok(!/dunecrest|warehouse|1995|palmgate|india/i.test(JSON.stringify(pull)), 'the pull summary carries flags only — no employer, payer, occupation, date of birth or nationality value');
+  ok(!Object.keys(r.features).some(k => /nation|enrich|corridor/i.test(k)) && !/india|nationality/i.test(JSON.stringify(r.rules) + JSON.stringify(r.score) + JSON.stringify(r.features)),
+     'no feature, rule or score field carries the nationality');
   ok(ruleOf(r, 'POL_ID_VALID').result === 'PASS' && ruleOf(r, 'POL_EMPLOYER_MATCH').result === 'PASS' && ruleOf(r, 'POL_ID_VALID').category === 'POLICY',
      'POL_ID_VALID PASS and POL_EMPLOYER_MATCH PASS');
   ok(r.features.idExpiryValid === true && r.features.idNameMatch === true && r.features.employerMatch === true && r.features.employerMatchScore === 100,
@@ -3289,15 +3302,16 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   ok(shape(memo) === shape(baseMemo) && strip(memo) === strip(baseMemo) && JSON.stringify(sftp.header) === JSON.stringify(E.memoSftpRow(baseMemo).header) &&
      sftp.row.join('|') === E.memoSftpRow(baseMemo).row.join('|'), 'the memo shape and every other memo field and SFTP cell are unchanged');
   const body = JSON.stringify(memo) + '\n' + sftp.row.join(',');
-  const leaked = ['Dunecrest', 'DUNECREST', 'Logistics', 'SALARY/WPS', 'WPS', 'Warehouse', 'Supervisor', '1995-03-14', '14/03/1995', '1995', '2028-02-09', 'Dubai', 'idEmployer', 'salaryPayer', 'occupation'].filter(w => body.includes(w));
-  ok(leaked.length === 0, 'memo + SFTP row: no employer, payer, occupation, date of birth, expiry or issuing place' + (leaked.length ? ' (found: ' + leaked.join(', ') + ')' : ''));
+  const leaked = ['Dunecrest', 'DUNECREST', 'Logistics', 'SALARY/WPS', 'WPS', 'Warehouse', 'Supervisor', '1995-03-14', '14/03/1995', '1995', '2028-02-09', 'Dubai', 'idEmployer', 'salaryPayer', 'occupation',
+    'India', 'Indian', 'nationality', 'enrichment'].filter(w => body.includes(w));
+  ok(leaked.length === 0, 'memo + SFTP row: no employer, payer, occupation, date of birth, expiry, issuing place or nationality' + (leaked.length ? ' (found: ' + leaked.join(', ') + ')' : ''));
   const expect = { incomeBand: T.income(12000), dbrBand: T.dbr(r.features.dbrPct), freeCashFlowBand: T.fcf(3700), instalmentToCashFlowBand: T.share(r.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) };
   const words = identityWordsOf(r);
-  ok(['Dunecrest Logistics LLC', 'Warehouse Supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '1995-03-14', '14/03/1995', 'Dunecrest'].every(w => words.includes(w)),
-     'the privacy scan now also forbids the employer, the occupation, the salary payer and the date of birth');
+  ok(['Dunecrest Logistics LLC', 'Warehouse Supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '1995-03-14', '14/03/1995', 'Dunecrest', 'India'].every(w => words.includes(w)),
+     'the privacy scan now also forbids the employer, the occupation, the salary payer, the date of birth and the nationality');
   let hits = privacyScan(r, memo, sftp, expect);
   ok(hits.length === 0, 'j1 memo with the Emirates ID: the recursive privacy scan stays clean' + (hits.length ? ' (' + hits.slice(0, 4).join('; ') + ')' : ''));
-  for (const leak of ['Dunecrest Logistics LLC', 'warehouse supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '14/03/1995']) {
+  for (const leak of ['Dunecrest Logistics LLC', 'warehouse supervisor', 'SALARY/WPS DUNECREST LOGISTICS', '14/03/1995', 'India']) {
     const m2 = clone(memo); m2.verification.identity += ' · ' + leak;
     ok(privacyScan(r, m2, sftp, expect).length > 0, 'the extended scan catches "' + leak + '" planted in the memo');
   }
@@ -3353,21 +3367,26 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   const all = [r, mm, ex, both, nf, np];
   ok(all.every(x => x.outcome !== 'DECLINE' && NEW_RULES.every(id => ['PASS', 'REFER', 'INFO'].includes(ruleOf(x, id).result))), 'the two rules only PASS, REFER or INFO — never FAIL, never a decline');
 
-  // ---- red-flag guardrail: nationality and sex are never read ----
+  // ---- the v2.9 guardrail (amendment 9 Oct): nationality is read for identity and enrichment only — never a score or decision input; sex never read ----
   const tagged = clone(j);
-  tagged.emiratesId.front.nationality = 'Testland'; tagged.emiratesId.front.sex = 'M'; tagged.emiratesId.back.nationality = 'Testland';
-  eq(JSON.stringify(E.checkEmiratesId(tagged)), JSON.stringify(ck), 'a scan carrying nationality and sex fields gives an identical checkEmiratesId() result');
+  tagged.emiratesId.front.nationality = 'Pakistan'; tagged.emiratesId.front.sex = 'M'; tagged.emiratesId.back.sex = 'M';
+  const ckTag = E.checkEmiratesId(tagged);
+  const noNat = (x) => { const o = clone(x); delete o.nationality; delete o.enrichment; return JSON.stringify(o); };
+  ok(ckTag.nationality === 'Pakistan' && ckTag.enrichment.corridor === 'PK' && noNat(ckTag) === noNat(ck) && !/"M"/.test(JSON.stringify(ckTag)) && !ckTag.fieldsRead.includes('sex'),
+     'a scan with a different nationality (and a sex field): checkEmiratesId() differs only in the nationality and its enrichment route — sex is never read');
   E.init(D);
   const rTag = decideJ(tagged);
-  const cmp = (x) => JSON.stringify([x.outcome, x.limit, x.pricing, x.score, x.reasonCodes, x.features, x.rules, x.dataPulls, x.emiratesId]);
-  ok(cmp(rTag) === cmp(r) && !/Testland/.test(JSON.stringify(rTag.emiratesId) + JSON.stringify(rTag.rules) + JSON.stringify(rTag.dataPulls) + JSON.stringify(E.creditMemo(rTag.id))),
-     'decide() with the tagged scan is identical; the nationality value reaches no rule, pull, check or memo');
+  const cmp = (x) => JSON.stringify([x.outcome, x.limit, x.pricing, x.score, x.noorScore, x.reasonCodes, x.features, x.rules, x.dataPulls, x.token && x.token.conditions]);
+  ok(cmp(rTag) === cmp(r) && rTag.score.points === 737 && rTag.score.grade === 'B' && rTag.limit.approved === 15000 && rTag.pricing.kfs.monthlyInstalment === 1311.7,
+     'a different nationality gives an identical decision: outcome, points 737, grade B, price, limit, features, rules and pulls (the v2.9 guardrail)');
+  ok(!/Pakistan|"M"/.test(JSON.stringify(rTag.rules) + JSON.stringify(rTag.dataPulls) + JSON.stringify(rTag.features) + JSON.stringify(E.creditMemo(rTag.id)) + E.memoSftpRow(E.creditMemo(rTag.id)).row.join(',')),
+     'the nationality value and the sex field reach no rule, pull, feature, memo or SFTP row');
   const log = new Set();
   const recorder = (obj) => new Proxy(obj, { get(t, prop, recv) { if (typeof prop === 'string') log.add(prop); const v = Reflect.get(t, prop, recv); return v && typeof v === 'object' ? recorder(v) : v; } });
   E.checkEmiratesId(j, recorder(clone(tagged.emiratesId)));
   const read = [...log];
-  ok(read.every(k => ['front', 'back', 'nameEn', 'nameAr', 'idMasked', 'dob', 'expiry', 'occupation', 'employer'].includes(k)) && !log.has('nationality') && !log.has('sex') && !log.has('issuingPlace'),
-     'checkEmiratesId() reads only the allowlisted card fields — never nationality or sex (read: ' + read.join(', ') + ')');
+  ok(read.every(k => ['front', 'back', 'nameEn', 'nameAr', 'idMasked', 'dob', 'nationality', 'expiry', 'occupation', 'employer'].includes(k)) && !log.has('sex') && !log.has('issuingPlace'),
+     'checkEmiratesId() reads only the allowlisted card fields (nationality included, for identity and enrichment) — never sex (read: ' + read.join(', ') + ')');
 
   // ---- vocabulary, determinism ----
   const v216Text = JSON.stringify([ck, pg, r.rules, r.dataPulls, mm.rules, ex.rules, nf.rules, memo, mmMemo, D.reasonCodes.RC_EMPLOYER_MISMATCH, D.reasonCodes.RC_ID_EXPIRED, j.emiratesId]);
