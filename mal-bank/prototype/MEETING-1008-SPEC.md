@@ -90,6 +90,69 @@ each partner.
 - Lender B's narrower memo;
 - update existing memo assertions that expected the old flag texts, and list them.
 
+## 1c. Explainable, not a black box (methodology slide 7)
+
+Internally NoorScore is never a black box. The model evolves in two phases and stays explainable in both:
+- **Phase 1** is an expert-based scorecard, used at launch, before any loan performance data exists. This is
+  what the prototype runs.
+- **Phase 2** is a model trained on repayment behaviour, once pilot lenders share repayment outcomes (DPD).
+
+**1. Reason codes are findings.** This is new and shared with lenders. Outside Noor, lenders see what drove each
+score through findings, without the formula. Each finding is a statement about the customer.
+
+Add a controlled vocabulary `MizanData.findings` (EN + Arabic) and an engine function `customerFindings(rec)`.
+It is pure and derives findings from data the engine has. The rules and thresholds stay inside Noor: document
+them in a code comment and never put them in the memo.
+
+| Code | Finding | Fires when (internal, illustrative) |
+|---|---|---|
+| `FND_ADDITIONAL_INCOME` | Detected additional income | regular non-salary income is verified (a1's rent; home-country income in statements) |
+| `FND_SAVER` | Saver | a savings account holds ≥ 1 month of spending, or regular transfers to savings are seen. Ravi: FAB savings 9,860 ≥ 7,400. |
+| `FND_NEW_TO_UAE` | New to the UAE | less than 12 months of UAE financial footprint. The slide's example says "New to Dubai"; Noor works UAE-wide, so the finding names the UAE. |
+| `FND_DINING_OUT` | Dining out lover | the dining share of spending is ≥ 20%. Add `connected.spendCategories` to j1 (e.g. Dining 24%, Groceries 22%, Transport 12%, Bills 18%, Shopping 14%, Other 10%) and to a1 where useful. |
+| `FND_DATA_HISTORY` | {N} months of data history | always, with N = the months of connected history |
+| `FND_STABLE_INCOME` | Stable income | income volatility ≤ 10% |
+| `FND_ON_TIME_PAYER` | Pays cards and loans on time | connected card and loan repayments are on time, with no delinquency |
+
+**Guardrail.** Findings are never derived from sensitive categories (health, religion, family status, politics)
+and never from nationality. Gambling is never a shared finding. Selftest these: a clone with those categories
+yields no such finding.
+
+**Placement.**
+- The memo shows **"Findings"** as outlined chips, in the slide's look, next to the reason codes.
+- The SFTP row gains a `findings` column (codes only).
+- The Decision log shows the findings plus the internal rule behind each one.
+- **Findings are not adverse-action reasons.** RC_* codes still explain any refer, decline or reduction, as
+  CBUAE disclosure requires.
+
+**2. Transparent by design (Phase 1).**
+- The Decision log shows "Model: Phase 1 — expert scorecard {model} {version}".
+- It shows every feature, weight and point, which is already traceable, as a **contribution chart**: a
+  horizontal waterfall from the base to NoorScore, one bar per factor, positive and negative. Label it "Phase 1:
+  scorecard points · Phase 2: SHAP values per feature".
+- The chart is internal only.
+
+**3. Auditable.**
+- A **"Reproduce"** button on each Decision-log record re-runs the evaluation purely, from the logged inputs
+  (applicant snapshot, request, consents, policy version, engine version). It shows "Reproduced — identical
+  score, outcome and price" or a diff. There's no new record and no clock tick.
+- An engine function `reproduceDecision(id)` does the work.
+- Add a muted note: "Phase 2: each score is checked against repayment outcomes (DPD) once pilot lenders share
+  them."
+
+**4. The lender view's methodology line** adds: "Explainable internally (expert scorecard, documented
+feature-by-feature); lenders receive findings and reason codes, not the formula."
+
+**Tests:**
+- the findings for j1 (Saver, Dining out lover, 12 months of data history, Stable income, Pays cards and loans
+  on time), a1 (Detected additional income, …) and a newcomer persona (New to the UAE);
+- the sensitive-category and nationality clones yield nothing extra;
+- reproduceDecision is identical for every persona decision in the selftest;
+- the memo carries finding words only, never their rules;
+- in the browser:
+  - the findings chips in the Lender view;
+  - the contribution chart and the Reproduce result in the Decision log.
+
 ## 2. botim placements: main page and menu page
 
 The main page already has Noor (v2.12). The bottom-nav **All** (menu) currently shows a toast. Make it a
