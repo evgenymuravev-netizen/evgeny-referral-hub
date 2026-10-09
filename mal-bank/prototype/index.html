@@ -1677,6 +1677,49 @@ label.bk-acct { position:relative; cursor:pointer; }
 .ph-mini-lines { display:flex; flex-direction:column; gap:2px; margin:2px 0 0 10px; }
 .ph-mini-line .ph-mini-k { font-size:14px; }
 .ph-mini-line .ph-mini-v { font-weight:600; font-size:14px; color:var(--ink-2); }
+/* v2.16 — 3·2 the Emirates ID scan: a neutral card outline with field labels (no card design), the simulated camera frame, the fields read */
+.ph-eid-tiles { display:flex; flex-direction:column; gap:10px; }
+.ph-eid-tile { display:flex; align-items:center; gap:14px; width:100%; min-width:0; text-align:left; background:var(--panel); color:var(--ink); border:0; border-radius:var(--radius);
+  padding:14px; cursor:pointer; font:inherit; }
+.ph-eid-tile[disabled] { cursor:default; opacity:.6; }
+.ph-eid-tile:focus-visible, .ph-eid-retake:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+.ph-eid-shape { flex:0 0 132px; width:132px; height:84px; border:1.5px dashed var(--ph-line); border-radius:10px; padding:9px 10px; display:flex; flex-direction:column; justify-content:center; gap:5px; }
+.ph-eid-ln { display:flex; align-items:center; gap:6px; min-width:0; }
+.ph-eid-lk { flex:0 0 auto; font-family:var(--font-label); font-size:9.5px; line-height:12px; color:var(--muted); white-space:nowrap; }
+.ph-eid-lb { flex:1; min-width:8px; height:4px; border-radius:2px; background:var(--ph-line); }
+.ph-eid-tt { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+.ph-eid-side { font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--ink); }
+.ph-eid-go { display:inline-flex; align-items:center; gap:6px; font-family:var(--font-label); font-size:14px; color:var(--brand-ink); }
+.ph-eid-cam-ico { width:18px; height:18px; }
+.ph-eid-done { gap:8px; }
+.ph-eid-dh { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.ph-eid-ok { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-label); font-size:13.5px; font-weight:500; color:var(--ok); }
+.ph-eid-ok-ico { width:15px; height:15px; }
+.ph-eid-retake { margin-left:auto; font-size:14.5px; }
+.ph-eid-retake[disabled] { opacity:.4; cursor:default; }
+.ph-eid-fields .ph-li { font-size:15px; align-items:baseline; }
+.ph-eid-fields .ph-li-v { text-align:right; min-width:0; overflow-wrap:anywhere; }
+.ph-eid-v2 { display:flex; flex-direction:column; align-items:flex-end; color:var(--ink); font-weight:600; text-align:right; }
+.ph-eid-v2 .ar { font-family:var(--font-ar); font-weight:500; font-size:16px; color:var(--ink-2); }
+.ph-eid-camwrap { align-items:center; justify-content:center; background:rgba(8,8,14,.86); }
+.ph-eid-cam { display:flex; flex-direction:column; align-items:center; gap:12px; padding:0 24px; text-align:center; color:#fff; }
+.ph-eid-frame { position:relative; width:280px; max-width:100%; aspect-ratio:1.586; border:1.5px dashed rgba(255,255,255,.45); border-radius:14px; }
+.ph-eid-frame-c { position:absolute; width:26px; height:26px; border:3px solid #fff; }
+.ph-eid-frame-c.tl { top:-3px; left:-3px; border-right:0; border-bottom:0; border-radius:14px 0 0 0; }
+.ph-eid-frame-c.tr { top:-3px; right:-3px; border-left:0; border-bottom:0; border-radius:0 14px 0 0; }
+.ph-eid-frame-c.bl { bottom:-3px; left:-3px; border-right:0; border-top:0; border-radius:0 0 0 14px; }
+.ph-eid-frame-c.br { bottom:-3px; right:-3px; border-left:0; border-top:0; border-radius:0 0 14px 0; }
+.ph-eid-cam-t { font-family:var(--font-display); font-weight:700; font-size:20px; }
+.ph-eid-cam-s { font-size:14px; color:rgba(255,255,255,.8); }
+/* v2.16 — 7·2 the cross-check rows under the budget */
+.ph-eid-match { gap:10px; }
+.ph-eid-mh { font-size:16px; }
+.ph-eid-chk { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; line-height:21px; color:var(--ink-2); overflow-wrap:anywhere; }
+.ph-eid-chk strong { color:var(--ink); font-weight:600; }
+.ph-eid-mk { flex:0 0 22px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-top:0; color:#fff; background:var(--ok); }
+.ph-eid-mk.bad { background:var(--bad); }
+.ph-eid-mk .ji { width:13px; height:13px; }
+#jr-eid-out .btn { align-self:flex-start; }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -1812,6 +1855,8 @@ var PULL_LABEL = {
   PRIOR_DECISION: 'Prior decision — the starter loan and how it was repaid',
   HOME_STATEMENTS: 'Home-country bank statements — parsed: integrity, name match, conduct, EMIs, buffer, remittances',
   DIGITAL_FOOTPRINT: 'Digital footprint (consented, optional) — identity and account security; the thin-file overlay in shadow',
+  /* v2.16 — the Emirates ID scan in the journey */
+  EMIRATES_ID: 'Emirates ID — front + back scanned: name, ID number, date of birth, expiry, occupation, employer (never nationality or sex)',
   /* v2.10 — the SME route */
   AECB_COMMERCIAL: 'AECB commercial report — the company',
   KYB: 'Trade licence + UBO (KYB) — the company',
@@ -2912,10 +2957,11 @@ var JR_FLOW = [
     r: 'Noor’s position (confirm with counsel): every Noor surface in botim, on the main screen and in botim money, is a Noor embed, and botim gets events only.' },
   /* v2.13 — the contact preferences moved to phase 10 (after the payout) */
   /* v2.14 — the footprint check is covered by the terms accepted at sign-up (no checkbox) */
-  { t: 'Noor opens in botim', d: 'Web-view · account · email', match: function (e) { return e.n >= 1 && e.n <= 3; },
-    c: 'Agrees to the hand-off, creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — and verifies the phone and the email.',
-    m: 'assessFootprint() runs for every applicant, covered by the terms accepted at sign-up. No contact preferences yet: they are asked once the loan is issued.',
-    r: 'PDPL purpose limitation: identity and account security only, and the Privacy policy says how to object (Noor’s position — confirm the terms-based basis with counsel).' },
+  /* v2.16 — the Emirates ID, front and back (3·2) */
+  { t: 'Noor opens in botim', d: 'Web-view · account · email · Emirates ID', match: function (e) { return e.n >= 1 && e.n <= 3; },
+    c: 'Agrees to the hand-off, creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — verifies the phone and the email, and scans the front and back of the Emirates ID.',
+    m: 'assessFootprint() runs for every applicant, covered by the terms accepted at sign-up. The scan reads the name, ID number, date of birth, expiry, occupation and employer; the employer is checked against the WPS salary payer once the accounts are read (checkEmiratesId(), pure), and decide() adds POL_ID_VALID and POL_EMPLOYER_MATCH. No contact preferences yet: they are asked once the loan is issued.',
+    r: 'PDPL purpose limitation and minimisation: identity and account security only; nationality and sex are never read and the photos are not kept (Noor’s position — confirm the terms-based basis and the e-KYC provider with counsel and compliance). A mismatch refers to a person, never a decline.' },
   { t: 'Connect banks', d: 'Al Tareq consent', of: true, match: function (e) { return e.n === 4; },
     c: 'Picks banks and reads what Noor will read, why and for how long. Cancel any time in the Al Tareq dashboard.',
     m: 'No engine call yet: the consent sets what later pulls may read.',
@@ -7050,7 +7096,7 @@ var Journey = {
   go: function (step, sub, dir) {
     var S = Journey.S;
     Journey.clearTimers();
-    S.chat = false; S.faceId = null;
+    S.chat = false; S.faceId = null; S.eidCam = null;   /* v2.16 — leaving a step drops an unfinished Emirates ID capture */
     sub = sub || 0;
     /* v2.12 — remember which botim screen the customer left from (0·0 main screen, 0·1 botim money), so ✕ returns there */
     if (S.step === 0) S.hostBack = S.sub;
@@ -8001,9 +8047,7 @@ var Journey = {
     var S = Journey.S;
     if (S.eidCam || S.eid[side]) return;
     var done = function () {
-      S.eid[side] = true; S.eidCam = null;
-      Journey.log('Emirates ID · ' + side + ' scanned', side === 'front' ? 'name (EN + AR), ID number (masked), date of birth, expiry · nationality and sex not read · photo not kept'
-                                                                       : 'occupation, employer · photo not kept');
+      S.eid[side] = true; S.eidCam = null;   /* a capture, not an engine call: nothing is logged under "Mizan calls" */
       Journey.render();
     };
     if (REDUCED) { done(); return; }
@@ -8402,7 +8446,13 @@ var Journey = {
             : 'Entry 1: the customer tapped “Add another +” in Connected accounts.']],
       2: ['Noor’s own account', ['The number comes from the hand-off; the customer confirms it and accepts Noor’s Terms and Privacy policy — Noor is responsible for the data that follows.',
           'The Terms of Use and Privacy policy (' + JR_TERMS.version + ') cover the digital-footprint check — there is no separate checkbox later. Continuing records the acceptance with its version and time; decide() receives it as the check’s basis.']],
-      3: sub === 1 ? ['Your email — and the digital-footprint check, covered by the terms', [
+      /* v2.16 — 3·2, the Emirates ID front + back (JOURNEY-EID-SPEC.md §1) */
+      3: sub === 2 ? ['Your Emirates ID — front and back, checked against the salary payer', [
+            'The back of a resident’s Emirates ID shows the employer. Once the accounts are connected, Mizan checks that the salary credits come from the same company (the WPS payer name) and that the name on the card matches the account holder.',
+            'A match strengthens income verification. A mismatch refers the application to a person — usually it’s a job change, solved with a salary certificate — never an automatic decline.',
+            'Data minimisation (PDPL): Noor extracts name, ID number, date of birth, expiry, occupation and employer; nationality and sex are on the card but not read, and the photos aren’t kept.',
+            'In production, validate the card against official records through an approved e-KYC provider, with a liveness check — confirm with compliance.']]
+        : sub === 1 ? ['Your email — and the digital-footprint check, covered by the terms', [
             'botim shared the email at hand-off; Noor confirms it with its own 6-digit code before using it. The customer can use a different one.',
             /* v2.14 — no separate checkbox (JOURNEY-FOOTPRINT-TC-SPEC.md §1) */
             'No separate checkbox: the check is covered by the Terms of Use and Privacy policy accepted when the account was created (step 2).',
@@ -8431,7 +8481,8 @@ var Journey = {
             'botim’s Credit tab shows a generic Loans list: a neutral row for the current partner’s cash loan and the Noor tile, a Noor embed. Nothing here copies botim’s real product UI.',
             'Tapping the Noor tile opens the Noor web-view at “How much do you need?” — amount first, no pre-qualification yet.']]
           : ['Entry 2 — Credit in botim money', ['botim’s Credit tab carries Noor’s card (a Noor embed). Tapping it reopens the Noor web-view; the accounts are already connected, so no new consent is needed.']])
-        : (sub < 3 ? ['Noor reads the connected accounts', ['Mizan reads 12 months across the current and savings accounts, plus the ENBD card and loan: salary credits, spending and the repayments already going out (AED 400 on the card + AED 500 on the loan = AED 900, the same total as the AECB report). This data stays in Noor.']]
+        : (sub < 3 ? ['Noor reads the connected accounts', ['Mizan reads 12 months across the current and savings accounts, plus the ENBD card and loan: salary credits, spending and the repayments already going out (AED 400 on the card + AED 500 on the loan = AED 900, the same total as the AECB report). This data stays in Noor.']
+            .concat(S.eidDone ? ['The Emirates ID cross-check runs now: the employer on the card against the WPS payer name on the salary credits, and the name on the card against the account holder — checkEmiratesId(), pure, no record. decide() repeats it as POL_EMPLOYER_MATCH and POL_ID_VALID (refer only).'] : [])]
         : ['prequalify() — Open Finance only', [
             'No AECB inquiry and no decision record: indicative only, so it can’t affect the credit score.',
             'Two affordability tests, the stricter wins: the CBUAE DBR cap (50% of income − repayments already going out = AED 5,100/month) and Noor’s cash-flow budget (50% of what’s left after spending and repayments: AED 3,700 → AED 1,850/month). Here the cash-flow budget binds — the DBR cap alone would have said “up to AED 110,000”, a payment Ravi’s budget can’t carry.',
@@ -8480,7 +8531,7 @@ var Journey = {
     if (st === 0 && sub === 0) {
       b = ['botim’s main screen — where the journey starts', [
         'Where botim users land. Noor’s banner and icon sit on the main screen (Max’s ask) and on botim money — both are Noor embeds, so botim gets events only. Tap the banner or the Noor icon to go straight to Noor, or open money to connect a bank first.',
-        'Variant ' + S.variant + ': the banner and the Noor icon open ' + (A ? 'botim’s Loans screen with the Noor tile' : '“How much can you borrow?”') + '. A customer without a Noor account creates one first — account and email; contact choices come after the payout.',
+        'Variant ' + S.variant + ': the banner and the Noor icon open ' + (A ? 'botim’s Loans screen with the Noor tile' : '“How much can you borrow?”') + '. A customer without a Noor account creates one first — account, email and the Emirates ID (front + back); contact choices come after the payout.',
         'Events: impression and click carry the surface they came from (home or money), so the experiment counts impressions by surface.']];
     }
     var hostView = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 3);
@@ -8515,6 +8566,8 @@ var Journey = {
               h('span', { class: 'jr-chip', dataset: { chip: 'excluded' }, text: fa.excluded.length + ' item types dropped at ingestion' }))
            : h('div', { class: 'small muted', text: 'Runs once the email is verified — covered by the terms accepted at sign-up (step 2).' })));
     }
+    /* v2.16 — the Emirates ID: what the scan read (3·2); the cross-check once the accounts are read (7·2; 8·2 in variant A); the what-if */
+    if ((st === 3 && sub === 2) || (S.eidDone && ((st === 7 && sub === 2) || (st === 8 && sub === 2)))) wrap.appendChild(Journey.eidEngineBox());
     if (st === 7 && sub === 3 && S.pq) {
       var pq = S.pq;
       wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-pq-out' },
@@ -8530,8 +8583,12 @@ var Journey = {
     if (st === 5) wrap.appendChild(h('div', { class: 'callout callout-warn jr-risk', id: 'jr-build-risk' }, h('div', { class: 'co-title', text: 'Build risk to agree with Botim' }),
       h('div', { class: 'co-body', text: 'App-to-app redirect out of the web-view and a registered return URL (universal link / app link) back into botim — prove both on iOS and Android early.' })));
     if (r && st >= 9 && st <= 10 && !(st === 9 && sub === 0 && !S.recId)) {
+      /* v2.16 — the two Emirates ID rules on the record (refer only) */
+      var eidRules = (r.rules || []).filter(function (x) { return x.id === 'POL_ID_VALID' || x.id === 'POL_EMPLOYER_MATCH'; });
       wrap.appendChild(h('div', { class: 'jr-engine' }, h('div', { class: 'jr-engine-h' }, h('code', { text: r.id }), ' ', outcomeChip(r.outcome),
         r.score && isNum(r.score.points) ? h('span', { class: 'small muted', text: ' NoorScore ' + r.score.points + ' · grade ' + r.score.grade }) : null),
+        eidRules.length ? h('div', { class: 'jr-chips', id: 'jr-eid-rules' }, eidRules.map(function (x) {
+          return h('span', { class: 'jr-chip' + (x.result === 'PASS' ? ' ok' : (x.result === 'REFER' ? ' warn' : '')), dataset: { rule: x.id, result: x.result }, text: x.id + ' ' + x.result }); })) : null,
         link('Open it in the Decision log →', 'jr-open-log', function () { showScreen('log'); LogScreen.select(r.id); })));
     }
     if (r && st === 11) {
@@ -8700,7 +8757,8 @@ var RC_SHORT = {
   RC_PURCHASE_UNVERIFIED: 'Purchase not verified', RC_AGE: 'Age outside range', RC_THIN_FILE: 'Thin credit file',
   RC_INCOME_VOLATILITY: 'Income too volatile', RC_CONNECTED_HISTORY: 'Too little connected history', RC_INCOME_UNVERIFIED: 'Income not verified',
   RC_TENOR_CAP: 'Term outside permitted', RC_MANUAL_REVIEW: 'Manual review', RC_LIMIT_REDUCED: 'Amount reduced',
-  RC_LTV_CAP: 'Limited to 80% of vehicle value', RC_VEHICLE_INELIGIBLE: 'Vehicle not eligible', RC_BELOW_MIN_AMOUNT: 'Below product minimum'
+  RC_LTV_CAP: 'Limited to 80% of vehicle value', RC_VEHICLE_INELIGIBLE: 'Vehicle not eligible', RC_BELOW_MIN_AMOUNT: 'Below product minimum',
+  RC_EMPLOYER_MISMATCH: 'Employer ≠ salary payer', RC_ID_EXPIRED: 'Emirates ID expired'
 };
 var Monitoring = {
   map: null,
