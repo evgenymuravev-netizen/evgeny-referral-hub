@@ -2,32 +2,36 @@
 
 Build after v2.16 and v2.17. The items below change the prototype. People own the rest (§7).
 
-## 1. The lender-view mockup (explicit next step: "Share lender-view mockup for feedback")
+## 1. The lender-view mockup, structured as the NoorScore methodology's six components
 
-The team wants to circulate the decision log and credit memo before the botim meeting, to align on what to
-show and what to protect.
+Explicit next step from the meeting: "Share lender-view mockup for feedback". The team circulates the
+decision log and credit memo before the botim meeting, to align on what to show and what to protect.
 
-**Credit memo: NoorScore breakdown in five buckets.** Show these as colour-coded bars (green / amber / red)
-with a short level word and up to two factor words each. Never weights, points or formulas: the methodology
-isn't disclosed to partners. Derive every bucket from signals the engine already has, and document the
-derivation in a code comment.
+The structure follows the methodology slide **"Six components"** (9 Oct). That slide supersedes the meeting's
+five buckets:
 
-| Bucket | Green | Amber | Red |
+| Group | Component | The question | Signals the engine already has (illustrative derivation; document it in a code comment) |
 |---|---|---|---|
-| **Fraud & integrity** | identity verified, with the ID ↔ account holder and employer matches where scanned, no ATO elevation, no statement integrity issue | a check missing (e.g. no ID scan) or ATO elevated | a mismatch, or statements integrity FAIL |
-| **Newcomer risk** | ≥ 24 months in the UAE and an AECB file | 6–24 months, or a thin file with home-country data | < 6 months with no file and no home data |
-| **Stacking & skip risk** | no v2.9 origination signals | one signal | two or more signals |
-| **Creditworthiness & affordability** | DBR < 35% and free cash flow ≥ 3,000 | DBR 35–50%, or free cash flow 1,000–2,999 | above either range (also covers verified additional income, e.g. rent) |
-| **Monitoring** | active (Open Finance consent covers monitoring while the loan is open) | elevated (an open early-warning signal) | — |
+| **Score components** (these four build the NoorScore and its risk band) | **Fraud & Integrity** | Is the applicant real and honest? | identity (UAE PASS; ID name ↔ account holder; employer ↔ salary payer, v2.16), digital footprint identity and ATO (v2.14), statement integrity (v2.4). Device intelligence and mule / income-manipulation patterns show as "not connected yet". Drives decline or extra verification: in the prototype a mismatch or integrity FAIL refers, as built. |
+| | **Newcomer Score** | Under 12 months of UAE financial footprint? | applies only when the UAE footprint is < 12 months: home-country history (Credit Passport, home statements) plus settling in (salary regularity since arrival, months of UAE accounts). Otherwise it shows "Established — not applicable" (neutral). |
+| | **Stacking & Skip Risk** | Will they take as much credit as possible and leave the UAE? | departure markers (the v2.9 signals), stacking speed (new credit lines in the last 90 days where the data has it, else "none seen") and anchors (months in the UAE, employer tenure, a salary account that's been active ≥ 12 months). |
+| | **Credit Behaviour** | Will they pay? | cash-flow behaviour (free cash flow, buffer, volatility), loan and bill payments on time as seen in the accounts, and AECB delinquency when available. |
+| **Aggregates** (shared as aggregates such as DBR, **not scored**) | **Affordability & Capacity** | How much can they carry? | the verified income band, obligations, the essential-expenses band, the DBR band and the maximum affordable instalment band. Bands and ranges only. |
+| **Post-disbursement** (not part of the score) | **Monitoring & Collections** | What changed after disbursement? | early-warning triggers (v2.9), **best debit date** (the day after the usual salary credit: Ravi's salary lands on the 27th, so the 28th) and the next monthly score refresh date. |
 
-When there is no Open Finance, the Monitoring bucket reads "not active".
+**The memo (lender):**
+- **The four score components** appear as colour-coded bars (green / amber / red, or a neutral "not
+  applicable"), each with a level word and up to two plain factor words. Never weights, points or formulas.
+  Add the line "Methodology not disclosed — outcome and high-level factors only".
+- **Affordability & Capacity** appears as bands under the heading "Aggregates — not scored".
+- **Monitoring & Collections** appears as one status line: active or elevated, the best debit date and the
+  next refresh.
+- **Plus** the completeness ring (v2.17) and the NoorScore value and band, as today.
 
-**The memo also shows:**
-- the completeness ring (v2.17);
-- the income range and free-cash-flow range (already there);
-- the line "Methodology not disclosed — outcome and high-level factors only".
+**The internal Decision log** shows the same six, with what drove each one.
 
-**Internal Decision log:** the same five buckets, with what drove each one.
+**The NoorScore number** stays the current scorecard until the scoring of the four components is defined (see
+§7, pending). Label the component bars as "illustrative derivation".
 
 **Deep link:** opening the page with `#lender` (and `#log`) lands on that screen with the most recent journey
 decision selected, so the link can be circulated. Without a decision, show a seeded example.
@@ -108,13 +112,13 @@ lender. The lender's policy can be loaded into Mizan.
 ## Tests
 
 **Selftest:**
-- the bucket derivation for r1 (all green), r6 (stacking red), r2 (newcomer amber), j1 and a1;
+- the six-component derivation for r1 (all green; newcomer not applicable), r6 (Stacking & Skip red), r2 (Newcomer amber, home-country data), j1 (best debit date 28th) and a1;
 - the memo carries levels and factor words only, never points or weights;
 - the privacy scans pass;
 - the fingerprints are unchanged.
 
 **Browser acceptance:**
-- the memo shows the five bars and the ring;
+- the memo shows the four score-component bars, the Affordability aggregates, the Monitoring line and the ring;
 - `#lender` and `#log` deep links work;
 - the All/menu page has a Noor tile;
 - the three phone scenarios: OTP kept, OTP skipped, overseas → UAE number + OTP;
