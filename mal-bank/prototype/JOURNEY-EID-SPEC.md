@@ -136,3 +136,25 @@ a nationality field gives an identical result.
 - the memo flag;
 - update the existing walks with the extra captures, keep their intent, and list them;
 - 390px; zero page errors; light and dark themes.
+
+## Amendment, 9 Oct — the NoorScore methodology ("What NoorScore is built on") and the 8 Oct meeting
+
+The methodology slide says the Emirates ID front and back is the **mandatory** input for every applicant.
+Front and back is enough. It anchors the fraud checks, confirms account ownership (the ID name matched to the
+bank account holder name) and supplies **nationality**, ID expiry, occupation and employer. The 8 Oct meeting
+says a liveness check is likely not needed, given the Open Finance matching. This supersedes:
+
+- **Nationality is read** from the front: Ravi → India. It is shown masked-free on the captured front. It is
+  used for **identity checks and to route enrichment**, i.e. which home-country data Noor can offer (the
+  Credit Passport and statements corridors India / Pakistan / Egypt).
+- **It is never a score or decision input.** The v2.9 guardrail stands: a clone with a different nationality
+  gives an identical decision (outcome, points, grade, price, limit). Keep that test.
+- **Sex and the photos are still not read or kept.** `notRead` becomes `['sex','photos']`.
+- **Screen line:** "We don't keep the photos or read your sex. Your nationality is used to confirm your
+  identity and offer the right home-country data — never to score you."
+- **Behind the scenes:**
+  - Replace the liveness sentence with "Front and back is enough: the Open Finance match (ID name ↔ account
+    holder, employer ↔ salary payer) does the work a liveness check would — confirm with compliance."
+  - Add: "Nationality: identity and enrichment routing only; never a NoorScore input (CBUAE fair treatment and
+    the AI/ML guidance)."
+- **The ID step is mandatory:** Continue is blocked until both sides are captured, as specified.

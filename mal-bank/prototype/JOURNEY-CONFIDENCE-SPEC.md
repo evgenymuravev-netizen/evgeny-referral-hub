@@ -1,142 +1,132 @@
-# Addendum v2.17 — Data completeness and confidence in the journey — binding spec
+# Addendum v2.17 (revised 9 Oct) — Two steps to a score: data completeness first, then the score — binding spec
 
-Source: Noor product request (8 Oct 2026): "we should focus in the journey on the data completeness and
-therefore confidence from our side as the proxy. We should show how many data sources he provided, like how
-many bank accounts."
+**Sources:**
+- Noor product request (8 Oct 2026): "focus in the journey on the data completeness and therefore confidence
+  from our side as the proxy; show how many data sources he provided, like how many bank accounts".
+- The NoorScore methodology slide "Two steps to a score" (9 Oct).
+- The 8 Oct meeting "Open Finance credit scoring and Botim partnership journey":
+  - the score reflects data completeness: low data means a lower score, not just a flag;
+  - a minimum amount of data is needed before any score;
+  - prompt the user to add more accounts when completeness is low;
+  - the lender sees completeness as a circular indicator.
 
-**Why.** Noor is the **proxy**. Partner Bank books the loan on Noor's decision and verification. How complete
-the customer's data is decides how confidently Noor can stand behind that decision: straight through, or a
-person checks first. So the journey makes completeness visible.
-- **The customer** sees it as **"Profile strength"**, with the sources they've shared counted (banks,
-  accounts, months, ID, credit report).
-- **Noor (behind the scenes)** sees it as **data confidence**, with a breakdown.
-- **The lender** sees it as a confidence band and counts in the memo. Never the raw data.
+**This replaces the first v2.17 draft.** That draft scored identity, contact and bureau as completeness and
+referred anything below 60. Identity checks (Emirates ID, email, phone) are **verification**, not
+completeness: they stay as v2.14 and v2.16 built them.
 
-## 1. Engine (additive): `dataConfidence(applicant, sources)`
+## 1. The model (engine, additive): `dataCompleteness(applicant, approvedAccounts)`
 
-This is a pure function. `sources` describes what the customer actually provided in this journey:
+**Step 1 — data completeness, 0–100%.** How full is the customer's financial data? An almost empty account,
+or a salary and many retail transactions we can actually calculate on? It is measured from what the customer
+connected through Open Finance:
 
-```
-{ phoneVerified, emailVerified, emiratesId:{ scanned, nameMatch, employerMatch } | null,
-  banks:[{ bank, salaryBank:bool, accounts:[{ type:'Current account'|'Savings account'|'Credit card'|'Personal loan', mask }] }],
-  monthsHistory, aecb:{ pulled, hit } | null, obligationsReconciled:bool|null }
-```
-
-**Components** (each maximum in brackets; total 100):
-
-| Component | Max | Points |
+| Component | Weight | Counts when |
 |---|---|---|
-| Identity | 20 | Emirates ID both sides scanned 10 · name on ID = account holder 5 · employer on ID = salary payer 5 |
-| Contact | 10 | mobile verified 5 · email verified 5 |
-| Banks | 30 | salary bank connected 20 · each additional bank +5 (max +10) |
-| Account types | 10 | 2.5 each for current, savings, credit card, loan among the approved accounts |
-| History depth | 10 | ≥ 12 months 10 · ≥ 6 → 6 · ≥ 3 → 3 · else 0 |
-| Credit bureau | 20 | AECB pulled with a file 15 (pulled, no file: 5) · obligations seen in connected accounts reconcile with AECB (within 10%) 5 |
+| Current account | 50% | a connected current account with ≥ 3 months of regular activity (≥ 20 transactions a month). An almost-empty current account counts 20%. |
+| Salary account | 20% | salary credits are visible in a connected account. The current account counts if the salary lands there. |
+| Credit cards | 15% | at least one credit card connected |
+| Loan accounts | 15% | at least one loan connected (personal or car loan) |
 
-**Bands:** ≥ 85 **Very high** · 70–84 **High** · 50–69 **Medium** · < 50 **Low**.
+- **Threshold:** `completenessThresholdPct`, default **70**, labelled "illustrative". It is a new
+  personal-loan policy param, bounds [50, 90], editable in the policy console under 4-eyes.
+- **Below the threshold, no score is issued and the customer is asked to act:** add accounts for better
+  visibility, starting with the salary account, credit cards and loans.
+- **At or above the threshold, Mizan scores (step 2).**
+- **Low data lowers the score, not only a flag** (illustrative). Completeness becomes a NoorScore overlay when
+  `dataSources` is given:
+  - ≥ 85% → 0;
+  - 70–84% → −10 points.
 
 **Output:**
 
 ```
-{ score, band, components:[{ key, label, have, points, max }], counts:{ sources, banks, accounts, months },
-  missing:[{ label, gain }] }
+{ pct, threshold, aboveThreshold, components:[{ key, label, weight, have, points }],
+  ask:[ 'Salary account', 'Credit cards', 'Loan accounts' ] (only the missing ones, in that order),
+  counts:{ banks, accounts, months } }
 ```
 
-- `counts.sources` counts the distinct sources: Emirates ID, mobile, email, each bank, AECB.
-- `missing` lists what would add points. Example: "Another bank you use — +5".
+**Ravi:**
 
-**Ravi's progression through the journey** (assert these):
+| Accounts approved | Completeness | Result |
+|---|---|---|
+| ENBD current (his salary account) + card + loan, FAB savings | **100%** (50 + 20 + 15 + 15) | scored, overlay 0, NoorScore 737; counts 2 banks · 4 accounts · 12 months; savings adds visibility but no points |
+| card and loan unticked at 5·1 | **70%**, at the threshold | scored, overlay −10 → NoorScore **727** (still grade B, same price band and amounts); ask: Credit cards, Loan accounts |
+| ENBD current unticked (card, loan and FAB savings kept) | **30%** (salary seen only in the current account, so 0 + 0 + 15 + 15) | below the threshold, no score; ask: Salary account first |
 
-| Stage | Score | Band | What it adds |
-|---|---|---|---|
-| after the OTP (step 3) | 5 | Low | mobile |
-| after email (3·1) | 10 | Low | email |
-| after the Emirates ID (3·2) | 20 | Low | ID scanned; the matches are pending until the accounts are read |
-| after both banks approved and read (step 6/7) | 75 | High | ENBD salary bank 20 + FAB 5; 4 types 10; 12 months 10; name match 5 + employer match 5 |
-| after the AECB pull at decide (step 9) | 95 | Very high | file 15 + obligations reconciled (900 vs 900) 5 |
+The deck's example **"current account only: 50%"** is a what-if: a non-salary current account alone gives
+50%, with ask Salary account, Credit cards, Loan accounts.
 
-**Final counts:** **6 sources** (Emirates ID, mobile, email, ENBD, FAB, AECB), **2 banks**, **4 accounts**,
-**12 months**. Missing: "Another bank you use — +5".
+**`prequalify()`** takes the approved accounts. Below the threshold it returns
+`{ status:'NEEDS_DATA', completeness, ask }` instead of a range: no record, no AECB.
 
-**If the customer unticks the ENBD card and loan at 5·1** (v2.15 allows it):
-- account types fall to 5 (2 × 2.5);
-- the obligations no longer reconcile (0 seen vs 900 at AECB): −5;
-- → **85, Very high**.
+**`decide()`** accepts `application.dataSources` (the approved accounts and months). It records
+`record.dataCompleteness`, adds a `DATA_COMPLETENESS` audit line, and adds rule `POL_DATA_COMPLETENESS`:
+- PASS at or above the threshold;
+- below it → **REFER** with RC_DATA_INCOMPLETE. This is a backstop: the journey normally asks the customer
+  first. Never a decline, never a price change.
+- New reason code RC_DATA_INCOMPLETE (EN + Arabic): "We need a fuller picture before we can calculate your
+  score — connecting your salary account, credit cards and loans usually does it."
 
-Test this, and make the journey reflect the actual approved accounts.
-
-**In `decide()`:** it accepts `application.dataSources` (the shape above). When present:
-- record `record.dataConfidence` (the output);
-- add a `DATA_SOURCES` audit line ("6 sources · 2 banks · 4 accounts · 12 months · confidence 95 Very high");
-- add rule `POL_DATA_CONFIDENCE`: PASS at or above `minDataConfidence`; below it → **REFER** with
-  RC_DATA_INCOMPLETE (never a decline, never a price change).
-  - `minDataConfidence` is a new personal-loan param: default 60, bounds [0, 90].
-  - Without `dataSources`, nothing is recorded and no rule is added. Every other screen and persona is
-    unchanged; the v2.9 fingerprints must match.
-- New reason code RC_DATA_INCOMPLETE (EN + Arabic): "We need a little more information to decide — connecting
-  your salary account or scanning your Emirates ID usually does it."
-
-**Ravi's decision numbers are unchanged** (95 → PASS).
-
-**Memo (allowlist):** add `dataConfidence: { band, score, sources, banks, accounts, months }`, counts only,
-to the memo and as SFTP columns `data_confidence_band` and `data_sources`. No bank names or masks. Extend the
-privacy scan.
+**Without `dataSources`, nothing changes:** no record field, no rule, no overlay. Every other screen and
+persona is unchanged; the v2.9 fingerprints must match.
 
 ## 2. Journey UI
 
-**Customer side: "Profile strength"** (on the phone, inside the Noor web-view).
+**"Your data", customer side.** A card with:
+- a completeness bar and a thin threshold marker at 70%, in the deck's look: a filled bar plus a red
+  threshold line;
+- the percentage;
+- the counts "2 banks · 4 accounts · 12 months";
+- the component checklist (Current account ✓ · Salary account ✓ · Credit cards ✓ · Loan accounts ✓).
 
-A compact card showing:
-- a bar, the band word and the score;
-- the counts: "6 sources · 2 banks · 4 accounts · 12 months";
-- an expandable list of the sources with checks.
+It appears at 6·0 (back from the banks), at 7·2 (the budget view) and at 7·3:
+- **At or above the threshold,** the pre-qualified screen adds "Based on {pct}% complete data · 2 banks ·
+  4 accounts".
+- **Below the threshold,** 7·3 becomes **"Almost there"**: "Add your salary account, credit cards and loans so
+  we can calculate your score", with the deck's chips (Salary account · Credit cards · Loan accounts, only
+  the missing ones). The CTA "Connect another account" returns to step 4. No range is shown and no score is
+  issued.
+- **Copy** is factual and calm, with no promise of a better price.
 
-It appears at:
-- **6·0, back from the banks:** "You shared 2 banks · 4 accounts · 12 months" and the list (ENBD: current,
-  credit card, personal loan · FAB: savings).
-- **7·2, the budget view:** the card under the budget summary.
-- **7·3, pre-qualified:** the line "Based on {N} data sources — profile strength {band}". Under it, the
-  missing-item hint as text, not a button: "Bank anywhere else? Adding it makes your profile stronger."
-- **9·0, final checks:** "Your credit report completes your profile", shown after decide as the final score.
+**"Two steps to a score", behind the scenes.** A panel from step 6 onwards:
+- **Step 1, data completeness:** the bar with the 70% line, the component table, and the line "Below the
+  threshold: the customer is asked to act. Above: we score."
+- **Step 2, the score itself:** NoorScore, with affordability aggregates (DBR, free cash flow) and monitoring
+  alongside. Show what this decision has.
+- **The proxy line:** "Noor is the proxy: Partner Bank relies on Noor's data and verification. Completeness
+  is how much of the customer's financial picture Noor actually sees — the threshold is the minimum before
+  Noor puts a score on it."
+- **A what-if button** "Current account only (no salary)" shows 50% and the ask (pure, no record).
 
-**Copy tone.** Factual and calm, with no promise of a better price. For example: "A complete profile lets us
-decide instantly — gaps can mean a quick manual check."
+**Flow map.** The journey map's header note gains "· data completeness {pct}%" once the accounts are read.
 
-**Noor side (behind the scenes): a "Data completeness & confidence" panel**, shown on every step from 2
-onwards, above the Mizan calls. It has:
-- the score and band;
-- the counts;
-- the component table (component · what we have · points / max), updating as the steps progress;
-- the "proxy" explanation: "Noor is the proxy: Partner Bank relies on Noor's verification. The more complete
-  the data, the more confidently Noor can stand behind the decision — straight-through rather than a manual
-  check, and a confidence band in the credit memo. Below 60 the application goes to a person
-  (POL_DATA_CONFIDENCE), never an automatic decline."
+**Lender view and memo:**
+- Show completeness as a **circular indicator** (a CSS conic-gradient ring) with the percentage and "threshold
+  70%", plus the counts (banks, accounts, months).
+- The memo carries `dataCompleteness: { pct, threshold, banks, accounts, months }`, counts only: no bank
+  names, no masks. Add the SFTP columns `data_completeness_pct` and `data_sources`.
 
-**Flow map** (v2.11): the journey map's header note gains "· data sources so far: N".
-
-**Decision log and Lender view:**
-- The Decision log shows the confidence line and the component table for journey decisions.
-- The Lender view memo shows "Data confidence: Very high (95) · 6 sources · 2 banks · 4 accounts · 12 months".
+**Decision log.** It shows the completeness line and the component table for journey decisions.
 
 ## 3. Tests
 
 **Selftest:**
-- `dataConfidence` for each stage in the table: exact scores and bands;
-- the unticked-card-and-loan case → 85;
-- counts and the missing list;
-- decide() with dataSources: the record, the rule PASS, numbers unchanged;
-- a low-data clone (no ID, one bank, 3 months) → REFER with RC_DATA_INCOMPLETE, not a decline, same price;
-- without dataSources nothing changes (the fingerprints);
-- the memo carries the band and counts only; the privacy scan passes;
-- existing checks stay green.
+- Ravi 100% · overlay 0 · 737;
+- card and loan unticked → 70% · overlay −10 · 727 · grade B · the same amounts and APR band;
+- the current account unticked → 30% · NEEDS_DATA from prequalify with ask[0] 'Salary account';
+- decide() below the threshold → REFER with RC_DATA_INCOMPLETE, not a decline;
+- the 50% what-if;
+- the almost-empty current account → 20%;
+- the threshold param bounds and 4-eyes;
+- without dataSources, the fingerprints are unchanged;
+- the memo carries counts only.
 
 **Browser acceptance:**
-- the Profile strength card appears at 6·0, 7·2, 7·3 and 9·0 with the right counts (2 banks · 4 accounts ·
-  12 months, then 6 sources);
-- the behind-the-scenes score follows the stage table (5 → 10 → 20 → 75 → 95);
-- unticking the card and loan at 5·1 gives 85 and "2 banks · 2 accounts";
-- the decision has POL_DATA_CONFIDENCE PASS;
-- the memo line in the Lender view;
-- the flow-map header shows the source count;
+- the "Your data" card at 6·0, 7·2 and 7·3 shows 100% and 2 banks · 4 accounts · 12 months;
+- unticking the card and loan → 70% and the pre-qualified screen still shows;
+- unticking the current account → 7·3 "Almost there" with the Salary account chip first, and "Connect another
+  account" → step 4;
+- the behind-the-scenes "Two steps" panel and the 50% what-if;
+- the Lender view's circular indicator shows 100%;
 - update existing checks minimally and list them;
 - 390px; zero page errors; light and dark themes.
