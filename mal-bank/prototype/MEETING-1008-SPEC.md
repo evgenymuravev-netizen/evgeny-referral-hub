@@ -36,6 +36,57 @@ five buckets:
 **Deep link:** opening the page with `#lender` (and `#log`) lands on that screen with the most recent journey
 decision selected, so the link can be circulated. Without a decision, show a seeded example.
 
+## 1a. What lenders receive (methodology slide 8): the memo's output table
+
+This **sets the memo's top-level structure** and supersedes the memo bullet list in §1. The memo opens with this
+table: output · what it tells the lender · status (**Core** / **Proposed**) · the value for this decision.
+
+| Output | What it tells the lender | Status | Value (Ravi) |
+|---|---|---|---|
+| **NoorScore and risk band** | The applicant's overall risk level, in bands mapped to expected default once calibrated | Core | 737 · Very good |
+| **Reason codes** | Findings behind the score, such as Saver or New to the UAE (§1c), plus any RC_* adverse reason | Core | Saver · Dining out lover · 12 months of data history · Stable income · Pays cards and loans on time |
+| **Data completeness** | How much of the customer's financial life we can see, 0 to 100% (the v2.17 ring, no threshold) | Proposed | 100% · 2 banks · 4 accounts · 12 months |
+| **Income bucket** | Verified regular income range | Proposed | AED 10,000–15,000 / month |
+| **Additional income bucket** | Variable and secondary income range | Proposed | None detected. For a1: AED 5,000–10,000 / month (rent). |
+| **DBR** | Observed debt burden ratio and headroom in AED | Proposed | see the note below |
+
+**Income buckets.** Use AED 5,000 steps up to 20,000 and AED 10,000 steps above (as v2.5).
+- **Additional income** = verified regular non-salary income (a1's rent) plus variable income above the base
+  salary (overtime, bonus, commission) averaged over the history.
+- Ravi's overtime swings are below AED 1,000, so his line reads "None detected (< AED 1,000)".
+
+**DBR and headroom must be banded, not exact.** An exact DBR % or headroom in AED, combined with the AECB
+obligations the lender pulls itself, would let the lender back out the customer's exact income (income =
+obligations ÷ DBR). That defeats the income bucket and the "raw data stays within Noor" rule. So the memo shows:
+- the DBR band in 5-point steps: "15–20%";
+- the monthly headroom band in AED 500 steps: "AED 3,000–3,500 / month". The headroom here is after the new
+  instalment, under the 50% cap.
+- **Note for the team:** if partners insist on exact figures, it's a per-agreement choice with this trade-off.
+  The engine supports a `dbrPrecision: 'BAND'|'EXACT'` setting in the sharing agreement, default BAND.
+
+**Banner, verbatim:** "The set of aggregates is open: we are flexible and want to hear what each partner needs
+to see."
+
+**Beyond the slide's table, the memo can add these Proposed extras** per sharing agreement (§1b):
+- the four score-component levels (§1, from the 8 Oct meeting);
+- the free-cash-flow band and the instalment-share band (already built);
+- the Monitoring status line, with the best debit date and the next refresh.
+
+**Sharing agreements (§1b) refer to these outputs by key:**
+- **Partner Bank v1:** Core + all Proposed + all extras.
+- **Lender B (illustrative):** Core only.
+- **SFTP:** columns follow the agreement's outputs.
+
+**Tests:**
+- the table renders in that order with the Core / Proposed tags;
+- Ravi's values match;
+- a1's additional-income bucket reads 5,000–10,000;
+- DBR and headroom are banded under BAND: the memo JSON contains no exact DBR % (e.g. 18.4) and no exact
+  headroom figure;
+- `dbrPrecision: 'EXACT'` on a test agreement shows them;
+- Lender B shows only the Core rows;
+- the banner is present.
+
 ## 1b. Noor IP vs lender view (methodology slide 6) — what the memo may and may not carry
 
 **What stays inside Noor**, never in the memo, the SFTP row or the lender-facing UI:
