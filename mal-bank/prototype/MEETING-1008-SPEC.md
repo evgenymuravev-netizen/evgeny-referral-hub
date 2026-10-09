@@ -48,7 +48,7 @@ table: output · what it tells the lender · status (**Core** / **Proposed**) ·
 | **Data completeness** | How much of the customer's financial life we can see, 0 to 100% (the v2.17 ring, no threshold) | Proposed | 100% · 2 banks · 4 accounts · 12 months |
 | **Income bucket** | Verified regular income range | Proposed | AED 10,000–15,000 / month |
 | **Additional income bucket** | Variable and secondary income range | Proposed | None detected. For a1: AED 5,000–10,000 / month (rent). |
-| **DBR** | Observed debt burden ratio and headroom in AED | Proposed | see the note below |
+| **DBR** | Observed debt burden ratio and headroom in AED | Proposed | 15–20% · headroom AED 3,500–4,000 / month (banded; see the note below) |
 
 **Income buckets.** Use AED 5,000 steps up to 20,000 and AED 10,000 steps above (as v2.5).
 - **Additional income** = verified regular non-salary income (a1's rent) plus variable income above the base
@@ -58,9 +58,10 @@ table: output · what it tells the lender · status (**Core** / **Proposed**) ·
 **DBR and headroom must be banded, not exact.** An exact DBR % or headroom in AED, combined with the AECB
 obligations the lender pulls itself, would let the lender back out the customer's exact income (income =
 obligations ÷ DBR). That defeats the income bucket and the "raw data stays within Noor" rule. So the memo shows:
-- the DBR band in 5-point steps: "15–20%";
-- the monthly headroom band in AED 500 steps: "AED 3,000–3,500 / month". The headroom here is after the new
-  instalment, under the 50% cap.
+- the DBR band in 5-point steps;
+- the monthly headroom band in AED 500 steps. The headroom here is after the new instalment, under the 50% cap.
+- **For Ravi:** obligations 900 + instalment 1,311.70 = 2,211.70 on 12,000 = DBR 18.4%, which shows as
+  **"15–20%"**. Headroom 6,000 − 2,211.70 = 3,788.30, which shows as **"AED 3,500–4,000 / month"**.
 - **Note for the team:** if partners insist on exact figures, it's a per-agreement choice with this trade-off.
   The engine supports a `dbrPrecision: 'BAND'|'EXACT'` setting in the sharing agreement, default BAND.
 
