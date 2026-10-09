@@ -6832,7 +6832,9 @@ var JR_ICON = {
   face: 'M2.5 5.5v-2h2M11.5 3.5h2v2M13.5 10.5v2h-2M4.5 12.5h-2v-2M6 6.5v1M10 6.5v1M8 6.5v2.5h-.8M6.2 10.5a2.6 2.6 0 0 0 3.6 0', clock: 'M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM8 5v3.2l2 1.3',
   /* v2.12 — neutral glyphs for botim's main screen (services grid, search) */
   search: 'M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3l3.2 3.2', recharge: 'M5.5 2.5h5v11h-5zM7.3 11.5h1.4M8.6 4.8L7.2 7.4h1.6L7.4 9.6',
-  bills: 'M4 2.5h8v11l-1.6-1-1.2 1-1.2-1-1.2 1-1.2-1L4 13.5zM6 5.5h4M6 8h4M6 10.5h2.2', gold: 'M1.5 13l1.2-3h3.6l1.2 3zM8.5 13l1.2-3h3.6l1.2 3zM5 9l1.2-3h3.6L11 9z'
+  bills: 'M4 2.5h8v11l-1.6-1-1.2 1-1.2-1-1.2 1-1.2-1L4 13.5zM6 5.5h4M6 8h4M6 10.5h2.2', gold: 'M1.5 13l1.2-3h3.6l1.2 3zM8.5 13l1.2-3h3.6l1.2 3zM5 9l1.2-3h3.6L11 9z',
+  /* v2.16 — a neutral camera glyph for the Emirates ID scan */
+  camera: 'M2.5 5.5h2.6l1.1-1.6h3.6l1.1 1.6h2.6v7h-11zM8 6.9a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2z'
 };
 function jrSvg(d, cls, sw) {
   var svg = document.createElementNS(SVGNS, 'svg');
@@ -6864,12 +6866,14 @@ var JR_HOST = {
 var JR_BANKS = [['ENBD', 'EN'], ['FAB', 'FA'], ['ADCB', 'AD'], ['Mashreq', 'MQ'], ['RAKBANK', 'RK'], ['Other bank', '··']];
 /* v2.8 — each experiment variant renders its own path through the shared steps. Top-level numbers 0–16 are the
    shared steps; the v2.8 additions are sub-steps (3·1 email; variant A's 8·1 and 8·2).
-   v2.13 — "How should we contact you?" moved from onboarding (3·2) to right after the payout (16·1). */
+   v2.13 — "How should we contact you?" moved from onboarding (3·2) to right after the payout (16·1).
+   v2.16 — 3·2 is now "Scan your Emirates ID" (front + back), in both variants. */
 var JR_ONBOARD = [
   { n: 1, title: 'Noor opens inside botim (web-view)' },
   { n: 2, title: 'Create your account' },
   { n: 3, title: 'Enter the code' },
   { n: 3, sub: 1, title: 'Your email — digital-footprint check (covered by the terms)', engine: 'assessFootprint()' },
+  { n: 3, sub: 2, title: 'Scan your Emirates ID' },
   { n: 4, title: 'Connect your bank accounts — Al Tareq' },
   { n: 5, title: 'Approve in your bank — leaves the web-view' }
 ];
@@ -6917,6 +6921,8 @@ var JR_TERMS = {
   clause: 'to confirm it’s you and protect your account, we check your email and mobile number with a fraud-prevention provider. We use it for identity and security — and, only if we switch it on after testing, to help when you have little credit history. We never use your gender, the apps or services you use, or where a data breach came from.',
   object: 'Contact us in the app to ask about or object to this check.'
 };
+/* v2.16 — the what-if: the same card, with the salary paid by another (fictitious) company */
+var JR_EID_WHATIF_PAYER = 'SALARY/WPS PALMGATE TRADING';
 /* When the terms were accepted: the demo's day (MizanData.TODAY), just before the engine's session clock starts (09:00) */
 function jrTermsAt() { return new Date(new Date(MD.TODAY + 'T09:00:00Z').getTime() - 120000).toISOString(); }
 /* The experiment: 2.0% → 2.5% funded, 80% power, two-sided α 0.05 */
@@ -6926,6 +6932,7 @@ function jrFresh(variant) {
            otp: '', otpErr: false, otpLeft: 24, banks: { ENBD: true, FAB: true }, bankDeclined: false, bankSel: {}, faceId: null,
            emailEdit: false, emailOther: '', emailErr: null, emailCode: '', emailCodeErr: false, emailOk: false, emailDone: false,
            footprint: false, fpa: null, terms: null, termsSheet: null,
+           eid: { front: false, back: false }, eidCam: null, eidDone: false, eidCheck: null, eidWhatIf: null,
            comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
            commsTouched: false, commsDone: false, commsErr: null,
            insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
@@ -7076,6 +7083,9 @@ var Journey = {
       }
     }
     if (S.step === 7 && S.sub === 0) S.hostTab = 'credit';
+    /* v2.16 — the Emirates ID cross-check, once the accounts are read: the employer on the card against the WPS payer on the
+       salary credits, and the name on the card against the account holder (pure: no record) */
+    if (((S.step === 7 && S.sub === 2) || (S.step === 8 && S.sub === 2)) && S.eidDone && S.connected && !S.eidCheck) Journey.runEidCheck();
     var pqStep = (S.step === 7 && S.sub === 3) || (S.step === 8 && S.sub === 2);
     if (pqStep && !S.pq) {
       try {
@@ -7251,12 +7261,16 @@ var Journey = {
     S.applyErr = null;
     /* v2.14 — the footprint check rests on the terms accepted at step 2 */
     var fpc = S.terms ? { basis: 'TERMS', termsVersion: S.terms.version, acceptedAt: S.terms.acceptedAt } : undefined;
+    /* v2.16 — the Emirates ID scanned at 3·2 (front + back): POL_ID_VALID and POL_EMPLOYER_MATCH, refer only */
+    var eid = S.eidDone && S.eid.front && S.eid.back;
     var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true' +
-      (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}})';
+      (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}' + (eid ? ', emiratesId:{front, back}' : '') + '})';
     var cons = { aecb: !!S.aecb, openFinance: true };
     if (fpc) cons.digitalFootprint = fpc;
     try {
-      rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' });
+      var app = { productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' };
+      if (eid) app.emiratesId = true;
+      rec = ME.decide(app);
     } catch (err) {
       /* Expected: no AECB consent → the engine refuses. Shown in the phone, calmly. */
       S.applyErr = err && err.message ? err.message : String(err);
@@ -7267,7 +7281,8 @@ var Journey = {
     S.recId = rec.id; S.reachedIdx = jrIdx(9, 0); S.kfsLang = 'en'; S.kfsSheet = false; S.waive = false; S.eventErr = null; S.pwaOpen = false; S.commsDone = false; S.commsErr = null;
     S.botim = S.botim.filter(function (b) { return b.key !== 'funded'; });
     Journey.emit('applied');
-    Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : ''));
+    Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : '') +
+      (eid ? ' · ' + (rec.rules || []).filter(function (x) { return x.id === 'POL_ID_VALID' || x.id === 'POL_EMPLOYER_MATCH'; }).map(function (x) { return x.id + ' ' + x.result; }).join(' · ') : ''));
     afterEngineMutation();
     Journey.go(9, 1, 1);
   },
@@ -7304,13 +7319,14 @@ var Journey = {
     S.hostTab = t;
     Journey.render();
   },
-  /* Onboarding picks up where it stopped: hand-off → account → code → email → banks
-     (v2.13 — the contact preferences are asked after the payout, not here) */
+  /* Onboarding picks up where it stopped: hand-off → account → code → email → Emirates ID → banks
+     (v2.13 — the contact preferences are asked after the payout, not here; v2.16 — the Emirates ID scan is 3·2) */
   resumeOnboarding: function () {
     var S = Journey.S;
     if (!S.account) { Journey.go(1, 0, 1); return; }
     if (!S.phoneOk) { Journey.go(3, 0, 1); return; }
     if (!S.emailDone) { Journey.go(3, 1, 1); return; }
+    if (!S.eidDone) { Journey.go(3, 2, 1); return; }
     Journey.go(4, 0, 1);
   },
   /* botim money → "Add another +": entry 1 (both variants) */
@@ -7739,6 +7755,7 @@ var Journey = {
           B('Continue', function () { Journey.acceptTerms(); Journey.go(3, 0, 1); }, 'jr-cta'))) };
     }
     if (st === 3 && sub === 1) return { kind: 'webview', node: Journey.emailView() };
+    if (st === 3 && sub === 2) return { kind: 'webview', node: Journey.eidView() };
     if (st === 3) {
       var cells = h('div', { class: 'ph-otp', id: 'jr-otp', role: 'group', 'aria-label': '6-digit code' });
       for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.otp[i] ? ' on' : (i === S.otp.length ? ' cur' : '')), text: S.otp[i] || '' }));
@@ -7828,7 +7845,9 @@ var Journey = {
           /* v2.15 — the card and the loan, each from the connected accounts (they add up to the total) */
           Journey.budgetRepayments(cn),
           h('div', { class: 'ph-mini-r ph-mini-sep' }, h('span', { class: 'ph-mini-k', text: 'Left after spending and repayments' }),
-            h('span', { class: 'ph-mini-v', text: '≈ ' + fmtAED(cn.avgMonthlyIncome - cn.avgMonthlySpend - (cn.observedObligationsMonthly || 0)) + ' / month' })))),
+            h('span', { class: 'ph-mini-v', text: '≈ ' + fmtAED(cn.avgMonthlyIncome - cn.avgMonthlySpend - (cn.observedObligationsMonthly || 0)) + ' / month' }))),
+        /* v2.16 — the Emirates ID cross-check: the employer on the card ↔ the WPS payer on the salary credits; the name ↔ the account holder */
+        Journey.eidMatchCard()),
         S.variant === 'A' ? B('Apply for a personal loan', function () { Journey.S.intent = 'loan'; Journey.go(8, 1, 1); }, 'jr-cta')
                           : B('See what you could borrow', function () { Journey.go(7, 3, 1); }, 'jr-cta')) };
     }
@@ -7932,7 +7951,127 @@ var Journey = {
       h('p', { class: 'ph-small ph-muted ph-fp-notice', id: 'jr-fp-notice' }, 'We verify your email and phone to protect your account — see our ',
         Journey.termsLink('privacy', 'Privacy policy', 'jr-fp-privacy'), '.'),
       Journey.termsSheet()),
-      B('Continue', function () { S.emailDone = true; Journey.go(4, 0, 1); }, 'jr-cta'));   /* v2.13 — straight to the bank: contact preferences come after the payout */
+      B('Continue', function () { S.emailDone = true; Journey.go(3, 2, 1); }, 'jr-cta'));   /* v2.16 — then the Emirates ID (3·2); contact preferences still come after the payout (v2.13) */
+  },
+  /* v2.16 — sub-step 3·2: the Emirates ID, front and back. A neutral card outline with field labels (never a real card
+     design); tapping a side shows a simulated camera frame for about a second (instant under reduced motion), then the
+     fields read. Nationality and sex are on the card but never read; the photos are not kept. */
+  eidView: function () {
+    var S = Journey.S, p = Journey.persona, B = Journey.btn, id = p.emiratesId || { front: {}, back: {} };
+    var both = S.eid.front && S.eid.back;
+    var tile = function (side) {
+      var done = !!S.eid[side], f = id[side] || {}, title = side === 'front' ? 'Front' : 'Back';
+      var labels = side === 'front' ? ['Name', 'ID number', 'Date of birth', 'Expiry'] : ['Occupation', 'Employer'];
+      if (!done) {
+        return h('button', { class: 'ph-eid-tile', type: 'button', id: 'jr-eid-' + side, dataset: { side: side, captured: 'false' },
+          disabled: S.eidCam ? 'disabled' : null, 'aria-label': 'Scan the ' + side + ' of your Emirates ID',
+          onclick: function () { Journey.eidCapture(side); } },
+          h('span', { class: 'ph-eid-shape', 'aria-hidden': 'true' }, labels.map(function (l) { return h('span', { class: 'ph-eid-ln' }, h('span', { class: 'ph-eid-lk', text: l }), h('span', { class: 'ph-eid-lb' })); })),
+          h('span', { class: 'ph-eid-tt' }, h('span', { class: 'ph-eid-side', text: title }), h('span', { class: 'ph-eid-go' }, jrSvg(JR_ICON.camera, 'ph-eid-cam-ico', '1.5'), 'Tap to scan')));
+      }
+      var rows = side === 'front'
+        ? [['name', 'Name', h('span', { class: 'ph-eid-v2' }, h('span', { text: f.nameEn || '—' }), h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: f.nameAr || '' }))],
+           ['id', 'ID number', f.idMasked || '—'], ['dob', 'Date of birth', fmtLongDate(f.dob)], ['expiry', 'Expiry', fmtLongDate(f.expiry)]]
+        : [['occupation', 'Occupation', f.occupation || '—'], ['employer', 'Employer', f.employer || '—']];
+      return h('div', { class: 'ph-card ph-eid-done', id: 'jr-eid-' + side + '-done', dataset: { side: side, captured: 'true' } },
+        h('div', { class: 'ph-eid-dh' }, h('span', { class: 'ph-eid-side', text: title }),
+          h('span', { class: 'ph-eid-ok', id: 'jr-eid-' + side + '-ok' }, jrSvg(JR_ICON.check, 'ph-eid-ok-ico', '2.2'), 'Captured'),
+          h('button', { class: 'ph-textlink ph-eid-retake', type: 'button', id: 'jr-eid-retake-' + side, disabled: S.eidCam ? 'disabled' : null,
+            onclick: function () { S.eid[side] = false; S.eidDone = false; S.eidCheck = null; Journey.render(); } }, 'Retake')),
+        h('div', { class: 'ph-list ph-eid-fields', id: 'jr-eid-fields-' + side }, rows.map(function (r) {
+          return h('div', { class: 'ph-li', dataset: { field: r[0] } }, h('span', { class: 'ph-li-k', text: r[1] }), typeof r[2] === 'string' ? h('span', { class: 'ph-li-v', text: r[2] }) : r[2]);
+        })));
+    };
+    var cam = S.eidCam ? h('div', { class: 'ph-overlay ph-eid-camwrap', id: 'jr-eid-cam', dataset: { side: S.eidCam }, role: 'status', 'aria-live': 'polite' },
+      h('div', { class: 'ph-eid-cam' },
+        h('span', { class: 'ph-eid-frame', 'aria-hidden': 'true' }, h('span', { class: 'ph-eid-frame-c tl' }), h('span', { class: 'ph-eid-frame-c tr' }),
+          h('span', { class: 'ph-eid-frame-c bl' }), h('span', { class: 'ph-eid-frame-c br' })),
+        h('span', { class: 'ph-eid-cam-t', text: 'Hold steady…' }),
+        h('span', { class: 'ph-eid-cam-s', text: (S.eidCam === 'front' ? 'Front' : 'Back') + ' of your Emirates ID — inside the frame' }))) : null;
+    return Journey.wv(h('div', { id: 'jr-eid', dataset: { front: String(!!S.eid.front), back: String(!!S.eid.back) } },
+      h('h2', { class: 'ph-h1', text: 'Scan your Emirates ID' }),
+      h('p', { class: 'ph-small', id: 'jr-eid-lead', text: 'Front and back — we read your name, ID number, expiry and, from the back, your employer.' }),
+      h('div', { class: 'ph-eid-tiles' }, tile('front'), tile('back')),
+      h('p', { class: 'ph-small ph-muted', id: 'jr-eid-notread', text: 'We don’t keep the photos, and we don’t read your nationality or sex — Noor doesn’t need them.' }),
+      cam),
+      B('Continue', function () { if (!(S.eid.front && S.eid.back)) return; S.eidDone = true; Journey.go(4, 0, 1); }, 'jr-cta', { disabled: !both || !!S.eidCam }));
+  },
+  /* The simulated camera: "Hold steady…" for about a second, then the side is captured (instant under reduced motion) */
+  eidCapture: function (side) {
+    var S = Journey.S;
+    if (S.eidCam || S.eid[side]) return;
+    var done = function () {
+      S.eid[side] = true; S.eidCam = null;
+      Journey.log('Emirates ID · ' + side + ' scanned', side === 'front' ? 'name (EN + AR), ID number (masked), date of birth, expiry · nationality and sex not read · photo not kept'
+                                                                       : 'occupation, employer · photo not kept');
+      Journey.render();
+    };
+    if (REDUCED) { done(); return; }
+    S.eidCam = side;
+    Journey.render();
+    if (Journey.timer) clearTimeout(Journey.timer);
+    Journey.timer = setTimeout(function () { Journey.timer = null; if (Journey.S === S && S.step === 3 && S.sub === 2) done(); }, 1000);
+  },
+  /* checkEmiratesId(): pure — no record. Run once the accounts are read (7·2, or 8·2 in variant A). */
+  runEidCheck: function () {
+    var S = Journey.S, p = Journey.persona;
+    try {
+      S.eidCheck = ME.checkEmiratesId(p, true, { openFinance: true });
+      var m = S.eidCheck.employerMatch, n = S.eidCheck.nameMatch;
+      Journey.log('checkEmiratesId(j1, front + back)', 'employer ↔ WPS payer: ' + (m.match ? 'match' : 'mismatch') + ' (' + m.score + '%) · name ' + (n.match ? 'matches' : 'does not match') +
+        ' the account holder · nationality and sex not read · pure, no record');
+    } catch (err) { S.eidCheck = null; }
+  },
+  /* The what-if: the same card, the salary from another company — a pure check, never a decision */
+  eidWhatIf: function () {
+    var S = Journey.S, p = Journey.persona;
+    try {
+      var w = ME.checkEmiratesId(p, true, { salaryPayer: JR_EID_WHATIF_PAYER, openFinance: !!S.connected });
+      S.eidWhatIf = w;
+      Journey.log('checkEmiratesId(j1, front + back, {salaryPayer:‘' + JR_EID_WHATIF_PAYER + '’})',
+        'what-if · ' + (w.employerMatch.match ? 'match' : 'mismatch') + ' (' + w.employerMatch.score + '%)' + (w.employerMatch.match ? '' : ' → POL_EMPLOYER_MATCH would REFER (RC_EMPLOYER_MISMATCH)') + ' · pure, no record');
+    } catch (err) { S.eidWhatIf = { err: err && err.message ? err.message : String(err) }; }
+    Journey.render();
+  },
+  /* 7·2 — the cross-check rows under the budget (only once the ID was scanned and the accounts read) */
+  eidMatchCard: function () {
+    var S = Journey.S, c = S.eidCheck;
+    if (!c) return null;
+    var m = c.employerMatch, n = c.nameMatch;
+    var mark = function (ok) { return h('span', { class: 'ph-eid-mk' + (ok ? ' ok' : ' bad'), 'aria-hidden': 'true' }, jrSvg(ok ? JR_ICON.check : JR_ICON.close, null, '2.2')); };
+    return h('div', { class: 'ph-card ph-eid-match', id: 'jr-eid-match', dataset: { employer: m.match ? 'match' : 'mismatch', name: n.match ? 'match' : 'mismatch', score: String(m.score) } },
+      h('div', { class: 'ph-h3 ph-eid-mh', text: 'Checked against your Emirates ID' }),
+      h('div', { class: 'ph-eid-chk', id: 'jr-eid-employer' }, mark(m.match),
+        h('span', null, 'Employer · Emirates ID: ', h('strong', { text: m.idEmployer }), ' ↔ salary credits: ', h('strong', { class: 'ph-eid-payer', text: '‘' + m.salaryPayer + '’' }),
+          ' — ' + (m.match ? 'match ✓' : 'no match'))),
+      h('div', { class: 'ph-eid-chk', id: 'jr-eid-name' }, mark(n.match), h('span', { text: n.match ? 'Name on ID matches the account holder ✓' : 'Name on ID doesn’t match the account holder' })));
+  },
+  /* Behind the scenes (3·2, 7·2 and variant A's 8·2): what the scan read, the cross-check, and the what-if */
+  eidEngineBox: function () {
+    var S = Journey.S, c = S.eidCheck, w = S.eidWhatIf;
+    var box = h('div', { class: 'jr-engine', id: 'jr-eid-out' },
+      h('div', { class: 'jr-engine-h' }, h('code', { text: 'checkEmiratesId(j1, front + back)' }), h('span', { class: 'small muted', text: ' · pure — no record' })));
+    if (c) {
+      box.appendChild(h('div', { class: 'jr-chips', id: 'jr-eid-chips' },
+        h('span', { class: 'jr-chip' + (c.employerMatch.match ? ' ok' : ' warn'), dataset: { chip: 'employer' }, text: 'Employer ↔ WPS payer: ' + (c.employerMatch.match ? 'match' : 'mismatch') + ' · ' + c.employerMatch.score + '%' }),
+        h('span', { class: 'jr-chip' + (c.nameMatch.match ? ' ok' : ' warn'), dataset: { chip: 'name' }, text: 'Name ↔ account holder: ' + (c.nameMatch.match ? 'match' : 'no match') }),
+        h('span', { class: 'jr-chip' + (c.expiryValid ? ' ok' : ' warn'), dataset: { chip: 'expiry' }, text: c.expiryValid ? 'Card valid' : 'Card expired' }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'notread' }, text: 'Not read: ' + c.notRead.join(' · ') })));
+    } else {
+      box.appendChild(h('div', { class: 'jr-chips', id: 'jr-eid-chips' },
+        h('span', { class: 'jr-chip', dataset: { chip: 'read' }, text: 'Read: name · ID number (masked) · date of birth · expiry · occupation · employer' }),
+        h('span', { class: 'jr-chip', dataset: { chip: 'notread' }, text: 'Not read: ' + (ME.EMIRATES_ID_NOT_READ || ['nationality', 'sex', 'photos']).join(' · ') })));
+      box.appendChild(h('div', { class: 'small muted', text: 'The employer ↔ salary-payer and name checks run once the accounts are connected and read (step 7).' }));
+    }
+    box.appendChild(h('button', { class: 'btn', type: 'button', id: 'jr-eid-whatif', text: 'What if the salary came from another company?', onclick: function () { Journey.eidWhatIf(); } }));
+    if (w) {
+      box.appendChild(w.err ? h('div', { class: 'small', id: 'jr-eid-whatif-out', text: w.err })
+        : h('div', { class: 'callout ' + (w.employerMatch.match ? 'callout-info' : 'callout-warn'), id: 'jr-eid-whatif-out', dataset: { match: String(!!w.employerMatch.match) } },
+            h('div', { class: 'co-title', text: w.employerMatch.match ? 'Still a match → PASS' : 'Mismatch → REFER (RC_EMPLOYER_MISMATCH): we’d ask for a salary certificate or an employment letter.' }),
+            h('div', { class: 'co-body', text: '‘' + w.employerMatch.idEmployer + '’ ↔ ‘' + w.employerMatch.salaryPayer + '’ — ' + w.employerMatch.score + '% of the employer’s words (a match needs 70%). ' +
+              'Never a decline and never a price change: a person looks at it — usually a job change. Pure check: no record, nothing in the Decision log.' })));
+    }
+    return box;
   },
   /* v2.8 — contact preferences; at least one channel for the account and the loan.
      v2.13 — asked at 16·1, once the loan is issued (no longer in onboarding): the same copy, toggles, defaults and
