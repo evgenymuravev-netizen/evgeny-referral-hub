@@ -3198,11 +3198,15 @@
     // v2.9 — the shared early-warning block sits beside the product packs (same 4-eyes publish + history).
     S.policies[EW_BLOCK_ID] = defaultEarlyWarningBlock();
     S.policyHistory[EW_BLOCK_ID] = [];
+    // v2.18 — every published version of every pack is kept whole, so reproduceDecision() re-runs a
+    // decision on the policy in force when it was made (the history above records the changes only).
+    S.policySnapshots = {};
     for (const pid of Object.keys(S.policies)) {
       const pol = S.policies[pid];
       pol.publishedAt = D.TODAY + 'T08:00:00.000Z';
       S.policyHistory[pid].push({ version: 1, publishedAt: pol.publishedAt,
                                   publishedBy: pol.publishedBy, approvedBy: pol.approvedBy, changes: [] });
+      S.policySnapshots[pid] = { 1: clone(pol) };
     }
     seedHistory();
     return true;
@@ -3544,6 +3548,7 @@
     pol.approvedBy = meta.approver;
     S.policyHistory[productId].push({ version: pol.version, publishedAt: pol.publishedAt,
                                       publishedBy: meta.author, approvedBy: meta.approver, changes });
+    S.policySnapshots[productId][pol.version] = clone(pol);   // v2.18 — for reproduceDecision()
     return { version: pol.version };
   }
 
@@ -3627,8 +3632,11 @@
   }
 
   // `internal` (not part of the public contract) carries redecide()'s trigger.
-  function decide(application, internal) {
-    ensureInit();
+  // v2.18 — the evaluation half of decide(), pure: validation, the evaluation and every adjustment to it
+  // (footprint, Emirates ID, data completeness). No record, no sequence number, no clock tick — so
+  // reproduceDecision() re-runs exactly this from a record's logged inputs. opts.reproduce skips the
+  // supersede checks (the record already is what it is).
+  function computeDecision(application, opts) {
     if (!application || typeof application !== 'object') throw err('decide(application) requires an application object');
     const { productId, applicant, consents } = application;
     const manifest = MANIFESTS.find(m => m.productId === productId);
@@ -3687,12 +3695,11 @@
     }
     // A re-decision supersedes an earlier decision for the same customer and product.
     let orig = null;
-    if (application.supersedes !== undefined && application.supersedes !== null) {
+    if (!(opts && opts.reproduce) && application.supersedes !== undefined && application.supersedes !== null) {
       orig = S.byId[application.supersedes];
       if (!orig) throw err('unknown decision id "' + application.supersedes + '" to supersede');
       checkSupersedable(orig, productId, applicant, statements);
     }
-    const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
     // v2.8 — contact preferences: validated before anything is pulled or recorded.
     const comms = normalizeCommunications(consents.communications);
     // v2.14 — the footprint consent's basis (EXPLICIT or TERMS), validated here too.
@@ -3741,6 +3748,27 @@
         }
       }
     }
+    if (fpa) {
+      // The footprint's effect on the evaluation (identity and security never change the outcome; see above).
+      ev.features.footprintIdentity = fpa.identity.confidence;
+      ev.features.footprintAtoRisk = fpa.security.atoRisk;
+      ev.features.footprintVendorScore = applicant.footprint.vendorScore;
+      ev.rules.push({ id: 'POL_IDENTITY_FOOTPRINT', name: 'Identity confirmed by the digital-footprint check (consented; never a decline reason)', category: 'POLICY',
+                      result: fpa.identity.confidence === 'HIGH' ? 'PASS' : 'INFO',
+                      observed: fpa.identity.confidence + ' — ' + fpa.identity.signals.filter(s => s.pass).length + ' of 4 signals' +
+                                ' · account-takeover risk ' + fpa.security.atoRisk,
+                      threshold: 'HIGH = all 4 signals (email 5+ years, name in 2+ sources, phone on a messenger, ≤ 2 lenders)' });
+      if (fpa.security.atoRisk === 'ELEVATED' && ev.outcome !== 'DECLINE' && !ev.reasonCodes.includes('RC_STEP_UP_AUTH')) ev.reasonCodes.push('RC_STEP_UP_AUTH');
+      if (fpOverlay && fpOverlay.applied && ev.outcome !== 'DECLINE' && !ev.reasonCodes.includes('RC_FOOTPRINT_OVERLAY')) ev.reasonCodes.push('RC_FOOTPRINT_OVERLAY');
+      if (fpOverlay) ev.score.footprintOverlay = { name: fpOverlay.name, delta: fpOverlay.delta, applied: fpOverlay.applied, mode: fpOverlay.mode, note: fpOverlay.note };
+    }
+    return { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay };
+  }
+  function decide(application, internal) {
+    ensureInit();
+    const cd = computeDecision(application);
+    const { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay } = cd;
+    const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
 
     S.seq += 1;
     const id = 'MZN-' + String(S.seq).padStart(6, '0');
@@ -3757,23 +3785,12 @@
                                 : (eid.employerMatch.match ? 'match' : 'mismatch') + ' — ' + eid.employerMatch.score + '% (WPS salary payer)' } });
     }
     if (fpa) {
-      ev.features.footprintIdentity = fpa.identity.confidence;
-      ev.features.footprintAtoRisk = fpa.security.atoRisk;
-      ev.features.footprintVendorScore = applicant.footprint.vendorScore;
       pulls.push({ source: 'DIGITAL_FOOTPRINT', status: 'OK', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
                    summary: { provider: 'Digital-footprint provider (RiskSeal-style) — email + phone', identity: fpa.identity.confidence,
                               atoRisk: fpa.security.atoRisk, vendorScore: applicant.footprint.vendorScore,
                               overlay: fpOverlay ? (fpOverlay.applied ? '+' + fpOverlay.delta + ' applied (LIVE)' : '+' + fpOverlay.delta + ' ' + (fpOverlay.mode === 'LIVE' ? '— ' + fpOverlay.note : 'shadow — not applied'))
                                                  : 'not eligible — AECB file present',
                               droppedAtIngestion: fpa.excluded.length + ' item types' } });
-      ev.rules.push({ id: 'POL_IDENTITY_FOOTPRINT', name: 'Identity confirmed by the digital-footprint check (consented; never a decline reason)', category: 'POLICY',
-                      result: fpa.identity.confidence === 'HIGH' ? 'PASS' : 'INFO',
-                      observed: fpa.identity.confidence + ' — ' + fpa.identity.signals.filter(s => s.pass).length + ' of 4 signals' +
-                                ' · account-takeover risk ' + fpa.security.atoRisk,
-                      threshold: 'HIGH = all 4 signals (email 5+ years, name in 2+ sources, phone on a messenger, ≤ 2 lenders)' });
-      if (fpa.security.atoRisk === 'ELEVATED' && ev.outcome !== 'DECLINE' && !ev.reasonCodes.includes('RC_STEP_UP_AUTH')) ev.reasonCodes.push('RC_STEP_UP_AUTH');
-      if (fpOverlay && fpOverlay.applied && ev.outcome !== 'DECLINE' && !ev.reasonCodes.includes('RC_FOOTPRINT_OVERLAY')) ev.reasonCodes.push('RC_FOOTPRINT_OVERLAY');
-      if (fpOverlay) ev.score.footprintOverlay = { name: fpOverlay.name, delta: fpOverlay.delta, applied: fpOverlay.applied, mode: fpOverlay.mode, note: fpOverlay.note };
     }
     // Repayment collection follows the approved amount (v2.3); refer/decline → null.
     const repayment = ev.outcome === 'APPROVE' && ev.limit.approved > 0 ? repaymentForProduct(productId, ev.limit.approved) : null;
@@ -3816,7 +3833,14 @@
       homeStatements: statements,
       evidenceComparison: statements ? evidenceComparison(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, ev) : null,
       supersedes: orig ? orig.id : null,
-      supersededBy: null
+      supersededBy: null,
+      // v2.18 — the logged inputs reproduceDecision() needs beyond the applicant snapshot, the request, the
+      // statements read (homeStatements) and the policy / engine versions: the consents as given, the Emirates ID
+      // scan, the data sources, the lender and the early-warning block version in force.
+      inputs: { consents: clone(application.consents), emiratesId: application.emiratesId === undefined ? null : clone(application.emiratesId),
+                dataSources: application.dataSources === undefined ? null : clone(application.dataSources),
+                lenderId: application.lenderId === undefined ? null : application.lenderId,
+                earlyWarningVersion: S.policies[EW_BLOCK_ID] ? S.policies[EW_BLOCK_ID].version : null }
     };
     if (ev.redFlags) {
       // v2.9 — what the red-flag rule read (internal: the Decision log and the Workbench).

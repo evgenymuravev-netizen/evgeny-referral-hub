@@ -23,6 +23,9 @@
  *  - 5 seeded day-zero early-warning signals (consumer only).
  *  - A seeded deterministic sample book (120 split + 140 personal-loan +
  *    80 starter-loan rows, + 17 hand-written car-loan rows) for policy simulation.
+ *  - Sharing agreements per lender (Addendum v2.18): Partner Bank v1 (full set)
+ *    and an illustrative Lender B (Core outputs only); the findings vocabulary
+ *    (EN + Arabic) that lenders see in place of the rules behind a score.
  *  - SME working capital (Addendum v2.10): persona s1 (an owner-managed trading
  *    company, its business accounts and the owner's optional personal accounts),
  *    a hand-written SME sample book (15 rows) and two SME loans under monitoring.
@@ -390,7 +393,11 @@
                    // Salary 12,000 with small overtime swings; mean 12,000, vol 1.4%
                    monthlyIncome: [11800, 12000, 12200, 11900, 12000, 12400, 11700, 12000, 12100, 11900, 12000, 12000],
                    // mean 7,400 (December higher: travel home)
-                   monthlySpend: [7100, 7650, 7300, 7900, 7250, 8200, 7000, 7350, 7450, 7200, 7600, 6800] },
+                   monthlySpend: [7100, 7650, 7300, 7900, 7250, 8200, 7000, 7350, 7450, 7200, 7600, 6800],
+                   // v2.18 — the spending mix (% of the monthly average) from the categorised connected-account history.
+                   // Read by customerFindings() for one finding only ("Dining out lover", Dining ≥ 20%) and by the
+                   // journey's Insights tab. Never shared: the lender sees the finding's words, never this mix.
+                   spendCategories: { Dining: 24, Groceries: 22, Transport: 12, Bills: 18, Shopping: 14, Other: 10 } },
       purpose: 'Family wedding',
       defaultRequest: { amount: 15000, tenorMonths: 12 },
       // v2.8 — the email botim shares at hand-off (synthetic, reserved domain). The journey shows it
@@ -1095,8 +1102,49 @@
   // built from an allowlist (never Open Finance data).
   // ---------------------------------------------------------------------------
   const lenders = [
-    { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record' }
+    { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record' },
+    // v2.18 — an illustrative second lender with a narrower sharing agreement (Core outputs only)
+    { id: 'lender-b', name: 'Lender B (illustrative)', nameAr: 'المُقرِض ب (توضيحي)', role: 'Lender of record' }
   ];
+
+  // ---------------------------------------------------------------------------
+  // Sharing agreements (Addendum v2.18, MEETING-1008-SPEC.md §1a + §1b). What each
+  // lender receives is agreed per partner and versioned: creditMemo(id, {lenderId})
+  // builds the memo's allowlist from the lender's agreement. Groups by key:
+  //   Core       — noorScore (NoorScore and risk band), reasonCodes (reason codes + findings)
+  //   Proposed   — dataCompleteness, incomeBucket, additionalIncomeBucket, dbr (DBR + headroom bands)
+  //   Extras     — scoreComponents (the four component levels), cashFlowBands (free cash flow +
+  //                instalment share), monitoring (status, best debit date, next refresh)
+  //   Supporting — verificationFlags, bureauFlags, consentReferences
+  // The envelope (memo id, lender, agreement, product, versions, borrower, outcome, terms) always goes.
+  // dbrPrecision: 'BAND' (default) or 'EXACT' — exact DBR % and headroom let a lender back out the
+  // exact income from the AECB obligations it pulls itself, so EXACT is a per-agreement trade-off.
+  // ---------------------------------------------------------------------------
+  const sharingAgreements = {
+    'partner-bank': { id: 'SA-PARTNER-BANK-V1', lenderId: 'partner-bank', label: 'Partner Bank v1', version: 'v1', agreedOn: '2026-10-08', dbrPrecision: 'BAND',
+                      groups: ['noorScore', 'reasonCodes', 'dataCompleteness', 'incomeBucket', 'additionalIncomeBucket', 'dbr',
+                               'scoreComponents', 'cashFlowBands', 'monitoring', 'verificationFlags', 'bureauFlags', 'consentReferences'] },
+    'lender-b': { id: 'SA-LENDER-B-V1', lenderId: 'lender-b', label: 'Lender B v1 (illustrative)', version: 'v1', agreedOn: '2026-10-08', dbrPrecision: 'BAND',
+                  groups: ['noorScore', 'reasonCodes'] }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Findings (Addendum v2.18, §1c — "Reason codes are findings"). A controlled
+  // vocabulary of statements about the customer, shared with lenders as words
+  // (EN + Arabic), never with the rule behind them. customerFindings() derives them;
+  // the rules and their thresholds stay inside Noor. Never derived from sensitive
+  // categories (health, religion, family status, politics) or nationality, and
+  // gambling is never a shared finding. {N} is the number of months.
+  // ---------------------------------------------------------------------------
+  const findings = {
+    FND_ADDITIONAL_INCOME: { en: 'Detected additional income', ar: 'تم رصد دخل إضافي' },
+    FND_SAVER: { en: 'Saver', ar: 'مُدّخِر' },
+    FND_NEW_TO_UAE: { en: 'New to the UAE', ar: 'جديد في الإمارات' },
+    FND_DINING_OUT: { en: 'Dining out lover', ar: 'يحب تناول الطعام خارج المنزل' },
+    FND_DATA_HISTORY: { en: '{N} months of data history', ar: '{N} شهرًا من سجل البيانات' },
+    FND_STABLE_INCOME: { en: 'Stable income', ar: 'دخل مستقر' },
+    FND_ON_TIME_PAYER: { en: 'Pays cards and loans on time', ar: 'يسدد البطاقات والقروض في مواعيدها' }
+  };
 
   const MizanData = {
     VERSION: 'data-2.0',
@@ -1110,6 +1158,8 @@
     personasSme: personasSme,
     seededDocumentCases: seededDocumentCases,
     lenders: lenders,
+    sharingAgreements: sharingAgreements,
+    findings: findings,
     reasonCodes: reasonCodes,
     earlyWarning: earlyWarning,
     monitoredLoans: monitoredLoans,
