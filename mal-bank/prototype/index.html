@@ -1754,6 +1754,101 @@ label.bk-acct { position:relative; cursor:pointer; }
   font-family:var(--font-display); font-weight:800; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
 .dc-side { flex:1 1 180px; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .dc-counts { font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
+/* v2.18 — the Lender view: "What lenders receive" (slide 8), the component bars, findings chips, the agreement bar, Noor IP vs lender view */
+.lv-lines { margin:10px 0 0; display:flex; flex-direction:column; gap:2px; }
+.lv-lines p { margin:0; }
+.lv-ext { color:var(--ink); font-weight:600; }
+.lv-agree { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:12px 0 0; }
+.lv-agree-l { color:var(--ink-2); }
+.lv-agree .seg button { white-space:nowrap; }
+.mo-table { display:flex; flex-direction:column; border:1px solid var(--hairline-soft); border-radius:10px; overflow:hidden; }
+.mo-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.5fr) 92px minmax(150px,1.6fr); gap:4px 12px; padding:9px 12px; border-top:1px solid var(--hairline-soft); align-items:baseline; }
+.mo-row:first-child { border-top:0; }
+.mo-head { background:var(--ground); font-family:var(--font-label); font-size:11.5px; color:var(--muted); font-weight:600; }
+.mo-name { font-weight:600; color:var(--ink); }
+.mo-tells { color:var(--muted); font-size:13px; }
+.mo-val { color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.mo-tag { display:inline-flex; align-items:center; border-radius:var(--radius-pill); padding:1px 8px; font-family:var(--font-label); font-size:11px; font-weight:600; border:1px solid var(--hairline); color:var(--muted); background:var(--panel); white-space:nowrap; }
+.mo-core { color:var(--ok); border-color:var(--ok); background:var(--ok-soft); }
+.mo-proposed { color:var(--brand-ink); border-color:var(--brand); background:transparent; }
+.mo-illus { color:var(--warn); border-color:var(--warn); background:var(--warn-soft); }
+.lv-open-note { margin-top:8px; padding:8px 12px; border-radius:8px; background:var(--brand-soft); color:var(--ink); font-size:13.5px; }
+@media (max-width:640px) {
+  .mo-head { display:none; }
+  .mo-row { grid-template-columns:1fr auto; padding:10px 12px; }
+  .mo-tells { grid-column:1 / -1; grid-row:2; }
+  .mo-val { grid-column:1 / -1; grid-row:3; font-weight:600; }
+}
+.mcb-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+.mcb { border:1px solid var(--hairline-soft); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.mcb-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+.mcb-name { font-weight:600; color:var(--ink); }
+.mcb-level { display:inline-flex; align-items:center; gap:6px; font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--ink); }
+.mcb-dot { width:9px; height:9px; border-radius:50%; background:var(--faint); flex:0 0 9px; }
+.mcb-bar { height:6px; border-radius:4px; background:var(--hairline); }
+.mcb-f { font-size:13px; color:var(--muted); }
+.mcb-green .mcb-bar, .lgt-green .mcb-dot, .mcb-green .mcb-dot { background:var(--ok); }
+.mcb-amber .mcb-bar, .lgt-amber .mcb-dot, .mcb-amber .mcb-dot { background:var(--warn); }
+.mcb-red .mcb-bar, .lgt-red .mcb-dot, .mcb-red .mcb-dot { background:var(--bad); }
+.mcb-neutral .mcb-bar { background:repeating-linear-gradient(135deg, var(--hairline) 0 6px, transparent 6px 10px); }
+.fnd-chips { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+.fnd-chip { display:inline-flex; align-items:center; border:1.5px solid var(--ink); border-radius:var(--radius-pill); padding:3px 11px; font-size:13px; font-weight:600; color:var(--ink); background:transparent; white-space:nowrap; }
+.mon-line { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; color:var(--ink); }
+.mon-st { display:inline-flex; border-radius:var(--radius-pill); padding:2px 10px; font-family:var(--font-label); font-size:12px; font-weight:600; color:var(--ok); background:var(--ok-soft); }
+.mon-elevated { color:var(--warn); background:var(--warn-soft); }
+.mon-not-applicable { color:var(--muted); background:var(--ground); }
+#lv-sharing .sw-shared li { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+/* v2.18 — the Decision log: Reproduce, the contribution chart (Phase 1 points), the six components, findings with their rules */
+.replay-acts { display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.lg-repro-l { margin:6px 0 4px; padding-left:18px; }
+.lg-sub { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--muted); margin:0 0 6px; }
+.cw { display:flex; flex-direction:column; gap:4px; }
+.cw-cap { margin-bottom:2px; }
+.cw-row { display:grid; grid-template-columns:minmax(110px,230px) 1fr 64px; gap:10px; align-items:center; }
+.cw-l { font-size:12.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cw-track { position:relative; height:16px; border-radius:4px; background:var(--ground); }
+.cw-bar { position:absolute; top:3px; bottom:3px; border-radius:4px; background:var(--faint); }
+.cw-up .cw-bar { background:var(--ok); }
+.cw-down .cw-bar { background:var(--bad); }
+.cw-total .cw-bar { background:var(--ink); }
+.cw-v { font-size:12.5px; font-weight:600; color:var(--ink); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.cw-axis { display:grid; grid-template-columns:minmax(110px,230px) 1fr 64px; gap:10px; }
+.cw-ticks { display:flex; justify-content:space-between; }
+@media (max-width:640px) { .cw-row, .cw-axis { grid-template-columns:96px 1fr 52px; gap:6px; } }
+.lg-six td { vertical-align:top; }
+.lg-drivers { margin:0; padding-left:16px; font-size:12.5px; color:var(--ink-2); }
+.lg-findings { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+/* v2.18 — the journey: botim's All page (menu), the phone scenarios, the pre-offer hand-off, botim's frame around its loan flow */
+.ba-title { font-family:var(--font-display); font-weight:800; font-size:24px; line-height:30px; color:var(--bm-ink); margin-top:4px; }
+.ba-svcs { margin-bottom:2px; }
+.ba-noor { width:100%; text-align:left; cursor:pointer; border:0; border-radius:18px; padding:12px 14px; background:var(--brand-card); color:#fff; font:inherit;
+  display:grid; grid-template-columns:46px minmax(0,1fr) auto; column-gap:12px; align-items:center; }
+.ba-noor-ico { width:46px; height:46px; border-radius:14px; background:rgba(255,255,255,.12); display:inline-flex; align-items:center; justify-content:center; }
+.ba-noor-ico .noor-icon { width:24px; vertical-align:0; display:block; }
+.ba-noor-m { display:flex; flex-direction:column; gap:2px; min-width:0; padding-right:44px; }
+.ba-noor-t { font-family:var(--font-display); font-weight:800; font-size:17px; line-height:22px; }
+.ba-noor-s { font-size:12.5px; line-height:17px; color:rgba(255,255,255,.86); }
+.ph-tel-row { display:flex; align-items:stretch; gap:8px; }
+.ph-cc { flex:0 0 auto; display:inline-flex; align-items:center; padding:0 14px; border:1.5px solid var(--ph-line); border-radius:16px; background:var(--panel); font:600 17px var(--font-ui); color:var(--ink); }
+.ph-tel-row .ph-text { flex:1 1 auto; min-width:0; }
+.ph-tags { display:flex; flex-wrap:wrap; gap:6px; }
+.ph-tag-pre { border-color:var(--ink); color:var(--ink); }
+.ph-handoff { font-size:14.5px; line-height:20px; color:var(--ink-2); border:1.5px dashed var(--ph-line); background:transparent; }
+.ph-botim { background:var(--ph-ground); }
+.ph-botim .ph-status { background:var(--bm-bg); color:#fff; }
+.bfr .bf-bar { flex:0 0 58px; display:grid; grid-template-columns:44px minmax(0,1fr) 44px; align-items:center; padding:0 8px; background:var(--bm-bg); color:var(--bm-ink); }
+.bfr .bf-x { color:var(--bm-ink); }
+.bfr .bf-x:hover { background:var(--bm-card); }
+.bf-title { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; line-height:1.2; }
+.bf-name { font-size:15px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.bf-name b { font-weight:800; }
+.bf-tag { font-family:var(--font-label); font-size:10.5px; line-height:15px; color:var(--bm-muted); border:1px solid var(--bm-line); border-radius:var(--radius-pill); padding:0 7px; white-space:nowrap; }
+.jr-scn { display:flex; flex-direction:column; gap:6px; margin:6px 0; }
+.jr-scn-b { display:flex; flex-direction:column; align-items:flex-start; gap:1px; text-align:left; white-space:normal; }
+.jr-scn-t { font-weight:600; }
+.jr-scn-s { font-family:var(--font-ui); font-weight:400; font-size:12px; opacity:.8; }
+.fm-orig { align-self:flex-start; margin-top:3px; font-family:var(--font-label); font-size:10.5px; font-weight:600; letter-spacing:.02em; color:var(--muted);
+  border:1px solid var(--hairline); border-radius:var(--radius-pill); padding:0 7px; }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -2165,7 +2260,13 @@ document.addEventListener('DOMContentLoaded', function () {
   Monitoring.build();
 
   var initial = (location.hash || '').replace('#', '');
-  showScreen(SCREENS.some(function (s) { return s.id === initial; }) ? initial : 'overview');
+  /* v2.18 — #lender and #log are circulated links: they land on the screen with a decision selected */
+  if (!applyDeepLink(initial)) showScreen(SCREENS.some(function (s) { return s.id === initial; }) ? initial : 'overview');
+  window.addEventListener('hashchange', function () {
+    var hsh = (location.hash || '').replace('#', '');
+    if (hsh === currentScreen) return;
+    if (!applyDeepLink(hsh) && SCREENS.some(function (s) { return s.id === hsh; })) showScreen(hsh);
+  });
 });
 
 /* Cross-screen refresh after any engine mutation */
@@ -2188,7 +2289,10 @@ var Overview = {
         h('strong', { text: 'Split a purchase, Personal loan, Car loan, Starter loan, Salary advance — and, for business owners, SME working capital' }),
         ') for approve / refer / decline + limit + pricing, with consent, AECB, connected-account (Open Finance / Al Tareq) data, policy and scoring behind one API — and every decision replayable for CBUAE model-risk and consumer-protection audit.'),
       h('p', { class: 'lead', id: 'ov-pack-line' }, h('strong', { text: 'A new product is a policy pack, not a new engine. ' }),
-        'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.')));
+        'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.'),
+      /* v2.18 — Noor's external line (methodology slide 6) */
+      h('p', { class: 'lead', id: 'ov-external' }, h('strong', { text: 'NoorScore, as lenders hear it. ' }), ME.EXTERNAL_LINE || '',
+        h('span', { class: 'muted', text: ' Lenders receive scores, findings, reason codes and derived aggregates per sharing agreement — the methodology, thresholds, data-source mix and raw data stay inside Noor.' }))));
 
     var positions = [
       ['Share the pipes, not the brain', 'One platform, one data layer, one decision store — with product-specific policy packs. Split underwrites on connected-account cash flow; the personal loan on salary + bureau. No unified scoring model.'],
@@ -2213,7 +2317,7 @@ var Overview = {
       ['Step 5', 'Monitoring', 'STP vs targets per product and day-zero early warning.', function () { showScreen('monitoring'); }],
       ['Step 6', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
       ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
-      ['Step 8', 'Lender view — the credit memo', 'The credit memo the partner bank receives; Open Finance data never leaves Noor. Compare it with the internal Decision log.', function () { showScreen('lender'); }],
+      ['Step 8', 'Lender view — the credit memo', 'What lenders receive, per sharing agreement: NoorScore, findings and banded aggregates; Open Finance data never leaves Noor. Switch to Lender B, then Reproduce the decision in the Decision log.', function () { showScreen('lender'); }],
       ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }],
       ['Step 10', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }],
       ['Step 11', 'SME working capital — Sara (s1)', 'The company’s accounts support AED 100,000; with Sara’s personal accounts AED 150,000, 2.5 points cheaper — business and owner watched while the loan is open.', function () { showScreen('sme'); Sme.reset(); }]
@@ -2682,6 +2786,7 @@ var FlowMap = {
           h('span', { class: 'fm-t', text: s.t }),
           h('span', { class: 'fm-d', text: s.d }),
           s.of ? h('span', { class: 'fm-of', text: 'Open Finance' }) : null,
+          s.orig ? h('span', { class: 'fm-orig', text: 'Origination — botim' }) : null,   /* v2.18 — phases 8–10 */
           h('span', { class: 'sr-only fm-sr' })));
       var li = h('li', { class: 'fm-step' + (s.of ? ' of' : ''), dataset: { step: String(i + 1), of: String(!!s.of), status: 'neutral' } }, b);
       self.btns.push(b); self.lis.push(li);
@@ -3020,16 +3125,16 @@ var JR_FLOW = [
     c: 'Gives AECB consent, confirms with UAE PASS and applies.',
     m: 'decide() for personal_loan: the journey’s first and only decision. It lands in the Decision log.',
     r: 'Federal Law 6/2010: AECB consent before any loan.' },
-  { t: 'Offer · Partner Bank confirms', d: 'Offer, credit memo to the lender', match: function (e) { return e.n === 10 || e.n === 11; },
+  { t: 'Offer · Partner Bank confirms', d: 'Offer, credit memo to the lender', orig: true, match: function (e) { return e.n === 10 || e.n === 11; },
     c: 'Sees the offer (amount, APR, instalment, total), then Partner Bank confirms.',
     m: 'creditMemo() sends Partner Bank an allowlisted memo: bands, flags and consent references, never account data.',
     r: 'CBUAE Open Finance consent scope and PDPL: the account data stays with Noor.' },
-  { t: 'Key Facts · e-sign · repayment · cooling-off', d: 'The execution steps', match: function (e) { return e.n >= 12 && e.n <= 15; },
+  { t: 'Key Facts · e-sign · repayment · cooling-off', d: 'The execution steps', orig: true, match: function (e) { return e.n >= 12 && e.n <= 15; },
     c: 'Reads the KFS in English or Arabic, signs with UAE PASS, approves the repayment, then waits or waives.',
     m: 'recordEvent(), in order: OFFER_ACCEPTED, KFS_ACKNOWLEDGED, AGREEMENT_SIGNED, REPAYMENT_SET_UP, COOLING_OFF_CLEARED.',
     r: 'CBUAE Consumer Protection Standards (the KFS first) and CPR 8/2020 (5 business days, waivable in writing).' },
   /* v2.13 — covers 16·0 (on its way), 16·1 (contact preferences), 16·2 (the PWA card) and 16·3 (back in botim) */
-  { t: 'Funded · contact preferences · back in botim', d: 'botim learns only “funded”', match: function (e) { return e.n === 16; },
+  { t: 'Funded · contact preferences · back in botim', d: 'botim learns only “funded”', orig: true, match: function (e) { return e.n === 16; },
     c: 'The money is on its way from Partner Bank. Picks how Noor reaches them about repayments, then botim shows “Loan funded · managed in Noor”, with no amount.',
     m: 'DISBURSED makes the record EXECUTED, and recordCommunications() adds the contact consent to the loan. botim gets the funded event only.',
     r: 'CBUAE consumer protection: marketing only with prior consent and an easy opt-out. Noor’s position: botim receives events only, never channels, an amount or credit data.' }
@@ -5765,6 +5870,10 @@ var Policy = {
     }
     t.appendChild(tb);
     box.appendChild(h('div', { class: 'tbl-scroll' }, t));
+    /* v2.18 §6 — the lender's policy, read-only on the personal-loan pack */
+    if (Policy.pid === 'personal_loan') box.appendChild(h('div', { class: 'callout callout-info small', id: 'pc-lender-policy', style: 'margin-top:8px;' },
+      h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), ' ', h('strong', { text: 'Lender policy: Partner Bank — loaded into Mizan for end-to-end decisioning' }),
+      h('span', { class: 'muted', text: ' · read-only · Noor owns assessment to pre-offer; origination stays with botim and its lender' })));
   },
   renderParams: function () {
     var box = clear($('#pc-params'));
@@ -6495,6 +6604,85 @@ function caseStatusChip(status) {
 }
 
 /* ================= Decision log (replay) ================= */
+/* ================= v2.18 — the Decision log: explainable and auditable (methodology slide 7), internal only ================= */
+/* The contribution chart: a horizontal waterfall from the base to NoorScore, one bar per scorecard factor (Phase 1 points) */
+function contributionChart(cc) {
+  var box = h('div', { class: 'cw', id: 'lg-contrib', dataset: { points: cc.points === null ? '' : String(cc.points), base: cc.base === null ? '' : String(cc.base) } });
+  if (cc.base === null) { box.appendChild(h('div', { class: 'small muted', text: 'No scorecard on this decision — nothing to chart.' })); return box; }
+  var vals = [cc.base, cc.points].concat(cc.steps.map(function (s) { return s.to; }));
+  var lo = Math.floor((Math.min.apply(null, vals) - 25) / 10) * 10, hi = Math.ceil((Math.max.apply(null, vals) + 25) / 10) * 10;
+  var pct = function (v) { return ((v - lo) / (hi - lo)) * 100; };
+  function row(kind, label, from, to, valueText, title) {
+    var a = Math.min(from, to), b = Math.max(from, to);
+    return h('div', { class: 'cw-row cw-' + kind, title: title, dataset: { kind: kind } },
+      h('span', { class: 'cw-l', text: label }),
+      h('span', { class: 'cw-track' }, h('span', { class: 'cw-bar', style: 'left:' + pct(a).toFixed(2) + '%;width:' + Math.max(0.8, pct(b) - pct(a)).toFixed(2) + '%;' })),
+      h('span', { class: 'cw-v', text: valueText }));
+  }
+  box.appendChild(h('div', { class: 'cw-cap small muted', id: 'lg-contrib-label', text: cc.label }));
+  box.appendChild(row('base', cc.baseLabel, lo, cc.base, String(cc.base), cc.baseLabel + ': ' + cc.base));
+  cc.steps.forEach(function (s) {
+    box.appendChild(row(s.delta > 0 ? 'up' : 'down', s.name, s.from, s.to, (s.delta > 0 ? '+' : '−') + Math.abs(s.delta), s.name + ': ' + (s.delta > 0 ? '+' : '−') + Math.abs(s.delta) + ' (' + s.from + ' → ' + s.to + ')'));
+  });
+  box.appendChild(row('total', 'NoorScore', lo, cc.points, cc.points + (cc.grade ? ' · ' + cc.grade : ''), 'NoorScore ' + cc.points + (cc.reconciles ? ' = base + every factor' : '')));
+  box.appendChild(h('div', { class: 'cw-axis small muted', 'aria-hidden': 'true' }, h('span'), h('span', { class: 'cw-ticks' }, h('span', { text: String(lo) }), h('span', { text: String(hi) })), h('span')));
+  box.setAttribute('role', 'img');
+  box.setAttribute('aria-label', 'Contribution chart: ' + cc.baseLabel + ' ' + cc.base + cc.steps.map(function (s) { return ', ' + s.name + ' ' + (s.delta > 0 ? 'plus ' : 'minus ') + Math.abs(s.delta); }).join('') + ', NoorScore ' + cc.points);
+  return box;
+}
+var LG_TONE_WORD = { green: 'green', amber: 'amber', red: 'red', neutral: 'neutral' };
+function logExplain(rec) {
+  var wrap = h('div', { id: 'lg-explain', style: 'margin:0 0 12px;' });
+  var cc = null, comps = null, finds = [];
+  try { cc = ME.scoreContributions(rec.id); } catch (e) {}
+  try { comps = ME.noorScoreComponents(rec.id); } catch (e) {}
+  try { finds = ME.customerFindings(rec.id); } catch (e) {}
+  wrap.appendChild(h('h3', null, 'Explainable — inside Noor ', h('span', { class: 'h3-note', text: '— never sent to a lender' })));
+  if (cc) wrap.appendChild(h('div', { class: 'small', id: 'lg-model' }, h('strong', { text: 'Model: ' }), cc.phase + ' ' + (cc.model || '—') + ' ' + (cc.version || '') +
+    ' · every feature, weight and point is traceable; Phase 2 (a model trained on repayment behaviour) stays explainable with SHAP values per feature.'));
+  if (cc) wrap.appendChild(h('div', { style: 'margin-top:8px;' }, h('h4', { class: 'lg-sub', text: 'Contribution chart' }), contributionChart(cc)));
+  /* the six components with what drove each one (illustrative derivation) */
+  if (comps && comps.components.length) {
+    var tb = h('tbody');
+    comps.components.forEach(function (c) {
+      var dl = h('ul', { class: 'lg-drivers' }); c.drivers.forEach(function (d) { dl.appendChild(h('li', { text: d })); });
+      tb.appendChild(h('tr', { dataset: { component: c.key, tone: c.tone } },
+        h('td', null, h('strong', { text: c.name }), h('div', { class: 'small muted', text: c.question })),
+        h('td', null, h('span', { class: 'mcb-level lg-level lgt-' + c.tone }, h('span', { class: 'mcb-dot', 'aria-hidden': 'true' }), c.level),
+          c.factors.length ? h('div', { class: 'small muted', text: c.factors.join(' · ') }) : null,
+          c.bands ? h('div', { class: 'small muted', text: [c.bands.incomeBand, c.bands.additionalIncomeBand, c.bands.essentialExpensesBand ? 'essentials ' + c.bands.essentialExpensesBand : null,
+            c.bands.dbrBand ? 'DBR ' + c.bands.dbrBand : null, c.bands.maxAffordableInstalmentBand ? 'max instalment ' + c.bands.maxAffordableInstalmentBand : null].filter(Boolean).join(' · ') }) : null),
+        h('td', null, dl)));
+    });
+    wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Six components — ' + comps.derivation.toLowerCase() + ', with what drove each one' }),
+      h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl lg-six', id: 'lg-components' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'Level' }), h('th', { text: 'What drove it (internal)' }))), tb))));
+  }
+  /* findings, with the internal rule behind each (the memo carries the words only) */
+  var fl = h('ul', { class: 'lg-findings', id: 'lg-findings' });
+  finds.forEach(function (x) { fl.appendChild(h('li', { dataset: { code: x.code } }, h('span', { class: 'fnd-chip', text: x.en }), h('span', { class: 'small muted', text: ' ' + x.code + ' — ' + x.rule }))); });
+  if (!finds.length) fl.appendChild(h('li', { class: 'small muted', text: 'No findings.' }));
+  wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Findings — with the rule behind each (stays inside Noor)' }), fl));
+  return wrap;
+}
+function logReproduceBox(rec) {
+  var out = h('div', { id: 'lg-repro-out', role: 'status', 'aria-live': 'polite' });
+  function run() {
+    clear(out);
+    var r = null, errMsg = null;
+    try { r = ME.reproduceDecision(rec.id); } catch (e) { errMsg = e && e.message ? e.message : String(e); }
+    if (!r) { out.appendChild(h('div', { class: 'callout callout-error small', text: errMsg || 'Could not reproduce.' })); return; }
+    out.dataset.identical = r.identical ? 'true' : 'false';
+    out.appendChild(h('div', { class: 'callout ' + (r.identical ? 'callout-ok' : 'callout-warn') + ' small', id: 'lg-repro-msg' },
+      h('div', { class: 'co-title', text: r.message }),
+      h('div', { text: 'Re-run purely from the logged inputs — no new record, no clock tick: ' + r.inputs.join(' · ') + '.' }),
+      h('ul', { class: 'lg-repro-l' }, r.checks.map(function (c) {
+        var show = function (v) { return Array.isArray(v) ? (v.join(', ') || 'none') : (typeof v === 'object' && v !== null ? (v.kfs ? 'band ' + v.band + ' · ' + fmtMoney(v.kfs.monthlyInstalment) + '/mo' : (v.mode || 'recorded')) : String(v === null ? '—' : v)); };
+        return h('li', { dataset: { field: c.field, same: c.same ? 'true' : 'false' } }, (c.same ? '✓ ' : '✗ ') + c.field + ': ' + show(c.logged) + (c.same ? '' : ' → ' + show(c.reproduced)));
+      })),
+      r.notes.length ? h('div', { class: 'small muted', text: r.notes.join(' · ') }) : null));
+  }
+  return { out: out, button: h('button', { class: 'btn', type: 'button', id: 'lg-reproduce', text: 'Reproduce', onclick: run }) };
+}
 var LogScreen = {
   selId: null,
   build: function () {
@@ -6563,10 +6751,13 @@ var LogScreen = {
     if (!rec) return;
     var c = rec.consents || {};
     var panel = h('div', { class: 'panel' });
-    panel.appendChild(h('h3', { class: 'replay-h' }, h('span', null, 'Full replay — ', h('code', { text: rec.id })), memoLink(rec.id, 'lg-lender-link')));
+    var repro = logReproduceBox(rec);   /* v2.18 — auditable: re-run from the logged inputs */
+    panel.appendChild(h('h3', { class: 'replay-h' }, h('span', null, 'Full replay — ', h('code', { text: rec.id })), h('span', { class: 'replay-acts' }, repro.button, memoLink(rec.id, 'lg-lender-link'))));
     panel.appendChild(h('div', { class: 'callout callout-info small' },
       h('strong', { text: 'Replay for CBUAE model-risk audit + consumer-protection audit. ' }),
       'Model-risk (Model Management Standards) replays inputs → features → rules → score → limit → pricing with the policy and model versions in force. Consumer protection reads the consents, the KFS figures and the execution-event ordering: offer → KFS → e-sign → repayment set-up → cooling-off → disbursement.'));
+    panel.appendChild(repro.out);
+    panel.appendChild(h('div', { class: 'small muted', id: 'lg-phase2', style: 'margin-top:6px;', text: 'Phase 2: each score is checked against repayment outcomes (DPD) once pilot lenders share them.' }));
     panel.appendChild(h('div', { class: 'kv', style: 'margin:10px 0;' },
       h('dt', { text: 'Created' }), h('dd', { class: 'num', text: fmtDT(rec.createdAt) }),
       h('dt', { text: 'Product' }), h('dd', { text: productLabel(rec.productId) + ' · ' + (rec.segment || 'CONSUMER') }),
@@ -6606,6 +6797,7 @@ var LogScreen = {
           (ldc.aboveThreshold ? 'scored' + (ldc.scoreOverlay ? ' — NoorScore ' + ldc.scoreOverlay : ' — nothing to add') : 'below the threshold — referred (' + ldc.ask.join(', ') + ' missing)') }),
         h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'What we have' }), h('th', { class: 'num', text: 'Points / weight' }))), ltb))));
     }
+    panel.appendChild(logExplain(rec));   /* v2.18 — the contribution chart, the six components and the findings (internal) */
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
@@ -6659,7 +6851,7 @@ function memoLink(id, elId) {
   return h('button', { class: 'btn btn-ghost linkbtn memo-link', type: 'button', id: elId || null, dataset: { memoLink: id }, text: 'Open the lender’s version →',
     onclick: function (ev) { ev.stopPropagation(); Lender.open(id); }, onkeydown: function (ev) { ev.stopPropagation(); } });
 }
-function memoFor(id) { try { return ME.creditMemo(id, { lenderId: LENDER_ID }); } catch (e) { return null; } }
+function memoFor(id) { try { return ME.creditMemo(id, { lenderId: (typeof Lender !== 'undefined' && Lender.lenderId) || LENDER_ID }); } catch (e) { return null; } }
 function csvCell(v) { var t = v === null || v === undefined ? '' : String(v); return /[",\r\n]|^\s|\s$/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
 function memoCsv(memo) { var r = ME.memoSftpRow(memo); return r.header.map(csvCell).join(',') + '\n' + r.row.map(csvCell).join(','); }
 /* Clipboard copy that never throws: the async API when allowed, else select + execCommand, else ask the user to select */
@@ -6682,6 +6874,7 @@ function copyText(text, statusEl, preEl) {
   fallback();
 }
 var MEMO_CONSENT_LABEL = { aecb: 'AECB credit bureau check', openFinance: 'Connected accounts (Open Finance, Al Tareq)', creditPassport: 'Credit Passport — home-country bureau',
+  additionalEvidence: 'Additional evidence (consented)',
   homeStatements: 'Home-country bank statements', shareWithLender: 'Share the application result with the lender',
   ownerOpenFinance: 'The owner’s personal accounts (Open Finance, Al Tareq) — the owner’s own consent' };
 function memoTermsTiles(m) {
@@ -6738,14 +6931,44 @@ function memoKv(rows) {
   });
   return grid;
 }
-/* The memo rendered as a one-page document — the lender portal's view (delivery channel "UI") */
+/* v2.18 — the memo opens with "What lenders receive" (methodology slide 8): output · what it tells the lender · status · value */
+function memoOutputsTable(m) {
+  var box = h('div', { class: 'mo-table', id: 'lv-outputs', role: 'table', 'aria-label': 'What lenders receive' },
+    h('div', { class: 'mo-row mo-head', role: 'row' }, h('span', { role: 'columnheader', text: 'Output' }), h('span', { role: 'columnheader', text: 'What it tells the lender' }),
+      h('span', { role: 'columnheader', text: 'Status' }), h('span', { role: 'columnheader', text: 'Value (this decision)' })));
+  (m.outputs || []).forEach(function (o) {
+    box.appendChild(h('div', { class: 'mo-row', role: 'row', dataset: { output: o.key, status: o.status } },
+      h('span', { class: 'mo-name', role: 'cell', text: o.output }),
+      h('span', { class: 'mo-tells', role: 'cell', text: o.tells }),
+      h('span', { class: 'mo-st', role: 'cell' }, h('span', { class: 'mo-tag mo-' + o.status.toLowerCase(), text: o.status })),
+      h('span', { class: 'mo-val', role: 'cell', text: o.value })));
+  });
+  return box;
+}
+/* v2.18 — the four score components as colour-coded bars: a level word and up to two factor words (never weights or points) */
+var MEMO_TONE_WORD = { green: 'green', amber: 'amber', red: 'red', neutral: 'not applicable' };
+function memoComponentBars(sc) {
+  var wrap = h('div', { class: 'mcb-list', id: 'lv-components', dataset: { derivation: sc.derivation } });
+  sc.components.forEach(function (c) {
+    wrap.appendChild(h('div', { class: 'mcb mcb-' + c.tone, dataset: { component: c.key, tone: c.tone, level: c.level } },
+      h('div', { class: 'mcb-top' }, h('span', { class: 'mcb-name', text: c.name }),
+        h('span', { class: 'mcb-level' }, h('span', { class: 'mcb-dot', 'aria-hidden': 'true' }), c.level)),
+      h('div', { class: 'mcb-bar', role: 'img', 'aria-label': c.name + ': ' + c.level + ' (' + MEMO_TONE_WORD[c.tone] + ')' }),
+      h('div', { class: 'mcb-f', text: c.factors.length ? c.factors.join(' · ') : 'No factor to show' })));
+  });
+  return wrap;
+}
+/* The memo rendered as a one-page document — the lender portal's view (delivery channel "UI").
+   v2.18: the output table first; the sections below show only what the lender's sharing agreement carries. */
 function memoDoc(m) {
   var d = m.decision, ns = m.noorScore, af = m.affordability, bu = m.bureau, ve = m.verification;
-  var doc = h('article', { class: 'memo', id: 'lv-memo', dataset: { memoId: m.memoId, ref: m.noorRef, outcome: d.outcome } });
+  var sme = m.product.productId === 'sme_working_capital';
+  var doc = h('article', { class: 'memo', id: 'lv-memo', dataset: { memoId: m.memoId, ref: m.noorRef, outcome: d.outcome, lender: m.lenderId, agreement: m.sharingAgreement ? m.sharingAgreement.label : '' } });
   doc.appendChild(h('header', { class: 'memo-head' },
     h('div', { class: 'memo-brand' }, h('span', { class: 'noor-logo', role: 'img', 'aria-label': 'noor finance' }), h('span', { class: 'memo-kind', text: 'Credit memo' })),
     h('div', { class: 'memo-to' }, 'To ', h('strong', { text: m.lenderName }), ' · from Noor, decided by Mizan'),
-    h('div', { class: 'memo-meta' }, h('code', { text: m.memoId }), h('span', { text: ' · Noor ref ' + m.noorRef + ' · ' + fmtDT(m.createdAt) + ' · policy v' + m.policyVersion + ' · ' + m.engineVersion }))));
+    h('div', { class: 'memo-meta' }, h('code', { text: m.memoId }), h('span', { text: ' · Noor ref ' + m.noorRef + ' · ' + fmtDT(m.createdAt) + ' · policy v' + m.policyVersion + ' · ' + m.engineVersion +
+      (m.sharingAgreement ? ' · sharing agreement ' + m.sharingAgreement.label : '') }))));
   var body = h('div', { class: 'memo-body' });
   body.appendChild(h('section', { class: 'memo-sec memo-top' },
     h('div', { class: 'memo-outcome' },
@@ -6758,40 +6981,66 @@ function memoDoc(m) {
       h('span', { class: 'mb-name', text: m.borrower.name }),
       m.borrower.nameAr ? h('span', { class: 'ar mb-ar', lang: 'ar', dir: 'rtl', text: m.borrower.nameAr }) : null,
       m.borrower.kind === 'COMPANY'
-        ? h('span', { class: 'mb-meta', text: 'Trade licence ' + m.borrower.tradeLicenceMasked + ' · ' + m.borrower.kycSource })
-        : h('span', { class: 'mb-meta', text: 'Emirates ID ' + m.borrower.emiratesIdMasked + ' · KYC ' + m.borrower.kycSource }),
+        ? h('span', { class: 'mb-meta', text: 'Trade licence ' + m.borrower.tradeLicenceMasked })
+        : h('span', { class: 'mb-meta', text: 'Emirates ID ' + m.borrower.emiratesIdMasked }),
       m.borrower.guarantor ? h('span', { class: 'mb-meta mb-guarantor', id: 'lv-guarantor' }, 'Personal guarantor: ' + m.borrower.guarantor.name + ' ',
         h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: m.borrower.guarantor.nameAr || '' }), ' · Emirates ID ' + m.borrower.guarantor.emiratesIdMasked) : null)));
+  /* §1a — what lenders receive */
+  body.appendChild(h('section', { class: 'memo-sec', id: 'lv-receive' }, h('h4', { text: 'What lenders receive' }), memoOutputsTable(m),
+    h('div', { class: 'lv-open-note', id: 'lv-open-note', role: 'note', text: m.outputsNote })));
   body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Outcome & terms' }), memoTermsTiles(m)));
+  /* NoorScore: the value and the band word — the band boundaries stay inside Noor (§1b) */
   var factors = h('ul', { class: 'factor-list' });
   (ns.factors || []).forEach(function (f) { factors.appendChild(h('li', { text: f })); });
   body.appendChild(h('section', { class: 'memo-sec memo-ns', dataset: { memo: 'noorscore', value: ns.value === null ? '' : String(ns.value), band: ns.band || '' } },
-    h('h4', { text: 'NoorScore' }),
+    h('h4', { text: 'NoorScore and risk band' }),
     h('div', { class: 'ns-mem' },
       h('span', { class: 'ns-v', text: ns.value === null ? 'Not scored yet' : String(ns.value) }),
       bandChip(ns.band, 'lv-band'),
-      h('span', { class: 'ns-scale', text: ns.value === null ? 'thin file — decided on the repayment record' : 'Excellent ≥ 740 · Very good 680–739 · Good 620–679 · Fair 560–619 · Poor < 560' })),
+      h('span', { class: 'ns-scale', id: 'lv-ns-note', text: ns.value === null ? (m.product.productId === 'starter_loan' ? 'decided on the repayment record' : 'no score yet — thin file') : 'Risk band, to be mapped to expected default once calibrated' })),
     (ns.factors && ns.factors.length) ? h('div', { class: 'ns-factors' }, h('span', { class: 'ns-fl', text: 'What moved it' }), factors) : null));
-  if (m.product.productId === 'sme_working_capital') {
-    /* v2.10 — a business memo: the company's figures as bands; the owner's personal data withheld */
-    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-business' }, h('h4', { text: 'Business — bands, never figures' }), memoKv([
-        ['Revenue', af.revenueBand || '—', 'revenue'], ['Debt service cover (DSCR)', af.dscrBand || '—', 'dscr'],
-        ['Instalment / operating cash flow', af.instalmentToCashFlowBand || '—', 'share'], ['Cash flow verified via', af.incomeVerifiedVia, 'via'],
-        ['Personal guarantee', ve.guarantee, 'guarantee']])));
-    body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Bureau & verification — flags' }), memoKv([
-        ['AECB checked', bu.aecbChecked ? 'Yes — commercial and the owner’s consumer report' : 'No', 'aecb'], ['AECB commercial band', bu.aecbScoreBand, 'aecbBand'],
-        ['Owner’s AECB consumer band', bu.ownerConsumerScoreBand, 'ownerBand'], ['Delinquency', bu.delinquencyFlag, 'delinquency'],
-        ['Returned cheques', bu.chequeReturnsFlag, 'cheques'], ['Identity', ve.identity, 'identity']])));
-  } else {
-  body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Affordability — bands, never figures' }), memoKv([
-      ['Income', af.incomeBand || 'Not verified', 'income'], ['Debt burden incl. this loan', af.dbrBand, 'dbr'],
-      ['Free cash flow', af.freeCashFlowBand || (m.product.productId === 'car_loan' ? 'Not assessed — spending not seen (salary certificate path)' : 'Not assessed for this product'), 'fcf'], ['Instalment / free cash flow', af.instalmentToCashFlowBand || '—', 'share'],
+  /* §1c — findings, next to the reason codes (outlined chips); RC_* still explain any refer, decline or reduction */
+  var rc = h('div', { class: 'memo-rc' });
+  var fchips = h('div', { class: 'fnd-chips', id: 'lv-findings', role: 'list', 'aria-label': 'Findings' });
+  (m.findings || []).forEach(function (x) { fchips.appendChild(h('span', { class: 'fnd-chip', role: 'listitem', dataset: { code: x.code }, title: x.ar, text: x.en })); });
+  if (!(m.findings || []).length) fchips.appendChild(h('span', { class: 'small muted', text: 'No findings for this customer.' }));
+  if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
+  d.reasonCodes.forEach(function (c) {
+    rc.appendChild(h('div', { class: 'reason-line', dataset: { code: c.code }, style: 'display:flex;justify-content:space-between;gap:6px 14px;padding:6px 0;border-bottom:1px solid var(--hairline-soft);align-items:baseline;flex-wrap:wrap;' },
+      h('span', { style: 'min-width:0;flex:1 1 220px;' }, h('code', { class: 'small muted', text: c.code }), ' ', h('span', { class: 'rc-en', text: c.en })),
+      h('span', { class: 'ar rc-ar', lang: 'ar', dir: 'rtl', style: 'flex:1 1 200px;text-align:right;', text: c.ar })));
+  });
+  body.appendChild(h('section', { class: 'memo-sec', id: 'lv-reasons' }, h('h4', { text: 'Reason codes and findings — English · العربية' }),
+    h('div', { class: 'small muted', style: 'margin-bottom:6px;', text: 'Findings describe the customer — what drove the score, without the formula. Reason codes (RC_*) explain any refer, decline or reduction.' }),
+    fchips, rc));
+  /* §1 — the four score components (Proposed extra) */
+  if (m.scoreComponents) {
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-score-components' },
+      h('h4', null, 'Score components ', h('span', { class: 'mo-tag mo-proposed', text: 'Proposed' }), ' ', h('span', { class: 'mo-tag mo-illus', text: m.scoreComponents.derivation })),
+      memoComponentBars(m.scoreComponents),
+      h('div', { class: 'small muted', id: 'lv-method-note', text: m.scoreComponents.note + '.' })));
+  }
+  if (af && sme) {
+    /* v2.10 — a business memo: the company's figures as bands; the owner's personal data stays inside Noor */
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-business' }, h('h4', { text: 'Business — aggregates, not scored' }), memoKv([
+        ['Revenue', af.revenueBand, 'revenue'], ['Debt service cover (DSCR)', af.dscrBand, 'dscr'],
+        ['Instalment / operating cash flow', af.instalmentToCashFlowBand, 'share'], ['Cash flow verified via', af.incomeVerifiedVia, 'via'],
+        ['Personal guarantee', ve ? ve.guarantee : null, 'guarantee']])));
+  } else if (af) {
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-aggregates' }, h('h4', { text: af.note || 'Aggregates — not scored' }), memoKv([
+      ['Income', 'incomeBand' in af ? (af.incomeBand || 'Not verified') : null, 'income'], ['Additional income', af.additionalIncomeBand, 'additionalIncome'],
+      ['Debt burden incl. this loan (DBR)', 'dbrBand' in af ? (af.dbrPct !== undefined && af.dbrPct !== null ? af.dbrPct + '%' : af.dbrBand) : null, 'dbr'],
+      ['Headroom after this loan', 'headroomBand' in af ? (af.headroomMonthly !== undefined && af.headroomMonthly !== null ? fmtMoney(af.headroomMonthly) + ' / month' : af.headroomBand) : null, 'headroom'],
+      ['Free cash flow', 'freeCashFlowBand' in af ? (af.freeCashFlowBand || (m.product.productId === 'car_loan' ? 'Not assessed — spending not seen (salary certificate path)' : 'Not assessed for this product')) : null, 'fcf'],
+      ['Instalment / free cash flow', 'instalmentToCashFlowBand' in af ? (af.instalmentToCashFlowBand || '—') : null, 'share'],
       ['Income verified via', af.incomeVerifiedVia, 'via']])));
-  body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Bureau & verification — flags' }), memoKv([
-      ['AECB checked', bu.aecbChecked ? 'Yes' : 'No', 'aecb'], ['AECB score band', bu.aecbScoreBand, 'aecbBand'], ['Delinquency', bu.delinquencyFlag, 'delinquency'],
-      ['Returned cheques', bu.chequeReturnsFlag, 'cheques'], ['Home-country bureau', bu.homeCountryFile, 'cpass'], ['Identity', ve.identity, 'identity'],
-      ['Home-country statements', ve.homeStatements, 'statements'], ['Purchase', ve.purchaseVerified, 'purchase'],
-      ['Other income', ve.otherIncome, 'otherIncome'], ['Down-payment source', ve.downPaymentSource, 'downPaymentSource']])));
+  }
+  /* §1 — Monitoring & Collections: one status line (Proposed extra) */
+  if (m.monitoring) {
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-monitoring', dataset: { status: m.monitoring.status } }, h('h4', null, 'Monitoring & Collections ', h('span', { class: 'mo-tag mo-proposed', text: 'Proposed' })),
+      h('div', { class: 'mon-line' }, h('span', { class: 'mon-st mon-' + String(m.monitoring.status).toLowerCase().replace(/\s+/g, '-'), text: m.monitoring.status }),
+        h('span', { text: m.monitoring.line.replace(/^[^·]*· ?/, '') })),
+      h('div', { class: 'small muted', text: 'After disbursement, not part of the score.' })));
   }
   /* v2.17 — data completeness as the lender sees it: a ring with the percentage and the counts (no threshold, no weights) */
   if (m.dataCompleteness) {
@@ -6804,32 +7053,62 @@ function memoDoc(m) {
           h('div', { class: 'dc-counts', id: 'lv-dc-counts', text: mdc.banks + (mdc.banks === 1 ? ' bank' : ' banks') + ' · ' + mdc.accounts + (mdc.accounts === 1 ? ' account' : ' accounts') + ' · ' + mdc.months + ' months' }),
           h('div', { class: 'small muted', text: 'How much of the customer’s financial picture Noor sees through Open Finance — counts only, never the accounts.' })))));
   }
-  var rc = h('div', { class: 'memo-rc' });
-  if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
-  d.reasonCodes.forEach(function (c) {
-    rc.appendChild(h('div', { class: 'reason-line', dataset: { code: c.code }, style: 'display:flex;justify-content:space-between;gap:6px 14px;padding:6px 0;border-bottom:1px solid var(--hairline-soft);align-items:baseline;flex-wrap:wrap;' },
-      h('span', { style: 'min-width:0;flex:1 1 220px;' }, h('code', { class: 'small muted', text: c.code }), ' ', h('span', { class: 'rc-en', text: c.en })),
-      h('span', { class: 'ar rc-ar', lang: 'ar', dir: 'rtl', style: 'flex:1 1 200px;text-align:right;', text: c.ar })));
-  });
-  body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Reason codes — English · العربية' }), rc));
-  var ct = h('div', { class: 'memo-consents' });
-  m.consents.forEach(function (c) {
-    ct.appendChild(h('div', { class: 'mc-row', dataset: { consent: c.type } },
-      h('span', { class: 'mc-l' }, h('span', { class: 'mc-t', text: MEMO_CONSENT_LABEL[c.type] || c.type }), h('span', { class: 'mc-at', text: 'granted ' + fmtDT(c.grantedAt) })),
-      h('code', { class: 'mc-ref', text: c.reference })));
-  });
-  body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Consent references — the reference, never the content' }), ct));
+  if (bu || ve) {
+    var flags = sme ? [
+        ['AECB checked', bu ? (bu.aecbChecked ? 'Yes — commercial and the owner’s consumer report' : 'No') : null, 'aecb'], ['AECB commercial band', bu && bu.aecbScoreBand, 'aecbBand'],
+        ['Owner’s AECB consumer band', bu && bu.ownerConsumerScoreBand, 'ownerBand'], ['Delinquency', bu && bu.delinquencyFlag, 'delinquency'],
+        ['Returned cheques', bu && bu.chequeReturnsFlag, 'cheques'], ['Identity', ve && ve.identity, 'identity']]
+      : [['AECB checked', bu ? (bu.aecbChecked ? 'Yes' : 'No') : null, 'aecb'], ['AECB score band', bu && bu.aecbScoreBand, 'aecbBand'], ['Delinquency', bu && bu.delinquencyFlag, 'delinquency'],
+         ['Returned cheques', bu && bu.chequeReturnsFlag, 'cheques'], ['Home-country credit history', bu && bu.homeCountryFile, 'cpass'], ['Identity', ve && ve.identity, 'identity'],
+         ['Additional evidence', ve && ve.additionalEvidence, 'evidence'], ['Purchase', ve && ve.purchaseVerified, 'purchase'],
+         ['Other income', ve && ve.otherIncome, 'otherIncome'], ['Down-payment source', ve && ve.downPaymentSource, 'downPaymentSource']];
+    body.appendChild(h('section', { class: 'memo-sec', id: 'lv-flags' }, h('h4', { text: 'Bureau & verification — flags' }), memoKv(flags)));
+  }
+  if (m.consents) {
+    var ct = h('div', { class: 'memo-consents' });
+    m.consents.forEach(function (c) {
+      ct.appendChild(h('div', { class: 'mc-row', dataset: { consent: c.type } },
+        h('span', { class: 'mc-l' }, h('span', { class: 'mc-t', text: MEMO_CONSENT_LABEL[c.type] || c.type }), h('span', { class: 'mc-at', text: 'granted ' + fmtDT(c.grantedAt) })),
+        h('code', { class: 'mc-ref', text: c.reference })));
+    });
+    body.appendChild(h('section', { class: 'memo-sec' }, h('h4', { text: 'Consent references — the reference, never the content' }), ct));
+  }
   doc.appendChild(body);
-  doc.appendChild(h('footer', { class: 'memo-foot', text: 'Built by Mizan from an allowlist of fields. Open Finance data never leaves Noor — the lender receives ranges, flags and references. Noor arranges the loan; ' + lenderName() + ' is the lender of record.' }));
+  doc.appendChild(h('footer', { class: 'memo-foot', text: 'Built by Mizan from ' + (m.sharingAgreement ? 'the sharing agreement ' + m.sharingAgreement.label : 'an allowlist') +
+    '. Scores, findings, reason codes and derived aggregates only — the methodology, its cut-offs and raw data stay inside Noor. Noor arranges the loan; ' + String(m.lenderName || lenderName()).replace(/ \(.*\)$/, '') + ' is the lender of record.' }));
   return doc;
 }
+/* v2.18 §1b — "Noor IP vs lender view" (methodology slide 6): the panel next to the memo, never part of it */
+function noorIpPanel(m) {
+  var ip = ME.NOOR_IP || { staysInside: [], sharedOutside: {} };
+  var inside = h('ul', { class: 'sw-list sw-withheld' });
+  ip.staysInside.forEach(function (x) { inside.appendChild(h('li', { dataset: { group: x.group } }, h('span', { class: 'sw-g', text: x.group }), h('span', { class: 'sw-r', text: x.detail }))); });
+  var agreed = h('ul', { class: 'sw-list sw-shared' });
+  var groups = [];
+  try { groups = ME.sharingAgreement(Lender.lenderId).groupsDetail || []; } catch (e) {}
+  groups.forEach(function (g) { agreed.appendChild(h('li', { dataset: { group: g.key } }, g.label + ' ', h('span', { class: 'mo-tag mo-' + g.status.toLowerCase().replace(/\s+/g, '-'), text: g.status }))); });
+  return h('div', { class: 'panel', id: 'lv-sharing' },
+    h('h3', null, 'Noor IP vs lender view ', h('span', { class: 'h3-note', id: 'lv-sharing-label', text: '— ' + ip.label })),
+    h('div', { class: 'sw-grid' },
+      h('div', { class: 'sw-col', id: 'lv-stays-inside' }, h('h4', { text: 'Stays inside Noor' }), inside),
+      h('div', { class: 'sw-col', id: 'lv-shared-outside' }, h('h4', { text: 'Shared outside Noor' }),
+        h('p', { class: 'lv-ext small', text: ip.sharedOutside.externalLine }),
+        h('div', { class: 'small muted', text: 'What ' + (m && m.sharingAgreement ? m.sharingAgreement.label.replace(/ v\d+.*$/, '') : 'the lender') + ' receives (' + (m && m.sharingAgreement ? m.sharingAgreement.label : '') + '):' }),
+        agreed,
+        h('p', { class: 'small', id: 'lv-why-private', text: ip.sharedOutside.why + '.' }))));
+}
+var LENDER_SWITCH = [['partner-bank', 'Partner Bank'], ['lender-b', 'Lender B (illustrative)']];
 var Lender = {
-  selId: null, tab: 'ui',
+  selId: null, tab: 'ui', lenderId: 'partner-bank',
   build: function () {
     var root = clear($('#scr-lender'));
     root.appendChild(screenHead('Shared with the lender of record', 'Lender view — credit memos',
       lenderName() + ' books, funds and collects the loan; Noor decides with Mizan and sends the bank a credit memo — the same memo in the bank’s portal, over the API and in the SFTP file. The Decision log stays Noor’s internal record.'));
-    root.appendChild(scopeBanner('lender', 'lv-banner', 'What the lender receives.', 'Built from an allowlist — Open Finance data is never shared, only ranges and verification flags.'));
+    root.appendChild(scopeBanner('lender', 'lv-banner', 'What the lender receives.', 'Built from an allowlist — Open Finance data is never shared, only ranges and verification flags. The allowlist is each lender’s sharing agreement: scores, findings, reason codes and derived aggregates.'));
+    root.appendChild(h('div', { class: 'lv-lines' },
+      h('p', { class: 'lv-ext', id: 'lv-external', text: ME.EXTERNAL_LINE || '' }),
+      h('p', { class: 'small muted', id: 'lv-method', text: ME.METHODOLOGY_LINE || '' })));
+    root.appendChild(h('div', { class: 'lv-agree', id: 'lv-agreement' }));
     root.appendChild(h('div', { class: 'lv-grid' },
       h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'lv-list' })),
       h('div', { class: 'stack', id: 'lv-right' })));
@@ -6838,9 +7117,26 @@ var Lender = {
   /* From the Decision log, the journey and the overview: show this decision's memo */
   open: function (id) { Lender.selId = id; showScreen('lender'); },
   select: function (id) { Lender.selId = id; Lender.refresh(); },
+  setLender: function (id) { Lender.lenderId = id; Lender.refresh(); },
+  agreementBar: function () {
+    var box = $('#lv-agreement');
+    if (!box) return;
+    clear(box);
+    var ag = null;
+    try { ag = ME.sharingAgreement(Lender.lenderId); } catch (e) {}
+    var seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Lender' });
+    LENDER_SWITCH.forEach(function (l) {
+      seg.appendChild(h('button', { type: 'button', id: 'lv-lender-' + l[0], 'aria-pressed': Lender.lenderId === l[0] ? 'true' : 'false', text: l[1],
+        onclick: function () { Lender.setLender(l[0]); } }));
+    });
+    box.appendChild(h('span', { class: 'lv-agree-l', id: 'lv-agreement-label' }, 'Sharing agreement: ', h('strong', { text: ag ? ag.label : '—' })));
+    box.appendChild(seg);
+    box.appendChild(h('span', { class: 'small muted lv-agree-s', text: ag ? (ag.groups.length === 2 ? 'Core outputs only' : 'Core, every Proposed output and the extras') + ' · DBR ' + (ag.dbrPrecision === 'EXACT' ? 'exact' : 'banded') : '' }));
+  },
   refresh: function () {
     var box = $('#lv-list');
     if (!box) return;
+    Lender.agreementBar();
     clear(box);
     var right = clear($('#lv-right'));
     box.appendChild(h('h3', null, 'Credit memos ', h('span', { class: 'h3-note', text: '— this session, newest first' })));
@@ -6878,14 +7174,10 @@ var Lender = {
     var right = clear($('#lv-right'));
     var m = memoFor(id);
     if (!m) return;
+    if (deepLinkDecision.seeded === id) right.appendChild(h('div', { class: 'callout callout-info small', id: 'lv-seeded' }, h('strong', { text: 'Seeded example. ' }),
+      'The link opened with no decision in this session, so Mizan decided Ravi’s journey application (AED 15,000 · 12 months) to show a real memo.'));
     right.appendChild(memoDoc(m));
-    var sh = h('ul', { class: 'sw-list sw-shared' }), wh = h('ul', { class: 'sw-list sw-withheld' });
-    m.sharing.shared.forEach(function (g) { sh.appendChild(h('li', { text: g })); });
-    m.sharing.withheld.forEach(function (w) { wh.appendChild(h('li', null, h('span', { class: 'sw-g', text: w.group }), h('span', { class: 'sw-r', text: w.reason }))); });
-    right.appendChild(h('div', { class: 'panel', id: 'lv-sharing' }, h('h3', { text: 'Shared vs withheld' }),
-      h('div', { class: 'sw-grid' },
-        h('div', { class: 'sw-col' }, h('h4', { text: 'Shared with ' + lenderName() }), sh),
-        h('div', { class: 'sw-col' }, h('h4', { text: 'Withheld — always, with the reason' }), wh))));
+    right.appendChild(noorIpPanel(m));
     var seg = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Delivery channel' });
     var bodyBox = h('div', { id: 'lv-delivery-body' });
     [['ui', 'UI'], ['api', 'API'], ['sftp', 'SFTP']].forEach(function (tb) {
@@ -6905,7 +7197,7 @@ var Lender = {
         var csv = memoCsv(m);
         var pre2 = h('pre', { class: 'code-block', id: 'lv-sftp', tabindex: '0', 'aria-label': 'Credit memo as a CSV row', text: csv });
         var st2 = h('span', { class: 'small muted', id: 'lv-copy-sftp-status', 'aria-live': 'polite' });
-        bodyBox.appendChild(h('div', { class: 'deliv-meta' }, h('code', { text: '/outbound/partner-bank/noor_credit_memos_' + String(m.createdAt).slice(0, 10) + '.csv' }), h('span', { text: ' · one flat row per memo, header first (illustrative path)' })));
+        bodyBox.appendChild(h('div', { class: 'deliv-meta' }, h('code', { text: '/outbound/' + m.lenderId + '/noor_credit_memos_' + String(m.createdAt).slice(0, 10) + '.csv' }), h('span', { text: ' · one flat row per memo, header first; the columns follow the sharing agreement (illustrative path)' })));
         bodyBox.appendChild(pre2);
         bodyBox.appendChild(h('div', { class: 'copy-row' }, h('button', { class: 'btn', type: 'button', id: 'lv-copy-sftp', text: 'Copy CSV', onclick: function () { copyText(csv, st2, pre2); } }), st2));
         var sr = ME.memoSftpRow(m);
@@ -6915,7 +7207,7 @@ var Lender = {
         colT.appendChild(colB);
         bodyBox.appendChild(h('details', { class: 'tbl-view', open: 'open' }, h('summary', { text: 'The row, column by column' }), h('div', { class: 'tbl-scroll' }, colT)));
       } else {
-        bodyBox.appendChild(h('div', { class: 'deliv-meta', id: 'lv-ui-note' }, 'The memo above is the UI delivery — ', lenderName(), '’s view in Noor’s lender portal, read-only. ',
+        bodyBox.appendChild(h('div', { class: 'deliv-meta', id: 'lv-ui-note' }, 'The memo above is the UI delivery — ', m.lenderName.replace(/ \((.*)\)$/, ''), '’s view in Noor’s lender portal, read-only. ',
           h('span', { class: 'muted', text: 'API and SFTP carry exactly the same fields: switch tabs to see the JSON and the CSV row.' })));
       }
     }
@@ -6923,6 +7215,32 @@ var Lender = {
     right.appendChild(h('div', { class: 'panel', id: 'lv-delivery' }, h('h3', null, 'Delivery ', h('span', { class: 'h3-note', text: '— the same memo, three channels' })), seg, bodyBox));
   }
 };
+/* v2.18 — deep links: #lender and #log land on that screen with the most recent journey decision selected (any decision
+   if none came from the journey); with no decision at all, a seeded example — Ravi's journey decision, on the real engine */
+function deepLinkDecision() {
+  var list = [];
+  try { list = ME.listDecisions() || []; } catch (e) {}
+  var pid = Journey.persona ? Journey.persona.id : 'j1';
+  var jr = list.filter(function (r) { return r.applicantSnapshot && r.applicantSnapshot.id === pid; })[0] || list[0];
+  if (jr) return jr.id;
+  try {
+    var p = Journey.persona;
+    var rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: 15000, tenorMonths: 12, lenderId: 'partner-bank',
+      consents: { aecb: true, openFinance: true, digitalFootprint: { basis: 'TERMS', termsVersion: JR_TERMS.version, acceptedAt: jrTermsAt() } },
+      emiratesId: true, dataSources: { approvedAccounts: ((p.connected && p.connected.accounts) || []).map(function (a) { return a.mask; }), months: jrMonthsSeen() } });
+    deepLinkDecision.seeded = rec.id;
+    afterEngineMutation();
+    return rec.id;
+  } catch (e) { return null; }
+}
+function applyDeepLink(hash) {
+  var id = String(hash || '').replace('#', '');
+  if (id !== 'lender' && id !== 'log') return false;
+  var dec = deepLinkDecision();
+  if (dec) { Lender.selId = dec; LogScreen.selId = dec; }
+  showScreen(id);
+  return true;
+}
 /* ================= Customer journey (v2.6) — botim money → Noor web-view → Partner Bank ================= */
 /* The host app is a CONCEPT of botim money, drawn from neutral components: the wordmark is plain text,
    no Botim artwork, colours or assets. Everything inside the web-view is Noor's own UI. Every engine
@@ -7030,6 +7348,17 @@ var JR_TERMS = {
 var JR_DC_PROXY = 'Noor is the proxy: Partner Bank relies on Noor’s data and verification. Completeness is how much of the customer’s financial picture Noor actually sees — the threshold is the minimum before Noor puts a score on it.';
 /* v2.16 — the what-if: the same card, with the salary paid by another (fictitious) company */
 var JR_EID_WHATIF_PAYER = 'SALARY/WPS PALMGATE TRADING';
+/* v2.18 — the phone scenarios at step 2 (behind-the-scenes switch): botim's number with the OTP (today), the OTP skipped for a
+   botim-verified UAE number (pending a CBUAE rules check), or an overseas number (+91…) → add a UAE number, then the OTP */
+var JR_PHONE_SCN = [['otp', 'UAE number verified by botim — OTP kept', 'default, today’s flow, until CBUAE confirms'],
+                    ['skip', 'UAE number verified by botim — OTP skipped', 'pending CBUAE rules check'],
+                    ['overseas', 'Overseas number (+91…)', 'add a UAE number, then the OTP to it']];
+var JR_PHONE_OVERSEAS = '+91 98•• ••• •21';
+var JR_UAE_REQUIRED = 'A local UAE number is required for assessment and collection; many botim users registered with a home number.';
+function jrPhoneShared() { return Journey.S && Journey.S.phoneScn === 'overseas' ? JR_PHONE_OVERSEAS : JR_HOST.phoneMasked; }
+function jrUaeMasked(d) { return '+971 ' + String(d).slice(0, 1) + '• ••• ••' + String(d).slice(-2); }
+/* v2.18 — steps 11–16·0 (lender confirmation → payout) run in botim's loan flow: the botim frame, not Noor's web-view */
+function jrInBotimFrame() { var S = Journey.S; return !!S && ((S.step >= 11 && S.step <= 15) || (S.step === 16 && S.sub === 0)); }
 /* When the terms were accepted: the demo's day (MizanData.TODAY), just before the engine's session clock starts (09:00) */
 function jrTermsAt() { return new Date(new Date(MD.TODAY + 'T09:00:00Z').getTime() - 120000).toISOString(); }
 /* The experiment: 2.0% → 2.5% funded, 80% power, two-sided α 0.05 */
@@ -7043,7 +7372,9 @@ function jrFresh(variant) {
            pqKey: null, dcWhatIf: null,
            comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
            commsTouched: false, commsDone: false, commsErr: null,
-           insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: false,
+           /* v2.18 — the All page (botim's menu); the phone scenario (OTP kept · skipped · overseas number); AECB pre-ticked (opt-out) */
+           allMenu: false, phoneScn: 'otp', otpSkipped: false, uaePhone: '', uaePhoneErr: null,
+           insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: true,
            recId: null, applyErr: null, eventErr: null, kfsLang: 'en', kfsSheet: false, waive: false, memoSent: null, pwaOpen: false,
            calls: [], botim: [], logged: {} };
 }
@@ -7167,6 +7498,7 @@ var Journey = {
     var S = Journey.S;
     Journey.clearTimers();
     S.chat = false; S.faceId = null; S.eidCam = null;   /* v2.16 — leaving a step drops an unfinished Emirates ID capture */
+    S.allMenu = false;   /* v2.18 — any navigation leaves botim's All page */
     sub = sub || 0;
     /* v2.12 — remember which botim screen the customer left from (0·0 main screen, 0·1 botim money), so ✕ returns there */
     if (S.step === 0) S.hostBack = S.sub;
@@ -7329,6 +7661,47 @@ var Journey = {
       h('div', { class: 'ph-mini-s', text: 'Total ' + fmtAED(total) + ', every month — card and loan together' }));
   },
   /* v2.14 — step 2: accepting the Terms of Use and Privacy policy (which cover the footprint check), kept with its version and time */
+  /* v2.18 — after "Create your account": the OTP (today), straight on to the email (OTP skipped for a botim-verified UAE
+     number, pending CBUAE), or "Add your UAE mobile number" first (an overseas number) */
+  phoneNext: function () {
+    var S = Journey.S;
+    if (S.phoneScn === 'skip') {
+      S.phoneOk = true; S.otpSkipped = true;
+      Journey.log('OTP skipped (scenario b)', 'botim already confirmed this number — pending a CBUAE rules check; no code sent');
+      Journey.go(3, 1, 1); return;
+    }
+    if (S.phoneScn === 'overseas' && !S.uaePhone) { Journey.go(2, 1, 1); return; }
+    Journey.go(3, 0, 1);
+  },
+  setPhoneScn: function (k) {
+    var S = Journey.S;
+    if (S.phoneOk || S.phoneScn === k) return;
+    S.phoneScn = k; S.uaePhone = ''; S.uaePhoneDraft = ''; S.uaePhoneErr = null; S.otpSkipped = false;
+    if (S.step === 2 && S.sub === 1 && k !== 'overseas') { Journey.go(2, 0, -1); return; }
+    Journey.render();
+  },
+  uaePhoneView: function () {
+    var S = Journey.S, B = Journey.btn;
+    var inp = h('input', { class: 'ph-text ph-tel', type: 'tel', id: 'jr-uae-phone', inputmode: 'numeric', value: S.uaePhoneDraft || '', placeholder: '5X XXX XXXX', autocomplete: 'tel-national',
+      'aria-label': 'UAE mobile number', oninput: function (ev) { S.uaePhoneDraft = ev.target.value; S.uaePhoneErr = null; } });
+    return Journey.wv(h('div', { id: 'jr-uae' },
+      h('h2', { class: 'ph-h1', text: 'Add your UAE mobile number' }),
+      h('p', { class: 'ph-p', id: 'jr-uae-lead', text: 'You joined botim with ' + JR_PHONE_OVERSEAS + '. Noor needs a UAE number for your assessment and for collections.' }),
+      h('div', { class: 'ph-field' }, h('label', { class: 'ph-field-l', for: 'jr-uae-phone', text: 'UAE mobile number' }),
+        h('span', { class: 'ph-tel-row' }, h('span', { class: 'ph-cc', text: '+971' }), inp)),
+      S.uaePhoneErr ? h('p', { class: 'ph-err', id: 'jr-uae-err', role: 'alert', text: S.uaePhoneErr }) : null,
+      S.uaePhoneDraft ? null : h('button', { class: 'ph-autofill', type: 'button', id: 'jr-uae-fill', onclick: function () { S.uaePhoneDraft = '50 214 8847'; S.uaePhoneErr = null; Journey.render(); } },
+        h('span', { class: 'ph-af-k', text: 'From your UAE SIM' }), h('span', { class: 'ph-af-v', text: '050 214 8847' })),
+      h('p', { class: 'ph-small', id: 'jr-uae-why', text: JR_UAE_REQUIRED })),
+      B('Send the code', function () { Journey.saveUaePhone(); }, 'jr-cta'));
+  },
+  saveUaePhone: function () {
+    var S = Journey.S, d = String(S.uaePhoneDraft || '').replace(/\D/g, '').replace(/^971/, '').replace(/^0/, '');
+    if (!/^5\d{8}$/.test(d)) { S.uaePhoneErr = 'Enter a UAE mobile number — 9 digits starting with 5.'; Journey.render(); return; }
+    S.uaePhone = d; S.otp = ''; S.otpErr = false; S.otpLeft = 24;
+    Journey.log('UAE mobile number added (scenario c)', jrUaeMasked(d) + ' — the one-time code goes to this number');
+    Journey.go(3, 0, 1);
+  },
   acceptTerms: function () {
     var S = Journey.S;
     S.account = true; S.termsSheet = null;
@@ -7426,6 +7799,8 @@ var Journey = {
   /* v2.12 — botim's main screen ↔ botim money: "money" (services grid or bottom nav) opens botim money on Pay; "Home" returns */
   openMoney: function () { Journey.S.hostTab = 'pay'; Journey.go(0, 1, 1); },
   goHome: function () { Journey.go(0, 0, -1); },
+  /* v2.18 — botim's All page (the menu): opens over the botim screen the customer is on; any navigation closes it */
+  openAll: function () { var S = Journey.S; S.chat = false; S.allMenu = true; Journey.clearTimers(); Journey.render(); },
   /* Services and nav items outside the demo: a small inline toast — never navigation, never the fatal banner */
   demoToast: function (what) {
     var scr = $('#jr-screen');
@@ -7454,6 +7829,7 @@ var Journey = {
   resumeOnboarding: function () {
     var S = Journey.S;
     if (!S.account) { Journey.go(1, 0, 1); return; }
+    if (!S.phoneOk && S.phoneScn === 'overseas' && !S.uaePhone) { Journey.go(2, 1, 1); return; }   /* v2.18 */
     if (!S.phoneOk) { Journey.go(3, 0, 1); return; }
     if (!S.emailDone) { Journey.go(3, 1, 1); return; }
     if (!S.eidDone) { Journey.go(3, 2, 1); return; }
@@ -7511,6 +7887,7 @@ var Journey = {
     if (!scr) return;
     clear(scr);
     var v = Journey.view();
+    if (v.kind === 'webview' && jrInBotimFrame()) v.kind = 'botim';   /* v2.18 */
     scr.className = 'ph-screen ph-' + v.kind;
     scr.dataset.step = String(S.step); scr.dataset.sub = String(S.sub); scr.dataset.kind = v.kind; scr.dataset.variant = S.variant;
     scr.appendChild(h('div', { class: 'ph-status' },
@@ -7536,11 +7913,23 @@ var Journey = {
   },
   /* ---------- phone building blocks ---------- */
   wv: function (body, cta, cls) {
+    if (jrInBotimFrame()) return Journey.bf(body, cta, cls);
     return h('div', { class: 'wv' + (cls ? ' ' + cls : '') },
       h('div', { class: 'wv-bar' },
         h('button', { class: 'wv-x', type: 'button', id: 'wv-close', 'aria-label': 'Close Noor and go back to botim', onclick: function () { Journey.closeWebview(); } }, jrSvg(JR_ICON.close, null, '1.8')),
         h('div', { class: 'wv-title' }, h('span', { class: 'wv-name', text: 'noor finance' }), h('span', { class: 'wv-url' }, jrSvg(JR_ICON.lock, 'wv-lock'), 'noor.finance')),
         h('span', { class: 'wv-more', 'aria-hidden': 'true' }, jrSvg(JR_ICON.more, null, '2.6'))),
+      h('div', { class: 'wv-body' }, body),
+      cta ? h('div', { class: 'wv-cta' }, cta) : null);
+  },
+  /* v2.18 — botim's own frame around its loan flow (lender confirmation, Key Facts, e-sign, repayment, cooling-off, payout).
+     A concept, like the other host screens: plain-text wordmark, no botim artwork. The content and the engine events are unchanged. */
+  bf: function (body, cta, cls) {
+    return h('div', { class: 'wv bfr' + (cls ? ' ' + cls : ''), id: 'bf-frame' },
+      h('div', { class: 'bf-bar' },
+        h('button', { class: 'wv-x bf-x', type: 'button', id: 'bf-back', 'aria-label': 'Back to botim money', onclick: function () { Journey.closeWebview(); } }, jrSvg('M10 3.5L5.5 8l4.5 4.5', null, '1.8')),
+        h('div', { class: 'bf-title' }, h('span', { class: 'bf-name', id: 'bf-name' }, h('b', { text: 'botim' }), ' · loan (with Partner Bank)'),
+          h('span', { class: 'bf-tag', id: 'bf-host-tag', text: 'Concept — illustrative host app' }))),
       h('div', { class: 'wv-body' }, body),
       cta ? h('div', { class: 'wv-cta' }, cta) : null);
   },
@@ -7589,11 +7978,12 @@ var Journey = {
   /* v2.12 — botim's bottom nav, shared by the main screen and botim money: Home ↔ money navigate; Calls, Chats and All
      are outside the demo and only show the toast */
   hostNav: function (active) {
-    var pre = active === 'home' ? 'bh' : 'bm';
+    var pre = active === 'home' ? 'bh' : (active === 'all' ? 'ba' : 'bm');
     var nav = h('div', { class: 'bm-nav', role: 'navigation', 'aria-label': 'botim' });
     [['home', 'Home', JR_ICON.home], ['calls', 'Calls', JR_ICON.phone], ['chats', 'Chats', JR_ICON.chat], ['money', 'money', JR_ICON.wallet], ['all', 'All', JR_ICON.grid]].forEach(function (n) {
       var on = n[0] === active;
-      var fn = on ? function () {} : n[0] === 'home' ? function () { Journey.goHome(); } : n[0] === 'money' ? function () { Journey.openMoney(); } : function () { Journey.demoToast(n[0]); };
+      var fn = on ? function () {} : n[0] === 'home' ? function () { Journey.goHome(); } : n[0] === 'money' ? function () { Journey.openMoney(); }
+        : n[0] === 'all' ? function () { Journey.openAll(); } : function () { Journey.demoToast(n[0]); };   /* v2.18 — All opens the menu page */
       nav.appendChild(h('button', { class: 'bm-nav-i' + (on ? ' on' : ''), type: 'button', id: pre + '-nav-' + n[0], 'aria-current': on ? 'page' : null, onclick: fn },
         jrSvg(n[2]), h('span', { text: n[1] })));
     });
@@ -7658,6 +8048,50 @@ var Journey = {
       })));
     root.appendChild(body);
     root.appendChild(Journey.hostNav('home'));
+    return root;
+  },
+  /* ---------- v2.18 — the host app: botim's All page (menu, concept) ----------
+     A neutral grid of services and one Noor tile, marked "by noor", that opens the active variant's entry. No real
+     botim product names, no logos: generic services only. */
+  allPage: function () {
+    var S = Journey.S, p = Journey.persona;
+    var toast = function (what) { return function () { Journey.demoToast(what); }; };
+    var G = { travel: 'M2.2 9.6l11.6-4.4-4.2 8.1-2.1-3-3.2-.8zM7.5 10.3l6.3-5.1', shop: 'M3.5 5.5h9l-.9 8h-7.2zM6 5.5V4.3a2 2 0 0 1 4 0v1.2',
+              food: 'M5 2.5v11M3.5 2.5v3.2a1.5 1.5 0 0 0 3 0V2.5M11 13.5V2.5c-1.4 0-2.3 1.9-2.3 4.1 0 1.6.9 2.4 2.3 2.4', games: 'M4.5 6h7a2.6 2.6 0 0 1 2.5 3.3l-.6 2a1.5 1.5 0 0 1-2.6.5L9.7 10.5H6.3L5.2 11.8a1.5 1.5 0 0 1-2.6-.5l-.6-2A2.6 2.6 0 0 1 4.5 6zM5.5 7.5v2M4.5 8.5h2',
+              settings: 'M8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM8 1.8v1.7M8 12.5v1.7M1.8 8h1.7M12.5 8h1.7M3.6 3.6l1.2 1.2M11.2 11.2l1.2 1.2M3.6 12.4l1.2-1.2M11.2 4.8l1.2-1.2', help: JR_ICON.chat };
+    var root = h('div', { class: 'bm bh ba', id: 'ba-all', dataset: { surface: 'all' } });
+    root.appendChild(h('div', { class: 'bm-head' },
+      h('div', { class: 'bm-brand' }, h('span', { class: 'bm-word', id: 'ba-word' }, h('b', { text: 'botim' })),
+        h('span', { class: 'bm-tag', id: 'ba-host-tag', text: 'Concept — illustrative host app' })),
+      h('div', { class: 'bm-head-r' }, h('span', { class: 'bm-avatar', role: 'img', 'aria-label': p.name, text: 'RK' }))));
+    var body = h('div', { class: 'bm-body bh-body ba-body' });
+    body.appendChild(h('div', { class: 'ba-title', text: 'All services' }));
+    var grid = function (list) {
+      var g = h('div', { class: 'bh-svcs ba-svcs' });
+      list.forEach(function (x) {
+        g.appendChild(h('button', { class: 'bh-svc ba-svc', type: 'button', id: 'ba-svc-' + x[0], dataset: { svc: x[0] },
+          onclick: x[0] === 'money' ? function () { Journey.openMoney(); } : toast(x[0]) },
+          h('span', { class: 'bh-svc-b' }, jrSvg(x[2], null, '1.7')), h('span', { class: 'bh-svc-l', text: x[1] })));
+      });
+      return g;
+    };
+    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Money' })));
+    body.appendChild(grid([['send', 'Send money', JR_ICON.send], ['recharge', 'Recharge', JR_ICON.recharge], ['bills', 'Bills', JR_ICON.bills], ['gold', 'Gold', JR_ICON.gold],
+                           ['cards', 'Cards', JR_ICON.card], ['money', 'money', JR_ICON.wallet]]));
+    /* the Noor tile — a Noor embed with its "by noor" label; it opens the variant's entry */
+    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Credit' })));
+    body.appendChild(h('button', { class: 'ba-noor noor-embed', type: 'button', id: 'ba-noor', dataset: { embed: 'menu-tile', surface: 'all' },
+      'aria-label': 'Noor — how much could you borrow?', onclick: function () { Journey.entry('all'); } },
+      Journey.byNoor(),
+      h('span', { class: 'ba-noor-ico' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' })),
+      h('span', { class: 'ba-noor-m' }, h('span', { class: 'ba-noor-t', text: 'Noor' }), h('span', { class: 'ba-noor-s', text: 'How much could you borrow? Check in 2 minutes — no impact on your credit score' })),
+      h('span', { class: 'bm-banner-go', 'aria-hidden': 'true' }, jrSvg(JR_ICON.arrowR, null, '1.9'))));
+    Journey.emit('impression', 'all');
+    body.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Everyday' })));
+    body.appendChild(grid([['travel', 'Travel', G.travel], ['shopping', 'Shopping', G.shop], ['food', 'Food', G.food], ['games', 'Games', G.games],
+                           ['settings', 'Settings', G.settings], ['help', 'Help', G.help]]));
+    root.appendChild(body);
+    root.appendChild(Journey.hostNav('all'));
     return root;
   },
   /* The Noor insights, from data and engine calls only: card totals and the repayment seen leaving the accounts,
@@ -7817,7 +8251,10 @@ var Journey = {
     emb.appendChild(h('div', { class: 'bm-sec' }, h('span', { class: 'bm-sec-t', text: 'Spending' }), h('span', { class: 'bm-link bm-link-static', text: 'Monthly average' })));
     var bar = h('div', { class: 'bm-mixbar', 'aria-hidden': 'true' });
     var list = h('div', { class: 'bm-mix' });
-    JR_HOST.spending.forEach(function (c, i) {
+    /* v2.18 — the mix comes from j1's categorised spending (connected.spendCategories), the same data the findings read */
+    var cats = (Journey.persona.connected || {}).spendCategories;
+    var mix = cats ? Object.keys(cats).map(function (k) { return [k, Math.round(spend * cats[k] / 100)]; }).sort(function (a, b) { return b[1] - a[1]; }) : JR_HOST.spending;
+    mix.forEach(function (c, i) {
       var pct = Math.round(c[1] / spend * 100);
       bar.appendChild(h('span', { class: 'bm-seg s' + i, style: 'flex:' + c[1] + ' 0 0;' }));
       list.appendChild(h('div', { class: 'bm-mix-r' }, h('span', { class: 'bm-dot s' + i }), h('span', { class: 'bm-mix-k', text: c[0] }),
@@ -7849,12 +8286,13 @@ var Journey = {
   /* ---------- the screen for the current step ---------- */
   view: function () {
     var S = Journey.S, p = Journey.persona, st = S.step, sub = S.sub, B = Journey.btn;
+    var hostStep = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 3);
+    if (hostStep && S.allMenu) return { kind: 'host', node: Journey.allPage() };   /* v2.18 — botim's All page */
     /* v2.12 — 0·0 is botim's main screen, where the journey starts; 0·1 is botim money */
     if (st === 0 && sub === 0) return { kind: 'host', node: Journey.home() };
-    var hostStep = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 3);
     if (hostStep && S.chat) return { kind: 'hostchat', node: Journey.chat() };
     if (hostStep) return { kind: 'host', node: Journey.host() };
-    var phone = JR_HOST.phoneMasked;
+    var phone = jrPhoneShared();
     if (st === 1) {
       return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-splash' },
         h('div', { class: 'ph-splash-mid' }, h('span', { class: 'noor-logo ph-splash-logo', role: 'img', 'aria-label': 'noor finance' })),
@@ -7870,18 +8308,22 @@ var Journey = {
           B('Continue', function () { Journey.go(2, 0, 1); }, 'jr-cta'),
           B('Not now', function () { Journey.closeWebview(); }, 'jr-cta-2', { ghost: true }))), null, 'wv-splashmode') };
     }
+    if (st === 2 && sub === 1) return { kind: 'webview', node: Journey.uaePhoneView() };   /* v2.18 — the overseas scenario */
     if (st === 2) {
       return { kind: 'webview', node: Journey.wv(h('div', null,
         Journey.connectFirst(),
         h('h2', { class: 'ph-h1', text: 'Create your account' }),
         h('label', { class: 'ph-field' }, h('span', { class: 'ph-field-l', text: 'Mobile number' }),
-          h('span', { class: 'ph-input' }, h('span', { class: 'ph-input-v', id: 'jr-phone-v', text: phone }), h('span', { class: 'ph-tag ph-tag-sm', text: 'shared by Botim' }))),
-        h('p', { class: 'ph-small', text: 'We’ll send a one-time code to confirm it’s you.' }),
+          h('span', { class: 'ph-input' }, h('span', { class: 'ph-input-v', id: 'jr-phone-v', text: phone }), h('span', { class: 'ph-tag ph-tag-sm', text: S.phoneScn === 'skip' ? 'verified by botim' : 'shared by Botim' }))),
+        /* v2.18 — the phone scenario decides what happens to the number botim shared */
+        S.phoneScn === 'skip' ? h('p', { class: 'ph-small', id: 'jr-otp-skip-note', text: 'botim already confirmed this number — no code needed.' })
+          : (S.phoneScn === 'overseas' ? h('p', { class: 'ph-small', id: 'jr-overseas-note', text: 'This is a home-country number. Next, add your UAE mobile number — Noor needs it for your assessment and for repayments.' })
+            : h('p', { class: 'ph-small', text: 'We’ll send a one-time code to confirm it’s you.' })),
         Journey.termsSheet()),
         /* v2.14 — "Privacy policy" and "Terms of Use" open the clause; continuing records the acceptance (version + time) */
         h('div', null, h('p', { class: 'ph-legal', id: 'jr-legal' }, 'By continuing you agree to ', Journey.termsLink('privacy', 'Privacy policy', 'jr-privacy-link'), ' and ',
             Journey.termsLink('terms', 'Terms of Use', 'jr-terms-link')),
-          B('Continue', function () { Journey.acceptTerms(); Journey.go(3, 0, 1); }, 'jr-cta'))) };
+          B('Continue', function () { Journey.acceptTerms(); Journey.phoneNext(); }, 'jr-cta'))) };
     }
     if (st === 3 && sub === 1) return { kind: 'webview', node: Journey.emailView() };
     if (st === 3 && sub === 2) return { kind: 'webview', node: Journey.eidView() };
@@ -7890,7 +8332,7 @@ var Journey = {
       for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.otp[i] ? ' on' : (i === S.otp.length ? ' cur' : '')), text: S.otp[i] || '' }));
       return { kind: 'webview', node: Journey.wv(h('div', null,
         h('h2', { class: 'ph-h1', text: 'Enter the code' }),
-        h('p', { class: 'ph-label', text: 'Sent to number ' + phone }),
+        h('p', { class: 'ph-label', id: 'jr-otp-to', text: 'Sent to number ' + (S.phoneScn === 'overseas' && S.uaePhone ? jrUaeMasked(S.uaePhone) : phone) }),
         cells,
         S.otpErr ? h('p', { class: 'ph-err', text: 'Enter the 6-digit code we sent you.' }) : null,
         h('p', { class: 'ph-label ph-muted', id: 'jr-resend', text: S.otpLeft > 0 ? 'Resend code in 0:' + String(S.otpLeft).padStart(2, '0') : 'Resend code' })),
@@ -7929,7 +8371,10 @@ var Journey = {
           h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'How long' }), h('span', { class: 'ph-ci-v', text: '12 months, or until you cancel' })),
           h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'Where you’ll see it' }), h('span', { class: 'ph-ci-v', id: 'jr-altareq-where', text: 'In Noor — including Noor views inside botim' })),
           h('div', { class: 'ph-ci' }, h('span', { class: 'ph-ci-k', text: 'Banks' }), h('span', { class: 'ph-ci-v', text: picked.join(' · ') }))),
-        h('p', { class: 'ph-small' }, jrSvg(JR_ICON.shield, 'ph-inline-ico'), 'Read-only — Noor can’t move your money. Cancel anytime in your Al Tareq dashboard.')),
+        h('p', { class: 'ph-small' }, jrSvg(JR_ICON.shield, 'ph-inline-ico'), 'Read-only — Noor can’t move your money. Cancel anytime in your Al Tareq dashboard.'),
+        /* v2.18 — the Open Finance notes: loans include car loans; what's coming */
+        h('p', { class: 'ph-small', id: 'jr-altareq-loans', text: 'Loans include car loans.' }),
+        h('p', { class: 'ph-small ph-muted', id: 'jr-altareq-coming', text: 'Coming: e-wallets and forex from January; insurance data in phase 2 (2027).' })),
         B('Continue to your bank', function () { Journey.S.bankDeclined = false; Journey.go(5, 0, 1); }, 'jr-cta')) };
     }
     if (st === 5 && sub === 0) {
@@ -8073,6 +8518,7 @@ var Journey = {
       var cells = h('div', { class: 'ph-otp', id: 'jr-email-otp', role: 'group', 'aria-label': '6-digit email code' });
       for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.emailCode[i] ? ' on' : (i === S.emailCode.length ? ' cur' : '')), text: S.emailCode[i] || '' }));
       return Journey.wv(h('div', { id: 'jr-email' },
+        S.otpSkipped ? h('div', { class: 'ph-note ph-note-ok', id: 'jr-otp-skipped' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'botim already confirmed this number' })) : null,
         h('h2', { class: 'ph-h1', text: 'Your email' }),
         h('p', { class: 'ph-small', text: 'For your Key Facts, statements and receipts.' }),
         field,
@@ -8087,6 +8533,7 @@ var Journey = {
     /* v2.14 — no "Digital footprint check · Optional" checkbox: the check is covered by the terms accepted at step 2.
        A notice, not a question: one muted line under the confirmation (its "Privacy policy" opens the clause). */
     return Journey.wv(h('div', { id: 'jr-email', dataset: { verified: 'true' } },
+      S.otpSkipped ? h('div', { class: 'ph-note ph-note-ok', id: 'jr-otp-skipped' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'botim already confirmed this number' })) : null,
       h('h2', { class: 'ph-h1', text: 'Your email' }),
       field,
       h('div', { class: 'ph-note ph-note-ok', id: 'jr-email-ok' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'Email verified · ' + masked })),
@@ -8329,6 +8776,7 @@ var Journey = {
     };
     var none = !JR_CHANNELS.some(function (ch) { return S.comms.service[ch[0]]; });
     return Journey.wv(h('div', { id: 'jr-contact' },
+      h('span', { class: 'ph-tag', id: 'jr-back-in-noor', text: 'Back in Noor' }),
       h('h2', { class: 'ph-h1', text: 'How should we contact you?' }),
       h('p', { class: 'ph-small', id: 'jr-contact-lead', text: 'Your loan is on its way. Pick how we reach you about repayments and your account.' }),
       group('service', 'About your account and loan', 'Required', 'Some messages are required by law — like your Key Facts and payment reminders. We send them on the channels you choose.', 'jr-comms-service'),
@@ -8444,13 +8892,13 @@ var Journey = {
   },
   checksView: function () {
     var S = Journey.S, B = Journey.btn;
-    var cb = h('input', { type: 'checkbox', id: 'jr-aecb', onchange: function (ev) { S.aecb = ev.target.checked; if (S.aecb) { S.applyErr = null; Journey.render(); } } });
+    var cb = h('input', { type: 'checkbox', id: 'jr-aecb', onchange: function (ev) { S.aecb = ev.target.checked; if (S.aecb) S.applyErr = null; Journey.render(); } });   /* v2.18 — pre-ticked (opt-out) */
     cb.checked = !!S.aecb;
     return Journey.wv(h('div', null,
       h('h2', { class: 'ph-h1', text: 'Final checks' }),
       h('div', { class: 'ph-card ph-sum' }, h('span', { class: 'ph-sum-v', text: fmtAED(S.amount) + ' · ' + jrMonths(S.months) }), h('span', { class: 'ph-sum-s', text: S.purpose || 'Personal loan' })),
       h('label', { class: 'ph-card ph-check' + (S.applyErr ? ' ph-check-err' : ''), for: 'jr-aecb' }, cb,
-        h('span', null, h('span', { class: 'ph-check-t', text: 'Check my credit report (AECB)' }), h('span', { class: 'ph-check-s', text: 'Required by law before any loan — Federal Law 6/2010' }))),
+        h('span', null, h('span', { class: 'ph-check-t', id: 'jr-aecb-t', text: 'Check my credit report (AECB) — untick if you don’t agree' }), h('span', { class: 'ph-check-s', text: 'Required by law before any loan — Federal Law 6/2010' }))),
       S.applyErr ? h('div', { class: 'ph-note ph-note-err', id: 'jr-apply-err', role: 'alert' },
         h('span', null, /AECB/.test(S.applyErr) ? h('strong', { text: 'We need your OK for the credit check. ' }) : h('strong', { text: 'We couldn’t apply yet. ' }),
           /AECB/.test(S.applyErr) ? 'Tick the box above and confirm again.' : 'Check your contact choices, then confirm again.',
@@ -8476,7 +8924,8 @@ var Journey = {
     var k = r.pricing.kfs, reduced = r.limit.approved < r.request.amount, tok = r.token || {};
     return Journey.wv(h('div', { id: 'jr-offer', dataset: { outcome: r.outcome, id: r.id, amount: String(r.limit.approved), months: String(k.tenorMonths), apr: String(k.rateMid),
         instalment: String(k.monthlyInstalment), total: String(k.totalRepayable) } },
-      h('span', { class: 'ph-tag', text: 'Approved · NoorScore ' + r.score.points + ' · ' + ((r.noorScore || {}).band || '') }),
+      h('div', { class: 'ph-tags' }, h('span', { class: 'ph-tag ph-tag-pre', id: 'jr-preoffer-tag', text: 'Noor’s pre-offer' }),
+        h('span', { class: 'ph-tag', text: 'Approved · NoorScore ' + r.score.points + ' · ' + ((r.noorScore || {}).band || '') })),
       reduced ? h('div', { class: 'ph-note ph-note-info', id: 'jr-reduced' }, h('span', null, h('strong', { text: 'We can offer ' + fmtAED(r.limit.approved) + ' rather than ' + fmtAED(r.request.amount) + '. ' }), reasons)) : null,
       h('div', { class: 'ph-offer-v', id: 'jr-offer-amount', text: fmtAED(r.limit.approved) }),
       h('div', { class: 'ph-label', text: 'over ' + jrMonths(k.tenorMonths) }),
@@ -8491,8 +8940,11 @@ var Journey = {
       S.kfsSheet ? h('div', { class: 'ph-overlay', id: 'jr-kfs-sheet' }, h('div', { class: 'ph-sheet ph-sheet-kfs' },
         h('div', { class: 'ph-sheet-h' }, h('span', { class: 'ph-sheet-t', text: 'Key Facts Statement' }),
           h('button', { class: 'wv-x', type: 'button', id: 'jr-kfs-close', 'aria-label': 'Close the Key Facts Statement', onclick: function () { S.kfsSheet = false; Journey.render(); } }, jrSvg(JR_ICON.close, null, '1.8'))),
-        Journey.kfsDoc(r, 'en'), h('p', { class: 'ph-small ph-muted', text: 'You’ll read it in Arabic or English and acknowledge it before you sign.' }))) : null),
-      h('div', null, B(reduced ? 'Accept ' + fmtAED(r.limit.approved) : 'Accept offer', function () { Journey.go(11, 0, 1); }, 'jr-cta'),
+        Journey.kfsDoc(r, 'en'), h('p', { class: 'ph-small ph-muted', text: 'You’ll read it in Arabic or English and acknowledge it before you sign.' }))) : null,
+      /* v2.18 §6 — Noor owns assessment → pre-offer; origination stays with botim and its lender */
+      h('div', { class: 'ph-card ph-handoff', id: 'jr-handoff-botim' }, h('strong', { text: 'Noor’s part ends here: assessment, recommendation and the credit memo.' }),
+        ' botim finalises your loan with its lender.')),
+      h('div', null, B('Continue in botim', function () { Journey.go(11, 0, 1); }, 'jr-cta'),
         reduced ? B('Change my loan', function () { Journey.changeLoan(); }, 'jr-cta-2', { ghost: true }) : null));
   },
   kfsDoc: function (r, lang) {
@@ -8562,6 +9014,7 @@ var Journey = {
           : 'Approve a recurring payment in your bank app via Al Tareq — ' + fmtMoney(k.monthlyInstalment) + ' on the ' + jrDayNth(due.day) + ' from ' + acct.bank + ' ••••' + acct.mask }),
         h('span', { class: 'ph-small ph-block', text: 'First payment ' + fmtLongDate(due.iso) + ' — the day after your salary lands · ' + k.tenorMonths + ' monthly payments.' })),
       h('p', { class: 'ph-p ph-strong', id: 'jr-no-salary', text: 'No salary transfer needed.' }),
+      h('p', { class: 'ph-small', id: 'jr-repay-route', text: 'Direct debit mandate above AED 1,000; at or below, an Al Tareq payment (Noor is applying for a payment-initiation licence). Repayments are run by botim’s loan flow.' }),
       done ? h('div', { class: 'ph-note ph-note-ok' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: dd ? 'Mandate approved' : 'Recurring payment approved' })) : null,
       Journey.inlineEngineError(S.eventErr)),
       done ? B('Continue', function () { Journey.go(15, 0, 1); }, 'jr-cta')
@@ -8738,6 +9191,12 @@ var Journey = {
         'Events: impression and click carry the surface they came from (home or money), so the experiment counts impressions by surface.']];
     }
     var hostView = st === 0 || (st === 6 && sub === 1) || (st === 7 && sub === 0) || (st === 16 && sub === 3);
+    if (S.allMenu && hostView) {
+      b = ['botim’s All page — a second Noor placement', [
+        'The bottom nav’s All opens botim’s menu: a neutral grid of services and one Noor tile, a Noor embed marked “by noor”.',
+        'The tile opens the variant’s entry (' + (A ? 'variant A: botim’s Loans screen with the Noor tile' : 'variant B: “How much can you borrow?”') + '), like the banner and the Noor icon on the main screen.',
+        'Events: the tile’s impression and click carry surface “all”, so the experiment counts this placement on its own. botim gets events only.']];
+    }
     if (S.chat && hostView) {
       b = ['Next: split in chat — a read-only teaser', ['botim AI could offer to split recent card purchases right in the chat.',
         'It needs a 1-month “repay next month” plan. The engine’s split product allows Pay in 3, 6 or 12 only, so nothing here calls Mizan and no price is shown — the plan would go through the policy console with 4-eyes first.']];
@@ -8783,6 +9242,43 @@ var Journey = {
     }
     if (st === 5 && sub >= 1) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-untick-note' }, h('div', { class: 'co-title', text: 'Unticking an account' }),
       h('div', { class: 'co-body', text: 'Unticking the card or the loan here would hide it from Noor — Mizan would still see the obligation in the AECB report, which the decision uses for the debt-burden ratio.' })));
+    /* v2.18 — the phone scenarios (8 Oct): a switch for the demo, at steps 1 and 2 */
+    if (st === 1 || st === 2) {
+      var scnBox = h('div', { class: 'jr-scn', id: 'jr-phone-scn', role: 'radiogroup', 'aria-label': 'Phone number scenario' });
+      JR_PHONE_SCN.forEach(function (x) {
+        scnBox.appendChild(h('button', { class: 'btn jr-scn-b' + (S.phoneScn === x[0] ? ' btn-primary' : ''), type: 'button', role: 'radio', id: 'jr-scn-' + x[0],
+          'aria-checked': S.phoneScn === x[0] ? 'true' : 'false', disabled: S.phoneOk && S.phoneScn !== x[0] ? 'disabled' : null, onclick: function () { Journey.setPhoneScn(x[0]); } },
+          h('span', { class: 'jr-scn-t', text: x[1] }), h('span', { class: 'jr-scn-s', text: x[2] })));
+      });
+      wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-phone-scn-box' }, h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Scenario — the mobile number' }),
+        h('span', { class: 'small muted', text: ' · for the demo; botim’s handling of overseas vs local numbers is being agreed' })), scnBox,
+        h('div', { class: 'small', id: 'jr-uae-required', text: JR_UAE_REQUIRED })));
+    }
+    if (st === 3 && sub === 0 && S.phoneScn === 'overseas') wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-otp-uae-note' }, h('div', { class: 'co-title', text: 'The code goes to the UAE number' }),
+      h('div', { class: 'co-body', text: 'botim registered the customer with a home-country number (' + JR_PHONE_OVERSEAS + '). The one-time code confirms the UAE number added at 2·1 — the number Noor and the lender use for assessment and collections.' })));
+    /* v2.18 — Open Finance notes (8 Oct) */
+    if (st === 5) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-of-notes' }, h('div', { class: 'co-title', text: 'Open Finance — how banks approve today' }),
+      h('ul', { class: 'jr-bts-l' },
+        h('li', { text: 'Today each bank is approved separately (aggregator flow); Nebras may support one consent for all banks.' }),
+        h('li', { text: 'Customers without the bank’s app approve through the bank’s web login in Safari.' }),
+        h('li', { text: 'Loans include car loans — data completeness already counts them as loan accounts.' }))));
+    if (st === 4) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-of-coming' }, h('div', { class: 'co-title', text: 'What Al Tareq will carry next' }),
+      h('div', { class: 'co-body', text: 'Coming: e-wallets and forex from January; insurance data in phase 2 (2027). Loans already include car loans.' })));
+    /* v2.18 — the credit report: an opt-out box, and who pulls the full report */
+    if (st === 9) wrap.appendChild(h('div', { class: 'callout callout-warn', id: 'jr-aecb-notes' }, h('div', { class: 'co-title', text: 'The credit-report consent — to confirm' }),
+      h('ul', { class: 'jr-bts-l' },
+        h('li', { text: 'Noor’s position: an opt-out box; confirm with compliance that a pre-ticked box is valid consent under Federal Law 6/2010.' }),
+        h('li', { text: 'The full credit report is pulled by the licensed lender acting for Noor (precedent: a lender pulling reports on another’s behalf with CBUAE approval). An AECB score via Open Finance is being explored with AECB.' }))));
+    /* v2.18 §6 — who owns which part of the journey */
+    if (st === 10) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-ownership' }, h('div', { class: 'co-title', text: 'Noor owns assessment → pre-offer' }),
+      h('ul', { class: 'jr-bts-l' },
+        h('li', { text: 'Noor’s part: the assessment, the recommendation and the credit memo. This screen is Noor’s pre-offer.' }),
+        h('li', { text: 'Origination stays with botim and its lender: lender confirmation, Key Facts, e-sign, repayment set-up, cooling-off and payout run in botim’s loan flow.' }),
+        h('li', { text: 'The lender’s policy can be loaded into Mizan, so the pre-offer is what the lender approves (Policy console: “Lender policy: Partner Bank — loaded into Mizan for end-to-end decisioning”).' }))));
+    if (jrInBotimFrame()) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-orig-note' }, h('div', { class: 'co-title', text: 'Origination — botim' }),
+      h('div', { class: 'co-body', text: 'This step runs in botim’s loan flow with Partner Bank (the botim frame, not Noor’s web-view). Its content and the execution events are unchanged: they come back to Noor as status events for monitoring. Repayments are run by botim’s loan flow — a direct debit mandate above AED 1,000; at or below, an Al Tareq payment (Noor is applying for a payment-initiation licence).' })));
+    if (st === 16 && sub === 1) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-back-noor-note' }, h('div', { class: 'co-title', text: 'Back in Noor' }),
+      h('div', { class: 'co-body', text: 'After the payout the customer is back in Noor: contact preferences for Noor’s insights and monitoring messages.' })));
     if (st === 5) wrap.appendChild(h('div', { class: 'callout callout-warn jr-risk', id: 'jr-build-risk' }, h('div', { class: 'co-title', text: 'Build risk to agree with Botim' }),
       h('div', { class: 'co-body', text: 'App-to-app redirect out of the web-view and a registered return URL (universal link / app link) back into botim — prove both on iOS and Android early.' })));
     if (r && st >= 9 && st <= 10 && !(st === 9 && sub === 0 && !S.recId)) {
@@ -8877,7 +9373,7 @@ var Journey = {
     box.appendChild(h('div', { class: 'jr-sub-t jr-exp-sub', text: 'This session, from the event log' }));
     box.appendChild(h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl jr-exp-tbl', id: 'jr-exp-counts' }, h('thead', null, thead), tbody)));
     /* v2.12 — impressions by surface: botim's main screen (home) and botim money */
-    var surf = [['home', 'Main screen'], ['money', 'botim money']];
+    var surf = [['home', 'Main screen'], ['money', 'botim money'], ['all', 'All page']];   /* v2.18 — the All page (menu) */
     var bySurface = function (v, s) { return Journey.eventLog.filter(function (e) { return e.variant === v && e.name === 'impression' && e.surface === s; }).length; };
     var sbody = h('tbody');
     ['A', 'B'].forEach(function (v) {

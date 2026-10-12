@@ -1635,3 +1635,140 @@ Acceptance 1159 green: the 1120 earlier checks and 39 in the new "v2.17 — data
   The revised spec says risk-band boundaries stay inside Noor. This build does not change that line; it is left for
   the v2.18 lender-view work.
 - The Noor skin `<style>` block is byte-identical; the v2.17 CSS sits at the end of "Noor additions".
+
+### As built — v2.18 (meeting 8 Oct; NoorScore methodology slides 5–8)
+
+Built as MEETING-1008-SPEC.md specifies. Selftest 1806 green: the 1726 earlier checks became 1728 (two checks added
+inside groups 23 and 24), plus 78 in group 25. Acceptance 1290 green: the 1159 earlier checks became 1161 (two added
+inside existing walks), plus 129 in the new "v2.18 — meeting 8 Oct" section. Every persona outcome, score, limit and
+price is unchanged, and the v2.9 fingerprints match. Every decision record the selftest creates (320) is byte-identical
+to v2.17's, except for the new `inputs` field and j1's new `spendCategories` in its snapshot. Decisions and deviations:
+
+- **Data.**
+  - `MizanData.sharingAgreements`:
+    - Partner Bank v1 carries every group: Core, Proposed, the extras and the supporting flags.
+    - Lender B v1 (illustrative) carries Core only.
+    - Both use `dbrPrecision: 'BAND'`.
+  - `lenders` adds "Lender B (illustrative)".
+  - `findings` is the seven-code vocabulary, in English and Arabic.
+  - `reasonCodesLender` holds lender-facing wordings for the 14 codes whose customer text names a source, a check's
+    internals or a threshold (RC_SCORE_LOW, RC_CROSS_BORDER, RC_INCOME_VOLATILITY, RC_UPGRADE_*, RC_STATEMENTS_*,
+    RC_FOOTPRINT_*, RC_STEP_UP_AUTH, RC_EMPLOYER_MISMATCH, RC_ID_EXPIRED). The customer's disclosure text is unchanged.
+  - j1 `connected.spendCategories`: Dining 24, Groceries 22, Transport 12, Bills 18, Shopping 14, Other 10.
+- **Engine.**
+  - `decide()` is split into a pure `computeDecision()` plus the recording. Footprint effects on the evaluation moved
+    into the pure part; the record is unchanged.
+  - Each decision logs `record.inputs`: the consents as given, the Emirates ID scan, the data sources, the lender and
+    the early-warning block version.
+  - Every published policy version is kept whole in `S.policySnapshots`.
+  - `reproduceDecision(id)` re-runs `computeDecision()` on the logged inputs and the policy versions in force, with no
+    record, no clock tick and no audit entry. It compares the outcome, the points, the grade, the reason codes, the
+    limit, the binding constraint and the pricing.
+    - After an override it compares the engine's own outcome, read from the first audit entry.
+    - After an override to DECLINE it skips the limit and the price, and says so.
+    - A tampered record shows "Not reproduced — 1 difference: score.points".
+  - `creditMemo(id, {lenderId})` builds the memo from the lender's agreement. A group the agreement doesn't list is never
+    built. Agreements are validated: known groups only, Core always present, `dbrPrecision` BAND or EXACT.
+  - The memo opens with `outputs`: the slide-8 table, each row with its output, what it tells the lender, its status
+    and its value. `outputsNote` carries the banner, verbatim. The memo also adds `sharingAgreement`, `findings` (words
+    only), `scoreComponents` (four bars: key, name, level, tone, at most two factor words), `affordability` (under
+    "Aggregates — not scored") and `monitoring` (status, best debit date, next refresh, line).
+  - `sharing` (the shared and withheld lists) and `borrower.kycSource` left the memo. The Noor-only panel replaces them:
+    `MizanEngine.NOOR_IP`, with `EXTERNAL_LINE` and `METHODOLOGY_LINE`.
+  - Buckets (internal derivation, documented in the code):
+    - The income bucket is the verified salary on the salary-based products; the car loan uses the salary alone. On
+      split and upgrade it is each connected month capped at the median, averaged.
+    - The additional income is verified non-salary income plus variable income above the base, net of it. Below
+      AED 1,000 it reads "None detected (< AED 1,000)"; without connected history, "Not assessed".
+    - DBR uses 5-point bands (50% and over is one band). Headroom = cap × income − obligations − the new instalment, in
+      AED 500 bands. Ravi: 18.4% → "15–20%"; AED 3,788.30 → "AED 3,500–4,000 / month".
+  - `customerFindings(rec | id | applicant)` returns the findings with their internal rules. The memo carries the words
+    only. Dining is the only spending category read; nationality is never read.
+  - `noorScoreComponents(id)` gives the six components with their drivers (internal, an illustrative derivation).
+    `scoreContributions(id)` gives the Phase 1 waterfall. `sharingAgreement(lenderId)` serves the UI.
+  - Source-agnostic flags:
+    - "Identity verified" / "Identity not verified";
+    - "Additional evidence verified" (key `additionalEvidence`, which was `homeStatements`);
+    - "Additional income verified";
+    - "Home-country credit history used (consented)";
+    - the SME guarantee flag without its factor;
+    - three NoorScore factor words reworded.
+  - Credit Passport and statements consents travel as `additionalEvidence` (CNS-…-EVIDENCE / -DOCUMENTS).
+  - SFTP: the v2.5 columns keep their order; an agreement without a group drops its column. These follow `created_at`:
+    `sharing_agreement`, `findings`, the additional-income and headroom bands, the cash-flow bands, the four component
+    levels, monitoring, and the completeness pair (now always on a consumer row, empty when not measured). SME rows end
+    with their three business columns.
+- **Lender view.**
+  - The header carries the external line, the methodology line, and "Sharing agreement: Partner Bank v1" with a
+    Partner Bank / Lender B switch.
+  - The memo sections, in order: "What lenders receive" (the table, stacked at 390px), the banner, outcome & terms,
+    NoorScore and band, findings chips with the reason codes, the score-component bars, "Aggregates — not scored", the
+    Monitoring line, the ring, flags and consents. Each section shows only what the agreement carries.
+  - The band-boundary scale line is gone.
+  - The "Shared vs withheld" panel is now the "Noor IP vs lender view" panel (`#lv-sharing`), labelled "Noor-only
+    explanation — not part of the memo".
+  - The v2.5 banner sentence is kept, plus one sentence on the agreement.
+- **Decision log.**
+  - "Model: Phase 1 — expert scorecard {model} {version}".
+  - The contribution chart: an HTML waterfall in the theme tokens, with signed values as text.
+  - The six components with their drivers, and the findings with their rules.
+  - Reproduce (`#lg-reproduce`) with its result, and the muted Phase 2 note.
+- **Deep links.**
+  - `#lender` and `#log` (on load or on a hash change) select the most recent journey (j1) decision.
+  - With no decision, they decide a seeded example on the real engine (Ravi's journey application) and say so
+    ("Seeded example").
+  - Opening Lender view from the nav keeps the v2.5 empty state.
+- **Journey.**
+  - All opens botim's All page, an overlay on the host screens:
+    - a neutral services grid and the Noor tile (`#ba-noor`, "by noor"), which opens the variant's entry;
+    - the concept tag, no logo, no real product names;
+    - events carry surface `all`, and the experiment's surface table gains an "All page" column.
+  - Step 2 has a three-way phone-scenario switch behind the scenes:
+    - (a) the OTP is kept, by default;
+    - (b) the OTP is skipped → 3·1, with "botim already confirmed this number";
+    - (c) an overseas number (+91…) → sub-step 2·1, "Add your UAE mobile number" (validated), then the OTP to it.
+  - The step lists are unchanged; 2·1 sits under step 2.
+  - Step 9's AECB box is pre-ticked: "Check my credit report (AECB) — untick if you don’t agree". Unticking still blocks
+    the application inline. The two notes appear behind the scenes.
+  - Step 4 shows the "coming" line and that loans include car loans. Step 5 has the Open Finance notes behind the scenes.
+  - Step 10 is "Noor’s pre-offer", ending "Noor’s part ends here…" with "Continue in botim".
+  - Steps 11–16·0 render in the botim frame ("botim · loan (with Partner Bank)", screen kind `botim`). Their content
+    and events are unchanged.
+  - 16·1 is "Back in Noor". Step 14 has the repayment copy.
+  - The Policy console shows a read-only lender-policy line on the personal-loan pack.
+  - Flow-map phases 8–10 carry the "Origination — botim" chip.
+  - The Insights spending mix now comes from `spendCategories`.
+- **Deviations.**
+  - Lender B gets Core only. §1a says Core only; §1b also lists the affordability aggregates. I took the narrower set,
+    since privacy only tightens, and the §1a test is "Lender B shows only the Core rows".
+  - The memo's reason codes use the lender wordings above. The code identifiers stay the engine's own (RC_STATEMENTS_*
+    still exists), and the scans treat codes as identifiers.
+  - c2's income bucket moves from 20–30k to 10–15k, plus 5–10k of variable pay. a1's moves from 50–60k (which counted
+    75% of the rent) to 40–50k, with the rent as additional income.
+  - FND_DATA_HISTORY fires only with connected history. FND_ON_TIME_PAYER reads the repayments seen leaving the accounts
+    plus a clean AECB file (the data has no per-account on-time flag).
+  - Stacking speed shows "none seen", because no persona has new-line data.
+  - SME memos get no components and no findings.
+- **Changed existing checks.**
+  - Selftest:
+    - the memo keys, the SFTP header and its width;
+    - the identity and evidence flags;
+    - the Credit Passport flag;
+    - the car bands and flags;
+    - r3's DBR band;
+    - the lenders count;
+    - the SME withheld rows and guarantee flag;
+    - the v2.13, v2.14 and v2.16 identity and sharing checks;
+    - v2.17's SFTP pair and its "illustrative" scan, which now exempts only the label "Illustrative derivation".
+    - `privacyScan` gains the v2.18 scans for every caller.
+  - Acceptance:
+    - the car memo bands and flags;
+    - the Shared vs withheld panel;
+    - the SFTP header and row;
+    - the upgrade flag;
+    - the AECB block, which now unticks first;
+    - the v2.8, v2.14 and v2.16 identity checks;
+    - the SME and contact withheld rows;
+    - v2.12's All toast, surface checks and 390px toast;
+    - the two v2.17 "illustrative" scans.
+- The Noor skin `<style>` block is byte-identical; the v2.18 CSS sits at the end of "Noor additions".

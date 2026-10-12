@@ -670,6 +670,26 @@
       ar: 'كان تحويل من الشركة إلى المالك أكبر بكثير من المسحوبات المعتادة.' }
   };
 
+  // v2.18 — the lender-facing wording of the reason codes whose customer text names a data source, a check's
+  // internals or a threshold (Noor IP vs lender view, MEETING-1008-SPEC.md §1b). The customer still reads the
+  // full text above (CBUAE disclosure); the credit memo carries the same code with this source-agnostic wording.
+  const reasonCodesLender = {
+    RC_SCORE_LOW: { en: 'Credit score too low for this product.', ar: 'درجة الائتمان منخفضة جدًا لهذا المنتج.' },
+    RC_CROSS_BORDER: { en: 'Approved using consented home-country credit history.', ar: 'تمت الموافقة باستخدام سجل ائتماني من بلد الموطن بموافقة العميل.' },
+    RC_INCOME_VOLATILITY: { en: 'Monthly income varies too much for an automatic approval — routed for review.', ar: 'يتفاوت الدخل الشهري بدرجة لا تسمح بالموافقة التلقائية — أُحيل الطلب للمراجعة.' },
+    RC_UPGRADE_ENHANCED: { en: 'Upgraded on connected UAE accounts and additional verified evidence.', ar: 'تمت الترقية بناءً على الحسابات الإماراتية المربوطة وأدلة إضافية موثّقة.' },
+    RC_UPGRADE_BASE: { en: 'Upgraded on connected UAE accounts — additional evidence could support a larger limit and a lower rate.', ar: 'تمت الترقية بناءً على الحسابات الإماراتية المربوطة — يمكن لأدلة إضافية أن تدعم حدًا أعلى وسعرًا أقل.' },
+    RC_STATEMENTS_REQUESTED: { en: 'Additional evidence requested to review a higher amount.', ar: 'طُلبت أدلة إضافية لمراجعة مبلغ أعلى.' },
+    RC_STATEMENTS_INCOMPLETE: { en: 'Additional evidence incomplete — the missing months were requested.', ar: 'الأدلة الإضافية غير مكتملة — طُلبت الأشهر الناقصة.' },
+    RC_STATEMENTS_INTEGRITY: { en: 'Additional evidence could not be verified — referred for review.', ar: 'تعذّر التحقق من الأدلة الإضافية — أُحيل الطلب للمراجعة.' },
+    RC_STATEMENTS_USED: { en: 'Decided with additional verified evidence.', ar: 'اتُّخذ القرار بالاستناد إلى أدلة إضافية موثّقة.' },
+    RC_FOOTPRINT_IDENTITY: { en: 'Identity confirmed with an additional check the customer agreed to.', ar: 'تم تأكيد الهوية بفحص إضافي وافق عليه العميل.' },
+    RC_FOOTPRINT_OVERLAY: { en: 'With little credit history, an additional check the customer agreed to added to the score.', ar: 'مع سجل ائتماني محدود، أضاف فحص إضافي وافق عليه العميل إلى الدرجة.' },
+    RC_STEP_UP_AUTH: { en: 'Extra sign-in check required before payout.', ar: 'يلزم تحقق إضافي من الدخول قبل صرف المبلغ.' },
+    RC_EMPLOYER_MISMATCH: { en: 'Employment details differ — referred for review.', ar: 'تختلف بيانات التوظيف — أُحيل الطلب للمراجعة.' },
+    RC_ID_EXPIRED: { en: 'Identity document expired — referred for review.', ar: 'وثيقة الهوية منتهية الصلاحية — أُحيل الطلب للمراجعة.' }
+  };
+
   // ---------------------------------------------------------------------------
   // Early warning — day-zero consumer signals. Seeded, deterministic: detected
   // within the last 3 days of TODAY, each paired with a same-day action.
@@ -1161,6 +1181,7 @@
     sharingAgreements: sharingAgreements,
     findings: findings,
     reasonCodes: reasonCodes,
+    reasonCodesLender: reasonCodesLender,
     earlyWarning: earlyWarning,
     monitoredLoans: monitoredLoans,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook(),

@@ -84,6 +84,12 @@
  *    asks for more accounts and decide() REFERs as a backstop (never a decline,
  *    never a price change); 70–84% lowers NoorScore by 10. The lender sees the
  *    percentage and counts only — never the threshold, the weights or the bands.
+ *  - What lenders receive (v2.18, ../MEETING-1008-SPEC.md): the credit memo opens with
+ *    the output table (NoorScore and band, reason codes + findings — Core; data
+ *    completeness, income, additional income, DBR — Proposed) and is built from each
+ *    lender's sharing agreement. Methodology, thresholds, the data-source mix and raw
+ *    data stay inside Noor; DBR and headroom are banded unless an agreement says
+ *    EXACT. Every decision logs its inputs, so reproduceDecision() re-runs it purely.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -941,11 +947,12 @@
     'Salary verified via connected account': 'Salary verified through connected accounts',
     'Employment tenure ≥ 24m': 'Long employment tenure',
     'ESR > 40%': 'High existing repayments on the bureau file',
-    'Cross-border conservatism': 'Home-country credit file, conservative adjustment',
+    // v2.18 — source-agnostic words (the data-source mix stays inside Noor)
+    'Cross-border conservatism': 'Home-country credit history considered',
     // v2.17 — the completeness overlay (70–84%); the lender sees the direction, never the band boundaries
     'Data completeness 70–84%': 'Part of the financial picture not connected',
-    'Home statements — account open ≥ 5 years': 'Long-standing home-country bank account',
-    'Home statements — clean conduct (0 returned items, 0 overdraft days)': 'Clean home-country account conduct',
+    'Home statements — account open ≥ 5 years': 'Long-standing banking history',
+    'Home statements — clean conduct (0 returned items, 0 overdraft days)': 'Clean account conduct',
     'Home statements — buffer ≥ half a month of income': 'Savings buffer',
     'Home statements — remittances match the UAE salary (≥ 85%)': 'Remittances consistent with salary',
     // v2.10 — SME working capital
@@ -3973,72 +3980,91 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Credit memo for the lender of record (Addendum v2.5)
+  // Credit memo for the lender of record (Addendum v2.5; restructured in v2.18)
   //
   // A Tier-3 bank (Partner Bank) books and funds the loan; Noor decides and sends
   // it a credit memo. The Decision log is Noor's INTERNAL record; the memo is the
   // only thing a lender receives, over the UI, the API (JSON) or SFTP (CSV).
   //
   // It is built from an ALLOWLIST: every field below is constructed explicitly from
-  // the decision record — nothing is copied over and then deleted. Open Finance data
-  // never leaves Noor: income, spending, free cash flow, DBR and the bureau score
-  // reach the lender as BANDS; identity, statements and the purchase as FLAGS;
-  // consents as REFERENCES. creditMemo() is pure: no clock tick, no audit entry.
+  // the decision record — nothing is copied over and then deleted. creditMemo() is
+  // pure: no clock tick, no audit entry.
+  //
+  // v2.18 (MEETING-1008-SPEC.md §1, §1a–§1c; NoorScore methodology slides 5–8):
+  //  - What lenders receive (slide 8): the memo opens with the output table — NoorScore and
+  //    risk band, reason codes (Core); data completeness, income bucket, additional income
+  //    bucket, DBR (Proposed) — each with what it tells the lender, its status and the value.
+  //    Proposed extras: the four score-component levels, the free-cash-flow and instalment-share
+  //    bands, the monitoring line.
+  //  - Per-partner sharing agreements (MizanData.sharingAgreements): the memo's allowlist is the
+  //    lender's agreement. A group the agreement does not list is never built.
+  //  - Noor IP vs lender view (slide 6): the methodology (features, component weights, how the
+  //    components combine), thresholds and cut-offs (the risk-band boundaries, the completeness
+  //    threshold, the rules behind each flag), the data-source mix and raw customer data
+  //    (transactions, balances, account details, Emirates ID images) never reach the memo or the
+  //    SFTP row. Flags are source-agnostic; Open Finance, Noor's core source, may be named.
+  //  - DBR and headroom are BANDED (5-point DBR steps, AED 500 headroom steps): an exact DBR or
+  //    headroom, with the AECB obligations the lender pulls itself, gives away the exact income
+  //    (income = obligations ÷ DBR). dbrPrecision 'EXACT' is a per-agreement trade-off.
+  //  - Findings (slide 7) are shared as words; the rules behind them stay inside Noor.
   // ---------------------------------------------------------------------------
   const DEFAULT_LENDERS = [{ id: 'partner-bank', name: 'Partner Bank', role: 'Lender of record' }];
   const SHARE_WITH_LENDER_WORDING = 'By applying you agree Noor shares your application result (not your bank data) with the lender of record';
-  const OPEN_FINANCE_REASON = 'Open Finance data is shared with Noor for this purpose only and cannot be passed on (customer consent scope, CBUAE Open Finance framework, PDPL)';
-  const MEMO_SHARED = [
-    'Decision, status and reason codes (English + Arabic)',
-    'Loan terms and repayment method',
-    'NoorScore, its band and up to three factor directions',
-    'Affordability as bands — income, debt burden, free cash flow, instalment share',
-    'Bureau flags — AECB checked, score band, delinquency, returned cheques',
-    'Verification flags — identity, home-country statements, purchase category',
-    'Consent references (type, time, reference — never the content)',
-    'Borrower name (with Arabic transliteration) and masked Emirates ID'
+  // v2.18 — Noor's external line (slide 6), the methodology line (slide 7) and the memo's fixed notes.
+  const EXTERNAL_LINE = 'NoorScore works with Open Finance data as its core component. For enrichment, we use different types of alternative data where available.';
+  const METHODOLOGY_LINE = 'Explainable internally (expert scorecard, documented feature-by-feature); lenders receive findings and reason codes, not the formula.';
+  const OUTPUTS_NOTE = 'The set of aggregates is open: we are flexible and want to hear what each partner needs to see.';
+  const COMPONENTS_NOTE = 'Methodology not disclosed — outcome and high-level factors only';
+  const COMPONENTS_BASIS = 'Illustrative derivation';
+  const AGGREGATES_NOTE = 'Aggregates — not scored';
+  // The "Noor IP vs lender view" panel (slide 6): a Noor-only explanation shown next to the memo, never part of it.
+  const NOOR_IP = {
+    label: 'Noor-only explanation — not part of the memo',
+    staysInside: [
+      { group: 'Methodology', detail: 'Features, component weights, how the components combine and, later, the trained model' },
+      { group: 'Thresholds and cut-offs', detail: 'The completeness threshold, the risk-band boundaries and the rules behind each flag' },
+      { group: 'Data-source mix', detail: 'Which alternative data sources are used, when, and how much each counts' },
+      { group: 'Raw customer data', detail: 'Transactions, balances, account details and Emirates ID images' }
+    ],
+    sharedOutside: {
+      externalLine: EXTERNAL_LINE,
+      receives: 'What lenders receive: scores, reason codes and derived aggregates only — the exact set is agreed with each partner',
+      why: 'Why the methodology stays private: it protects NoorScore from being copied by competitors and from being gamed by applicants'
+    }
+  };
+  // The memo's groups, by key (sharing agreements list these). Core goes to every lender.
+  const MEMO_GROUPS = [
+    { key: 'noorScore', status: 'Core', kind: 'output', label: 'NoorScore and risk band' },
+    { key: 'reasonCodes', status: 'Core', kind: 'output', label: 'Reason codes and findings' },
+    { key: 'dataCompleteness', status: 'Proposed', kind: 'output', label: 'Data completeness' },
+    { key: 'incomeBucket', status: 'Proposed', kind: 'output', label: 'Income bucket' },
+    { key: 'additionalIncomeBucket', status: 'Proposed', kind: 'output', label: 'Additional income bucket' },
+    { key: 'dbr', status: 'Proposed', kind: 'output', label: 'DBR and headroom' },
+    { key: 'scoreComponents', status: 'Proposed', kind: 'extra', label: 'The four score-component levels' },
+    { key: 'cashFlowBands', status: 'Proposed', kind: 'extra', label: 'Free-cash-flow and instalment-share bands' },
+    { key: 'monitoring', status: 'Proposed', kind: 'extra', label: 'Monitoring status, best debit date and next refresh' },
+    { key: 'verificationFlags', status: 'Per agreement', kind: 'supporting', label: 'Verification flags' },
+    { key: 'bureauFlags', status: 'Per agreement', kind: 'supporting', label: 'Bureau flags (AECB)' },
+    { key: 'consentReferences', status: 'Per agreement', kind: 'supporting', label: 'Consent references' }
   ];
-  const MEMO_WITHHELD = [
-    { group: 'Line-by-line account history and merchant names (only the purchase category is shared)', reason: OPEN_FINANCE_REASON },
-    { group: 'Account names, banks and account identifiers', reason: OPEN_FINANCE_REASON },
-    { group: 'Exact income, spending, balances and free cash flow', reason: OPEN_FINANCE_REASON },
-    { group: 'Salary dates', reason: OPEN_FINANCE_REASON },
-    { group: 'Home-country statement figures, banks and file names',
-      reason: 'Uploaded for Noor\'s assessment only — the lender receives verification flags (PDPL purpose limitation)' },
-    { group: 'Digital-footprint and vendor raw data', reason: 'Never used for credit; dropped at ingestion (PDPL data minimisation)' },
-    // v2.8 — contact preferences joined the raw contact details: one group, still 7 in all.
-    { group: 'Contact details and preferences', reason: 'Not needed to book the loan — Noor stays the customer\'s point of contact; the email, phone and chosen channels stay with Noor (PDPL data minimisation)' }
+  const MEMO_GROUP_KEYS = MEMO_GROUPS.map(g => g.key);
+  // The output table (slide 8), in its order.
+  const MEMO_OUTPUTS = [
+    { key: 'noorScore', output: 'NoorScore and risk band', tells: 'The applicant’s overall risk level, in bands mapped to expected default once calibrated', status: 'Core' },
+    { key: 'reasonCodes', output: 'Reason codes', tells: 'Findings behind the score, such as Saver or New to the UAE, plus any adverse reason (RC_*)', status: 'Core' },
+    { key: 'dataCompleteness', output: 'Data completeness', tells: 'How much of the customer’s financial life we can see, 0 to 100%', status: 'Proposed' },
+    { key: 'incomeBucket', output: 'Income bucket', tells: 'Verified regular income range', status: 'Proposed' },
+    { key: 'additionalIncomeBucket', output: 'Additional income bucket', tells: 'Variable and secondary income range', status: 'Proposed' },
+    { key: 'dbr', output: 'DBR', tells: 'Observed debt burden ratio and headroom in AED', status: 'Proposed' }
   ];
-  // v2.17 — a memo with data completeness adds this line (the percentage and counts only).
-  const MEMO_SHARED_DC = 'Data completeness — the share of the financial picture Noor sees, with the number of banks, accounts and months';
-  // Car loan (v2.7) memos add these lines; other products' memos are unchanged.
-  const MEMO_SHARED_CAR = [
-    'Vehicle quote — category, condition, model year, price, loan-to-value and down payment (dealer-quote data, not Open Finance)',
-    'Other income as a category and the share counted; the down-payment source as a flag'
+  // SME memos (a business borrower): the business analogues of the income and DBR rows.
+  const MEMO_OUTPUTS_SME = [
+    MEMO_OUTPUTS[0], MEMO_OUTPUTS[1],
+    { key: 'incomeBucket', output: 'Revenue bucket', tells: 'Annual business revenue range', status: 'Proposed' },
+    { key: 'dbr', output: 'Debt service cover', tells: 'DSCR band — operating cash flow ÷ instalment', status: 'Proposed' }
   ];
-  const MEMO_WITHHELD_CAR = [
-    { group: 'Rental income amounts, receipts and the account they land in (only the category and the share counted are shared)', reason: OPEN_FINANCE_REASON }
-  ];
-  // SME working capital (v2.10) memos: their own allowlist. Business figures travel as bands; the owner's
-  // personal-account data never leaves Noor (a withheld group of its own).
-  const MEMO_SHARED_SME = [
-    'Decision, status and reason codes (English + Arabic)',
-    'Loan terms and repayment method (direct debit on the business account)',
-    'NoorScore, its band and up to three factor directions',
-    'Business terms as bands — trade-licence age, annual revenue, debt service cover (DSCR), instalment share of operating cash flow',
-    'Personal-guarantee status as a flag — verified strong, verified weak or unverified',
-    'Bureau flags — AECB commercial score band, the owner’s AECB consumer score band, delinquency, returned cheques',
-    'Consent references (type, time, reference — never the content)',
-    'Company name (with Arabic) and masked trade-licence number; the guarantor’s name and masked Emirates ID'
-  ];
-  const SME_OWNER_WITHHELD = 'Owner\'s personal account data — used for Noor\'s guarantee assessment only';
-  const MEMO_WITHHELD_SME = [
-    { group: 'Exact business revenue, operating cash flow, balances and customer names (only bands are shared)', reason: OPEN_FINANCE_REASON },
-    { group: SME_OWNER_WITHHELD,
-      reason: 'Shared by the owner as an individual, under the owner’s own Al Tareq consent, for the guarantee assessment — it cannot be passed on (CBUAE Open Finance framework, PDPL purpose limitation)' }
-  ];
-  const MEMO_SFTP_HEADER_SME_EXTRA = ['revenue_band', 'dscr_band', 'guarantee_status'];
-  const MEMO_SFTP_HEADER_DC_EXTRA = ['data_completeness_pct', 'data_sources'];   // v2.17
+  const DEFAULT_AGREEMENTS = { 'partner-bank': { id: 'SA-PARTNER-BANK-V1', lenderId: 'partner-bank', label: 'Partner Bank v1', version: 'v1', dbrPrecision: 'BAND', groups: MEMO_GROUP_KEYS.slice() } };
+  // The v2.5 SFTP columns, in their order (an agreement without a group drops its column); v2.18 appends after created_at.
   const MEMO_SFTP_HEADER = ['memo_id', 'noor_ref', 'product', 'outcome', 'amount', 'tenor', 'apr_or_fee', 'monthly_payment',
                             'repayment_method', 'noorscore', 'noorscore_band', 'income_band', 'dbr_band', 'aecb_band',
                             'reason_codes', 'created_at'];
@@ -4050,6 +4076,32 @@
     if (!l) throw err('unknown lender "' + lenderId + '" — lenders: ' + list.map(x => x.id).join(', '));
     return l;
   }
+  // "Partner Bank (lender of record)"; a name that already ends in a bracket keeps one: "Lender B (illustrative, lender of record)"
+  function memoLenderName(lender) {
+    const role = String(lender.role || 'lender of record').toLowerCase();
+    return /\)$/.test(lender.name) ? lender.name.replace(/\)$/, ', ' + role + ')') : lender.name + ' (' + role + ')';
+  }
+  function agreementsAll() { return (D && D.sharingAgreements && typeof D.sharingAgreements === 'object') ? D.sharingAgreements : DEFAULT_AGREEMENTS; }
+  // v2.18 — the lender's sharing agreement, validated: known groups only, Core always, dbrPrecision BAND (default) or EXACT.
+  function agreementFor(lender) {
+    const a = agreementsAll()[lender.id];
+    if (!a) throw err('no sharing agreement on file for lender "' + lender.id + '" — the memo is built from the lender’s agreement');
+    const name = a.label || lender.id;
+    const groups = Array.isArray(a.groups) ? a.groups : [];
+    const unknown = groups.filter(g => !MEMO_GROUP_KEYS.includes(g));
+    if (unknown.length) throw err('sharing agreement ' + name + ' lists unknown groups: ' + unknown.join(', '));
+    if (!groups.includes('noorScore') || !groups.includes('reasonCodes')) throw err('sharing agreement ' + name + ' must include the Core outputs (noorScore, reasonCodes)');
+    const precision = a.dbrPrecision === undefined || a.dbrPrecision === null ? 'BAND' : a.dbrPrecision;
+    if (precision !== 'BAND' && precision !== 'EXACT') throw err('dbrPrecision must be BAND or EXACT (sharing agreement ' + name + ')');
+    return { id: a.id || null, lenderId: lender.id, label: name, version: a.version || 'v1', dbrPrecision: precision,
+             groups: MEMO_GROUP_KEYS.filter(k => groups.includes(k)) };
+  }
+  // Public: the agreement as the UI shows it (with each group's status and label).
+  function sharingAgreement(lenderId) {
+    ensureInit();
+    const ag = agreementFor(lenderFor(lenderId));
+    return clone(Object.assign({}, ag, { groupsDetail: MEMO_GROUPS.filter(g => ag.groups.includes(g.key)) }));
+  }
   const thousands = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   // Income: AED 5,000 steps up to 20,000, AED 10,000 steps above.
   function incomeBand(x) {
@@ -4059,9 +4111,20 @@
     const lo = Math.floor(x / step) * step;
     return 'AED ' + thousands(lo) + '–' + thousands(lo + step) + ' / month';
   }
+  // v2.18 — DBR in 5-point steps (was < 20 / 20–35 / 35–50 / > 50); 50% and over is one band.
   function dbrBand(p) {
     if (!Number.isFinite(p)) return null;
-    return p < 20 ? '< 20%' : (p < 35 ? '20–35%' : (p <= 50 ? '35–50%' : '> 50%'));
+    if (p >= 50) return '50% or more';
+    const lo = Math.floor(p / 5) * 5;
+    return lo + '–' + (lo + 5) + '%';
+  }
+  // v2.18 — the monthly headroom after the new instalment, under the DBR cap, in AED 500 steps.
+  function headroomBand(x) {
+    if (!Number.isFinite(x)) return null;
+    if (x <= 0) return 'None — at the cap';
+    if (x < 500) return 'Below AED 500 / month';
+    const lo = Math.floor(x / 500) * 500;
+    return 'AED ' + thousands(lo) + '–' + thousands(lo + 500) + ' / month';
   }
   function fcfBand(x) {
     if (!Number.isFinite(x)) return null;
@@ -4157,39 +4220,356 @@
           (f.regularIncomeCountedMonthly > 0 ? ' — salary and ' + incomeWord(f.regularIncomeCategory)[0].toLowerCase() : ' — salary');
     }
     else via = viaOf;
+    // v2.18 — source-agnostic: verified home-country documents are "additional evidence" (the data-source mix stays inside Noor)
     const st = rec.homeStatements;
-    if (st && st.usable) via += ' + home-country statements (6 months)';
+    if (st && st.usable) via += ' + additional evidence';
     return via;
   }
-  function memoStatementsFlag(st) {
+  // v2.18 — the evidence flag, source-agnostic (was "6 of 6 months verified · conduct clean").
+  function memoEvidenceFlag(st) {
     if (!st) return null;
-    if (st.integrity !== 'PASS' || st.nameMatch !== true) return 'Not verified — referred to fraud review';
-    if (!st.complete) return st.monthsPresent + ' of 6 months — incomplete, not used';
-    const clean = st.evidence && st.evidence.conductClean;
-    return '6 of 6 months verified · conduct ' + (clean ? 'clean' : 'issues noted') + (st.obligationsMonthlyAed ? ' · home-country loan counted in DBR' : '');
+    if (st.integrity !== 'PASS' || st.nameMatch !== true) return 'Additional evidence not verified — under review';
+    if (!st.complete) return 'Additional evidence incomplete — not used';
+    return 'Additional evidence verified';
   }
   function memoUpgradeFactors(rec) {
     const out = [];
     const pr = rec.priorLoan || {};
     out.push(pr.dpd === 0 ? 'Starter loan repaid on time' : 'Starter loan repaid late');
-    if (rec.homeStatements && rec.homeStatements.usable) out.push('Home-country statements verified');
+    if (rec.homeStatements && rec.homeStatements.usable) out.push('Additional evidence verified');
     return out;
   }
-  // Car loan (v2.7) flags: other income as a category and the share counted, never the
-  // amounts; the down-payment source as a flag, never the balances.
+  // Car loan (v2.7) flags. v2.18 — source-agnostic and without the share counted (methodology): other income as
+  // "Additional income verified"; the down-payment source as a flag, never the balances.
   function memoCarFlags(rec) {
     const f = rec.features || {};
-    const word = incomeWord(f.regularIncomeCategory)[0];
     let otherIncome;
-    if (!f.openFinance) otherIncome = 'Declared other income not counted — not verifiable in an instant decision';
-    else if (f.regularIncomeCountedMonthly > 0) otherIncome = word + ' verified via Open Finance (' + f.connectedMonths + ' months) — counted at ' + f.regularIncomeCountedPct + '%';
-    else if (f.regularIncomeVerifiedMonthly > 0) otherIncome = word + ' verified via Open Finance — counted at ' + f.regularIncomeCountedPct + '%';
-    else if (f.regularIncomeCategory) otherIncome = word + ' seen in connected accounts — not counted (did not meet the verification rule)';
-    else otherIncome = 'None seen in connected accounts';
+    if (!f.openFinance) otherIncome = 'Additional income declared — not verified';
+    else if (f.regularIncomeCountedMonthly > 0 || f.regularIncomeVerifiedMonthly > 0) otherIncome = 'Additional income verified';
+    else if (f.regularIncomeCategory) otherIncome = 'Additional income seen — not verified';
+    else otherIncome = 'None seen';
     const downPaymentSource = rec.outcome === 'DECLINE' || !Number.isFinite(f.downPayment) ? null
       : (f.downPaymentCoveredByOwnFunds === true ? 'Own funds — verified in connected accounts'
         : (f.openFinance ? 'Own funds — to be evidenced before release' : 'Own funds — declared, not verified'));
     return { otherIncome, downPaymentSource };
+  }
+
+  // ---------------------------------------------------------------------------
+  // v2.18 — the buckets behind the output table (§1a). Internal derivations; the memo carries bands only.
+  //  Regular income (the income bucket): the verified salary on the salary-based products (personal loan,
+  //    salary advance, car loan — the salary alone, so a counted share of other income never shows); on the
+  //    cash-flow products (split, upgrade) the regular part of connected income — each month capped at the
+  //    typical month (the median), averaged.
+  //  Additional income: verified regular non-salary income (a1's rent through Open Finance) plus variable
+  //    income above the base salary (overtime, bonus, commission) averaged over the connected history, net of
+  //    that regular non-salary income (it already lands in the same months). Below AED 1,000 a month it reads
+  //    "None detected (< AED 1,000)"; without connected history it is "Not assessed".
+  //  DBR: the engine's own figure, banded in 5-point steps. Headroom: the DBR cap × income − obligations − the
+  //    new instalment (the approved terms' payment), banded in AED 500 steps. Ravi: 0.5 × 12,000 − 900 −
+  //    1,311.70 = 3,788.30 → "AED 3,500–4,000 / month"; DBR 18.4% → "15–20%".
+  // ---------------------------------------------------------------------------
+  const ADDITIONAL_INCOME_MIN = 1000;
+  const SALARY_PRODUCTS = ['personal_loan', 'salary_advance', 'car_loan'];
+  function ofGranted(rec) { return !!(rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted); }
+  function incomeParts(rec) {
+    const f = rec.features || {}, a = rec.applicantSnapshot || {}, cn = a.connected || {};
+    const series = ofGranted(rec) ? (cn.monthlyIncome || []).filter(v => Number.isFinite(v)) : [];
+    const salaryBased = SALARY_PRODUCTS.includes(rec.productId);
+    const salary = a.employment && Number.isFinite(a.employment.salaryMonthly) ? a.employment.salaryMonthly : null;
+    const base = salaryBased && salary !== null ? salary : (series.length ? median(series) : null);
+    let regular;
+    if (rec.productId === 'car_loan') regular = Number.isFinite(f.salaryMonthly) ? f.salaryMonthly : f.verifiedIncome;
+    else if (salaryBased) regular = f.verifiedIncome;
+    else regular = series.length && base !== null ? series.reduce((s, m) => s + Math.min(m, base), 0) / series.length : f.verifiedIncome;
+    const secondary = rec.productId === 'car_loan' && f.openFinance && f.regularIncomeVerifiedMonthly > 0 ? f.regularIncomeVerifiedMonthly : 0;
+    const secondaryKind = secondary > 0 ? (f.regularIncomeCategory === 'RENTAL' ? 'rent' : 'other regular income') : null;
+    const above = series.length && base !== null ? series.reduce((s, m) => s + Math.max(0, m - base), 0) / series.length : 0;
+    const variable = Math.max(0, above - secondary);
+    return { regular: Number.isFinite(regular) ? regular : null, base, secondary, secondaryKind, variable: round2(variable),
+             additional: round2(secondary + variable), assessed: series.length > 0 || secondary > 0, months: series.length };
+  }
+  function additionalIncomeBand(ip) {
+    if (!ip.assessed) return 'Not assessed';
+    if (ip.additional < ADDITIONAL_INCOME_MIN) return 'None detected (< AED 1,000)';
+    const kind = ip.secondary > 0 ? (ip.variable >= ADDITIONAL_INCOME_MIN ? ip.secondaryKind + ' + variable pay' : ip.secondaryKind) : 'variable pay';
+    return incomeBand(ip.additional) + ' (' + kind + ')';
+  }
+  function dbrParts(rec) {
+    const f = rec.features || {};
+    const dbrPct = rec.kind === 'UPGRADE' && rec.selection && Number.isFinite(rec.selection.dbrPct) ? rec.selection.dbrPct : f.dbrPct;
+    if (!Number.isFinite(dbrPct) || dbrPct >= 999) return null;
+    const income = rec.productId === 'car_loan' ? f.incomeCounted : f.verifiedIncome;
+    let instalment = 0;
+    if (rec.productId !== 'salary_advance') {   // the advance is repaid once from the next salary: its DBR carries no instalment
+      const t = memoTerms(rec);
+      if (t && Number.isFinite(t.monthlyPayment)) instalment = t.monthlyPayment;
+      else if (Number.isFinite(f.newInstallment)) instalment = f.newInstallment;
+      else if (Number.isFinite(f.newInstalment)) instalment = f.newInstalment;
+    }
+    const ok = Number.isFinite(income) && income > 0 && Number.isFinite(f.dbrCapApplied) && Number.isFinite(f.existingObligations);
+    return { dbrPct, headroom: ok ? round2(f.dbrCapApplied / 100 * income - f.existingObligations - instalment) : null,
+             capPct: Number.isFinite(f.dbrCapApplied) ? f.dbrCapApplied : null, instalment };
+  }
+
+  // ---------------------------------------------------------------------------
+  // v2.18 §1c — findings: statements about the customer, derived from data the engine already has.
+  // The rules (illustrative) stay inside Noor — the memo carries the words only:
+  //   FND_ADDITIONAL_INCOME  regular non-salary income verified (a1's rent through Open Finance; home-country
+  //                          income in verified statements)
+  //   FND_SAVER              a savings account holds ≥ 1 month of spending, or regular transfers to savings are seen
+  //                          (Ravi: FAB savings 9,860 ≥ 7,400)
+  //   FND_NEW_TO_UAE         under 12 months in the UAE (the slide says "New to Dubai"; Noor works UAE-wide)
+  //   FND_DINING_OUT         dining ≥ 20% of spending (connected.spendCategories — Dining is the ONLY category read)
+  //   FND_DATA_HISTORY       always, with N = the months of connected history
+  //   FND_STABLE_INCOME      income volatility ≤ 10%
+  //   FND_ON_TIME_PAYER      card and loan repayments seen leaving the accounts every month, no delinquency or
+  //                          returned cheque on file
+  // Guardrail: never from sensitive categories (health, religion, family status, politics) and never from
+  // nationality — the function reads the fields above only; gambling is never a finding. Connected-account
+  // findings need the Open Finance consent on the decision. Findings are not adverse-action reasons: RC_* codes
+  // still explain a refer, decline or reduction (CBUAE disclosure).
+  // ---------------------------------------------------------------------------
+  const FINDING_ORDER = ['FND_ADDITIONAL_INCOME', 'FND_SAVER', 'FND_NEW_TO_UAE', 'FND_DINING_OUT', 'FND_DATA_HISTORY', 'FND_STABLE_INCOME', 'FND_ON_TIME_PAYER'];
+  const FINDING_RULES = {
+    FND_ADDITIONAL_INCOME: 'Regular non-salary income verified (rent through Open Finance; home-country income in verified statements)',
+    FND_SAVER: 'A savings account holds at least 1 month of spending, or regular transfers to savings are seen',
+    FND_NEW_TO_UAE: 'Under 12 months in the UAE',
+    FND_DINING_OUT: 'Dining is at least 20% of spending (the only spending category read)',
+    FND_DATA_HISTORY: 'Always — the months of connected history',
+    FND_STABLE_INCOME: 'Income volatility at or below 10%',
+    FND_ON_TIME_PAYER: 'Card and loan repayments seen leaving the accounts every month; no delinquency or returned cheque on file'
+  };
+  const FINDING_DINING_MIN_PCT = 20, FINDING_STABLE_MAX_PCT = 10, FINDING_NEW_MAX_MONTHS = 12;
+  function findingWords(code, n) {
+    const v = (D && D.findings && D.findings[code]) || { en: code, ar: '' };
+    const sub = (s) => String(s || '').replace('{N}', String(n));
+    return { code, en: sub(v.en), ar: sub(v.ar) };
+  }
+  // Public: customerFindings(decision id | record | applicant) → [{code, en, ar, rule}] in the vocabulary's order.
+  // An applicant (not a decision) is read as if every connected-account block were consented — a pure what-if.
+  function customerFindings(x) {
+    ensureInit();
+    const rec = typeof x === 'string' ? getDecisionRef(x) : x;
+    if (!rec || typeof rec !== 'object') throw err('customerFindings needs a decision id, a decision record or an applicant');
+    const isRecord = !!rec.applicantSnapshot;
+    const a = isRecord ? rec.applicantSnapshot : rec;
+    if ((isRecord && rec.productId === SME_PID) || a.segment === 'SME') return [];   // a business borrower: no consumer findings
+    const f = isRecord ? (rec.features || {}) : {};
+    const of = isRecord ? ofGranted(rec) : true;
+    const cn = (of && a.connected) || {}, bd = a.bankData || {}, ae = a.aecb || {};
+    const st = isRecord ? rec.homeStatements : null;
+    const hit = {};
+    // additional income (regular, non-salary, verified)
+    const rentVerified = isRecord ? (rec.productId === 'car_loan' && f.openFinance && f.regularIncomeVerifiedMonthly > 0)
+      : (of && (cn.regularIncome || []).some(r => r && r.onSchedule === true && Number(r.monthlyEquivalent) > 0));
+    if (rentVerified || (st && st.usable && Number(st.homeIncomeMonthlyAed) > 0)) hit.FND_ADDITIONAL_INCOME = 1;
+    // saver
+    const spend = Number(cn.avgMonthlySpend);
+    const savings = (cn.accounts || []).filter(acc => /savings/i.test(String(acc.type || '')));
+    if ((spend > 0 && savings.some(acc => Number(acc.balance) >= spend)) || Number(cn.savingsTransfersMonthly) > 0) hit.FND_SAVER = 1;
+    // new to the UAE (residency length — never nationality)
+    if (Number.isFinite(a.monthsInUae) && a.monthsInUae < FINDING_NEW_MAX_MONTHS) hit.FND_NEW_TO_UAE = 1;
+    // dining out — the only spending category read
+    const cats = cn.spendCategories || {};
+    if (Number(cats.Dining) >= FINDING_DINING_MIN_PCT) hit.FND_DINING_OUT = 1;
+    // months of connected history
+    const months = of ? (cn.monthsAvailable || (bd.source === 'ALTAREQ_TPP' ? bd.monthsAvailable : 0) || f.connectedMonths || 0) : 0;
+    if (months > 0) hit.FND_DATA_HISTORY = 1;
+    // stable income
+    const vol = Number.isFinite(cn.incomeVolatilityPct) ? cn.incomeVolatilityPct : (of && Number.isFinite(f.incomeVolatilityPct) ? f.incomeVolatilityPct : null);
+    if (vol !== null && vol <= FINDING_STABLE_MAX_PCT) hit.FND_STABLE_INCOME = 1;
+    // pays cards and loans on time
+    if (Number(cn.observedObligationsMonthly) > 0 && (ae.worstDelinquency || 'NONE') === 'NONE' && !(ae.chequeReturns12m > 0)) hit.FND_ON_TIME_PAYER = 1;
+    return FINDING_ORDER.filter(c => hit[c]).map(c => Object.assign(findingWords(c, months), { rule: FINDING_RULES[c] }));
+  }
+
+  // ---------------------------------------------------------------------------
+  // v2.18 §1 — the six components of the NoorScore methodology (slide "Six components", 9 Oct). An ILLUSTRATIVE
+  // derivation from signals the engine already has: the NoorScore number stays the current scorecard until the
+  // scoring of the four score components is defined. Levels explain; they do not score. The drivers (what decided
+  // each level, with the internal rules) stay inside Noor — the memo carries the level word and up to two plain
+  // factor words per score component, never these rules, weights or points.
+  //  Fraud & Integrity (score) — red: a mismatch or an integrity FAIL (ID name ≠ account holder, employer ≠ salary
+  //    payer, an expired card, documents failing integrity or the name check) — as built, these REFER; amber: identity
+  //    only partly confirmed (footprint MEDIUM/LOW) or account-takeover risk ELEVATED (step-up sign-in); else green.
+  //    Device intelligence and mule / income-manipulation patterns: not connected yet.
+  //  Newcomer Score (score) — applies under 12 months in the UAE, else "Established — not applicable" (neutral).
+  //    green: home-country history used (Credit Passport consented, or statements verified) and a regular salary since
+  //    arrival; red: neither home-country data nor a salary seen; amber otherwise (settling in).
+  //  Stacking & Skip Risk (score) — red: 2+ departure markers (the v2.9 origination flags) or 3+ new credit lines in
+  //    90 days; amber: 1 marker, 2 new lines, or no anchor; green otherwise. Anchors: 24+ months in the UAE, employer
+  //    tenure 12+ months, a salary account active 12+ months. New lines read aecb.newCreditLines90d where the data
+  //    has it, else "none seen".
+  //  Credit Behaviour (score) — red: DPD90 / write-off, returned cheques, or negative free cash flow; amber: DPD30,
+  //    income volatility 40%+, free cash flow under AED 1,500, or no bureau file; else green.
+  //  Affordability & Capacity (aggregates, not scored) — bands only: income, obligations, essential expenses, DBR,
+  //    the maximum affordable instalment.
+  //  Monitoring & Collections (post-disbursement, not part of the score) — early-warning triggers (v2.9): Elevated
+  //    when origination red flags fired; best debit date = the day after the usual salary credit; the next monthly
+  //    score refresh one month after the decision.
+  // ---------------------------------------------------------------------------
+  const COMPONENT_LEVELS = {
+    fraudIntegrity: { green: 'Clear', amber: 'Check', red: 'Review' },
+    newcomer: { green: 'Strong', amber: 'Building', red: 'Thin', neutral: 'Established — not applicable' },
+    stackingSkip: { green: 'Low', amber: 'Medium', red: 'High' },
+    creditBehaviour: { green: 'Strong', amber: 'Fair', red: 'Weak' }
+  };
+  const SCORE_COMPONENT_KEYS = ['fraudIntegrity', 'newcomer', 'stackingSkip', 'creditBehaviour'];
+  function ordinalDay(d) { const s = ['th', 'st', 'nd', 'rd'], v = d % 100; return d + (s[(v - 20) % 10] || s[v] || s[0]); }
+  function addMonthIso(isoDate) {
+    const [y, m, d] = String(isoDate).slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(y, m, d)).toISOString().slice(0, 10);
+  }
+  function longDate(isoDate) { const [y, m, d] = String(isoDate).split('-').map(Number); return d + ' ' + MON[m - 1] + ' ' + y; }
+  function monitoringOf(rec) {
+    const a = rec.applicantSnapshot || {}, bd = a.bankData || {}, cn = a.connected || {};
+    const salaryDay = Number.isFinite(bd.salaryCreditDay) ? bd.salaryCreditDay : (Number.isFinite(cn.salaryCreditDay) ? cn.salaryCreditDay : null);
+    const bestDay = salaryDay === null ? null : (salaryDay < 28 ? salaryDay + 1 : 1);
+    const flags = rec.redFlags && Array.isArray(rec.redFlags.flags) ? rec.redFlags.flags : [];
+    if (rec.outcome === 'DECLINE') {
+      return { status: 'Not applicable', bestDebitDay: null, bestDebitDate: null, nextRefresh: null, salaryDay, flags: flags.map(x => x.code),
+               line: 'Not applicable — declined, no loan to monitor' };
+    }
+    const status = flags.length ? 'Elevated' : 'Active';
+    const nextRefresh = addMonthIso(rec.createdAt);
+    const bestDebitDate = bestDay === null ? null : ordinalDay(bestDay) + ' of the month';
+    return { status, bestDebitDay: bestDay, bestDebitDate, nextRefresh, salaryDay, flags: flags.map(x => x.code),
+             line: status + ' · best debit date ' + (bestDebitDate || 'to be agreed') + ' · next refresh ' + longDate(nextRefresh) };
+  }
+  function componentsOf(rec) {
+    const a = rec.applicantSnapshot || {}, f = rec.features || {}, bd = a.bankData || {}, ae = aecbOf(rec);
+    const of = ofGranted(rec), cn = (of && a.connected) || {};
+    const st = rec.homeStatements || null;
+    const inUae = Number.isFinite(a.monthsInUae) ? a.monthsInUae : null;
+    const pick = (list) => list.filter(Boolean).filter((x, i, arr) => arr.indexOf(x) === i).slice(0, 2);
+    const mk = (key, name, group, question, tone, factors, drivers) => ({ key, name, group, question, tone,
+      level: COMPONENT_LEVELS[key] ? COMPONENT_LEVELS[key][tone] : null, factors: pick(factors), drivers });
+    // 1 · Fraud & Integrity
+    const fiRed = [], fiAmber = [], fiDrv = ['Identity: verified at onboarding (UAE PASS)'];
+    if (rec.emiratesId) {
+      fiDrv.push('Emirates ID front + back · card ' + (f.idExpiryValid === false ? 'EXPIRED' : 'valid'));
+      fiDrv.push('ID name ↔ account holder: ' + (f.idNameMatch === true ? 'match' : (f.idNameMatch === false ? 'MISMATCH' : 'not checked (no Open Finance)')));
+      fiDrv.push('Employer ↔ salary payer: ' + (f.employerMatch === true ? 'match' : (f.employerMatch === false ? 'MISMATCH' : 'not checked')) +
+                 (Number.isFinite(f.employerMatchScore) ? ' (' + f.employerMatchScore + '%, match at ≥ 70%)' : ''));
+      if (f.idExpiryValid === false) fiRed.push('ID document expired');
+      if (f.idNameMatch === false || f.employerMatch === false) fiRed.push('Details differ — under review');
+    }
+    if (f.footprintIdentity) {
+      fiDrv.push('Digital footprint: identity ' + f.footprintIdentity + ' · account-takeover risk ' + f.footprintAtoRisk);
+      if (f.footprintIdentity !== 'HIGH') fiAmber.push('Identity partly confirmed');
+      if (f.footprintAtoRisk === 'ELEVATED') fiAmber.push('Extra sign-in check before payout');
+    }
+    if (st) {
+      fiDrv.push('Home-country statements: integrity ' + st.integrity + (st.integrity === 'PASS' ? ' · name ' + (st.nameMatch ? 'match' : 'MISMATCH') : ''));
+      if (st.integrity !== 'PASS' || st.nameMatch !== true) fiRed.push('Documents under review');
+    }
+    fiDrv.push('Not connected yet: device intelligence; mule and income-manipulation patterns');
+    const fiTone = fiRed.length ? 'red' : (fiAmber.length ? 'amber' : 'green');
+    const fi = mk('fraudIntegrity', 'Fraud & Integrity', 'score', 'Is the applicant real and honest?', fiTone,
+      fiTone === 'red' ? fiRed : (fiTone === 'amber' ? fiAmber : ['Identity verified', f.employerMatch === true ? 'Employment confirmed'
+        : (f.footprintIdentity === 'HIGH' ? 'Consistent identity signals' : (st && st.usable ? 'Documents consistent' : null))]), fiDrv);
+    // 2 · Newcomer Score
+    let nc;
+    if (inUae === null || inUae >= 12) {
+      nc = mk('newcomer', 'Newcomer Score', 'score', 'Under 12 months of UAE financial footprint?', 'neutral', [],
+              ['Months in the UAE: ' + (inUae === null ? 'unknown' : inUae) + ' — 12 or more, not applicable']);
+    } else {
+      const cpUsed = !!f.crossBorder, cpAvail = !!(a.homeBureau && a.aecb && a.aecb.creditPassportAvailable);
+      const stUsable = !!(st && st.usable), stAvail = !!a.homeStatements;
+      const uaeMonths = cn.monthsAvailable || (of && bd.source === 'ALTAREQ_TPP' ? bd.monthsAvailable : 0) || f.connectedMonths || 0;
+      const vol = Number.isFinite(cn.incomeVolatilityPct) ? cn.incomeVolatilityPct : (Number.isFinite(f.incomeVolatilityPct) ? f.incomeVolatilityPct : null);
+      const salaryRegular = bd.salaryDetected === true || (uaeMonths > 0 && vol !== null && vol <= 10);
+      const homeUsed = cpUsed || stUsable, homeAvail = homeUsed || cpAvail || stAvail;
+      const tone = homeUsed && salaryRegular ? 'green' : (!homeAvail && !salaryRegular ? 'red' : 'amber');
+      nc = mk('newcomer', 'Newcomer Score', 'score', 'Under 12 months of UAE financial footprint?', tone,
+        tone === 'green' ? ['Home-country history verified', 'Regular salary since arrival']
+          : (tone === 'red' ? ['Settling in', 'Little history yet']
+            : [homeAvail ? 'Home-country history available' : 'Settling in', salaryRegular ? 'Regular salary since arrival' : 'Little history yet']),
+        ['Months in the UAE: ' + inUae + ' — under 12, applies',
+         'Home-country history: Credit Passport ' + (cpUsed ? 'used (consented)' : (cpAvail ? 'available, not consented' : 'none')) +
+           ' · statements ' + (stUsable ? 'verified (6 months)' : (stAvail ? 'available, not shared' : 'none')),
+         'Settling in: salary ' + (salaryRegular ? 'regular since arrival' : 'not seen') + ' · ' + uaeMonths + ' months of UAE accounts']);
+    }
+    // 3 · Stacking & Skip Risk
+    const flags = rec.redFlags && Array.isArray(rec.redFlags.flags) ? rec.redFlags.flags : [];
+    const codes = flags.map(x => x.code);
+    const newLines = a.aecb && Number.isFinite(a.aecb.newCreditLines90d) ? a.aecb.newCreditLines90d : null;
+    const tenure = a.employment && Number.isFinite(a.employment.tenureMonths) ? a.employment.tenureMonths : null;
+    const salaryAcct = of ? (cn.monthsAvailable || (bd.source === 'ALTAREQ_TPP' ? bd.monthsAvailable : 0) || f.connectedMonths || 0) : 0;
+    const salarySeen = bd.salaryDetected === true || Number.isFinite(cn.salaryCreditDay) || (Number.isFinite(f.verifiedIncome) && salaryAcct > 0);
+    const anchors = [inUae !== null && inUae >= 24 ? 'months in the UAE' : null, tenure !== null && tenure >= 12 ? 'employer tenure' : null,
+                     salaryAcct >= 12 && salarySeen ? 'salary account active 12+ months' : null].filter(Boolean);
+    const skTone = (codes.length >= 2 || (newLines !== null && newLines >= 3)) ? 'red'
+      : ((codes.length === 1 || (newLines !== null && newLines >= 2) || !anchors.length) ? 'amber' : 'green');
+    const sk = mk('stackingSkip', 'Stacking & Skip Risk', 'score', 'Will they take as much credit as possible and leave the UAE?', skTone,
+      skTone === 'green' ? [inUae >= 24 ? 'Settled in the UAE' : null, tenure !== null && tenure >= 24 ? 'Long employment tenure' : null, 'No new credit lines seen']
+        : [codes.length ? 'Recent changes in account activity' : null, codes.includes('RF_CARDS_MAXED') ? 'Card use rising' : null,
+           newLines !== null && newLines >= 2 ? 'New credit lines opened recently' : null, !anchors.length ? 'Few anchors yet' : null],
+      ['Departure markers (v2.9 origination flags): ' + (codes.length ? codes.join(' · ') : 'none'),
+       'Stacking speed: ' + (newLines === null ? 'none seen (no new-line data on file)' : newLines + ' new credit lines in 90 days'),
+       'Anchors: ' + (anchors.length ? anchors.join(' · ') : 'none') + ' (' + (inUae === null ? '—' : inUae) + ' months in the UAE · tenure ' +
+         (tenure === null ? '—' : tenure + ' months') + ' · ' + salaryAcct + ' months of salary account)']);
+    // 4 · Credit Behaviour
+    const dq = ae.worstDelinquency || 'NONE', chq = ae.chequeReturns12m || 0;
+    const priorLate = !!(rec.priorLoan && rec.priorLoan.dpd > 0);   // the starter loan, repaid late (upgrade records)
+    const fcf = Number.isFinite(f.freeCashFlowMonthly) ? f.freeCashFlowMonthly : null;
+    const vol = Number.isFinite(f.incomeVolatilityPct) ? f.incomeVolatilityPct : (Number.isFinite(cn.incomeVolatilityPct) ? cn.incomeVolatilityPct : null);
+    const onTime = Number(cn.observedObligationsMonthly) > 0 && dq === 'NONE' && !chq;
+    const cbTone = (dq === 'DPD90' || dq === 'WRITEOFF' || chq > 0 || (fcf !== null && fcf < 0)) ? 'red'
+      : ((dq === 'DPD30' || priorLate || (vol !== null && vol >= 40) || (fcf !== null && fcf < 1500) || !ae.hit) ? 'amber' : 'green');
+    const cb = mk('creditBehaviour', 'Credit Behaviour', 'score', 'Will they pay?', cbTone,
+      cbTone === 'red' ? [dq !== 'NONE' ? 'Missed payments in history' : null, chq > 0 ? 'Returned cheques' : null, fcf !== null && fcf < 0 ? 'Spending exceeds income' : null]
+        : (cbTone === 'amber' ? [dq === 'DPD30' || priorLate ? 'Late payment in history' : null, vol !== null && vol >= 40 ? 'Income varies a lot' : null,
+                                fcf !== null && fcf < 1500 ? 'Thin margin after bills' : null, !ae.hit ? 'No credit file yet' : null]
+          : [fcf !== null && fcf >= 3000 ? 'Strong cash flow' : null, onTime ? 'Pays cards and loans on time' : (ae.hit ? 'Clean credit file' : null),
+             vol !== null && vol <= 20 ? 'Stable income' : null]),
+      ['Free cash flow: ' + (fcf === null ? 'not assessed (no spending seen)' : 'AED ' + thousands(Math.round(fcf)) + ' a month') +
+         (vol === null ? '' : ' · income volatility ' + vol + '%'),
+       'Repayments seen in the accounts: ' + (Number(cn.observedObligationsMonthly) > 0 ? 'AED ' + thousands(cn.observedObligationsMonthly) + ' a month' + (onTime ? ', on time' : '') : 'none seen'),
+       'AECB: ' + (ae.hit ? 'score ' + (ae.score === null ? '—' : ae.score) : 'no file') + ' · worst delinquency ' + dq + ' · returned cheques ' + chq +
+         (rec.priorLoan ? ' · starter loan repaid ' + (priorLate ? rec.priorLoan.dpd + ' days late' : 'on time') : '')]);
+    // 5 · Affordability & Capacity — aggregates, not scored
+    const ip = incomeParts(rec), dp = dbrParts(rec);
+    const spend = Number.isFinite(f.avgMonthlySpend) ? f.avgMonthlySpend : (Number(cn.avgMonthlySpend) > 0 ? cn.avgMonthlySpend : null);
+    const cats = cn.spendCategories || null;
+    const essentials = spend === null ? null : (cats ? spend * ((Number(cats.Groceries) || 0) + (Number(cats.Bills) || 0) + (Number(cats.Transport) || 0)) / 100 : spend);
+    const essentialsBand = essentials === null ? null : (essentials < 1000 ? 'Below AED 1,000 / month'
+      : 'AED ' + thousands(Math.floor(essentials / 1000) * 1000) + '–' + thousands(Math.floor(essentials / 1000) * 1000 + 1000) + ' / month');
+    const polSnap = (S.policySnapshots[rec.productId] || {})[rec.policyVersion];
+    const fcfPct = polSnap && polSnap.params && Number.isFinite(polSnap.params.instalmentToFcfMaxPct) ? polSnap.params.instalmentToFcfMaxPct : null;
+    const budgets = [Number.isFinite(f.headroomMonthly) ? f.headroomMonthly : null, Number.isFinite(f.instalmentBudgetDbr) ? f.instalmentBudgetDbr : null,
+                     Number.isFinite(f.instalmentBudgetFcf) ? f.instalmentBudgetFcf : (fcf !== null && fcfPct !== null ? Math.max(0, fcf * fcfPct / 100) : null)].filter(x => x !== null);
+    const maxInstalment = budgets.length ? Math.min.apply(null, budgets) : null;
+    const af = { key: 'affordability', name: 'Affordability & Capacity', group: 'aggregate', question: 'How much can they carry?', tone: 'neutral',
+      level: AGGREGATES_NOTE, factors: [],
+      bands: { incomeBand: incomeBand(ip.regular), additionalIncomeBand: additionalIncomeBand(ip),
+               obligationsBand: Number.isFinite(f.existingObligations) ? (f.existingObligations === 0 ? 'None' : incomeBand(f.existingObligations).replace(/^Below AED 5,000/, 'Below AED 5,000')) : null,
+               essentialExpensesBand: essentialsBand, dbrBand: dp ? dbrBand(dp.dbrPct) : null, headroomBand: dp ? headroomBand(dp.headroom) : null,
+               maxAffordableInstalmentBand: maxInstalment === null ? null : headroomBand(maxInstalment) },
+      drivers: ['Regular income AED ' + (ip.regular === null ? '—' : thousands(Math.round(ip.regular))) + ' a month · additional AED ' + thousands(Math.round(ip.additional)) +
+                  (ip.secondary ? ' (' + ip.secondaryKind + ' ' + thousands(Math.round(ip.secondary)) + ', variable ' + thousands(Math.round(ip.variable)) + ')' : ' (variable above the base salary)'),
+                'Obligations AED ' + (Number.isFinite(f.existingObligations) ? thousands(f.existingObligations) : '—') + ' a month · essential expenses ' +
+                  (essentials === null ? '—' : 'AED ' + thousands(Math.round(essentials))) + (cats ? ' (groceries, bills, transport)' : ''),
+                dp ? 'DBR ' + dp.dbrPct + '% (cap ' + (dp.capPct === null ? '—' : dp.capPct + '%') + ') · headroom after the instalment AED ' +
+                     (dp.headroom === null ? '—' : thousands(Math.round(dp.headroom))) + ' a month' : 'DBR: not assessed for this product',
+                'Maximum affordable instalment: ' + (maxInstalment === null ? '—' : 'AED ' + thousands(Math.round(maxInstalment)) + ' a month (the tighter of the DBR headroom and the cash-flow budget)')] };
+    // 6 · Monitoring & Collections — post-disbursement
+    const mon = monitoringOf(rec);
+    const mo = { key: 'monitoring', name: 'Monitoring & Collections', group: 'post', question: 'What changed after disbursement?',
+      tone: mon.status === 'Elevated' ? 'amber' : 'neutral', level: mon.status, factors: [],
+      bestDebitDate: mon.bestDebitDate, nextRefresh: mon.nextRefresh, line: mon.line,
+      drivers: ['Early-warning triggers (v2.9): ' + (mon.flags.length ? mon.flags.join(' · ') + ' at origination' : 'none at origination') +
+                  ' · watched monthly against the customer’s own baseline',
+                'Best debit date: ' + (mon.salaryDay === null ? 'no salary day seen — to be agreed' : 'the day after the usual salary credit (' + ordinalDay(mon.salaryDay) + ') → ' + mon.bestDebitDate),
+                'Next monthly score refresh: ' + (mon.nextRefresh || '—')] };
+    return [fi, nc, sk, cb, af, mo];
+  }
+  // Public: the six components with what drove each one — INTERNAL (the Decision log). The memo carries levels and words.
+  function noorScoreComponents(decisionId) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    if (rec.productId === SME_PID) return { derivation: COMPONENTS_BASIS, note: 'Not derived for a business borrower — the SME memo carries the business bands', components: [] };
+    return { derivation: COMPONENTS_BASIS, note: COMPONENTS_NOTE, components: clone(componentsOf(rec)) };
   }
   // v2.10 — SME bands. Annual revenue (turnover) bands are the usual SME segmentation; none of their
   // boundaries is a monthly figure, so a band can never reveal the company's average month.
@@ -4206,162 +4586,213 @@
     if (!Number.isFinite(months)) return null;
     return months < 12 ? 'Under 1 year' : (months < 36 ? '1–3 years' : (months < 60 ? '3–5 years' : '5 years or more'));
   }
+  // v2.18 — the guarantee as a flag, without the factor (the share of the business capacity is methodology).
   const SME_GUARANTEE_FLAG = {
-    VERIFIED_STRONG: 'Verified (strong) — through the owner’s connected accounts; 100% of the business capacity',
-    VERIFIED_WEAK: 'Verified (weak) — through the owner’s connected accounts; 80% of the business capacity',
-    UNVERIFIED: 'Unverified — the owner’s accounts were not connected; a reduced share of the business capacity'
+    VERIFIED_STRONG: 'Verified (strong) — through the owner’s connected accounts',
+    VERIFIED_WEAK: 'Verified (weak) — through the owner’s connected accounts',
+    UNVERIFIED: 'Unverified — the owner’s accounts were not connected'
   };
   function maskedTradeLicence(applicantId) {
     const s = String(applicantId || 'company');
     let sum = 0; for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i) * (i + 1);
     return 'DED ••••••' + (sum % 10);
   }
-  function smeMemo(rec, lender) {
+  // ownerOpenFinance (v2.10) is the owner's own consent: its REFERENCE is shared (the guarantee flag rests on it), never its content.
+  const CONSENT_CODES = [['aecb', 'AECB'], ['openFinance', 'ALTAREQ'], ['ownerOpenFinance', 'ALTAREQ-OWNER'], ['creditPassport', 'CPASS'], ['homeStatements', 'STMT'], ['shareWithLender', 'LENDER']];
+  // v2.18 — consents for alternative data travel under one neutral type (the data-source mix stays inside Noor):
+  // the Credit Passport and home-country statements consents become "additionalEvidence" with their own reference.
+  const CONSENT_LENDER_VIEW = { creditPassport: ['additionalEvidence', 'EVIDENCE'], homeStatements: ['additionalEvidence', 'DOCUMENTS'] };
+  function memoConsents(rec) {
+    const seq = rec.id.replace(/^MZN-/, '');
+    return CONSENT_CODES
+      .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
+      .map(([k, code]) => {
+        const lv = CONSENT_LENDER_VIEW[k];
+        return { type: lv ? lv[0] : k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + (lv ? lv[1] : code) };
+      });
+  }
+  // v2.18 — the code with its lender-facing wording where the customer text names a source or a threshold (§1b)
+  function memoReasonCodes(rec) {
+    return (rec.reasonCodes || []).map(code => {
+      const rc = (D.reasonCodesLender && D.reasonCodesLender[code]) || D.reasonCodes[code] || {};
+      return { code, en: rc.en || code, ar: rc.ar || '' };
+    });
+  }
+  function memoAgreement(ag) { return { id: ag.id, label: ag.label, version: ag.version, dbrPrecision: ag.dbrPrecision, groups: ag.groups.slice() }; }
+  // The output table rows the agreement carries, in the slide's order, each with its value for this decision.
+  function memoOutputs(rows, ag, values) {
+    return rows.filter(r => ag.groups.includes(r.key))
+      .map(r => ({ key: r.key, output: r.output, tells: r.tells, status: r.status, value: values[r.key] === null || values[r.key] === undefined ? '—' : values[r.key] }));
+  }
+  function noorScoreValueText(value, band, upgrade) { return value === null ? (upgrade ? 'Not scored yet — decided on the repayment record' : 'Not scored yet') : value + ' · ' + band; }
+  function reasonValueText(findings, rcs) {
+    const words = findings.map(x => x.en).concat(rcs.map(x => x.code));
+    return words.length ? words.join(' · ') : 'None';
+  }
+  function smeMemo(rec, lender, ag) {
     const a = rec.applicantSnapshot || {}, f = rec.features || {}, sc = rec.score || {};
     const man = MANIFESTS.find(m => m.productId === rec.productId) || {};
     const value = Number.isFinite(sc.points) ? sc.points : null;
-    const seq = rec.id.replace(/^MZN-/, '');
-    const owner = a.owner || {}, biz = a.business || {}, ca = biz.aecb || {}, oa = owner.aecb || {};
+    const G = (k) => ag.groups.includes(k);
+    const owner = a.owner || {}, ca = (a.business || {}).aecb || {}, oa = owner.aecb || {};
     let terms = memoTerms(rec);
     if (terms) {
       terms.repaymentAccount = 'Business account';
-      terms.business = { companyName: (rec.borrower && rec.borrower.name) || a.name || null,
-                         tradeLicenceAgeBand: smeLicenceAgeBand(f.tradingMonths), revenueBand: smeRevenueBand(f.avgMonthlyRevenue),
-                         dscrBand: smeDscrBand(f.dscr), guaranteeStatus: f.guaranteeStatus || null, guaranteeFlag: SME_GUARANTEE_FLAG[f.guaranteeStatus] || null };
+      terms.business = Object.assign({ companyName: (rec.borrower && rec.borrower.name) || a.name || null, tradeLicenceAgeBand: smeLicenceAgeBand(f.tradingMonths) },
+        G('incomeBucket') ? { revenueBand: smeRevenueBand(f.avgMonthlyRevenue) } : {},
+        G('dbr') ? { dscrBand: smeDscrBand(f.dscr) } : {},
+        G('verificationFlags') ? { guaranteeStatus: f.guaranteeStatus || null, guaranteeFlag: SME_GUARANTEE_FLAG[f.guaranteeStatus] || null } : {});
     }
     const g = rec.guarantee || {};
-    return {
+    const rcs = memoReasonCodes(rec);
+    const memo = {
       memoId: 'CM-' + rec.id, noorRef: rec.id,
-      lenderId: lender.id, lenderName: lender.name + ' (' + String(lender.role || 'lender of record').toLowerCase() + ')',
+      lenderId: lender.id, lenderName: memoLenderName(lender), sharingAgreement: memoAgreement(ag),
       createdAt: rec.createdAt,
       product: { productId: rec.productId, nameEn: man.nameEn || rec.productId, segment: 'SME' },
       policyVersion: rec.policyVersion, engineVersion: rec.engineVersion,
       borrower: { kind: 'COMPANY', name: (rec.borrower && rec.borrower.name) || a.name || null, nameAr: (rec.borrower && rec.borrower.nameAr) || a.nameAr || null,
-                  tradeLicenceMasked: maskedTradeLicence(a.id), kycSource: 'Trade licence + UBO (KYB) · owner verified with UAE PASS',
+                  tradeLicenceMasked: maskedTradeLicence(a.id),
                   guarantor: { name: owner.name || g.guarantor || null, nameAr: owner.nameAr || null,
                                role: 'Owner, authorised signatory and personal guarantor', emiratesIdMasked: maskedEmiratesId((a.id || '') + '-owner') } },
-      decision: {
-        outcome: rec.outcome, status: rec.status, route: rec.override ? 'ANALYST_REVIEW' : 'STRAIGHT_THROUGH',
-        reasonCodes: (rec.reasonCodes || []).map(code => { const rc = D.reasonCodes[code] || {}; return { code, en: rc.en || code, ar: rc.ar || '' }; }),
-        validUntil: rec.token ? rec.token.expiresAt : null
-      },
+      decision: { outcome: rec.outcome, status: rec.status, route: rec.override ? 'ANALYST_REVIEW' : 'STRAIGHT_THROUGH', reasonCodes: rcs,
+                  validUntil: rec.token ? rec.token.expiresAt : null },
       terms,
+      outputs: memoOutputs(MEMO_OUTPUTS_SME, ag, { noorScore: noorScoreValueText(value, noorScoreBand(value)), reasonCodes: reasonValueText([], rcs),
+                                                   incomeBucket: smeRevenueBand(f.avgMonthlyRevenue), dbr: smeDscrBand(f.dscr) }),
+      outputsNote: OUTPUTS_NOTE,
       noorScore: { value, band: noorScoreBand(value), factors: noorScoreFactors(sc, 3) },
-      affordability: {
-        incomeBand: null, dbrBand: null, freeCashFlowBand: null,
-        revenueBand: smeRevenueBand(f.avgMonthlyRevenue), dscrBand: smeDscrBand(f.dscr),
-        instalmentToCashFlowBand: shareBand(f.instalmentToNocfPct),
-        incomeVerifiedVia: 'Business accounts — Open Finance (Al Tareq), ' + (f.businessHistoryMonths || 12) + ' months, consent by the authorised signatory'
-      },
-      bureau: {
+      findings: []
+    };
+    if (G('incomeBucket') || G('dbr') || G('cashFlowBands')) {
+      memo.affordability = Object.assign({ note: AGGREGATES_NOTE },
+        G('incomeBucket') ? { revenueBand: smeRevenueBand(f.avgMonthlyRevenue),
+                              incomeVerifiedVia: 'Business accounts — Open Finance (Al Tareq), ' + (f.businessHistoryMonths || 12) + ' months, consent by the authorised signatory' } : {},
+        G('dbr') ? { dscrBand: smeDscrBand(f.dscr) } : {},
+        G('cashFlowBands') ? { instalmentToCashFlowBand: shareBand(f.instalmentToNocfPct) } : {});
+    }
+    if (G('bureauFlags')) {
+      memo.bureau = {
         aecbChecked: (rec.rules || []).some(r => r.id === 'REG_AECB_CHECK'),
         aecbScoreBand: aecbScoreBand({ hit: ca.hit === true, score: ca.score }),
         ownerConsumerScoreBand: aecbScoreBand({ hit: oa.hit === true, score: oa.score }),
         delinquencyFlag: DELINQUENCY_FLAG[ca.worstDelinquency || 'NONE'] || ca.worstDelinquency,
         chequeReturnsFlag: f.returnedCheques12m > 0 ? f.returnedCheques12m + ' returned cheque' + (f.returnedCheques12m === 1 ? '' : 's') + ' in 12 months' : 'None',
         homeCountryFile: null
-      },
-      verification: {
-        identity: 'Company verified (trade licence + UBO) · owner verified (UAE PASS)',
-        guarantee: SME_GUARANTEE_FLAG[f.guaranteeStatus] || null,
-        homeStatements: null, purchaseVerified: null
-      },
-      consents: CONSENT_CODES
-        .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
-        .map(([k, code]) => ({ type: k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + code })),
-      sharing: { shared: MEMO_SHARED_SME.slice(),
-                 // the shared seven groups (the first reworded for a business: no purchase category here) + the two SME groups
-                 withheld: MEMO_WITHHELD.map(w => /^Line-by-line/.test(w.group) ? { group: 'Line-by-line account history and counterparty names (business and personal accounts)', reason: w.reason } : w)
-                   .concat(MEMO_WITHHELD_SME).map(w => ({ group: w.group, reason: w.reason })) }
-    };
-  }
-  // ownerOpenFinance (v2.10) is the owner's own consent: its REFERENCE is shared (the guarantee flag rests on it), never its content.
-  const CONSENT_CODES = [['aecb', 'AECB'], ['openFinance', 'ALTAREQ'], ['ownerOpenFinance', 'ALTAREQ-OWNER'], ['creditPassport', 'CPASS'], ['homeStatements', 'STMT'], ['shareWithLender', 'LENDER']];
-  const FOOTPRINT_CONFIDENCE_WORD = { HIGH: 'high', MEDIUM: 'medium', LOW: 'low' };
-  // v2.16 — the Emirates ID part of the identity flag ('' when the decision had no scan).
-  function memoEmiratesIdFlag(rec) {
-    if (!rec.emiratesId) return '';
-    const f = rec.features || {};
-    return ' · Emirates ID front + back' + (f.idExpiryValid === false ? ' · card expired' : '') +
-      (f.employerMatch === true ? ' · employer matches salary payer'
-        : (f.employerMatch === false ? ' · employer differs from salary payer' : ' · employer not yet checked against salary credits'));
+      };
+    }
+    if (G('verificationFlags')) {
+      memo.verification = { identity: 'Company and owner verified', guarantee: SME_GUARANTEE_FLAG[f.guaranteeStatus] || null, additionalEvidence: null, purchaseVerified: null };
+    }
+    if (G('consentReferences')) memo.consents = memoConsents(rec);
+    return memo;
   }
   function creditMemo(decisionId, opts) {
     ensureInit();
     const rec = getDecisionRef(decisionId);
     const lender = lenderFor(opts && opts.lenderId);
+    const ag = agreementFor(lender);
+    if (rec.productId === SME_PID) return smeMemo(rec, lender, ag);   // v2.10 — business memo, its own allowlist
+    const G = (k) => ag.groups.includes(k);
     const a = rec.applicantSnapshot || {};
     const f = rec.features || {};
     const man = MANIFESTS.find(m => m.productId === rec.productId) || {};
     const aecb = aecbOf(rec);
     const sc = rec.score || {};
     const value = Number.isFinite(sc.points) ? sc.points : null;
-    const seq = rec.id.replace(/^MZN-/, '');
-    const crossBorder = !!f.crossBorder;
+    const band = noorScoreBand(value);
     const car = rec.productId === 'car_loan';
-    if (rec.productId === 'sme_working_capital') return smeMemo(rec, lender);   // v2.10 — business memo, its own allowlist
-    return {
+    const rcs = memoReasonCodes(rec);
+    const findings = customerFindings(rec).map(x => ({ code: x.code, en: x.en, ar: x.ar }));   // the words only, never the rule
+    const ip = incomeParts(rec), dp = dbrParts(rec);
+    const exact = ag.dbrPrecision === 'EXACT';
+    const dcm = rec.dataCompleteness || null;
+    const dcText = dcm ? dcm.pct + '% · ' + dcm.counts.banks + (dcm.counts.banks === 1 ? ' bank' : ' banks') + ' · ' + dcm.counts.accounts +
+      (dcm.counts.accounts === 1 ? ' account' : ' accounts') + ' · ' + dcm.counts.months + ' months' : 'Not measured for this decision';
+    const dbrText = !dp ? 'Not assessed for this product'
+      : (exact ? dp.dbrPct + '%' + (dp.headroom === null ? '' : ' · headroom AED ' + money(dp.headroom).replace(/^AED /, '') + ' / month')
+               : dbrBand(dp.dbrPct) + (dp.headroom === null ? '' : ' · headroom ' + headroomBand(dp.headroom)));
+    const memo = {
       memoId: 'CM-' + rec.id,
       noorRef: rec.id,
       lenderId: lender.id,
-      lenderName: lender.name + ' (' + String(lender.role || 'lender of record').toLowerCase() + ')',
+      lenderName: memoLenderName(lender),
+      sharingAgreement: memoAgreement(ag),
       createdAt: rec.createdAt,
       product: { productId: rec.productId, nameEn: man.nameEn || rec.productId },
       policyVersion: rec.policyVersion,
       engineVersion: rec.engineVersion,
+      // v2.18 — no KYC-source detail (UAE PASS / Emirates ID): the identity flag says verified or not verified
       borrower: { name: a.name || null, nameAr: a.nameAr || null,
-                  emiratesIdMasked: (rec.emiratesId && rec.emiratesId.idMasked) || maskedEmiratesId(a.id), kycSource: 'UAE PASS (onboarding)' },
+                  emiratesIdMasked: (rec.emiratesId && rec.emiratesId.idMasked) || maskedEmiratesId(a.id) },
       decision: {
         outcome: rec.outcome,
         status: rec.status,
         route: rec.override ? 'ANALYST_REVIEW' : 'STRAIGHT_THROUGH',
-        reasonCodes: (rec.reasonCodes || []).map(code => {
-          const rc = D.reasonCodes[code] || {};
-          return { code, en: rc.en || code, ar: rc.ar || '' };
-        }),
+        reasonCodes: rcs,
         validUntil: rec.token ? rec.token.expiresAt : null
       },
       terms: memoTerms(rec),
+      // v2.18 §1a — the output table opens the memo
+      outputs: memoOutputs(MEMO_OUTPUTS, ag, {
+        noorScore: noorScoreValueText(value, band, rec.kind === 'UPGRADE'),
+        reasonCodes: reasonValueText(findings, rcs),
+        dataCompleteness: dcText,
+        incomeBucket: incomeBand(ip.regular) || 'Not verified',
+        additionalIncomeBucket: additionalIncomeBand(ip),
+        dbr: dbrText
+      }),
+      outputsNote: OUTPUTS_NOTE,
       noorScore: {
         value,
-        band: noorScoreBand(value),
+        band,
         factors: rec.kind === 'UPGRADE' ? memoUpgradeFactors(rec) : noorScoreFactors(sc, 3)
       },
-      affordability: {
-        incomeBand: incomeBand(f.verifiedIncome),
-        dbrBand: dbrBand(f.dbrPct),
-        freeCashFlowBand: fcfBand(f.freeCashFlowMonthly),
-        instalmentToCashFlowBand: shareBand(memoInstalmentShare(rec)),
-        incomeVerifiedVia: memoIncomeVia(rec)
-      },
-      bureau: {
+      findings
+    };
+    if (G('scoreComponents')) {
+      const comps = componentsOf(rec);
+      memo.scoreComponents = { note: COMPONENTS_NOTE, derivation: COMPONENTS_BASIS,
+        components: comps.filter(c => c.group === 'score').map(c => ({ key: c.key, name: c.name, level: c.level, tone: c.tone, factors: c.factors.slice() })) };
+    }
+    if (G('incomeBucket') || G('additionalIncomeBucket') || G('dbr') || G('cashFlowBands')) {
+      memo.affordability = Object.assign({ note: AGGREGATES_NOTE },
+        G('incomeBucket') ? { incomeBand: incomeBand(ip.regular), incomeVerifiedVia: memoIncomeVia(rec) } : {},
+        G('additionalIncomeBucket') ? { additionalIncomeBand: additionalIncomeBand(ip) } : {},
+        G('dbr') ? Object.assign({ dbrBand: dp ? dbrBand(dp.dbrPct) : null, headroomBand: dp ? headroomBand(dp.headroom) : null },
+                                 exact ? { dbrPct: dp ? dp.dbrPct : null, headroomMonthly: dp ? dp.headroom : null } : {}) : {},
+        G('cashFlowBands') ? { freeCashFlowBand: fcfBand(f.freeCashFlowMonthly), instalmentToCashFlowBand: shareBand(memoInstalmentShare(rec)) } : {});
+    }
+    if (G('monitoring')) {
+      const mon = monitoringOf(rec);
+      memo.monitoring = { status: mon.status, bestDebitDate: mon.bestDebitDate, nextRefresh: mon.nextRefresh, line: mon.line };
+    }
+    if (G('bureauFlags')) {
+      memo.bureau = {
         aecbChecked: (rec.rules || []).some(r => r.id === 'REG_AECB_CHECK'),
         aecbScoreBand: aecbScoreBand(aecb),
         delinquencyFlag: DELINQUENCY_FLAG[aecb.worstDelinquency] || aecb.worstDelinquency,
         chequeReturnsFlag: aecb.chequeReturns12m > 0
           ? aecb.chequeReturns12m + ' returned cheque' + (aecb.chequeReturns12m === 1 ? '' : 's') + ' in 12 months' : 'None',
-        homeCountryFile: crossBorder ? 'Home-country credit file used (Credit Passport, consented)' : null
-      },
-      verification: Object.assign({
-        // v2.8 — a consented digital-footprint check adds its confidence level, never its data.
-        // v2.16 — an Emirates ID scan adds a flag only: never the employer, the payer, the date of birth or the occupation.
-        identity: 'Verified (UAE PASS)' + memoEmiratesIdFlag(rec) +
-          (FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] && rec.consents && rec.consents.digitalFootprint && rec.consents.digitalFootprint.granted
-          ? ' · digital footprint: ' + FOOTPRINT_CONFIDENCE_WORD[f.footprintIdentity] + ' confidence' : ''),
-        homeStatements: memoStatementsFlag(rec.homeStatements),
+        homeCountryFile: f.crossBorder ? 'Home-country credit history used (consented)' : null
+      };
+    }
+    if (G('verificationFlags')) {
+      // v2.18 — source-agnostic: verified or not verified; never UAE PASS / Emirates ID / footprint detail.
+      memo.verification = Object.assign({
+        identity: f.idExpiryValid === false || f.idNameMatch === false ? 'Identity not verified' : 'Identity verified',
+        additionalEvidence: memoEvidenceFlag(rec.homeStatements),
         purchaseVerified: rec.productId === 'split'
           ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
           : null
-      }, car ? memoCarFlags(rec) : {}),
-      // v2.17 — completeness as the lender sees it: the percentage and counts only (no threshold, weights or bands)
-      ...(rec.dataCompleteness ? { dataCompleteness: { pct: rec.dataCompleteness.pct, banks: rec.dataCompleteness.counts.banks,
-                                                       accounts: rec.dataCompleteness.counts.accounts, months: rec.dataCompleteness.counts.months } } : {}),
-      consents: CONSENT_CODES
-        .filter(([k]) => rec.consents && rec.consents[k] && rec.consents[k].granted)
-        .map(([k, code]) => ({ type: k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + code })),
-      sharing: { shared: MEMO_SHARED.concat(car ? MEMO_SHARED_CAR : [], rec.dataCompleteness ? [MEMO_SHARED_DC] : []),
-                 withheld: MEMO_WITHHELD.concat(car ? MEMO_WITHHELD_CAR : []).map(w => ({ group: w.group, reason: w.reason })) }
-    };
+      }, car ? memoCarFlags(rec) : {});
+    }
+    // v2.17 — completeness as the lender sees it: the percentage and counts only (no threshold, weights or bands)
+    if (G('dataCompleteness') && dcm) {
+      memo.dataCompleteness = { pct: dcm.pct, banks: dcm.counts.banks, accounts: dcm.counts.accounts, months: dcm.counts.months };
+    }
+    if (G('consentReferences')) memo.consents = memoConsents(rec);
+    return memo;
   }
   function assertMemo(memo, fn) {
     if (!memo || typeof memo !== 'object' || typeof memo.memoId !== 'string' || !/^CM-/.test(memo.memoId)) {
@@ -4370,34 +4801,169 @@
   }
   // API delivery: the memo itself, as a detached JSON object.
   function memoApiPayload(memo) { assertMemo(memo, 'memoApiPayload'); return clone(memo); }
-  // SFTP delivery: one flat CSV row per memo (header + row, all strings).
+  // SFTP delivery: one flat CSV row per memo (header + row, all strings). v2.18 — the columns follow the agreement's
+  // groups: the v2.5 columns keep their order (a group the agreement lacks drops its column), the v2.18 columns follow
+  // created_at; a consumer row ends with the v2.17 completeness pair, an SME row with its three business columns.
   function memoSftpRow(memo) {
     assertMemo(memo, 'memoSftpRow');
-    const t = memo.terms || {};
+    const groups = (memo.sharingAgreement && memo.sharingAgreement.groups) || MEMO_GROUP_KEYS;
+    const G = (k) => groups.includes(k);
+    const t = memo.terms || {}, af = memo.affordability || {}, bu = memo.bureau || {};
     const s = (v) => (v === null || v === undefined ? '' : String(v));
     let aprOrFee = '';
     if (Number.isFinite(t.monthlyFeeRate)) aprOrFee = 'Fee ' + pctStr(t.monthlyFeeRate) + '/mo (APR equivalent ' + pctStr(t.aprEquivalent) + ')';
     else if (Number.isFinite(t.flatFee)) aprOrFee = 'Flat fee ' + aed(t.flatFee);
     else if (Number.isFinite(t.apr)) aprOrFee = 'APR ' + pctStr(t.apr);
     else if (Number.isFinite(t.aprFrom)) aprOrFee = 'APR from ' + pctStr(t.aprFrom);
-    const row = [memo.memoId, memo.noorRef, memo.product.productId, memo.decision.outcome,
-                 s(Number.isFinite(t.amount) ? t.amount : t.offerUpTo), s(t.tenorMonths || t.planMonths || t.maxTenorMonths), aprOrFee,
-                 s(t.monthlyPayment), s(t.repaymentMethod), s(memo.noorScore.value), s(memo.noorScore.band),
-                 s(memo.affordability.incomeBand), s(memo.affordability.dbrBand), s(memo.bureau.aecbScoreBand),
-                 memo.decision.reasonCodes.map(r => r.code).join('|'), memo.createdAt];
-    // v2.17 — a memo with data completeness adds two columns (the percentage and the counts); other rows are unchanged.
-    if (memo.dataCompleteness) {
-      const dcm = memo.dataCompleteness;
-      return { header: MEMO_SFTP_HEADER.concat(MEMO_SFTP_HEADER_DC_EXTRA),
-               row: row.concat([String(dcm.pct), dcm.banks + ' banks · ' + dcm.accounts + ' accounts · ' + dcm.months + ' months']) };
-    }
-    // v2.10 — SME memos add three business columns (bands and the guarantee flag); other products' rows are unchanged.
-    if (memo.product.productId === 'sme_working_capital') {
+    const sme = memo.product.productId === SME_PID;
+    const cols = [];
+    const col = (name, v) => cols.push([name, s(v)]);
+    col('memo_id', memo.memoId); col('noor_ref', memo.noorRef); col('product', memo.product.productId); col('outcome', memo.decision.outcome);
+    col('amount', Number.isFinite(t.amount) ? t.amount : t.offerUpTo); col('tenor', t.tenorMonths || t.planMonths || t.maxTenorMonths); col('apr_or_fee', aprOrFee);
+    col('monthly_payment', t.monthlyPayment); col('repayment_method', t.repaymentMethod);
+    col('noorscore', memo.noorScore.value); col('noorscore_band', memo.noorScore.band);
+    if (G('incomeBucket')) col('income_band', sme ? null : af.incomeBand);
+    if (G('dbr')) col('dbr_band', sme ? null : af.dbrBand);
+    if (G('bureauFlags')) col('aecb_band', bu.aecbScoreBand);
+    col('reason_codes', memo.decision.reasonCodes.map(r => r.code).join('|'));
+    col('created_at', memo.createdAt);
+    // v2.18
+    col('sharing_agreement', memo.sharingAgreement ? memo.sharingAgreement.label : '');
+    col('findings', (memo.findings || []).map(x => x.code).join('|'));
+    if (!sme) {
+      if (G('additionalIncomeBucket')) col('additional_income_band', af.additionalIncomeBand);
+      if (G('dbr')) {
+        col('headroom_band', af.headroomBand);
+        if (memo.sharingAgreement && memo.sharingAgreement.dbrPrecision === 'EXACT') { col('dbr_pct', af.dbrPct); col('headroom_aed', af.headroomMonthly); }
+      }
+      if (G('cashFlowBands')) { col('free_cash_flow_band', af.freeCashFlowBand); col('instalment_share_band', af.instalmentToCashFlowBand); }
+      if (G('scoreComponents')) {
+        const comps = (memo.scoreComponents && memo.scoreComponents.components) || [];
+        for (const [key, name] of [['fraudIntegrity', 'fraud_integrity'], ['newcomer', 'newcomer'], ['stackingSkip', 'stacking_skip'], ['creditBehaviour', 'credit_behaviour']]) {
+          const c = comps.find(x => x.key === key);
+          col('component_' + name, c ? c.level : '');
+        }
+      }
+      if (G('monitoring')) {
+        const mo = memo.monitoring || {};
+        col('monitoring_status', mo.status); col('best_debit_date', mo.bestDebitDate); col('next_refresh', mo.nextRefresh);
+      }
+      // v2.17 — the completeness pair (empty when the decision did not measure it)
+      if (G('dataCompleteness')) {
+        const dcm = memo.dataCompleteness;
+        col('data_completeness_pct', dcm ? dcm.pct : null);
+        col('data_sources', dcm ? dcm.banks + ' banks · ' + dcm.accounts + ' accounts · ' + dcm.months + ' months' : null);
+      }
+    } else {
+      // v2.10 — the business columns (bands and the guarantee flag)
       const b = t.business || {};
-      return { header: MEMO_SFTP_HEADER.concat(MEMO_SFTP_HEADER_SME_EXTRA),
-               row: row.concat([s(memo.affordability.revenueBand), s(memo.affordability.dscrBand), s(b.guaranteeStatus || (memo.terms ? null : ''))]) };
+      if (G('incomeBucket')) col('revenue_band', af.revenueBand);
+      if (G('dbr')) col('dscr_band', af.dscrBand);
+      if (G('verificationFlags')) col('guarantee_status', b.guaranteeStatus || (memo.terms ? null : ''));
     }
-    return { header: MEMO_SFTP_HEADER.slice(), row };
+    return { header: cols.map(c => c[0]), row: cols.map(c => c[1]) };
+  }
+
+  // ---------------------------------------------------------------------------
+  // v2.18 §1c.2 — Transparent by design (Phase 1): every feature, weight and point of the expert scorecard, as a
+  // waterfall from the base to NoorScore. INTERNAL only (the Decision log): the memo never carries a weight or a point.
+  // Phase 2 replaces the points with SHAP values per feature, once pilot lenders share repayment outcomes.
+  // ---------------------------------------------------------------------------
+  function scoreBaseLabel(rec) {
+    const sc = rec.score || {}, f = rec.features || {};
+    if (rec.productId === SME_PID) return 'AECB commercial score';
+    if (sc.basis === 'CASH_FLOW_PROXY') return 'Cash-flow proxy base (AECB no-hit)';
+    if (sc.basis === 'HOME_STATEMENTS') return 'Statements proxy base (AECB no-hit)';
+    if (f.crossBorder) return 'Home-country bureau score (Credit Passport)';
+    return 'AECB score';
+  }
+  function scoreContributions(decisionId) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    const sc = rec.score || {};
+    const out = { id: rec.id, model: sc.model || null, version: sc.version || null, phase: 'Phase 1 — expert scorecard',
+                  label: 'Phase 1: scorecard points · Phase 2: SHAP values per feature',
+                  base: Number.isFinite(sc.base) ? sc.base : null, baseLabel: Number.isFinite(sc.base) ? scoreBaseLabel(rec) : null,
+                  steps: [], points: Number.isFinite(sc.points) ? sc.points : null, grade: sc.grade || null, reconciles: false };
+    if (out.base === null) return out;
+    let run = out.base;
+    for (const o of sc.overlays || []) {
+      if (!o.delta) continue;
+      out.steps.push({ name: o.name, delta: o.delta, from: run, to: run + o.delta });
+      run += o.delta;
+    }
+    out.reconciles = run === out.points;
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------
+  // v2.18 §1c.3 — Auditable: reproduceDecision(id) re-runs the evaluation purely from the record's logged inputs —
+  // the applicant snapshot, the request, the consents as given, the statements read, the Emirates ID scan, the data
+  // sources, the policy version (the pack as published then) and the early-warning block version — and compares the
+  // score, the outcome and the price with the record. No new record, no clock tick, no audit entry.
+  // Human actions after the decision are accounted for: an override changed the outcome on purpose, so the engine's
+  // own outcome (the first audit entry) is compared; an override to DECLINE removed the price, so it is not compared.
+  // ---------------------------------------------------------------------------
+  function reproduceDecision(decisionId) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    if (!rec.inputs) throw err(decisionId + ' has no logged inputs to reproduce from');
+    const pid = rec.productId;
+    const polSnap = (S.policySnapshots[pid] || {})[rec.policyVersion];
+    if (!polSnap) throw err('policy v' + rec.policyVersion + ' of ' + pid + ' is not on file — cannot reproduce ' + decisionId);
+    const ewVer = rec.inputs.earlyWarningVersion;
+    const ewSnap = ewVer === null || ewVer === undefined ? null : (S.policySnapshots[EW_BLOCK_ID] || {})[ewVer];
+    const app = { productId: pid, applicant: clone(rec.applicantSnapshot), amount: rec.request.amount, tenorMonths: rec.request.tenorMonths,
+                  consents: clone(rec.inputs.consents) };
+    if (rec.request.vehicle) app.vehicle = clone(rec.request.vehicle);
+    if (rec.homeStatements) app.statements = clone(rec.homeStatements);
+    if (rec.inputs.emiratesId !== null && rec.inputs.emiratesId !== undefined) app.emiratesId = clone(rec.inputs.emiratesId);
+    if (rec.inputs.dataSources !== null && rec.inputs.dataSources !== undefined) app.dataSources = clone(rec.inputs.dataSources);
+    const saved = { pol: S.policies[pid], ew: S.policies[EW_BLOCK_ID], ticks: S.clockTicks, seq: S.seq };
+    let run;
+    try {
+      S.policies[pid] = clone(polSnap);
+      if (ewSnap) S.policies[EW_BLOCK_ID] = clone(ewSnap);
+      run = computeDecision(app, { reproduce: true }).ev;
+    } finally {
+      S.policies[pid] = saved.pol; S.policies[EW_BLOCK_ID] = saved.ew; S.clockTicks = saved.ticks; S.seq = saved.seq;
+    }
+    const ov = rec.override;
+    const firstAudit = (rec.audit && rec.audit[0] && rec.audit[0].detail) || '';
+    const loggedOutcome = ov ? firstAudit.split(' · ')[0] : rec.outcome;
+    const loggedReasons = ov && !run.reasonCodes.includes(ov.reasonCode) ? rec.reasonCodes.filter(c => c !== ov.reasonCode) : rec.reasonCodes;
+    const checks = [];
+    const cmp = (field, logged, reproduced) => checks.push({ field, logged, reproduced, same: JSON.stringify(logged) === JSON.stringify(reproduced) });
+    cmp('outcome', loggedOutcome, run.outcome);
+    cmp('score.points', Number.isFinite(rec.score && rec.score.points) ? rec.score.points : null, Number.isFinite(run.score.points) ? run.score.points : null);
+    cmp('score.grade', (rec.score && rec.score.grade) || null, run.score.grade || null);
+    cmp('reasonCodes', loggedReasons, run.reasonCodes);
+    const notes = [];
+    if (ov && ov.outcome === 'DECLINE') {
+      notes.push('Overridden to DECLINE by ' + ov.analyst + ' / ' + ov.approver + ' — the engine’s limit and price are no longer on the record, so they are not compared');
+    } else {
+      cmp('limit.approved', rec.limit ? rec.limit.approved : null, run.limit ? run.limit.approved : null);
+      cmp('limit.bindingConstraint', rec.limit ? rec.limit.bindingConstraint : null, run.limit ? run.limit.bindingConstraint : null);
+      cmp('pricing', rec.pricing || null, run.pricing || null);
+    }
+    if (ov) notes.push('Human action after the decision: override to ' + ov.outcome + ' (' + ov.reasonCode + ') — the engine’s own outcome is compared');
+    if (rec.engineVersion !== ENGINE_VERSION) notes.push('Recorded on ' + rec.engineVersion + '; re-run on ' + ENGINE_VERSION);
+    const diffs = checks.filter(c => !c.same);
+    const c = rec.consents || {};
+    return {
+      id: rec.id, identical: diffs.length === 0,
+      message: diffs.length === 0 ? 'Reproduced — identical score, outcome and price'
+        : 'Not reproduced — ' + diffs.length + ' difference' + (diffs.length === 1 ? '' : 's') + ': ' + diffs.map(d => d.field).join(', '),
+      policyVersion: rec.policyVersion, engineVersion: rec.engineVersion, earlyWarningVersion: ewVer === undefined ? null : ewVer,
+      inputs: ['Applicant snapshot (frozen at decision time)',
+               'Request: AED ' + thousands(rec.request.amount) + ' · ' + rec.request.tenorMonths + (rec.request.tenorMonths === 1 ? ' month' : ' months'),
+               'Consents: ' + Object.keys(c).filter(k => c[k] && c[k].granted).join(', '),
+               rec.homeStatements ? 'Home-country statements as read (' + rec.homeStatements.file + ')' : null,
+               app.emiratesId ? 'Emirates ID scan (front + back)' : null,
+               app.dataSources ? 'Data sources: ' + (app.dataSources.approvedAccounts || []).length + ' approved accounts · ' + app.dataSources.months + ' months' : null,
+               'Policy ' + pid + ' v' + rec.policyVersion + (ewSnap ? ' · early-warning block v' + ewVer : '') + ' · ' + rec.engineVersion].filter(Boolean),
+      checks, diffs, notes
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -5532,6 +6098,10 @@
     // v2.5 — NoorScore + the lender's credit memo (UI · API · SFTP)
     NOORSCORE_BANDS: NOORSCORE_BANDS.map(b => ({ min: b[0], band: b[1] })).concat([{ min: null, band: 'Poor' }]),
     noorScoreBand, creditMemo, memoApiPayload, memoSftpRow,
+    // v2.18 — what lenders receive, per sharing agreement; findings; the six components; explainable and auditable
+    sharingAgreement, customerFindings, noorScoreComponents, scoreContributions, reproduceDecision,
+    MEMO_GROUPS: MEMO_GROUPS.map(g => Object.assign({}, g)), MEMO_OUTPUTS: MEMO_OUTPUTS.map(o => Object.assign({}, o)),
+    NOOR_IP: JSON.parse(JSON.stringify(NOOR_IP)), EXTERNAL_LINE, METHODOLOGY_LINE, OUTPUTS_NOTE, COMPONENTS_NOTE, AGGREGATES_NOTE,
     // v2.6 — the customer journey: pre-qualification on connected accounts only
     prequalify, loanInstalment,
     // v2.8 — digital footprint (identity · account security · shadow thin-file overlay), pure
