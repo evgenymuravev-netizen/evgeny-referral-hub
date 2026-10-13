@@ -96,6 +96,11 @@
  *    still reads the RC_* reasons (EN + AR). A partner code's rule reads a whitelisted
  *    engine metric only (never nationality, sex, age, religion, health, family or free
  *    text), is approved with 4-eyes, and versions the lender's sharing agreement.
+ *  - Rely on botim's verification (v2.20, ../BOTIM-RELIANCE-SPEC.md): botimReliance() says
+ *    whether botim's signed assertion covers the number and the email (no one-time codes)
+ *    or which fallback code is needed. decide() can record how they were verified
+ *    (contactVerification) — a Fraud & Integrity driver in the Decision log only; never a
+ *    score, outcome, limit or price input, never in the memo.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -1266,6 +1271,92 @@
       scope: FOOTPRINT_SCOPE,
       reasonCodes
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // v2.20 — rely on botim's phone and email verification (../BOTIM-RELIANCE-SPEC.md) — pure.
+  // The hand-off carries a signed botim assertion: the number is verified by botim and is a UAE number (+971), the
+  // email is verified by botim, the verification date and the device binding. Noor relies on it by default — no
+  // one-time codes — and sends a code only as a fallback:
+  //   overseas number    — "Add your UAE mobile number", then a code to it (a UAE number is needed for assessment and
+  //                        collections; v2.18 scenario c);
+  //   stale or changed   — botim's last verification is older than 90 days, or botim signals a SIM change → a code;
+  //   no device binding  — the assertion does not bind the number to the device → a code;
+  //   account takeover   — the footprint shows ATO ELEVATED (v2.14) → a code (step-up);
+  //   a different email  — the customer changes the email (opts.emailChanged) → a code to the new address;
+  //   no assertion       — botim shared no verified email (or number) → the customer enters one, then a code.
+  // Strong identity is unchanged: UAE PASS at final checks (step 9) confirms the customer before any decision, and the
+  // Emirates ID scan still runs. Noor's position — confirm with compliance (the open 8 Oct action "Verify CBUAE OTP
+  // rules for Botim-passed phone numbers"). Never a score, outcome, limit or price input.
+  // ---------------------------------------------------------------------------
+  const BOTIM_MAX_AGE_DAYS = 90;
+  const BOTIM_PHONE_REASON = {
+    NO_ASSERTION: 'no botim assertion', OVERSEAS: 'overseas number', STALE: null, SIM_CHANGE: 'SIM change signalled',
+    NOT_DEVICE_BOUND: 'not device-bound', ATO_ELEVATED: 'account-takeover risk ELEVATED — step-up'
+  };
+  const BOTIM_STRONG_IDENTITY = 'UAE PASS at step 9 remains the strong identity check before any decision';
+  const BOTIM_POSITION = 'Noor’s position — confirm with compliance (open action from 8 Oct)';
+  function botimReliance(assertion, opts) {
+    const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
+    if (opts !== undefined && opts !== null && !isObj(opts)) throw err('botimReliance(assertion, opts): opts must be an object');
+    const o = opts || {};
+    const ato = o.ato === undefined || o.ato === null ? null : String(o.ato).toUpperCase();
+    if (ato !== null && ato !== 'NORMAL' && ato !== 'ELEVATED') throw err('botimReliance(): opts.ato must be NORMAL or ELEVATED');
+    const a = isObj(assertion) ? assertion : null;
+    const ph = a && isObj(a.phone) ? a.phone : null, em = a && isObj(a.email) ? a.email : null;
+    const ago = (n) => n === 0 ? 'today' : n + (n === 1 ? ' day' : ' days') + ' ago';
+    // The number: relied on only when botim verified a UAE number within 90 days, on a bound device, with no SIM
+    // change and no account-takeover signal.
+    const age = ph && Number.isFinite(ph.verifiedDaysAgo) && ph.verifiedDaysAgo >= 0 ? ph.verifiedDaysAgo : null;
+    const pr = [];
+    if (age === null) pr.push('NO_ASSERTION');
+    else {
+      if (ph.uae !== true) pr.push('OVERSEAS');
+      if (age > BOTIM_MAX_AGE_DAYS) pr.push('STALE');
+      if (ph.simChanged === true) pr.push('SIM_CHANGE');
+      if (ph.deviceBound !== true) pr.push('NOT_DEVICE_BOUND');
+    }
+    if (ato === 'ELEVATED') pr.push('ATO_ELEVATED');
+    const phoneRelied = pr.length === 0, addUae = pr.includes('OVERSEAS');
+    const phoneLine = phoneRelied
+      ? 'phone ✓ (UAE, verified ' + ago(age) + ', device-bound)'
+      : 'phone → ' + (addUae ? 'UAE number + code' : 'code') + ' (' +
+        pr.map(r => r === 'STALE' ? 'last verified ' + ago(age) + ', over ' + BOTIM_MAX_AGE_DAYS : BOTIM_PHONE_REASON[r]).join('; ') + ')';
+    // The email: relied on when botim verified it and the customer keeps it.
+    const er = o.emailChanged === true ? ['CHANGED'] : (em && em.verified === true ? [] : ['NO_ASSERTION']);
+    const emailRelied = er.length === 0;
+    const emailLine = emailRelied ? 'email ✓'
+      : (er[0] === 'CHANGED' ? 'email → code (a different email)' : 'email → entered by the customer, then a code (no verified email from botim)');
+    const codes = (phoneRelied ? [] : ['PHONE']).concat(emailRelied ? [] : ['EMAIL']);
+    const tail = !codes.length ? 'no codes sent'
+      : (codes.length === 2 ? 'codes to the number and the email' : (codes[0] === 'PHONE' ? 'a code to the number' : 'a code to the email'));
+    return {
+      phone: { relied: phoneRelied, code: !phoneRelied, addUaeNumber: addUae, reasons: pr,
+               uae: ph ? ph.uae === true : null, verifiedDaysAgo: age, deviceBound: ph ? ph.deviceBound === true : null, line: phoneLine },
+      email: { relied: emailRelied, code: !emailRelied, enterEmail: er[0] === 'NO_ASSERTION', reasons: er,
+               verifiedDaysAgo: em && Number.isFinite(em.verifiedDaysAgo) ? em.verifiedDaysAgo : null, line: emailLine },
+      codes, ato, maxAgeDays: BOTIM_MAX_AGE_DAYS,
+      summary: phoneLine + ' · ' + emailLine + ' — ' + tail,
+      strongIdentity: BOTIM_STRONG_IDENTITY, position: BOTIM_POSITION
+    };
+  }
+  // v2.20 — how the mobile number and the email were verified at onboarding, as decide() records it (internal: the
+  // Decision log's Fraud & Integrity drivers). BOTIM = relied on botim's signed assertion (no code); CODE = Noor's own
+  // one-time code. Never a score, outcome, limit or price input, and never in the memo or the SFTP row.
+  const CONTACT_VERIFICATION = ['BOTIM', 'CODE'];
+  function normalizeContactVerification(cv) {
+    if (cv === undefined || cv === null) return null;
+    if (typeof cv !== 'object' || Array.isArray(cv) || Object.keys(cv).sort().join() !== 'email,phone' ||
+        !CONTACT_VERIFICATION.includes(cv.phone) || !CONTACT_VERIFICATION.includes(cv.email)) {
+      throw err('application.contactVerification must be {phone, email}, each BOTIM (relied on botim’s verification) or CODE (Noor’s one-time code)');
+    }
+    return { phone: cv.phone, email: cv.email };
+  }
+  function contactVerificationLine(cv) {
+    if (cv.phone === 'BOTIM' && cv.email === 'BOTIM') return 'Mobile and email verified by botim (relied on)';
+    if (cv.phone === 'CODE' && cv.email === 'CODE') return 'Mobile and email verified with Noor’s one-time codes';
+    return cv.phone === 'BOTIM' ? 'Mobile verified by botim (relied on) · email verified with Noor’s one-time code'
+                                : 'Mobile verified with Noor’s one-time code · email verified by botim (relied on)';
   }
 
   // ---------------------------------------------------------------------------
@@ -3727,6 +3818,8 @@
     const comms = normalizeCommunications(consents.communications);
     // v2.14 — the footprint consent's basis (EXPLICIT or TERMS), validated here too.
     const fpc = normalizeFootprintConsent(consents.digitalFootprint);
+    // v2.20 — how the mobile and the email were verified (botim relied on, or Noor's code): the shape, validated here.
+    const cv = normalizeContactVerification(application.contactVerification);
 
     // v2.16 — the Emirates ID scan (front + back): {front, back}, or true for the applicant's own
     // record. Personal loan only. The employer is matched against the salary payer only with
@@ -3785,12 +3878,19 @@
       if (fpOverlay && fpOverlay.applied && ev.outcome !== 'DECLINE' && !ev.reasonCodes.includes('RC_FOOTPRINT_OVERLAY')) ev.reasonCodes.push('RC_FOOTPRINT_OVERLAY');
       if (fpOverlay) ev.score.footprintOverlay = { name: fpOverlay.name, delta: fpOverlay.delta, applied: fpOverlay.applied, mode: fpOverlay.mode, note: fpOverlay.note };
     }
-    return { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay };
+    // v2.20 — relying on botim needs the applicant's botim assertion to support it (botimReliance(), with the
+    // footprint's account-takeover risk when the check ran). Nothing in the evaluation reads it.
+    if (cv && (cv.phone === 'BOTIM' || cv.email === 'BOTIM')) {
+      const rl = botimReliance(applicant.botimAssertion, { ato: fpa ? fpa.security.atoRisk : null });
+      if (cv.phone === 'BOTIM' && !rl.phone.relied) throw err('contactVerification.phone is BOTIM, but botim’s assertion does not support relying on it (' + rl.phone.reasons.join(', ') + ') — a one-time code is needed');
+      if (cv.email === 'BOTIM' && !rl.email.relied) throw err('contactVerification.email is BOTIM, but botim’s assertion does not support relying on it (' + rl.email.reasons.join(', ') + ') — a one-time code is needed');
+    }
+    return { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv };
   }
   function decide(application, internal) {
     ensureInit();
     const cd = computeDecision(application);
-    const { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay } = cd;
+    const { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv } = cd;
     const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
 
     S.seq += 1;
@@ -3865,6 +3965,9 @@
                 lenderId: application.lenderId === undefined ? null : application.lenderId,
                 earlyWarningVersion: S.policies[EW_BLOCK_ID] ? S.policies[EW_BLOCK_ID].version : null }
     };
+    // v2.20 — how the mobile and the email were verified, logged with the inputs only when the journey says so
+    // (records from the other journeys keep their earlier shape). Internal: the Decision log reads it; the memo never does.
+    if (cv) record.inputs.contactVerification = clone(cv);
     if (ev.redFlags) {
       // v2.9 — what the red-flag rule read (internal: the Decision log and the Workbench).
       // Never part of the credit memo: the lender sees the outcome and RC_RED_FLAGS_REVIEW only.
@@ -4474,6 +4577,9 @@
       level: COMPONENT_LEVELS[key] ? COMPONENT_LEVELS[key][tone] : null, factors: pick(factors), drivers });
     // 1 · Fraud & Integrity
     const fiRed = [], fiYellow = [], fiDrv = ['Identity: verified at onboarding (UAE PASS)'];
+    // v2.20 — the mobile and the email: relied on botim's verification, or Noor's one-time code (a driver only — the level
+    // and the memo's factor words are unchanged)
+    if (rec.inputs && rec.inputs.contactVerification) fiDrv.push(contactVerificationLine(rec.inputs.contactVerification));
     if (rec.emiratesId) {
       fiDrv.push('Emirates ID front + back · card ' + (f.idExpiryValid === false ? 'EXPIRED' : 'valid'));
       fiDrv.push('ID name ↔ account holder: ' + (f.idNameMatch === true ? 'match' : (f.idNameMatch === false ? 'MISMATCH' : 'not checked (no Open Finance)')));
@@ -5337,6 +5443,7 @@
     if (rec.homeStatements) app.statements = clone(rec.homeStatements);
     if (rec.inputs.emiratesId !== null && rec.inputs.emiratesId !== undefined) app.emiratesId = clone(rec.inputs.emiratesId);
     if (rec.inputs.dataSources !== null && rec.inputs.dataSources !== undefined) app.dataSources = clone(rec.inputs.dataSources);
+    if (rec.inputs.contactVerification) app.contactVerification = clone(rec.inputs.contactVerification);   // v2.20
     const saved = { pol: S.policies[pid], ew: S.policies[EW_BLOCK_ID], ticks: S.clockTicks, seq: S.seq };
     let run;
     try {
@@ -5379,6 +5486,7 @@
                rec.homeStatements ? 'Home-country statements as read (' + rec.homeStatements.file + ')' : null,
                app.emiratesId ? 'Emirates ID scan (front + back)' : null,
                app.dataSources ? 'Data sources: ' + (app.dataSources.approvedAccounts || []).length + ' approved accounts · ' + app.dataSources.months + ' months' : null,
+               app.contactVerification ? 'Contact verification: ' + contactVerificationLine(app.contactVerification) : null,
                'Policy ' + pid + ' v' + rec.policyVersion + (ewSnap ? ' · early-warning block v' + ewVer : '') + ' · ' + rec.engineVersion].filter(Boolean),
       checks, diffs, notes
     };
@@ -6533,6 +6641,8 @@
     recordCommunications,
     // v2.16 — the Emirates ID front + back, cross-checked against the salary payer in Open Finance (pure)
     checkEmiratesId, EMIRATES_ID_NOT_READ: EID_NOT_READ.slice(),
+    // v2.20 — rely on botim's phone and email verification; a one-time code only as a fallback (pure)
+    botimReliance, BOTIM_MAX_AGE_DAYS,
     // v2.17 — "Two steps to a score": data completeness first (pure), then the score
     dataCompleteness,
     // v2.7 — car loan: a pure live quote (documents path vs Open Finance path) for the car screen

@@ -406,6 +406,11 @@
       // v2.8 — the email botim shares at hand-off (synthetic, reserved domain). The journey shows it
       // masked; it never reaches the credit memo or the SFTP row.
       contact: { email: 'ravi.k@example.com', emailSharedBy: 'botim' },
+      // v2.20 — botim's signed assertion, carried with the hand-off: the number is a UAE number (+971) botim verified
+      // 14 days ago on a bound device; the email is verified by botim. Noor relies on it by default (no one-time
+      // codes) — MizanEngine.botimReliance() says when a code is still needed. Never a score, outcome, limit or price
+      // input, and never in the credit memo or the SFTP row.
+      botimAssertion: { phone: { uae: true, verifiedDaysAgo: 14, deviceBound: true }, email: { verified: true, verifiedDaysAgo: 14 } },
       // v2.8 — synthetic digital footprint, minimised at ingestion (same shape as FOOTPRINT-SPEC.md):
       // identity HIGH, account-takeover risk NORMAL; the thin-file overlay is not eligible (AECB file).
       footprint: { vendorScore: 731, emailAgeYearsMin: 7, nameMatchSources: 2, phoneOnMessenger: true,

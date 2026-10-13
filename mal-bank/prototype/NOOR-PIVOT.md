@@ -1870,3 +1870,126 @@ Decisions and deviations:
       `#lg-rc` (was `#lg-findings` with FND_DINING_OUT).
 - The Noor skin `<style>` block is byte-identical; the v2.19 CSS sits at the end of "Noor additions". The v2.18 bar rule
   was renamed in place (`.mcb-amber` → `.mcb-yellow`).
+
+### As built — v2.20 (rely on botim's phone and email verification; one-time codes only as a fallback)
+
+Built as BOTIM-RELIANCE-SPEC.md specifies. Selftest 1946 green: the 1891 earlier checks (none rewritten) plus 55 in
+group 27. Acceptance 1445 green: the 1380 earlier checks (rewritten in place where listed below) plus 65 in the new
+"v2.20 — rely on botim’s verification" section. Every persona outcome, score, limit and price is unchanged, and the v2.9
+fingerprints match. UAE PASS at step 9 and the Emirates ID step (3·2) are unchanged. Decisions and deviations:
+
+- **Data.** j1 carries `botimAssertion: { phone: { uae: true, verifiedDaysAgo: 14, deviceBound: true }, email: { verified:
+  true, verifiedDaysAgo: 14 } }` next to `contact`. It ends up in j1's applicant snapshot (internal); the memo and the SFTP row
+  never carry it.
+- **Engine.**
+  - `botimReliance(assertion, {ato, emailChanged})` is pure. It returns `phone` and `email` (`relied`, `code`, `reasons`,
+    `line`; `addUaeNumber` for the number, `enterEmail` for the email), `codes`, `summary`, `maxAgeDays` (90), and the
+    strong-identity and compliance lines. The default summary is "phone ✓ (UAE, verified 14 days ago, device-bound) · email
+    ✓ — no codes sent".
+    - The number falls back to a code when it is overseas (UAE number + code), older than 90 days, SIM-changed, not
+      device-bound, or the footprint's ATO risk is ELEVATED. Several reasons are all listed.
+    - The email falls back when the customer changes it (`emailChanged`), or when botim shared no verified email (the customer
+      enters one, then a code).
+    - Exported with `BOTIM_MAX_AGE_DAYS`.
+  - `decide()` accepts an optional `contactVerification: {phone, email}`, each `BOTIM` (relied on) or `CODE` (Noor's code).
+    - It is validated in `computeDecision()`: the shape, and that BOTIM is supported by the applicant's assertion (with the
+      footprint's ATO risk when the check ran). Nothing in the evaluation reads it.
+    - It is logged as `record.inputs.contactVerification` only when given, so every other record keeps its v2.18 shape.
+      `reproduceDecision()` passes it back and names it among the inputs.
+    - The Fraud & Integrity component gains one driver, second in the list (Decision log, internal): "Mobile and email verified
+      by botim (relied on)", or the CODE variants. The level and the memo's factor words are unchanged.
+  - Selftest group 27 (55 checks): the data; the default; 90 vs 91 days; the 120-days what-if line; SIM change; no device
+    binding; ATO ELEVATED; overseas; a changed email; no email; no assertion at all; several fallbacks at once; purity and
+    refusals; decide() with and without `contactVerification` (identical outcome, score, limit, price, pulls and memo, Partner
+    Bank and Lender B, and SFTP); the driver lines; reproduce; malformed values and unsupported BOTIM claims refused with
+    nothing recorded; the privacy and Noor-IP scans; fingerprints, determinism and vocabulary.
+- **Journey.**
+  - The phone scenario switch keeps its three keys. (b) "UAE number verified by botim — no code" is the default; (a) is "Code
+    sent anyway (if compliance requires it)"; (c) is the overseas number.
+  - Step 2: the tag stays "shared by Botim". A check line, "✓ Verified by botim — no code needed" (the tick is the check icon in
+    the --ok token), replaces "We’ll send a one-time code to confirm it’s you" when the assertion supports it. Scenario (a)
+    keeps the code line.
+  - Continue runs `relyOnBotimVerification({phone, email})`:
+    - The email botim verified lets the v2.14 footprint check run now, covered by the terms just accepted. Its ATO risk is the
+      number's step-up input.
+    - `botimReliance()` then decides on the number. The call is logged under "Mizan calls" with the spec's line.
+    - The default goes straight to 3·1. The overseas number goes to 2·1, then a code. Scenario (a), or any fallback, goes to
+      step 3.
+  - Step list: step 3 shows "Skipped — verified by botim" (struck-through title, not a jump target) once Noor relied on botim.
+  - 3·1 shows the masked email botim shared with "✓ Verified by botim", no code entry, "Use a different email", and the v2.14
+    notice line right under it.
+    - "Use a different email" opens the field and the 6-digit code, as before, and logs `relyOnBotimVerification({phone,
+      email:changed})`. The notice line stays. "Use the email botim shared" returns to the verified email without a code.
+    - A code-verified address shows "Email verified · …" as before.
+  - Behind the scenes for steps 2 and 3·1:
+    - one copy line each;
+    - the `#jr-rely` box: the signed assertion, the fallback cases, "UAE PASS at step 9 remains the strong identity check before
+      any decision", the compliance callout "Noor’s position — confirm with compliance (open action from 8 Oct)", the result
+      chips and line once Continue ran, and the what-if button.
+  - Step 3's behind-the-scenes is now "A one-time code — the fallback" (why the code is sent in this scenario).
+  - The what-if "botim last verified this number 120 days ago" shows the code fallback in a callout and logs a what-if line.
+    The step, the verified number and email, the codes and the decisions are untouched.
+  - decide() passes `contactVerification` from the journey: phone BOTIM when step 3 was skipped, email BOTIM unless a code
+    verified it. The "Mizan calls" decide() line ends with `contactVerification:{phone:…, email:…}`. The seeded deep-link example
+    passes BOTIM/BOTIM (the default journey).
+  - Copy:
+    - flow-map phase 2's Customer block says Noor relies on botim's verification;
+    - step 9's line reads "the verified mobile (verified by botim, or by Noor’s code)";
+    - the empty "Mizan calls" line says the calls start at step 2.
+- **Term rows (coordinator's addition).**
+  - The per-row "from X% APR" (`ph-term-apr`) is gone from variant A's "How much do you need?" and variant B's "Choose your
+    loan". The one line under the rows, "Indicative at X% — your offer confirms the rate", stays, as do each row's pill and
+    payment.
+  - B's per-term "up to AED …" cap stays, and so does A's "fits up to AED …" once the affordability check has run.
+  - The two `.ph-term-apr` rules left the Noor additions. Flow-map phase 6's Rule now says the bands set "the indicative
+    rate".
+- **Deviations.**
+  - The engine change goes beyond the optional helper: `decide()` records `contactVerification` (input only).
+    - Without it, the Fraud & Integrity factor could only be derived from the assertion in the snapshot. That would claim
+      "relied on" in scenario (a), in scenario (c) and after a different email.
+    - It changes no outcome, score, limit, price, pull, rule, reason code or memo.
+  - The footprint check now runs when botim's verified email is relied on (Continue at step 2), not at 3·1. Its ATO result is
+    the spec's step-up input for the number. In "Mizan calls" it now comes before `relyOnBotimVerification`.
+  - Rules the spec does not spell out:
+    - a phone assertion without the device binding is not relied on (§1 lists the binding as part of the assertion);
+    - the 90-day rule applies to the number only, as the spec's table says;
+    - scenario (a) sends the phone code only; the email botim verified is still relied on;
+    - the "no botim email" path exists (the field and a code) but Ravi's hand-off always has one, so the journey does not show
+      it; group 27 covers it.
+  - The spec says "the four fallback cases"; behind the scenes lists all five rows of its table.
+  - `relyOnBotimVerification` is logged under "Mizan calls" only. botim's event log (events only) gets nothing new, so the
+    experiment's event set is unchanged.
+  - The v2.18 note at 3·1 ("botim already confirmed this number") and the "OTP skipped (scenario b)" log line are gone.
+    Step 2's check line, the step list and the reliance log replace them.
+- **Changed existing acceptance checks** (each keeps its intent):
+  - B walk:
+    - The three OTP checks ("step 3: 6-cell code, sent-to line, resend timer"; "verifying an empty code is refused inline";
+      "demo code auto-fills") now run under scenario (a). The walk then jumps back to step 2 and continues on the default.
+    - "step 3·1: … a 6-digit code" now reads "… ‘Verified by botim’ — no code entry".
+    - "verifying the email without the code is refused inline" now runs under "Use a different email" and also checks the six
+      cells.
+    - "demo code auto-fills → email verified" is now "the email botim verified → ‘Verified by botim’; the footprint notice
+      appears".
+    - "term rows: … ‘from 7.99% APR’" now asserts that no row says "APR" and that the line "Indicative at 8.99% — your offer
+      confirms the rate" is present.
+  - Variant A: "steps 1–3, then the email sub-step 3·1" is now "steps 1–2 … (step 3 skipped)". The different-email path with
+    its code is unchanged.
+  - v2.13: "onboarding reaches the verified email" reads "Verified by botim". The step-9 copy check reads "(verified by botim,
+    or by Noor’s code)". The decide() regex gains `contactVerification:{phone:BOTIM, email:BOTIM}`.
+  - v2.14:
+    - "Continue records the acceptance" lands on 3·1.
+    - "before the email is verified: no notice yet …" is now "the check waits for a verified email: it had not run before
+      Continue; botim’s verified email lets it run then, and the notice shows".
+  - v2.16's and v2.17's "Mizan calls" decide() regexes accept the trailing `contactVerification`.
+  - v2.18, light and dark:
+    - the scenario switch's default is (b);
+    - "(b) OTP skipped …" reads "Verified by botim — no code needed";
+    - "(b) step 3 is skipped …" reads the step list's "Skipped — verified by botim";
+    - "a new journey starts on" (b);
+    - "(a) … the code to botim’s UAE number" selects (a) first.
+  - Click sequences only, no check text changed: the OTP and email-code clicks are removed from the animated walk, the v2.8
+    dark walk, the 390px walk, the v2.11 flow-map and screenshot walks, v2.12's `WALK_TO_9`, v2.13's `TO_EMAIL` and variant-A
+    walk, v2.14's variant-A, dark and 390px walks, v2.15's `TO_BANK`, v2.16's `TO_EID` and variant-A walk, v2.17's `TO_51` and
+    variant-A walk, v2.18's and v2.19's `AFTER_EMAIL`, and v2.19's step-10 walk. v2.18's (a) and (c) walks keep their OTP
+    clicks.
+- The Noor skin `<style>` block is byte-identical; the v2.20 CSS sits at the end of "Noor additions".

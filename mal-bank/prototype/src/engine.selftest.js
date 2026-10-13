@@ -14,6 +14,7 @@
  * Group 24 = v2.17 "Two steps to a score": data completeness first, then the score (JOURNEY-CONFIDENCE-SPEC.md).
  * Group 25 = v2.18 what lenders receive, Noor IP vs lender view, findings, six components, reproduce (MEETING-1008-SPEC.md).
  * Group 26 = v2.19 the reason-code library: three colours, standard and partner-requested codes, 4-eyes (REASON-CODES-SPEC.md).
+ * Group 27 = v2.20 rely on botim’s phone and email verification; one-time codes only as a fallback (BOTIM-RELIANCE-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -4163,6 +4164,144 @@ group('26. Addendum v2.19: the reason-code library — three colours, Noor stand
   const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|cash now/i;
   const txt26 = JSON.stringify([D.reasonCodeLibrary, D.sharingAgreements, E.reasonCodeLibrary(), snap()]);
   ok(!banned.test(txt26) && !mentionsSalaryTransfer(txt26), 'no banned vocabulary in the v2.19 library, agreements or memos');
+  E.init(D);
+});
+
+group('27. Addendum v2.20: rely on botim’s phone and email verification — one-time codes only as a fallback; never a decision input', () => {
+  E.init(D);
+  const j = D.personasJourney[0];
+  const OF = { aecb: true, openFinance: true };
+  const TERMS = { basis: 'TERMS', termsVersion: 'T&C v1.0 · Privacy policy v1.0', acceptedAt: '2026-07-19T08:58:00.000Z' };
+  const ALL4 = ['4821', '0193', '7702', '3317'];
+  const BB = { phone: 'BOTIM', email: 'BOTIM' };
+  const app = (cv, applicant) => Object.assign({ productId: 'personal_loan', applicant: applicant || j, amount: 15000, tenorMonths: 12, consents: Object.assign({ digitalFootprint: TERMS }, OF),
+                                                 emiratesId: true, dataSources: { approvedAccounts: ALL4, months: 12 }, lenderId: 'partner-bank' }, cv ? { contactVerification: cv } : {});
+  const R = E.botimReliance;
+  const withPhone = (patch) => Object.assign({}, j.botimAssertion, { phone: Object.assign({}, j.botimAssertion.phone, patch) });
+  const DEFAULT_LINE = 'phone ✓ (UAE, verified 14 days ago, device-bound) · email ✓ — no codes sent';
+
+  // ---- data: Ravi's hand-off carries botim's signed assertion ----
+  eq(JSON.stringify(j.botimAssertion), JSON.stringify({ phone: { uae: true, verifiedDaysAgo: 14, deviceBound: true }, email: { verified: true, verifiedDaysAgo: 14 } }),
+     'j1’s hand-off carries botimAssertion { phone: { uae, verifiedDaysAgo 14, deviceBound }, email: { verified, verifiedDaysAgo 14 } }');
+  ok([].concat(D.personasLoan, D.personasSplit, D.personasUpgrade, D.personasCar, D.personasSme || []).every(p => !('botimAssertion' in p)), 'only the botim journey persona carries a botim assertion');
+  eq(E.BOTIM_MAX_AGE_DAYS, 90, 'botim’s verification is relied on for 90 days');
+
+  // ---- the helper: the default → no codes ----
+  const d0 = R(j.botimAssertion, { ato: 'NORMAL' });
+  ok(d0.phone.relied && d0.email.relied && d0.codes.length === 0 && !d0.phone.code && !d0.email.code && !d0.phone.addUaeNumber, 'the default (UAE, 14 days, device-bound, email verified, ATO NORMAL) → no codes');
+  eq(d0.summary, DEFAULT_LINE, 'the default summary, as logged under “Mizan calls”');
+  ok(d0.phone.uae === true && d0.phone.verifiedDaysAgo === 14 && d0.phone.deviceBound === true && d0.email.verifiedDaysAgo === 14 && d0.ato === 'NORMAL',
+     'the result names what was relied on: UAE number, verified 14 days ago, device-bound; email verified 14 days ago');
+  eq(R(j.botimAssertion).summary, DEFAULT_LINE, 'no footprint result yet (no ato) → the same: no codes');
+  ok(d0.strongIdentity === 'UAE PASS at step 9 remains the strong identity check before any decision' && d0.position === 'Noor’s position — confirm with compliance (open action from 8 Oct)',
+     'the result carries the strong-identity line (UAE PASS at step 9) and Noor’s position (confirm with compliance)');
+
+  // ---- stale: older than 90 days → a code to the number ----
+  const s90 = R(withPhone({ verifiedDaysAgo: 90 })), s91 = R(withPhone({ verifiedDaysAgo: 91 })), s120 = R(withPhone({ verifiedDaysAgo: 120 }));
+  ok(s90.phone.relied && s90.codes.length === 0, 'verifiedDaysAgo 90 → still relied on (the boundary)');
+  ok(!s91.phone.relied && s91.phone.code && s91.phone.reasons.join() === 'STALE' && s91.email.relied && s91.codes.join() === 'PHONE' && !s91.phone.addUaeNumber,
+     'verifiedDaysAgo 91 → a code to the number (STALE); the email is still relied on');
+  eq(s120.summary, 'phone → code (last verified 120 days ago, over 90) · email ✓ — a code to the number', 'the 120-days what-if: a code to the number');
+  ok(!R(withPhone({ simChanged: true })).phone.relied && R(withPhone({ simChanged: true })).phone.reasons.join() === 'SIM_CHANGE', 'botim signals a SIM change → a code to the number');
+  ok(!R(withPhone({ deviceBound: false })).phone.relied && R(withPhone({ deviceBound: false })).phone.reasons.join() === 'NOT_DEVICE_BOUND', 'no device binding → a code to the number');
+
+  // ---- account-takeover risk → a step-up code ----
+  const ato = R(j.botimAssertion, { ato: 'ELEVATED' });
+  ok(!ato.phone.relied && ato.phone.reasons.join() === 'ATO_ELEVATED' && ato.email.relied && ato.codes.join() === 'PHONE' && /step-up/.test(ato.summary),
+     'ATO ELEVATED → a code to the number (step-up); the email is still relied on');
+  ok(R(j.botimAssertion, { ato: 'elevated' }).phone.reasons.join() === 'ATO_ELEVATED', 'the ATO level is read case-insensitively');
+
+  // ---- overseas → a UAE number, then a code ----
+  const ov = R(withPhone({ uae: false }));
+  ok(!ov.phone.relied && ov.phone.addUaeNumber && ov.phone.reasons.join() === 'OVERSEAS' && ov.email.relied && ov.codes.join() === 'PHONE',
+     'overseas number → “Add your UAE mobile number”, then a code to it; the email is still relied on');
+  eq(ov.summary, 'phone → UAE number + code (overseas number) · email ✓ — a code to the number', 'the overseas summary');
+
+  // ---- the email: changed, or none from botim → a code ----
+  const ch = R(j.botimAssertion, { emailChanged: true });
+  ok(ch.phone.relied && !ch.email.relied && ch.email.reasons.join() === 'CHANGED' && !ch.email.enterEmail && ch.codes.join() === 'EMAIL',
+     'a changed email (“Use a different email”) → a code to the new address; the number is still relied on');
+  const ne = R({ phone: j.botimAssertion.phone });
+  ok(ne.phone.relied && !ne.email.relied && ne.email.enterEmail && ne.email.reasons.join() === 'NO_ASSERTION' && ne.codes.join() === 'EMAIL',
+     'no email from botim → the customer enters one, then a code');
+  ok(R({ phone: j.botimAssertion.phone, email: { verified: false } }).email.enterEmail, 'an email botim did not verify → the customer enters one, then a code');
+  ok([undefined, null, 'signed', [], {}].every(x => { const r = R(x); return r.codes.join() === 'PHONE,EMAIL' && r.phone.reasons[0] === 'NO_ASSERTION' && r.email.enterEmail; }),
+     'no assertion at all (undefined, null, a string, an array, an empty object) → codes to the number and the email');
+  ok(R(withPhone({ uae: false, verifiedDaysAgo: 200 }), { ato: 'ELEVATED', emailChanged: true }).phone.reasons.join() === 'OVERSEAS,STALE,ATO_ELEVATED' &&
+     R(withPhone({ uae: false, verifiedDaysAgo: 200 }), { ato: 'ELEVATED', emailChanged: true }).codes.join() === 'PHONE,EMAIL', 'several fallbacks at once are all listed');
+
+  // ---- pure ----
+  const before = JSON.stringify(j.botimAssertion);
+  const r1 = R(j.botimAssertion, { ato: 'NORMAL' }); r1.phone.reasons.push('X'); r1.codes.push('X');
+  ok(JSON.stringify(j.botimAssertion) === before && JSON.stringify(R(j.botimAssertion, { ato: 'NORMAL' })) === JSON.stringify(d0), 'pure: the assertion is not mutated, and a mutated result does not leak into the next call');
+  throwsWith(() => R(j.botimAssertion, { ato: 'HIGH' }), 'NORMAL or ELEVATED', 'an unknown ATO level is refused');
+  throwsWith(() => R(j.botimAssertion, 'ELEVATED'), 'opts must be an object', 'opts must be an object');
+
+  // ---- decide(): contactVerification — recorded with the inputs, a Fraud & Integrity driver, never a decision input ----
+  E.init(D); const plain = E.decide(app(null));
+  const plainMemo = JSON.stringify(E.creditMemo(plain.id)), plainSftp = JSON.stringify(E.memoSftpRow(E.creditMemo(plain.id))), plainB = JSON.stringify(E.creditMemo(plain.id, { lenderId: 'lender-b' }));
+  const plainComps = E.noorScoreComponents(plain.id).components;
+  E.init(D); const rv = E.decide(app(BB));
+  eq(fingerprint(rv), V27_FINGERPRINTS.j1, 'Ravi relying on botim: the v2.9 fingerprint for j1 still matches (APPROVE 15000 B 737)');
+  const core = (r) => JSON.stringify([r.outcome, r.score, r.noorScore, r.limit, r.pricing, r.reasonCodes, r.features, r.rules, r.dataPulls, r.consents, r.token, r.repayment]);
+  ok(core(rv) === core(plain), 'outcome, score, limit, price, reason codes, features, rules, pulls, consents and token are identical with and without contactVerification');
+  eq(JSON.stringify(rv.inputs.contactVerification), JSON.stringify(BB), 'record.inputs.contactVerification = {phone BOTIM, email BOTIM}');
+  ok(!('contactVerification' in plain.inputs) && Object.keys(plain.inputs).join() === 'consents,emiratesId,dataSources,lenderId,earlyWarningVersion',
+     'without it, the logged inputs keep their v2.18 shape (no contactVerification key)');
+  ok(JSON.stringify(E.creditMemo(rv.id)) === plainMemo && JSON.stringify(E.memoSftpRow(E.creditMemo(rv.id))) === plainSftp && JSON.stringify(E.creditMemo(rv.id, { lenderId: 'lender-b' })) === plainB,
+     'the credit memo (Partner Bank and Lender B) and the SFTP row are byte-identical with and without it');
+  const comps = E.noorScoreComponents(rv.id).components, fi = comps[0], fi0 = plainComps[0];
+  ok(fi.key === 'fraudIntegrity' && fi.drivers[1] === 'Mobile and email verified by botim (relied on)', 'Fraud & Integrity (Decision log, internal): the driver “Mobile and email verified by botim (relied on)”');
+  ok(fi.tone === fi0.tone && fi.level === fi0.level && JSON.stringify(fi.factors) === JSON.stringify(fi0.factors) &&
+     JSON.stringify(fi.drivers.filter((x, i) => i !== 1)) === JSON.stringify(fi0.drivers), 'the level (' + fi.level + ') and the memo’s factor words are unchanged — one driver line more');
+  ok(JSON.stringify(comps.slice(1)) === JSON.stringify(plainComps.slice(1)), 'the other five components are unchanged');
+  ok(!plainComps[0].drivers.some(x => /botim|one-time code/i.test(x)), 'a decision without contactVerification has no such driver');
+  const rp = E.reproduceDecision(rv.id);
+  ok(rp.identical && rp.inputs.includes('Contact verification: Mobile and email verified by botim (relied on)'), 'reproduceDecision(): identical, and the logged inputs name the contact verification');
+  const lines = [['CODE', 'BOTIM', 'Mobile verified with Noor’s one-time code · email verified by botim (relied on)'],
+                 ['BOTIM', 'CODE', 'Mobile verified by botim (relied on) · email verified with Noor’s one-time code'],
+                 ['CODE', 'CODE', 'Mobile and email verified with Noor’s one-time codes']];
+  for (const [p, e, line] of lines) {
+    const r = E.decide(app({ phone: p, email: e }));
+    ok(E.noorScoreComponents(r.id).components[0].drivers[1] === line && fingerprint(r) === V27_FINGERPRINTS.j1, 'phone ' + p + ' · email ' + e + ' → “' + line + '”; the fingerprint holds');
+  }
+
+  // ---- refusals: the shape, and relying on botim without an assertion that supports it ----
+  const n0 = E.listDecisions().length;
+  for (const bad of [{ phone: 'BOTIM' }, { phone: 'BOTIM', email: 'BOTIM', sms: 'CODE' }, { phone: 'botim', email: 'BOTIM' }, ['BOTIM', 'BOTIM'], 'BOTIM', { phone: 'OTP', email: 'CODE' }]) {
+    throwsWith(() => E.decide(app(bad)), 'contactVerification must be {phone, email}', 'a malformed contactVerification is refused: ' + JSON.stringify(bad));
+  }
+  const stale = Object.assign({}, j, { botimAssertion: withPhone({ verifiedDaysAgo: 120 }) });
+  throwsWith(() => E.decide(app(BB, stale)), ['phone is BOTIM', 'STALE', 'one-time code'], 'relying on botim’s number verified 120 days ago is refused (a code is needed)');
+  const atoJ = Object.assign({}, j, { footprint: Object.assign({}, j.footprint, { breaches: { count: 3, includesCredentialStuffingCompilation: false } }) });
+  throwsWith(() => E.decide(app(BB, atoJ)), ['phone is BOTIM', 'ATO_ELEVATED'], 'ATO ELEVATED on the footprint: relying on botim’s number is refused (step-up code)');
+  const noEmail = Object.assign({}, j, { botimAssertion: { phone: j.botimAssertion.phone } });
+  throwsWith(() => E.decide(app(BB, noEmail)), ['email is BOTIM', 'NO_ASSERTION'], 'no verified email from botim: relying on it is refused');
+  throwsWith(() => E.decide({ productId: 'personal_loan', applicant: D.personasLoan[0], amount: 15000, tenorMonths: 12, consents: OF, contactVerification: BB }), 'phone is BOTIM',
+             'a persona without a botim assertion (r1) cannot be recorded as relied on');
+  eq(E.listDecisions().length, n0, 'refusals record nothing');
+  const atoOk = E.decide(app({ phone: 'CODE', email: 'BOTIM' }, atoJ)), staleOk = E.decide(app({ phone: 'CODE', email: 'BOTIM' }, stale));
+  ok(atoOk.outcome === 'APPROVE' && staleOk.outcome === 'APPROVE' && fingerprint(staleOk) === V27_FINGERPRINTS.j1 && atoOk.reasonCodes.includes('RC_STEP_UP_AUTH'),
+     'with the fallback code recorded (phone CODE), both decide as before (the ATO case keeps its v2.8 step-up sign-in before payout)');
+
+  // ---- privacy: the assertion and the reliance never reach a lender ----
+  const memo = E.creditMemo(rv.id), sftp = E.memoSftpRow(memo);
+  const t = JSON.stringify(memo) + '\n' + sftp.header.join(',') + '\n' + sftp.row.join(',');
+  ok(!/botim|relied|verifiedDaysAgo|deviceBound|contactVerification|BOTIM|one-time code|assertion/i.test(t), 'the memo and the SFTP row carry no botim assertion, reliance or code wording');
+  const expect = { incomeBand: T.income(12000), dbrBand: T.dbr(rv.features.dbrPct), freeCashFlowBand: T.fcf(3700), instalmentToCashFlowBand: T.share(rv.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) };
+  const hits = privacyScan(rv, memo, sftp, expect).concat(ipScan(memo, sftp, rv));
+  ok(hits.length === 0, 'the v2.5 privacy scan and the v2.18 Noor-IP scan stay clean' + (hits.length ? ' (' + hits.slice(0, 3).join('; ') + ')' : ''));
+
+  // ---- fingerprints, determinism, vocabulary ----
+  E.init(D);
+  const P = {}; for (const p of D.personasLoan) P[p.id] = p; for (const p of D.personasSplit) P[p.id] = p;
+  const fp = { r1: decidePersona('personal_loan', P.r1), r3: decidePersona('personal_loan', P.r3), c1: decidePersona('split', P.c1), j1: E.decide(app(BB)) };
+  ok(Object.keys(fp).every(k => fingerprint(fp[k]) === V27_FINGERPRINTS[k]), 'the v2.9 fingerprints still match (r1, r3, c1, j1 relying on botim)');
+  const run = () => { E.init(D); const x = E.decide(app(BB)); return JSON.stringify([x, E.noorScoreComponents(x.id), E.creditMemo(x.id), R(j.botimAssertion, { ato: 'NORMAL' })]); };
+  ok(run() === run(), 'two fresh init() runs: identical records, components, memos and reliance');
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|cash now/i;
+  const txt27 = JSON.stringify([d0, s120, ato, ov, ch, ne, lines]);
+  ok(!banned.test(txt27) && !mentionsSalaryTransfer(txt27), 'no banned vocabulary in the v2.20 reliance results or driver lines');
   E.init(D);
 });
 

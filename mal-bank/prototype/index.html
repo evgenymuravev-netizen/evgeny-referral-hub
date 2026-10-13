@@ -874,8 +874,6 @@ details.tbl-view table { margin-top:6px; }
 .ph-pill-o { flex:0 0 auto; border:1.5px solid currentColor; border-radius:var(--radius-pill); padding:6px 14px; font-family:var(--font-display); font-weight:700; font-size:15px; white-space:nowrap; }
 .ph-term-r { display:flex; flex-direction:column; align-items:flex-end; min-width:0; }
 .ph-term-pay { font-weight:700; font-size:17px; font-variant-numeric:tabular-nums; }
-.ph-term-apr { font-family:var(--font-label); font-size:13px; color:var(--muted); }
-.ph-row.sel .ph-term-apr { color:rgba(255,255,255,.9); }
 .ph-term-l { display:flex; flex-direction:column; align-items:flex-start; gap:4px; flex:0 0 auto; }
 .ph-term-cap { font-family:var(--font-label); font-size:12px; color:var(--muted); white-space:nowrap; padding-left:2px; }
 .ph-row.sel .ph-term-cap { color:rgba(255,255,255,.9); }
@@ -1924,6 +1922,16 @@ label.bk-acct { position:relative; cursor:pointer; }
   .rc-form-grid { grid-template-columns:1fr; }
   .rcl-act .field { max-width:none; }
 }
+/* ---------- v2.20 — rely on botim's verification: the check line, the skipped OTP step, the reliance box ---------- */
+.ph-check { display:flex; align-items:center; gap:7px; margin:0; font-family:var(--font-ui); font-size:14.5px; line-height:21px; font-weight:500; color:var(--ink); }
+.ph-check-ico { flex:0 0 18px; width:18px; height:18px; color:var(--ok); }
+.jr-step.jr-skipped { color:var(--muted); }
+.jr-step.jr-skipped .jr-st-t { text-decoration:line-through; }
+.jr-step.jr-skipped .jr-st-e.skip { font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.jr-rely .jr-sub-t { margin:2px 0 0; }
+.jr-rely-line { color:var(--ink-2); overflow-wrap:anywhere; }
+.jr-rely .callout { margin:0; }
+.jr-rely > .btn { align-self:flex-start; }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -3176,7 +3184,7 @@ var JR_FLOW = [
   /* v2.14 — the footprint check is covered by the terms accepted at sign-up (no checkbox) */
   /* v2.16 — the Emirates ID, front and back (3·2) */
   { t: 'Noor opens in botim', d: 'Web-view · account · email · Emirates ID', match: function (e) { return e.n >= 1 && e.n <= 3; },
-    c: 'Agrees to the hand-off, creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — and verifies the phone and the email. Then scans the front and back of the Emirates ID.',
+    c: 'Agrees to the hand-off and creates an account under the Terms of Use and Privacy policy — which cover the digital-footprint check — while Noor relies on botim’s verification of the phone and the email (a one-time code only as a fallback). Then scans the front and back of the Emirates ID.',   /* v2.20 */
     m: 'The Emirates ID is checked once the accounts are read (checkEmiratesId(): ID employer ↔ WPS salary payer, ID name ↔ account holder; POL_ID_VALID and POL_EMPLOYER_MATCH in decide(), refer only), and assessFootprint() runs for every applicant, covered by the terms accepted at sign-up. No contact preferences yet: they are asked once the loan is issued.',
     r: 'PDPL purpose limitation: identity and account security only, and the Privacy policy says how to object (Noor’s position — confirm the terms-based basis with counsel). Sex is never read and the ID images stay inside Noor as KYC records; nationality routes identity and enrichment only, never the score (CBUAE fair treatment).' },
   { t: 'Connect banks', d: 'Al Tareq consent', of: true, match: function (e) { return e.n === 4; },
@@ -3195,7 +3203,7 @@ var JR_FLOW = [
   { t: 'Choose your loan', d: 'Amount, term, purpose', match: function (e, v) { return v === 'A' ? (e.n === 8 && e.sub === 1) : e.n === 8; },
     c: 'Sets the amount, the term (6, 12 or 24 months) and the purpose.',
     m: 'Indicative payments come from loanInstalment(). Nothing is recorded.',
-    r: 'Noor policy: the personal-loan pricing bands set the “from” APR. Reg 29/2011: at most 48 months.' },
+    r: 'Noor policy: the personal-loan pricing bands set the indicative rate. Reg 29/2011: at most 48 months.' },   /* v2.20 — no per-row “from” APR on the term rows */
   { t: 'Final checks', d: 'AECB consent · UAE PASS · decide()', match: function (e) { return e.n === 9; },
     c: 'Gives AECB consent, confirms with UAE PASS and applies.',
     m: 'decide() for personal_loan: the journey’s first and only decision. It lands in the Decision log.',
@@ -7556,7 +7564,8 @@ function deepLinkDecision() {
     var p = Journey.persona;
     var rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: 15000, tenorMonths: 12, lenderId: 'partner-bank',
       consents: { aecb: true, openFinance: true, digitalFootprint: { basis: 'TERMS', termsVersion: JR_TERMS.version, acceptedAt: jrTermsAt() } },
-      emiratesId: true, dataSources: { approvedAccounts: ((p.connected && p.connected.accounts) || []).map(function (a) { return a.mask; }), months: jrMonthsSeen() } });
+      emiratesId: true, dataSources: { approvedAccounts: ((p.connected && p.connected.accounts) || []).map(function (a) { return a.mask; }), months: jrMonthsSeen() },
+      contactVerification: { phone: 'BOTIM', email: 'BOTIM' } });   /* v2.20 — the default journey relies on botim's verification */
     deepLinkDecision.seeded = rec.id;
     afterEngineMutation();
     return rec.id;
@@ -7677,15 +7686,34 @@ var JR_TERMS = {
 var JR_DC_PROXY = 'Noor is the proxy: Partner Bank relies on Noor’s data and verification. Completeness is how much of the customer’s financial picture Noor actually sees — the threshold is the minimum before Noor puts a score on it.';
 /* v2.16 — the what-if: the same card, with the salary paid by another (fictitious) company */
 var JR_EID_WHATIF_PAYER = 'SALARY/WPS PALMGATE TRADING';
-/* v2.18 — the phone scenarios at step 2 (behind-the-scenes switch): botim's number with the OTP (today), the OTP skipped for a
-   botim-verified UAE number (pending a CBUAE rules check), or an overseas number (+91…) → add a UAE number, then the OTP */
-var JR_PHONE_SCN = [['otp', 'UAE number verified by botim — OTP kept', 'default, today’s flow, until CBUAE confirms'],
-                    ['skip', 'UAE number verified by botim — OTP skipped', 'pending CBUAE rules check'],
-                    ['overseas', 'Overseas number (+91…)', 'add a UAE number, then the OTP to it']];
+/* v2.18 — the phone scenarios at step 2 (behind-the-scenes switch).
+   v2.20 — Noor relies on botim's phone and email verification by default (BOTIM-RELIANCE-SPEC.md): (b) is the default and sends
+   no code; (a) sends Noor's own code anyway, if compliance requires it; (c) an overseas number (+91…) → add a UAE number, then a
+   code to it. The keys stay as in v2.18. */
+var JR_PHONE_SCN = [['otp', 'Code sent anyway (if compliance requires it)', 'Noor’s own one-time code to botim’s UAE number'],
+                    ['skip', 'UAE number verified by botim — no code', 'default · relies on botim’s signed assertion'],
+                    ['overseas', 'Overseas number (+91…)', 'add a UAE number, then a code to it']];
+/* v2.20 — when a one-time code is still sent: the fallback cases (the spec's table), said behind the scenes at steps 2 and 3·1 */
+var JR_RELY_FALLBACKS = [
+  ['Overseas number', 'the botim account uses a home-country number → “Add your UAE mobile number”, then a code to it (a UAE number is needed for assessment and collections).'],
+  ['Stale or changed', 'botim last verified the number more than 90 days ago, or signals a SIM change → a code to the number.'],
+  ['Account-takeover risk', 'the footprint shows ATO ELEVATED → a code (step-up).'],
+  ['A different email', '“Use a different email” → a code to the new address.'],
+  ['No assertion', 'botim didn’t share a verified email → the customer enters one, then a code.']];
+var JR_RELY_CALL = 'relyOnBotimVerification({phone, email})';
 var JR_PHONE_OVERSEAS = '+91 98•• ••• •21';
 var JR_UAE_REQUIRED = 'A local UAE number is required for assessment and collection; many botim users registered with a home number.';
 function jrPhoneShared() { return Journey.S && Journey.S.phoneScn === 'overseas' ? JR_PHONE_OVERSEAS : JR_HOST.phoneMasked; }
 function jrUaeMasked(d) { return '+971 ' + String(d).slice(0, 1) + '• ••• ••' + String(d).slice(-2); }
+/* v2.20 — botim's signed assertion as this journey's hand-off carries it: Ravi's (data.js); in scenario (c) the number botim
+   registered is a home-country one, so the same assertion with uae:false. A copy — the persona is never touched. */
+function jrAssertion() {
+  var p = Journey.persona, a = p && p.botimAssertion ? JSON.parse(JSON.stringify(p.botimAssertion)) : null;
+  if (a && a.phone && Journey.S && Journey.S.phoneScn === 'overseas') a.phone.uae = false;
+  return a;
+}
+/* v2.20 — what botim's assertion supports before the footprint has run (no account-takeover input yet) */
+function jrRelyPreview() { try { return ME.botimReliance(jrAssertion()); } catch (e) { return null; } }
 /* v2.18 — steps 11–16·0 (lender confirmation → payout) run in botim's loan flow: the botim frame, not Noor's web-view */
 function jrInBotimFrame() { var S = Journey.S; return !!S && ((S.step >= 11 && S.step <= 15) || (S.step === 16 && S.sub === 0)); }
 /* When the terms were accepted: the demo's day (MizanData.TODAY), just before the engine's session clock starts (09:00) */
@@ -7701,8 +7729,11 @@ function jrFresh(variant) {
            pqKey: null, dcWhatIf: null,
            comms: { service: { EMAIL: false, SMS: true, WHATSAPP: false, PUSH: true }, marketing: { EMAIL: false, SMS: false, WHATSAPP: false, PUSH: false } },
            commsTouched: false, commsDone: false, commsErr: null,
-           /* v2.18 — the All page (botim's menu); the phone scenario (OTP kept · skipped · overseas number); AECB pre-ticked (opt-out) */
-           allMenu: false, phoneScn: 'otp', otpSkipped: false, uaePhone: '', uaePhoneErr: null,
+           /* v2.18 — the All page (botim's menu); the phone scenario; AECB pre-ticked (opt-out).
+              v2.20 — scenario (b), relying on botim's verification, is the default; the reliance result (relyOnBotimVerification),
+              who verified the email ('botim' | 'code') and the 120-days what-if (display only) */
+           allMenu: false, phoneScn: 'skip', otpSkipped: false, uaePhone: '', uaePhoneErr: null,
+           reliance: null, relyLine: null, emailBy: null, relyWhatIf: null,
            insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: true,
            recId: null, applyErr: null, eventErr: null, kfsLang: 'en', kfsSheet: false, waive: false, memoSent: null, pwaOpen: false,
            calls: [], botim: [], logged: {} };
@@ -7990,22 +8021,68 @@ var Journey = {
       h('div', { class: 'ph-mini-s', text: 'Total ' + fmtAED(total) + ', every month — card and loan together' }));
   },
   /* v2.14 — step 2: accepting the Terms of Use and Privacy policy (which cover the footprint check), kept with its version and time */
-  /* v2.18 — after "Create your account": the OTP (today), straight on to the email (OTP skipped for a botim-verified UAE
-     number, pending CBUAE), or "Add your UAE mobile number" first (an overseas number) */
+  /* v2.18 — after "Create your account": the OTP, straight on to the email, or "Add your UAE mobile number" first.
+     v2.20 — Noor relies on botim's signed assertion by default (relyOnBotimVerification): no code for the number, and the email
+     botim verified needs none either — straight on to 3·1. A code only as a fallback: an overseas number (add a UAE number
+     first), a stale or changed number, account-takeover risk — or scenario (a), when compliance requires a code anyway. */
   phoneNext: function () {
     var S = Journey.S;
-    if (S.phoneScn === 'skip') {
+    if (!S.reliance) Journey.relyOnBotim();
+    var rl = S.reliance;
+    if (S.phoneScn === 'skip' && rl && rl.phone.relied) {
       S.phoneOk = true; S.otpSkipped = true;
-      Journey.log('OTP skipped (scenario b)', 'botim already confirmed this number — pending a CBUAE rules check; no code sent');
       Journey.go(3, 1, 1); return;
     }
-    if (S.phoneScn === 'overseas' && !S.uaePhone) { Journey.go(2, 1, 1); return; }
+    if ((S.phoneScn === 'overseas' || (rl && rl.phone.addUaeNumber)) && !S.uaePhone) { Journey.go(2, 1, 1); return; }
     Journey.go(3, 0, 1);
+  },
+  /* v2.20 — relyOnBotimVerification({phone, email}): botimReliance() on the hand-off's signed assertion (pure). The email botim
+     verified lets the footprint check run now (covered by the terms just accepted); its account-takeover risk is the number's
+     step-up input. Logged once under "Mizan calls"; nothing is sent and nothing is recorded. */
+  relyOnBotim: function () {
+    var S = Journey.S, a = jrAssertion();
+    var rl;
+    try {
+      if (ME.botimReliance(a).email.relied) Journey.runFootprint();
+      rl = ME.botimReliance(a, { ato: S.fpa ? S.fpa.security.atoRisk : null });
+    } catch (err) { S.reliance = null; return; }
+    S.reliance = rl;
+    S.relyLine = S.phoneScn === 'otp' && rl.phone.relied
+      ? rl.phone.line + ' · ' + rl.email.line + ' — a code to the number anyway (scenario a: if compliance requires it)'
+      : rl.summary;
+    if (rl.email.relied) Journey.useBotimEmail();
+    else if (rl.email.enterEmail) { S.emailEdit = true; S.emailOk = false; S.emailBy = null; }
+    Journey.log(JR_RELY_CALL, S.relyLine);
+  },
+  /* v2.20 — the email botim shared and verified: relied on, no code (Email joins the default service channels, as on verification) */
+  useBotimEmail: function () {
+    var S = Journey.S;
+    S.emailEdit = false; S.emailErr = null; S.emailCode = ''; S.emailCodeErr = false; S.emailOk = true; S.emailBy = 'botim';
+    if (!S.commsTouched) S.comms.service.EMAIL = true;
+  },
+  /* v2.20 — the what-if: the same assertion, last verified 120 days ago. Shows the code fallback behind the scenes only —
+     the journey (step, verified number and email, codes) is unchanged */
+  relyWhatIf: function () {
+    var S = Journey.S, a = jrAssertion();
+    if (!a || !a.phone) return;
+    a.phone.verifiedDaysAgo = 120;
+    try {
+      var w = ME.botimReliance(a, { ato: S.fpa ? S.fpa.security.atoRisk : null });
+      S.relyWhatIf = w;
+      Journey.log('relyOnBotimVerification({phone:{verifiedDaysAgo:120}, email})', 'what-if · ' + w.summary + ' · the journey is unchanged');
+    } catch (err) { S.relyWhatIf = { err: err && err.message ? err.message : String(err) }; }
+    Journey.render();
+  },
+  /* v2.20 — what decide() records about the mobile and the email (internal: the Decision log's Fraud & Integrity drivers) */
+  contactVerification: function () {
+    var S = Journey.S;
+    return { phone: S.otpSkipped ? 'BOTIM' : 'CODE', email: S.emailBy === 'botim' ? 'BOTIM' : 'CODE' };
   },
   setPhoneScn: function (k) {
     var S = Journey.S;
     if (S.phoneOk || S.phoneScn === k) return;
     S.phoneScn = k; S.uaePhone = ''; S.uaePhoneDraft = ''; S.uaePhoneErr = null; S.otpSkipped = false;
+    S.reliance = null; S.relyLine = null;   /* v2.20 — Continue re-checks the assertion for the new scenario */
     if (S.step === 2 && S.sub === 1 && k !== 'overseas') { Journey.go(2, 0, -1); return; }
     Journey.render();
   },
@@ -8092,15 +8169,19 @@ var Journey = {
     var eid = S.eidDone && S.eid.front && S.eid.back;
     /* v2.17 — dataSources: the accounts approved in the banks' apps (step 1, data completeness) */
     var dsMasks = Journey.dcMasks();
+    /* v2.20 — how the mobile and the email were verified: botim relied on (no code) or Noor's one-time code */
+    var cv = Journey.contactVerification();
     var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true' +
       (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}' + (eid ? ', emiratesId:{front, back}' : '') +
-      (dsMasks.length ? ', dataSources:{' + dsMasks.length + ' accounts, ' + jrMonthsSeen() + ' months}' : '') + '})';
+      (dsMasks.length ? ', dataSources:{' + dsMasks.length + ' accounts, ' + jrMonthsSeen() + ' months}' : '') +
+      ', contactVerification:{phone:' + cv.phone + ', email:' + cv.email + '}})';
     var cons = { aecb: !!S.aecb, openFinance: true };
     if (fpc) cons.digitalFootprint = fpc;
     try {
       var app = { productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' };
       if (eid) app.emiratesId = true;
       if (dsMasks.length) app.dataSources = { approvedAccounts: dsMasks, months: jrMonthsSeen() };
+      app.contactVerification = cv;
       rec = ME.decide(app);
     } catch (err) {
       /* Expected: no AECB consent → the engine refuses. Shown in the phone, calmly. */
@@ -8643,11 +8724,13 @@ var Journey = {
         Journey.connectFirst(),
         h('h2', { class: 'ph-h1', text: 'Create your account' }),
         h('label', { class: 'ph-field' }, h('span', { class: 'ph-field-l', text: 'Mobile number' }),
-          h('span', { class: 'ph-input' }, h('span', { class: 'ph-input-v', id: 'jr-phone-v', text: phone }), h('span', { class: 'ph-tag ph-tag-sm', text: S.phoneScn === 'skip' ? 'verified by botim' : 'shared by Botim' }))),
-        /* v2.18 — the phone scenario decides what happens to the number botim shared */
-        S.phoneScn === 'skip' ? h('p', { class: 'ph-small', id: 'jr-otp-skip-note', text: 'botim already confirmed this number — no code needed.' })
+          h('span', { class: 'ph-input' }, h('span', { class: 'ph-input-v', id: 'jr-phone-v', text: phone }), h('span', { class: 'ph-tag ph-tag-sm', text: 'shared by Botim' }))),
+        /* v2.18 — the phone scenario decides what happens to the number botim shared.
+           v2.20 — by default a check line replaces the one-time code: Noor relies on botim's verification */
+        S.phoneScn === 'skip' && (jrRelyPreview() || { phone: {} }).phone.relied
+          ? h('p', { class: 'ph-check', id: 'jr-otp-skip-note' }, jrSvg(JR_ICON.check, 'ph-check-ico', '2.4'), h('span', { text: 'Verified by botim — no code needed' }))
           : (S.phoneScn === 'overseas' ? h('p', { class: 'ph-small', id: 'jr-overseas-note', text: 'This is a home-country number. Next, add your UAE mobile number — Noor needs it for your assessment and for repayments.' })
-            : h('p', { class: 'ph-small', text: 'We’ll send a one-time code to confirm it’s you.' })),
+            : h('p', { class: 'ph-small', id: 'jr-otp-note', text: 'We’ll send a one-time code to confirm it’s you.' })),
         Journey.termsSheet()),
         /* v2.14 — "Privacy policy" and "Terms of Use" open the clause; continuing records the acceptance (version + time) */
         h('div', null, h('p', { class: 'ph-legal', id: 'jr-legal' }, 'By continuing you agree to ', Journey.termsLink('privacy', 'Privacy policy', 'jr-privacy-link'), ' and ',
@@ -8815,30 +8898,41 @@ var Journey = {
     return msg ? h('div', { class: 'ph-note ph-note-err', id: 'jr-engine-err', role: 'alert' }, h('span', null, h('strong', { text: title || 'That step isn’t available yet. ' }),
       h('span', { class: 'ph-small ph-block ph-mono-msg', text: msg }))) : null;
   },
-  /* v2.8 — sub-step 3·1: the email botim shared, verified by Noor; then an optional, separate digital-footprint consent */
+  /* v2.8 — sub-step 3·1: the email botim shared, verified by Noor; then an optional, separate digital-footprint consent.
+     v2.20 — the email botim shared is verified by botim: "✓ Verified by botim", no code entry. "Use a different email" opens the
+     field and the 6-digit code, as before (a code to the new address); without a botim email the customer types one and gets a
+     code. The v2.14 notice line stays in every state. */
   emailView: function () {
     var S = Journey.S, p = Journey.persona, B = Journey.btn;
     var shared = (p.contact || {}).email || '';
+    var botimEmail = !!(S.reliance ? S.reliance.email.relied : (jrRelyPreview() || { email: {} }).email.relied);
     var masked = S.emailEdit ? (S.emailOther ? jrMaskEmail(S.emailOther) : 'your new email') : jrMaskEmail(shared);
+    var notice = function () {
+      return h('p', { class: 'ph-small ph-muted ph-fp-notice', id: 'jr-fp-notice' }, 'We verify your email and phone to protect your account — see our ',
+        Journey.termsLink('privacy', 'Privacy policy', 'jr-fp-privacy'), '.');
+    };
     var field;
     if (!S.emailEdit) {
       field = h('div', { class: 'ph-field' }, h('span', { class: 'ph-field-l', text: 'Email' }),
         h('span', { class: 'ph-input', id: 'jr-email-field' }, h('span', { class: 'ph-input-v', id: 'jr-email-v', text: jrMaskEmail(shared) }),
           h('span', { class: 'ph-tag ph-tag-sm', text: 'shared by botim' })),
-        S.emailOk ? null : h('button', { class: 'ph-textlink', type: 'button', id: 'jr-email-other', onclick: function () {
-          S.emailEdit = true; S.emailOk = false; S.emailCode = ''; S.emailCodeErr = false; S.emailErr = null; Journey.render(); } }, 'Use a different email'));
+        S.emailOk && S.emailBy !== 'botim' ? null : h('button', { class: 'ph-textlink', type: 'button', id: 'jr-email-other', onclick: function () {
+          S.emailEdit = true; S.emailOk = false; S.emailBy = null; S.emailCode = ''; S.emailCodeErr = false; S.emailErr = null;
+          /* v2.20 — a changed email: botim's verification no longer covers it → a code to the new address */
+          try { Journey.log(JR_RELY_CALL.replace('email}', 'email:changed}'), ME.botimReliance(jrAssertion(), { ato: S.fpa ? S.fpa.security.atoRisk : null, emailChanged: true }).summary); } catch (e) {}
+          Journey.render(); } }, 'Use a different email'));
     } else {
       var inp = h('input', { class: 'ph-text', type: 'email', id: 'jr-email-input', value: S.emailOther, placeholder: 'Your email address', autocomplete: 'email',
         'aria-label': 'Your email', disabled: S.emailOk ? 'disabled' : null, oninput: function (ev) { S.emailOther = ev.target.value; S.emailErr = null; } });
       field = h('div', { class: 'ph-field' }, h('label', { class: 'ph-field-l', for: 'jr-email-input', text: 'Email' }), inp,
         S.emailErr ? h('p', { class: 'ph-err', id: 'jr-email-err', text: S.emailErr }) : null,
-        S.emailOk ? null : h('button', { class: 'ph-textlink', type: 'button', id: 'jr-email-shared', onclick: function () {
-          S.emailEdit = false; S.emailErr = null; S.emailCode = ''; S.emailCodeErr = false; Journey.render(); } }, 'Use the email botim shared'));
+        S.emailOk || !botimEmail ? null : h('button', { class: 'ph-textlink', type: 'button', id: 'jr-email-shared', onclick: function () {
+          Journey.useBotimEmail(); Journey.render(); } }, 'Use the email botim shared'));
     }
     var verify = function () {
       if (S.emailEdit && !/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(S.emailOther || '')) { S.emailErr = 'Enter a valid email address.'; Journey.render(); return; }
       if (S.emailCode.length < 6) { S.emailCodeErr = true; Journey.render(); return; }
-      S.emailOk = true; S.emailCodeErr = false;
+      S.emailOk = true; S.emailBy = 'code'; S.emailCodeErr = false;
       if (!S.commsTouched) S.comms.service.EMAIL = true;   /* Email joins the defaults once it is verified */
       Journey.runFootprint();   /* v2.14 — covered by the terms accepted at step 2: no checkbox */
       Journey.render();
@@ -8846,28 +8940,31 @@ var Journey = {
     if (!S.emailOk) {
       var cells = h('div', { class: 'ph-otp', id: 'jr-email-otp', role: 'group', 'aria-label': '6-digit email code' });
       for (var i = 0; i < 6; i++) cells.appendChild(h('span', { class: 'ph-otp-c' + (S.emailCode[i] ? ' on' : (i === S.emailCode.length ? ' cur' : '')), text: S.emailCode[i] || '' }));
-      return Journey.wv(h('div', { id: 'jr-email' },
-        S.otpSkipped ? h('div', { class: 'ph-note ph-note-ok', id: 'jr-otp-skipped' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'botim already confirmed this number' })) : null,
+      return Journey.wv(h('div', { id: 'jr-email', dataset: { verified: 'false', by: '' } },
         h('h2', { class: 'ph-h1', text: 'Your email' }),
         h('p', { class: 'ph-small', text: 'For your Key Facts, statements and receipts.' }),
         field,
         h('p', { class: 'ph-label', id: 'jr-email-sent', text: 'Enter the 6-digit code we sent to ' + masked }),
         cells,
-        S.emailCodeErr ? h('p', { class: 'ph-err', text: 'Enter the 6-digit code we sent to your email.' }) : null),
+        S.emailCodeErr ? h('p', { class: 'ph-err', text: 'Enter the 6-digit code we sent to your email.' }) : null,
+        notice(),
+        Journey.termsSheet()),
         h('div', null,
           S.emailCode.length < 6 ? h('button', { class: 'ph-autofill', type: 'button', id: 'jr-email-fill', onclick: function () { S.emailCode = '739204'; S.emailCodeErr = false; Journey.render(); } },
             h('span', { class: 'ph-af-k', text: 'From Mail' }), h('span', { class: 'ph-af-v', text: '739 204' })) : null,
           B('Verify email', verify, 'jr-cta')));
     }
     /* v2.14 — no "Digital footprint check · Optional" checkbox: the check is covered by the terms accepted at step 2.
-       A notice, not a question: one muted line under the confirmation (its "Privacy policy" opens the clause). */
-    return Journey.wv(h('div', { id: 'jr-email', dataset: { verified: 'true' } },
-      S.otpSkipped ? h('div', { class: 'ph-note ph-note-ok', id: 'jr-otp-skipped' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'botim already confirmed this number' })) : null,
+       A notice, not a question: one muted line under the confirmation (its "Privacy policy" opens the clause).
+       v2.20 — the confirmation is "✓ Verified by botim" when Noor relied on botim's verification, "Email verified" after a code */
+    var byBotim = S.emailBy === 'botim';
+    return Journey.wv(h('div', { id: 'jr-email', dataset: { verified: 'true', by: byBotim ? 'botim' : 'code' } },
       h('h2', { class: 'ph-h1', text: 'Your email' }),
+      byBotim ? h('p', { class: 'ph-small', text: 'For your Key Facts, statements and receipts.' }) : null,
       field,
-      h('div', { class: 'ph-note ph-note-ok', id: 'jr-email-ok' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'Email verified · ' + masked })),
-      h('p', { class: 'ph-small ph-muted ph-fp-notice', id: 'jr-fp-notice' }, 'We verify your email and phone to protect your account — see our ',
-        Journey.termsLink('privacy', 'Privacy policy', 'jr-fp-privacy'), '.'),
+      byBotim ? h('p', { class: 'ph-check', id: 'jr-email-ok', dataset: { by: 'botim' } }, jrSvg(JR_ICON.check, 'ph-check-ico', '2.4'), h('span', { text: 'Verified by botim' }))
+        : h('div', { class: 'ph-note ph-note-ok', id: 'jr-email-ok', dataset: { by: 'code' } }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'Email verified · ' + masked })),
+      notice(),
       Journey.termsSheet()),
       B('Continue', function () { S.emailDone = true; Journey.go(3, 2, 1); }, 'jr-cta'));   /* v2.16 — then the Emirates ID (3·2); contact preferences still come after the payout (v2.13) */
   },
@@ -9055,6 +9152,37 @@ var Journey = {
     return h('span', { class: 'jr-chip', id: 'jr-eid-enrich', dataset: { chip: 'enrichment', corridor: en.corridor || '' },
       text: 'Nationality → ' + (en.corridor ? 'can offer ' + en.offer.join(' · ') : 'no home-country data to offer') + ' · never a score input' });
   },
+  /* v2.20 — behind the scenes at steps 2 and 3·1: Noor relies on botim's signed assertion; a one-time code only as a fallback.
+     The result of relyOnBotimVerification (once Continue ran), the fallback cases, UAE PASS, Noor's position and the what-if. */
+  relyBox: function () {
+    var S = Journey.S, rl = S.reliance, w = S.relyWhatIf, a = jrAssertion();
+    var box = h('div', { class: 'jr-engine jr-rely', id: 'jr-rely', dataset: { relied: rl ? String(rl.phone.relied && rl.email.relied) : '' } },
+      h('div', { class: 'jr-engine-h' }, h('code', { text: JR_RELY_CALL }), h('span', { class: 'small muted', text: rl ? ' · botimReliance() — pure, no record' : ' · runs on Continue (step 2)' })));
+    if (rl) {
+      box.appendChild(h('div', { class: 'jr-chips', id: 'jr-rely-chips' },
+        h('span', { class: 'jr-chip' + (rl.phone.relied && S.phoneScn !== 'otp' ? ' ok' : ' warn'), dataset: { chip: 'phone' },
+          text: rl.phone.relied ? (S.phoneScn === 'otp' ? 'Phone: verified by botim — code sent anyway (a)' : 'Phone: relied on — no code') : 'Phone: code (' + rl.phone.reasons.join(', ').toLowerCase().replace(/_/g, ' ') + ')' }),
+        h('span', { class: 'jr-chip' + (S.emailBy === 'botim' ? ' ok' : ' warn'), dataset: { chip: 'email' },
+          text: S.emailBy === 'botim' ? 'Email: relied on — no code' : (S.emailBy === 'code' ? 'Email: verified with a code' : 'Email: code (' + (S.emailEdit ? 'a different email' : rl.email.reasons.join(', ').toLowerCase().replace(/_/g, ' ')) + ')') })));
+      box.appendChild(h('div', { class: 'small jr-rely-line', id: 'jr-rely-line', text: '→ ' + (S.relyLine || rl.summary) }));
+    }
+    var asr = a && a.phone ? 'The signed botim assertion: the number is verified by botim and is ' + (a.phone.uae ? 'a UAE number (+971)' : 'a home-country number') +
+      ', the email is verified by botim, the verification date (' + a.phone.verifiedDaysAgo + ' days ago) and the device binding' + (a.phone.deviceBound ? ' (bound)' : ' (none)') + '.' : 'No botim assertion with this hand-off.';
+    box.appendChild(h('div', { class: 'small', id: 'jr-rely-assertion', text: asr }));
+    box.appendChild(h('div', { class: 'jr-sub-t', text: 'A one-time code only as a fallback' }));
+    box.appendChild(h('ul', { class: 'jr-bts-l', id: 'jr-rely-fallbacks' }, JR_RELY_FALLBACKS.map(function (f) { return h('li', null, h('strong', { text: f[0] + ': ' }), f[1]); })));
+    box.appendChild(h('div', { class: 'small', id: 'jr-rely-uaepass', text: 'UAE PASS at step 9 remains the strong identity check before any decision — and the Emirates ID scan (3·2) still runs.' }));
+    box.appendChild(h('div', { class: 'callout callout-warn', id: 'jr-rely-position' }, h('div', { class: 'co-title', text: 'Noor’s position — confirm with compliance (open action from 8 Oct)' }),
+      h('div', { class: 'co-body', text: 'Relying on botim’s verification instead of Noor’s own one-time code is the open 8 Oct action “Verify CBUAE OTP rules for Botim-passed phone numbers”. If compliance requires a code, scenario (a) shows that flow.' })));
+    box.appendChild(h('button', { class: 'btn', type: 'button', id: 'jr-rely-whatif', text: 'What if botim last verified this number 120 days ago?', onclick: function () { Journey.relyWhatIf(); } }));
+    if (w) {
+      box.appendChild(w.err ? h('div', { class: 'small', id: 'jr-rely-whatif-out', text: w.err })
+        : h('div', { class: 'callout callout-warn', id: 'jr-rely-whatif-out', dataset: { code: String(w.phone.code) } },
+            h('div', { class: 'co-title', text: w.phone.code ? 'Fallback: a one-time code to the number — botim’s check is ' + w.phone.verifiedDaysAgo + ' days old (over ' + w.maxAgeDays + ')' : 'Still relied on — no code' }),
+            h('div', { class: 'co-body', text: '→ ' + w.summary + '. What-if only: the journey is unchanged — no code is sent here and nothing is recorded.' })));
+    }
+    return box;
+  },
   /* Behind the scenes (3·2, 7·2 and variant A's 8·2): what the scan read, the cross-check, and the what-if */
   eidEngineBox: function () {
     var S = Journey.S, c = S.eidCheck, w = S.eidWhatIf;
@@ -9135,7 +9263,7 @@ var Journey = {
           dataset: { months: String(m), pay: String(pay) }, onclick: function () { S.months = m; paint(); } },
           h('span', { class: 'ph-term-l' }, h('span', { class: 'ph-pill-o', text: jrMonths(m) }),
             cap !== null ? h('span', { class: 'ph-term-cap', text: 'fits up to ' + fmtAED(cap) }) : null),
-          h('span', { class: 'ph-term-r' }, h('span', { class: 'ph-term-pay', text: 'about ' + fmtMoney(pay) + '/mo' }), h('span', { class: 'ph-term-apr', text: 'from ' + fmtRate(bands.A[0]) + ' APR' }))));
+          h('span', { class: 'ph-term-r' }, h('span', { class: 'ph-term-pay', text: 'about ' + fmtMoney(pay) + '/mo' }))));   /* v2.20 — no per-row APR: the indicative line below says the rate */
       });
     }
     amt.addEventListener('input', function () { S.amount = Number(amt.value); paint(); });
@@ -9195,7 +9323,7 @@ var Journey = {
         rows.appendChild(h('button', { class: 'ph-row ph-term' + (on ? ' sel' : ''), type: 'button', role: 'radio', id: 'jr-term-' + m, 'aria-checked': on ? 'true' : 'false',
           dataset: { months: String(m), pay: String(pay), cap: String(capM) }, onclick: function () { S.months = m; paint(); } },
           h('span', { class: 'ph-term-l' }, h('span', { class: 'ph-pill-o', text: jrMonths(m) }), h('span', { class: 'ph-term-cap', text: 'up to ' + fmtAED(capM) })),
-          h('span', { class: 'ph-term-r' }, h('span', { class: 'ph-term-pay', text: fmtMoney(pay) + '/mo' }), h('span', { class: 'ph-term-apr', text: 'from ' + fmtRate(ip.aprMin) + ' APR' }))));
+          h('span', { class: 'ph-term-r' }, h('span', { class: 'ph-term-pay', text: fmtMoney(pay) + '/mo' }))));   /* v2.20 — no per-row APR: the indicative line below says the rate */
       });
       var rep = repayFor(S.amount);
       clear(repay);
@@ -9420,7 +9548,9 @@ var Journey = {
           S.intent === 'loan' ? (A ? 'Variant A: the customer named an amount first; Noor needs an account and the bank accounts to check it fits.' : 'The customer asked “How much can you borrow?” before connecting a bank, so Noor asks them to connect first — pre-qualification is worked out from the accounts.')
             : 'Entry 1: the customer tapped “Add another +” in Connected accounts.']],
       2: ['Noor’s own account', ['The number comes from the hand-off; the customer confirms it and accepts Noor’s Terms and Privacy policy — Noor is responsible for the data that follows.',
-          'The Terms of Use and Privacy policy (' + JR_TERMS.version + ') cover the digital-footprint check — there is no separate checkbox later. Continuing records the acceptance with its version and time; decide() receives it as the check’s basis.']],
+          'The Terms of Use and Privacy policy (' + JR_TERMS.version + ') cover the digital-footprint check — there is no separate checkbox later. Continuing records the acceptance with its version and time; decide() receives it as the check’s basis.',
+          /* v2.20 — rely on botim's verification (BOTIM-RELIANCE-SPEC.md) */
+          'botim already verified the number and the email: the hand-off carries a signed botim assertion, so Noor relies on it — no one-time codes by default. Continue checks the assertion (relyOnBotimVerification) and goes straight to the email.']],
       /* v2.16 — 3·2, the Emirates ID front + back (JOURNEY-EID-SPEC.md §1) */
       3: sub === 2 ? ['Your Emirates ID — front and back, checked against the salary payer', [
             'The back of a resident’s Emirates ID shows the employer. Once the accounts are connected, Mizan checks that the salary credits come from the same company (the WPS payer name) and that the name on the card matches the account holder.',
@@ -9432,7 +9562,8 @@ var Journey = {
             'Front and back is enough: the Open Finance match (ID name ↔ account holder, employer ↔ salary payer) does the work a liveness check would — confirm with compliance.',
             'Nationality: identity and enrichment routing only; never a NoorScore input (CBUAE fair treatment and the AI/ML guidance).']]
         : sub === 1 ? ['Your email — and the digital-footprint check, covered by the terms', [
-            'botim shared the email at hand-off; Noor confirms it with its own 6-digit code before using it. The customer can use a different one.',
+            /* v2.20 — botim's verification is relied on; a code only for a different email or when botim shared none */
+            'botim shared the email at hand-off and verified it: Noor relies on that — no code. “Use a different email” sends a 6-digit code to the new address; without a botim email the customer types one and gets a code.',
             /* v2.14 — no separate checkbox (JOURNEY-FOOTPRINT-TC-SPEC.md §1) */
             'No separate checkbox: the check is covered by the Terms of Use and Privacy policy accepted when the account was created (step 2).',
             'Purpose stays limited to identity and account security; the thin-file overlay runs in shadow until switched live.',
@@ -9440,7 +9571,13 @@ var Journey = {
             'Noor’s position — confirm with counsel that a terms-based basis is enough under PDPL for a third-party provider, including where the provider processes data.',
             'Never used for credit here: Ravi has an AECB file; on a thin file the overlay runs in shadow until back-tested.',
             'Never used at all: gender, lifestyle traits, service names, breach sources (PDPL minimisation).']]
-        : ['Noor verifies the number itself', ['A one-time code from Noor: the host’s hand-off is a convenience, not proof of identity. UAE PASS comes later, for signing.']],
+        : ['A one-time code — the fallback', [
+            /* v2.20 — by default this step is skipped (botim verified the number) */
+            S.phoneScn === 'otp' ? 'Scenario (a): Noor sends its own code even though botim verified the number — the step compliance would require if relying on botim is not acceptable.'
+              : (S.phoneScn === 'overseas' ? 'Scenario (c): botim registered a home-country number, so the code confirms the UAE number added at 2·1.'
+                : 'botim’s assertion did not cover this number (' + ((S.reliance && S.reliance.phone.reasons.join(', ').toLowerCase().replace(/_/g, ' ')) || 'no assertion') + '), so Noor confirms it with a code.'),
+            'By default this step is skipped: Noor relies on botim’s signed assertion. A code is sent only as a fallback — an overseas number, a stale or changed number, account-takeover risk, or when compliance requires it.',
+            'UAE PASS at step 9 remains the strong identity check before any decision.']],
       4: ['Al Tareq — UAE Open Finance consent', [
           'Al Tareq is the CBUAE’s Open Finance platform; Noor is the licensed third party that holds this consent.',
           'The consent is specific: what (accounts, balances, 12 months of transactions), why (what the customer can afford — and, while a loan with Noor is open, spotting early if repayments might become hard), how long (12 months or until cancelled), and where it shows: in Noor — including Noor views inside botim.',
@@ -9484,7 +9621,7 @@ var Journey = {
           'AECB consent is required by law before any loan (Federal Law 6/2010). Without it the engine refuses — try confirming with the box unticked.',
           'Applying also records consent “share with lender”: Partner Bank gets the application result, never the bank data.' +
             (S.terms ? ' The digital-footprint check runs on the terms accepted at sign-up (' + S.terms.version + ') — recorded as its basis, and it stays with Noor.' : ''),
-          'Contact preferences are asked once the loan is issued. Until then, service messages — the Key Facts, the e-signature and the confirmations — happen inside the Noor web-view, and the verified mobile (the OTP number) gets them by SMS.',
+          'Contact preferences are asked once the loan is issued. Until then, service messages — the Key Facts, the e-signature and the confirmations — happen inside the Noor web-view, and the verified mobile (verified by botim, or by Noor’s code) gets them by SMS.',
           'UAE PASS confirms identity; decide() then pulls AECB, verifies the salary through Open Finance, runs the policy pack — including the free-cash-flow rule — NoorScore and the limit, and prices the loan.']],
       10: ['The offer is the decision record', [
           'Every figure on this screen is read from ' + (S.recId || 'the decision record') + ': amount, term, APR (mid of band B), instalment and total repayable — the record the Decision log replays.',
@@ -9583,6 +9720,8 @@ var Journey = {
         h('span', { class: 'small muted', text: ' · for the demo; botim’s handling of overseas vs local numbers is being agreed' })), scnBox,
         h('div', { class: 'small', id: 'jr-uae-required', text: JR_UAE_REQUIRED })));
     }
+    /* v2.20 — relying on botim's verification: the assertion, the fallbacks, UAE PASS, Noor's position and the 120-days what-if */
+    if (st === 2 || (st === 3 && sub === 1)) wrap.appendChild(Journey.relyBox());
     if (st === 3 && sub === 0 && S.phoneScn === 'overseas') wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-otp-uae-note' }, h('div', { class: 'co-title', text: 'The code goes to the UAE number' }),
       h('div', { class: 'co-body', text: 'botim registered the customer with a home-country number (' + JR_PHONE_OVERSEAS + '). The one-time code confirms the UAE number added at 2·1 — the number Noor and the lender use for assessment and collections.' })));
     /* v2.18 — Open Finance notes (8 Oct) */
@@ -9665,7 +9804,7 @@ var Journey = {
     /* v2.17 — "Two steps to a score", from step 6 on (once the accounts are read) */
     if (S.step >= 6 && S.connected) { var ts = Journey.twoSteps(); if (ts) box.appendChild(ts); }
     var calls = h('div', { class: 'jr-calls', id: 'jr-calls' });
-    if (!S.calls.length) calls.appendChild(h('div', { class: 'small muted', text: 'No engine calls yet — they start once the accounts are connected.' }));
+    if (!S.calls.length) calls.appendChild(h('div', { class: 'small muted', text: 'No engine calls yet — they start when the account is created (step 2).' }));   /* v2.20 — relyOnBotimVerification and the footprint check run on Continue at step 2 */
     S.calls.slice(-6).forEach(function (c) { calls.appendChild(h('div', { class: 'jr-call' }, h('code', { text: c.call }), h('span', { class: 'jr-call-r', text: '→ ' + c.result }))); });
     var bot = h('div', { class: 'jr-botim', id: 'jr-botim' });
     if (!S.botim.length) bot.appendChild(h('span', { class: 'small muted', text: 'Nothing yet.' }));
@@ -9738,14 +9877,17 @@ var Journey = {
       path.forEach(function (s, i) {
         if (s.group !== g[0]) return;
         var reached = i <= S.reachedIdx, cur = i === curIdx;
-        var tag = s.exec ? s.exec.map(function (k) { return ex[k] ? ex[k].label : ''; }).join(' · ') : (s.engine || '');
+        /* v2.20 — the OTP step, when Noor relied on botim's verification of the number */
+        var skipped = s.n === 3 && s.sub === undefined && S.otpSkipped;
+        var tag = skipped ? 'Skipped — verified by botim' : (s.exec ? s.exec.map(function (k) { return ex[k] ? ex[k].label : ''; }).join(' · ') : (s.engine || ''));
         var execDone = s.exec && s.exec.every(function (k) { return ex[k] && done[ex[k].type]; });
         var ds = { step: String(s.n), idx: String(i) };
         if (s.sub !== undefined) ds.sub = String(s.sub);
-        col.appendChild(h('button', { class: 'jr-step' + (cur ? ' cur' : '') + (reached ? ' reached' : '') + (s.sub !== undefined ? ' jr-substep' : ''), type: 'button', dataset: ds,
-          disabled: reached ? null : 'disabled', 'aria-current': cur ? 'step' : null, onclick: function () { Journey.jump(i); } },
+        if (skipped) ds.skipped = 'true';
+        col.appendChild(h('button', { class: 'jr-step' + (cur ? ' cur' : '') + (reached ? ' reached' : '') + (s.sub !== undefined ? ' jr-substep' : '') + (skipped ? ' jr-skipped' : ''), type: 'button', dataset: ds,
+          disabled: reached && !skipped ? null : 'disabled', 'aria-current': cur ? 'step' : null, onclick: function () { Journey.jump(i); } },
           h('span', { class: 'jr-n', text: execDone ? '✓' : String(s.n) + (s.sub !== undefined ? '·' + s.sub : '') }),
-          h('span', { class: 'jr-st' }, h('span', { class: 'jr-st-t', text: s.title }), tag ? h('span', { class: 'jr-st-e' + (s.exec ? ' exec' : ''), text: tag }) : null)));
+          h('span', { class: 'jr-st' }, h('span', { class: 'jr-st-t', text: s.title }), tag ? h('span', { class: 'jr-st-e' + (s.exec ? ' exec' : '') + (skipped ? ' skip' : ''), text: tag }) : null)));
       });
     });
     box.appendChild(list);
@@ -9762,6 +9904,7 @@ var Journey = {
     }
     if (n >= 10 && !S.recId) return;
     if (n === 8 && sub === 2 && !S.connected) return;
+    if (n === 3 && e.sub === undefined && S.otpSkipped) return;   /* v2.20 — step 3 was skipped: botim verified the number */
     Journey.go(n, sub);
   },
   /* v2.11 — the flow map: a phase is reached once any of its steps on this variant's path is; the ring sits on the
