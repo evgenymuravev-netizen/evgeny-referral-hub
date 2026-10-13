@@ -13,6 +13,7 @@
  * Group 23 = v2.16 the Emirates ID front + back, employer cross-checked against the salary payer (JOURNEY-EID-SPEC.md).
  * Group 24 = v2.17 "Two steps to a score": data completeness first, then the score (JOURNEY-CONFIDENCE-SPEC.md).
  * Group 25 = v2.18 what lenders receive, Noor IP vs lender view, findings, six components, reproduce (MEETING-1008-SPEC.md).
+ * Group 26 = v2.19 the reason-code library: three colours, standard and partner-requested codes, 4-eyes (REASON-CODES-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -1204,14 +1205,16 @@ group('13. Home-country statements (v2.4): parser, underwriter request, re-decis
 // values a memo must never contain (per record: its persona + what Mizan derived).
 // v2.18 — the memo opens with the output table (sharingAgreement, outputs, outputsNote, findings, scoreComponents, monitoring
 // are new; the "sharing" lists became the Noor-only panel, outside the memo). A memo with data completeness adds
-// dataCompleteness before consents.
+// dataCompleteness before consents. v2.19 — the findings key left the memo: the reason-code library replaces it
+// (decision.reasonCodes carries library codes only).
 const MEMO_KEYS = ['memoId', 'noorRef', 'lenderId', 'lenderName', 'sharingAgreement', 'createdAt', 'product', 'policyVersion', 'engineVersion',
-                   'borrower', 'decision', 'terms', 'outputs', 'outputsNote', 'noorScore', 'findings', 'scoreComponents', 'affordability', 'monitoring',
+                   'borrower', 'decision', 'terms', 'outputs', 'outputsNote', 'noorScore', 'scoreComponents', 'affordability', 'monitoring',
                    'bureau', 'verification', 'consents'];
-// The v2.5 columns keep their order; v2.18 appends after created_at (Partner Bank v1, a consumer memo).
+// The v2.5 columns keep their order; v2.18 appends after created_at (Partner Bank v1, a consumer memo). v2.19 — the findings
+// column is gone: reason_codes carries the library codes.
 const SFTP_V25 = ['memo_id', 'noor_ref', 'product', 'outcome', 'amount', 'tenor', 'apr_or_fee', 'monthly_payment',
                   'repayment_method', 'noorscore', 'noorscore_band', 'income_band', 'dbr_band', 'aecb_band', 'reason_codes', 'created_at'];
-const SFTP_HEADER = SFTP_V25.concat(['sharing_agreement', 'findings', 'additional_income_band', 'headroom_band', 'free_cash_flow_band', 'instalment_share_band',
+const SFTP_HEADER = SFTP_V25.concat(['sharing_agreement', 'additional_income_band', 'headroom_band', 'free_cash_flow_band', 'instalment_share_band',
                      'component_fraud_integrity', 'component_newcomer', 'component_stacking_skip', 'component_credit_behaviour',
                      'monitoring_status', 'best_debit_date', 'next_refresh', 'data_completeness_pct', 'data_sources']);
 const grp3 = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -1436,11 +1439,12 @@ group('14. Lender view (v2.5): NoorScore, credit memo from an allowlist, API + S
     eq(sftp.header.join(','), SFTP_HEADER.join(','), label + ': SFTP header columns (the v2.5 sixteen, then the v2.18 columns)');
     ok(sftp.row.length === SFTP_HEADER.length && sftp.row.every(c => typeof c === 'string') && !sftp.row.some(c => /[\r\n]/.test(c)), label + ': SFTP row is ' + SFTP_HEADER.length + ' flat string cells');
     ok(sftp.row[0] === memo.memoId && sftp.row[1] === r.id && sftp.row[3] === r.outcome && sftp.row[9] === (memo.noorScore.value === null ? '' : String(memo.noorScore.value)) &&
-       sftp.row[14] === r.reasonCodes.join('|'), label + ': SFTP row matches the memo');
+       sftp.row[14] === memo.decision.reasonCodes.map(c => c.code).join('|'), label + ': SFTP row matches the memo (v2.19: reason_codes = the memo’s library codes)');
     // presence
     ok(memo.memoId === 'CM-' + r.id && memo.noorRef === r.id && memo.lenderName === 'Partner Bank (lender of record)', label + ': memo id, Noor reference, lender of record');
-    ok(memo.decision.outcome === r.outcome && memo.decision.reasonCodes.length === r.reasonCodes.length &&
-       memo.decision.reasonCodes.every(c => c.en && ARABIC.test(c.ar)), label + ': outcome + every reason code in English and Arabic');
+    ok(memo.decision.outcome === r.outcome && r.reasonCodes.every(rc => memo.decision.reasonCodes.some(c => c.code === E.REASON_CODE_MAP[rc])) &&
+       memo.decision.reasonCodes.every(c => Object.keys(c).join() === 'code,colour,en,ar' && /^(GREEN|YELLOW|RED)$/.test(c.colour) && c.en && ARABIC.test(c.ar)),
+       label + ': outcome + every reason code, as its library code (v2.19), in English and Arabic with its colour');
     ok(memo.noorScore.value === (Number.isFinite(r.score.points) ? r.score.points : null) && memo.noorScore.band === T.noor(memo.noorScore.value) &&
        Array.isArray(memo.noorScore.factors) && memo.noorScore.factors.length <= 3 && memo.noorScore.factors.every(w => !/\d/.test(w)),
        label + ': NoorScore + band, ≤ 3 factor directions with no numbers');
@@ -2602,8 +2606,8 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
        label + ': memo + SFTP row never contain 12,400 · 1,850 · 7,000 · 58,200 · 60,000, "airline" or any signal (' + hits.join(', ') + ')');
   }
   const mr = E.creditMemo(E.listDecisions().find(r => r.outcome === 'REFER' && r.applicantSnapshot.id === 'r6').id);
-  ok(mr.decision.outcome === 'REFER' && mr.decision.reasonCodes.map(c => c.code).join() === 'RC_RED_FLAGS_REVIEW' && mr.terms === null && !('redFlags' in mr),
-     'r6 memo: REFER + RC_RED_FLAGS_REVIEW and nothing more (no terms, no flags)');
+  ok(mr.decision.outcome === 'REFER' && mr.decision.reasonCodes.filter(c => c.colour !== 'GREEN').map(c => c.code).join() === 'R02' && mr.terms === null && !('redFlags' in mr) &&
+     !/RC_|RF_/.test(JSON.stringify(mr)), 'r6 memo: REFER + R02 Recent Changes in Account Activity (v2.19: the library code for RC_RED_FLAGS_REVIEW) as its only yellow or red code, and nothing more (no terms, no flags)');
 
   // ---- simulate before publish ----
   const s1 = E.simulateEarlyWarning({ remittanceShareOfIncomePct: 90 });
@@ -2837,9 +2841,9 @@ group('19. SME working capital (v2.10): business accounts + the owner’s person
     const hits = smePrivacyScan(memo, sftp);
     ok(hits.length === 0, label + ': memo + SFTP row contain none of 35,000 · 180,000 · 21,000 · 4,500 · 27,600 · 200,000, no bank name or mask (' + hits.slice(0, 4).join(', ') + ')');
     /* v2.18 — the shared/withheld lists left the memo (the Noor-only panel replaces them); the SME memo opens with its output table */
-    ok(!('sharing' in memo) && memo.sharingAgreement.label === 'Partner Bank v1' && memo.findings.length === 0 &&
+    ok(!('sharing' in memo) && memo.sharingAgreement.label === 'Partner Bank v1' && !('findings' in memo) &&
        memo.outputs.map(o => o.output).join('|') === 'NoorScore and risk band|Reason codes|Revenue bucket|Debt service cover' &&
-       !/business capacity|100%|80%/.test(JSON.stringify(memo)), label + ': v2.18 output table (Core + revenue and DSCR rows), no findings for a business, no guarantee factor');
+       !/business capacity|100%|80%/.test(JSON.stringify(memo)), label + ': v2.18 output table (Core + revenue and DSCR rows), no findings for a business (v2.19: no findings key), no guarantee factor');
     const leak = keysDeep(memo).filter(k => /^(features|applicantSnapshot|ownerFindings|businessFindings|guarantee|owner|personalAccounts|business\.accounts|redFlags|dataPulls|rules|audit)$/.test(k) && k !== 'guarantee');
     ok(leak.length === 0 && !/ownerFindings|drawingsFromBusiness|liquidBalances|ownerDbr/.test(JSON.stringify(memo)), label + ': no internal key reaches the memo');
   }
@@ -2859,8 +2863,8 @@ group('19. SME working capital (v2.10): business accounts + the owner’s person
      'SFTP row adds revenue_band, dscr_band, guarantee_status (bands and the flag)');
   ok(E.memoSftpRow(E.creditMemo(E.listDecisions().find(r => r.productId === 'split').id)).header.join() === SFTP_HEADER.join(), 'other products’ SFTP rows: the v2.5 sixteen columns, then the v2.18 consumer columns');
   const mr = E.creditMemo(rr2.id);
-  ok(mr.terms === null && mr.decision.reasonCodes.map(c => c.code).join() === 'RC_RED_FLAGS_REVIEW' && !/RF_|exit.risk|international transfer/i.test(JSON.stringify(mr).split('RC_RED_FLAGS_REVIEW').join('')),
-     'SME REFER memo: RC_RED_FLAGS_REVIEW and nothing more');
+  ok(mr.terms === null && mr.decision.reasonCodes.map(c => c.code).join() === 'R02' && !/RC_|RF_|exit.risk|international transfer/i.test(JSON.stringify(mr)),
+     'SME REFER memo: R02 (v2.19: the library code for RC_RED_FLAGS_REVIEW) and nothing more');
 
   // ---- simulateBook ----
   const book = D.sampleBook.sme_working_capital;
@@ -3378,12 +3382,17 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   E.init(D);
   const baseMemo = E.creditMemo(E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF }).id);
   const shape = (x) => JSON.stringify(keysDeep(x));
-  /* v2.18 — the Fraud & Integrity factors differ by design ("Employment confirmed" needs the scan); compare everything else */
-  const stripO = (m) => { const o = clone(m); delete o.verification.identity; delete o.borrower.emiratesIdMasked; delete o.scoreComponents.components[0].factors; return o; };
+  /* v2.18 — the Fraud & Integrity factors differ by design ("Employment confirmed" needs the scan); compare everything else.
+     v2.19 — so does the library code G08 Employer Confirmed (it fires on the employer match the scan makes possible). */
+  const stripO = (m) => { const o = clone(m); delete o.verification.identity; delete o.borrower.emiratesIdMasked; delete o.scoreComponents.components[0].factors;
+    o.decision.reasonCodes = o.decision.reasonCodes.filter(c => c.code !== 'G08'); o.outputs[1].value = o.outputs[1].value.replace(' · G08 Employer Confirmed', ''); return o; };
   const strip = (m) => JSON.stringify(stripO(m));
-  ok(shape(stripO(memo)) === shape(stripO(baseMemo)) && strip(memo) === strip(baseMemo) && JSON.stringify(sftp.header) === JSON.stringify(E.memoSftpRow(baseMemo).header) &&
-     sftp.row.join('|') === E.memoSftpRow(baseMemo).row.join('|'), 'the memo shape and every other memo field and SFTP cell are unchanged');
-  const body = JSON.stringify(memo) + '\n' + sftp.row.join(',');
+  const noG08 = (row) => row.map(c => c.split('|').filter(x => x !== 'G08').join('|')).join('|');
+  ok(memo.decision.reasonCodes.some(c => c.code === 'G08') && !baseMemo.decision.reasonCodes.some(c => c.code === 'G08') &&
+     shape(stripO(memo)) === shape(stripO(baseMemo)) && strip(memo) === strip(baseMemo) && JSON.stringify(sftp.header) === JSON.stringify(E.memoSftpRow(baseMemo).header) &&
+     noG08(sftp.row) === noG08(E.memoSftpRow(baseMemo).row), 'the memo shape and every other memo field and SFTP cell are unchanged (v2.19: G08 Employer Confirmed added by the scan)');
+  /* v2.19 — "Salary Through WPS" is Partner Bank's requested code (the payment channel, never the payer's name) */
+  const body = (JSON.stringify(memo) + '\n' + sftp.row.join(',')).split('Salary Through WPS').join('');
   const leaked = ['Dunecrest', 'DUNECREST', 'Logistics', 'SALARY/WPS', 'WPS', 'Warehouse', 'Supervisor', '1995-03-14', '14/03/1995', '1995', '2028-02-09', 'Dubai', 'idEmployer', 'salaryPayer', 'occupation',
     'India', 'Indian', 'nationality', 'enrichment'].filter(w => body.includes(w));
   ok(leaked.length === 0, 'memo + SFTP row: no employer, payer, occupation, date of birth, expiry, issuing place or nationality' + (leaked.length ? ' (found: ' + leaked.join(', ') + ')' : ''));
@@ -3417,9 +3426,10 @@ group('23. Addendum v2.16: the Emirates ID front + back — employer cross-check
   ok(!mm.token && E.referQueue().some(q => q.id === mm.id && q.reason === 'RC_EMPLOYER_MISMATCH'), 'the mismatch goes to the refer queue (a person looks at it)');
   const mmMemo = E.creditMemo(mm.id), mmSftp = E.memoSftpRow(mmMemo);
   ok(mmMemo.verification.identity === 'Identity verified' && mmMemo.scoreComponents.components[0].tone === 'red' && mmMemo.scoreComponents.components[0].factors.includes('Details differ — under review') &&
-     mmMemo.decision.reasonCodes.map(c => c.code).join() === 'RC_EMPLOYER_MISMATCH' && mmMemo.decision.reasonCodes[0].en === 'Employment details differ — referred for review.' && ARABIC.test(mmMemo.decision.reasonCodes[0].ar),
-     'the mismatch memo (v2.18): Fraud & Integrity red, "Details differ — under review"; the reason code travels with a source-agnostic wording and its Arabic');
-  ok(!/palmgate|dunecrest|wps/i.test(JSON.stringify(mmMemo) + mmSftp.row.join(',')) && privacyScan(mm, mmMemo, mmSftp, Object.assign({}, expect, { dbrBand: T.dbr(mm.features.dbrPct), instalmentToCashFlowBand: T.share(mm.features.instalmentToFcfPct) })).length === 0,
+     mmMemo.decision.reasonCodes.filter(c => c.colour !== 'GREEN').map(c => c.code).join() === 'Y11' && mmMemo.decision.reasonCodes.find(c => c.code === 'Y11').en === 'Employer Differs From ID' &&
+     ARABIC.test(mmMemo.decision.reasonCodes.find(c => c.code === 'Y11').ar) && !/RC_/.test(JSON.stringify(mmMemo)),
+     'the mismatch memo (v2.18): Fraud & Integrity red, "Details differ — under review"; the reason travels as its library code Y11 Employer Differs From ID (v2.19, no RC_* name) with its Arabic');
+  ok(!/palmgate|dunecrest|wps/i.test((JSON.stringify(mmMemo) + mmSftp.row.join(',')).split('Salary Through WPS').join('')) && privacyScan(mm, mmMemo, mmSftp, Object.assign({}, expect, { dbrBand: T.dbr(mm.features.dbrPct), instalmentToCashFlowBand: T.share(mm.features.instalmentToFcfPct) })).length === 0,
      'the mismatch memo names neither company nor the payer; the privacy scan stays clean');
 
   // ---- an expired card → REFER with RC_ID_EXPIRED ----
@@ -3681,8 +3691,9 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
   eq(Object.keys(D.findings).join(), 'FND_ADDITIONAL_INCOME,FND_SAVER,FND_NEW_TO_UAE,FND_DINING_OUT,FND_DATA_HISTORY,FND_STABLE_INCOME,FND_ON_TIME_PAYER', 'MizanData.findings: the seven codes of the controlled vocabulary');
   ok(Object.values(D.findings).every(x => x.en && ARABIC.test(x.ar)), 'every finding has English and Arabic');
   eq(JSON.stringify(j.connected.spendCategories), JSON.stringify({ Dining: 24, Groceries: 22, Transport: 12, Bills: 18, Shopping: 14, Other: 10 }), 'j1 connected.spendCategories (sums to 100)');
-  ok(Object.keys(D.reasonCodesLender).every(c => D.reasonCodes[c] && ARABIC.test(D.reasonCodesLender[c].ar) &&
-     !/threshold|statement|footprint|passport|uae pass|emirates id|employer|payer/i.test(D.reasonCodesLender[c].en)), 'lender wordings exist only for real codes, with Arabic, and name no source or threshold');
+  /* v2.19 — the per-code lender wordings are gone: lenders read library labels (EN + AR), which name no source or threshold */
+  ok(!('reasonCodesLender' in D) && D.reasonCodeLibrary.every(e => ARABIC.test(e.labelAr) && !/threshold|statement|footprint|passport|uae pass|emirates id|payer/i.test(e.labelEn + ' ' + e.tells)),
+     'lender wordings come from the reason-code library only (v2.19), with Arabic, naming no source or threshold');
 
   // ---- §1a — the output table (Ravi) ----
   const r = ravi(), m = E.creditMemo(r.id), sf = E.memoSftpRow(m);
@@ -3690,8 +3701,10 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
      'NoorScore and risk band:Core | Reason codes:Core | Data completeness:Proposed | Income bucket:Proposed | Additional income bucket:Proposed | DBR:Proposed',
      'the memo opens with the slide-8 table, in order, with the Core / Proposed tags');
   ok(Object.keys(m).indexOf('outputs') < Object.keys(m).indexOf('noorScore') && m.outputs.every(o => o.tells && o.value), 'each row: output, what it tells the lender, status, value — before the detail sections');
-  eq(m.outputs.map(o => o.value).join(' | '), '737 · Very good | Saver · Dining out lover · 12 months of data history · Stable income · Pays cards and loans on time | ' +
-     '100% · 2 banks · 4 accounts · 12 months | AED 10,000–15,000 / month | None detected (< AED 1,000) | 15–20% · headroom AED 3,500–4,000 / month', 'Ravi’s values match the spec table');
+  /* v2.19 — the Reason codes row carries library codes with their labels (REASON-CODES-SPEC.md §2, Ravi), not finding words */
+  eq(m.outputs.map(o => o.value).join(' | '), '737 · Very good | G02 Saver · G03 Dining Out Lover · G04 Stable Income · G05 Pays Cards and Loans on Time · G06 12M+ History Shared · ' +
+     'G07 Salary Verified · G08 Employer Confirmed · G09 Low Debt Burden · G10 Settled in UAE · G11 Full Financial Picture · PR-PB-G01 Salary Through WPS | ' +
+     '100% · 2 banks · 4 accounts · 12 months | AED 10,000–15,000 / month | None detected (< AED 1,000) | 15–20% · headroom AED 3,500–4,000 / month', 'Ravi’s values match the spec table (v2.19: library codes)');
   eq(m.outputsNote, 'The set of aggregates is open: we are flexible and want to hear what each partner needs to see.', 'the banner, verbatim');
   const bkR = bucketsOf(r);
   ok(r.features.dbrPct === 18.4 && bkR.headroom === 3788.3, 'internally: DBR 18.4% ((900 + 1,311.70) ÷ 12,000) and headroom AED 3,788.30 (6,000 − 2,211.70)');
@@ -3720,16 +3733,19 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
   // ---- §1b — Lender B's narrower memo; the agreement in the memo ----
   E.init(D);
   const r2 = ravi(), mb = E.creditMemo(r2.id, { lenderId: 'lender-b' }), sb = E.memoSftpRow(mb);
-  eq(Object.keys(mb).join(), 'memoId,noorRef,lenderId,lenderName,sharingAgreement,createdAt,product,policyVersion,engineVersion,borrower,decision,terms,outputs,outputsNote,noorScore,findings',
-     'Lender B’s memo: the envelope, the Core rows, NoorScore and findings — nothing else');
+  eq(Object.keys(mb).join(), 'memoId,noorRef,lenderId,lenderName,sharingAgreement,createdAt,product,policyVersion,engineVersion,borrower,decision,terms,outputs,outputsNote,noorScore',
+     'Lender B’s memo: the envelope, the Core rows, NoorScore and the reason codes in decision — nothing else (v2.19: no findings key)');
   ok(mb.outputs.map(o => o.key).join() === 'noorScore,reasonCodes' && mb.outputs.every(o => o.status === 'Core'), 'Lender B shows only the Core rows');
   ok(['scoreComponents', 'affordability', 'monitoring', 'bureau', 'verification', 'dataCompleteness', 'consents'].every(k => !(k in mb)), 'Lender B’s memo omits every group it has not agreed to');
-  eq(sb.header.join(), 'memo_id,noor_ref,product,outcome,amount,tenor,apr_or_fee,monthly_payment,repayment_method,noorscore,noorscore_band,reason_codes,created_at,sharing_agreement,findings',
-     'Lender B’s SFTP columns follow its agreement');
+  eq(sb.header.join(), 'memo_id,noor_ref,product,outcome,amount,tenor,apr_or_fee,monthly_payment,repayment_method,noorscore,noorscore_band,reason_codes,created_at,sharing_agreement',
+     'Lender B’s SFTP columns follow its agreement (v2.19: no findings column)');
   ok(mb.lenderName === 'Lender B (illustrative, lender of record)' && mb.sharingAgreement.label === 'Lender B v1 (illustrative)' && m.sharingAgreement.label === 'Partner Bank v1',
      'each memo names its sharing agreement (Partner Bank v1 · Lender B v1)');
-  ok(JSON.stringify(mb.outputs) === JSON.stringify(E.creditMemo(r2.id).outputs.slice(0, 2)) && JSON.stringify(mb.findings) === JSON.stringify(E.creditMemo(r2.id).findings),
-     'the Core rows are the same for both lenders');
+  /* v2.19 — the same Core rows, except Partner Bank's own requested code (partner codes show only in that partner's memo) */
+  const mpb = E.creditMemo(r2.id), notPb = (cs) => cs.filter(c => !/^PR-PB-/.test(c.code));
+  ok(JSON.stringify(mb.outputs[0]) === JSON.stringify(mpb.outputs[0]) && JSON.stringify(mb.decision.reasonCodes) === JSON.stringify(notPb(mpb.decision.reasonCodes)) &&
+     mb.outputs[1].value === mpb.outputs[1].value.replace(' · PR-PB-G01 Salary Through WPS', '') && mpb.decision.reasonCodes.some(c => c.code === 'PR-PB-G01'),
+     'the Core rows are the same for both lenders, but for Partner Bank’s own code PR-PB-G01');
   const sa = E.sharingAgreement('lender-b');
   ok(sa.groupsDetail.map(g => g.status).join() === 'Core,Core' && E.sharingAgreement().label === 'Partner Bank v1', 'sharingAgreement(lenderId) — the agreement as the UI shows it');
   ok(E.NOOR_IP.label === 'Noor-only explanation — not part of the memo' && E.NOOR_IP.staysInside.map(x => x.group).join(' · ') === 'Methodology · Thresholds and cut-offs · Data-source mix · Raw customer data' &&
@@ -3778,8 +3794,8 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
      'no shared/withheld lists in any memo; identity says verified / not verified; alternative-data consents travel as "additionalEvidence"');
   const r2st = E.creditMemo(set.find(x => x[0] === 'r2+statements')[1].id);
   ok(r2st.verification.additionalEvidence === 'Additional evidence verified' && r2st.consents.some(c => c.type === 'additionalEvidence' && /-DOCUMENTS$/.test(c.reference)) &&
-     r2st.decision.reasonCodes.some(c => c.code === 'RC_STATEMENTS_USED' && c.en === 'Decided with additional verified evidence.'),
-     'r2 with statements: "Additional evidence verified"; the consent as additionalEvidence; RC_STATEMENTS_USED with the lender wording');
+     r2st.decision.reasonCodes.some(c => c.code === 'Y14' && c.en === 'Additional Evidence Used') && !/RC_STATEMENTS/.test(JSON.stringify(r2st)),
+     'r2 with statements: "Additional evidence verified"; the consent as additionalEvidence; RC_STATEMENTS_USED travels as Y14 Additional Evidence Used (v2.19)');
   ok(E.creditMemo(set.find(x => x[0] === 'a1 Open Finance')[1].id).verification.otherIncome === 'Additional income verified', 'a1: "Additional income verified" (was "Rental income verified via Open Finance — counted at 75%")');
 
   // ---- §1 — the six components ----
@@ -3792,8 +3808,8 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
      'r1: all green; Newcomer "Established — not applicable" (neutral)');
   ok(tone(C('r6'), 'stackingSkip') === 'red' && C('r6')[2].level === 'High' && C('r6')[2].factors.includes('Recent changes in account activity') && C('r6')[5].level === 'Elevated',
      'r6: Stacking & Skip red (High) — "Recent changes in account activity"; monitoring Elevated');
-  ok(tone(C('r2'), 'newcomer') === 'amber' && C('r2')[1].level === 'Building' && C('r2')[1].factors.includes('Home-country history available') && /Credit Passport available/.test(C('r2')[1].drivers.join(' ')),
-     'r2: Newcomer amber — home-country history available (Credit Passport, not yet consented)');
+  ok(tone(C('r2'), 'newcomer') === 'yellow' && C('r2')[1].level === 'Building' && C('r2')[1].factors.includes('Home-country history available') && /Credit Passport available/.test(C('r2')[1].drivers.join(' ')),
+     'r2: Newcomer yellow (v2.19, was amber) — home-country history available (Credit Passport, not yet consented)');
   ok(tone(C('r2+creditPassport'), 'newcomer') === 'green', 'r2 with the Credit Passport consented: Newcomer green');
   const cj = C('j1 journey');
   ok(cj[5].bestDebitDate === '28th of the month' && cj[5].nextRefresh === '2026-08-19' && /the day after the usual salary credit \(27th\)/.test(cj[5].drivers.join(' ')),
@@ -3803,8 +3819,8 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
   const ca = C('a1 Open Finance');
   ok(ca[4].bands.additionalIncomeBand === 'AED 5,000–10,000 / month (rent)' && ca[4].bands.incomeBand === 'AED 40,000–50,000 / month' && ca[4].level === 'Aggregates — not scored' &&
      tone(ca, 'creditBehaviour') === 'green', 'a1: the aggregates (income 40–50k + rent 5–10k), Credit Behaviour green');
-  ok(tone(C('c4'), 'newcomer') === 'amber' && tone(C('c5'), 'creditBehaviour') === 'red' && tone(C('c2'), 'creditBehaviour') === 'amber' && tone(C('c3'), 'creditBehaviour') === 'red' &&
-     C('u2')[3].factors.includes('Late payment in history'), 'c4 newcomer amber; c5 (DPD90) and c3 (negative cash flow) red; c2 (volatile income) amber; u2 (starter repaid late) "Late payment in history"');
+  ok(tone(C('c4'), 'newcomer') === 'yellow' && tone(C('c5'), 'creditBehaviour') === 'red' && tone(C('c2'), 'creditBehaviour') === 'yellow' && tone(C('c3'), 'creditBehaviour') === 'red' &&
+     C('u2')[3].factors.includes('Late payment in history'), 'c4 newcomer yellow; c5 (DPD90) and c3 (negative cash flow) red; c2 (volatile income) yellow (v2.19, was amber); u2 (starter repaid late) "Late payment in history"');
   ok(cj[0].drivers.some(d => /Not connected yet: device intelligence; mule and income-manipulation patterns/.test(d)), 'Fraud & Integrity names what is not connected yet (device intelligence, mule / income manipulation)');
   // the memo: levels and factor words only
   ok(set.filter(x => x[1].productId !== 'sme_working_capital').every(([, rec]) => {
@@ -3830,13 +3846,17 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
   ok(fsens.join() === 'FND_SAVER,FND_DATA_HISTORY,FND_STABLE_INCOME,FND_ON_TIME_PAYER', 'a clone spending on health, religion, gambling, family, politics: nothing extra (and no Dining finding at 10%)');
   const nat = clone(j); nat.emiratesId.front.nationality = 'Pakistan'; nat.nationality = 'Egypt'; nat.residency = 'RESIDENT';
   eq(E.customerFindings(nat).map(x => x.code).join(), E.customerFindings(j).map(x => x.code).join(), 'a nationality clone: the same findings');
-  const vocab = new Set(Object.keys(D.findings));
-  ok(set.every(([, rec]) => E.creditMemo(rec.id).findings.every(x => vocab.has(x.code) && Object.keys(x).join() === 'code,en,ar' && ARABIC.test(x.ar))),
-     'memos carry finding words (EN + AR) from the vocabulary only — never the rule');
+  /* v2.19 — the memo carries library codes (code, colour, EN + AR) only: no finding words, no FND_* codes, never the rule */
+  const vocab = new Set(D.reasonCodeLibrary.map(e => e.code));
+  ok(set.every(([, rec]) => { const mm = E.creditMemo(rec.id); return !('findings' in mm) && mm.decision.reasonCodes.every(x => vocab.has(x.code) && Object.keys(x).join() === 'code,colour,en,ar' && ARABIC.test(x.ar)); }),
+     'memos carry library codes (EN + AR, with the colour) from the library only — no findings, never the rule (v2.19)');
   const rulesText = Object.values(E.customerFindings(j)).map(x => x.rule);
-  ok(set.every(([, rec]) => { const t = JSON.stringify(E.creditMemo(rec.id)); return rulesText.every(rt => !t.includes(rt)) && !/"rule"/.test(t); }), 'no finding rule reaches any memo');
-  eq(sf.row[sf.header.indexOf('findings')], 'FND_SAVER|FND_DINING_OUT|FND_DATA_HISTORY|FND_STABLE_INCOME|FND_ON_TIME_PAYER', 'the SFTP row gains a findings column (codes only)');
-  ok(E.creditMemo(set.find(x => x[0] === 'r4')[1].id).decision.reasonCodes.map(c => c.code).join() === 'RC_DELINQUENCY,RC_SCORE_LOW', 'findings are not adverse-action reasons: RC_* still explains the decline');
+  ok(set.every(([, rec]) => { const t = JSON.stringify(E.creditMemo(rec.id)); return rulesText.every(rt => !t.includes(rt)) && !/"rule"/.test(t) && !/FND_/.test(t); }), 'no finding rule (and no FND_* code) reaches any memo');
+  /* v2.19 — the findings column is gone; reason_codes carries the library codes (codes only) */
+  ok(!sf.header.includes('findings') && sf.row[sf.header.indexOf('reason_codes')] === 'G02|G03|G04|G05|G06|G07|G08|G09|G10|G11|PR-PB-G01', 'the SFTP reason_codes column carries the library codes (codes only; the findings column is gone)');
+  const r4rec = set.find(x => x[0] === 'r4')[1];
+  ok(r4rec.reasonCodes.join() === 'RC_DELINQUENCY,RC_SCORE_LOW' && E.creditMemo(r4rec.id).decision.reasonCodes.filter(c => c.colour === 'RED').map(c => c.code).join() === 'R03,R06',
+     'the decline is still explained: the record keeps RC_DELINQUENCY, RC_SCORE_LOW for the customer; the lender reads R03 Past-Due History, R06 Weak Credit Profile');
 
   // ---- §1c.2 — the contribution chart (internal) ----
   const cc = E.scoreContributions(jr.id);
@@ -3888,8 +3908,261 @@ group('25. Addendum v2.18 (meeting 8 Oct, methodology slides 5–8): what lender
   const snap = () => { E.init(D); const x = ravi(); return JSON.stringify([E.creditMemo(x.id), E.memoSftpRow(E.creditMemo(x.id)), E.creditMemo(x.id, { lenderId: 'lender-b' }), E.noorScoreComponents(x.id), E.reproduceDecision(x.id), E.scoreContributions(x.id)]); };
   ok(snap() === snap(), 'two fresh init() runs: identical memos (both lenders), components, contributions and reproduction');
   const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|cash now/i;
-  const txt = JSON.stringify([D.findings, D.reasonCodesLender, D.sharingAgreements, E.NOOR_IP, E.MEMO_OUTPUTS, snap()]);
+  const txt = JSON.stringify([D.findings, D.reasonCodeLibrary, D.sharingAgreements, E.NOOR_IP, E.MEMO_OUTPUTS, snap()]);
   ok(!banned.test(txt) && !mentionsSalaryTransfer(txt), 'no banned vocabulary (incl. a botim product name) in the v2.18 data, panel or memos');
+  E.init(D);
+});
+
+// ---------------------------------------------------------------------------
+group('26. Addendum v2.19: the reason-code library — three colours, Noor standard codes, partner-requested codes (4-eyes); the only vocabulary a lender sees', () => {
+  E.init(D);
+  const j = D.personasJourney[0], a1 = D.personasCar[0], s1 = D.personasSme[0];
+  const OF = { aecb: true, openFinance: true };
+  const TERMS = { basis: 'TERMS', termsVersion: 'T&C v1.0 · Privacy policy v1.0', acceptedAt: '2026-07-19T08:58:00.000Z' };
+  const ALL4 = ['4821', '0193', '7702', '3317'];
+  const ravi = () => E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: Object.assign({ digitalFootprint: TERMS }, OF),
+                                emiratesId: true, dataSources: { approvedAccounts: ALL4, months: 12 }, lenderId: 'partner-bank' });
+  const L = D.reasonCodeLibrary;
+  const codesOf = (rec, lenderId) => E.creditMemo(rec.id, { lenderId }).decision.reasonCodes.map(c => c.code);
+
+  // ---- §1 — one library, exactly three colours ----
+  eq(E.REASON_CODE_COLOURS.join(), 'GREEN,YELLOW,RED', 'the engine knows exactly three colours: GREEN, YELLOW, RED');
+  eq(Array.from(new Set(L.map(e => e.colour))).sort().join(), 'GREEN,RED,YELLOW', 'the library uses exactly three colours — no fourth, no amber');
+  const SHAPE = 'code,colour,labelEn,labelAr,tells,component,source,requestedBy,status,version,ruleRef';
+  ok(L.every(e => Object.keys(e).slice(0, 11).join() === SHAPE && E.REASON_CODE_COMPONENTS.includes(e.component) && E.REASON_CODE_SOURCES.includes(e.source) &&
+     E.REASON_CODE_STATUSES.includes(e.status) && Number.isInteger(e.version) && e.ruleRef === 'RULE-' + e.code),
+     'every entry: { code, colour, labelEn, labelAr, tells, component, source, requestedBy, status, version, ruleRef } with valid values');
+  ok(L.filter(e => e.source === 'NOOR_STANDARD').every(e => /^[GYR]\d{2}$/.test(e.code) && e.code[0] === e.colour[0] && e.requestedBy === null && e.status === 'ACTIVE') &&
+     L.filter(e => e.source === 'PARTNER_REQUEST').every(e => /^PR-[A-Z]{2}-[GYR]\d{2}$/.test(e.code) && e.code.split('-')[2][0] === e.colour[0] && D.lenders.some(l => l.id === e.requestedBy)),
+     'codes carry their colour letter: G·· / Y·· / R·· (Noor standard, ACTIVE) and PR-<lender>-<letter>nn (partner requests)');
+  eq(L.filter(e => e.source === 'NOOR_STANDARD').map(e => e.code).join(' '),
+     'G01 G02 G03 G04 G05 G06 G07 G08 G09 G10 G11 Y01 Y02 Y03 Y04 Y05 Y06 Y07 Y08 Y09 Y10 Y11 Y12 Y13 Y14 Y15 Y16 R01 R02 R03 R04 R05 R06 R07 R08 R09',
+     'the standard library: G01–G11, Y01–Y16, R01–R09');
+  const SIX = [['G01', 'GREEN', 'Detected Additional Income'], ['G02', 'GREEN', 'Saver'], ['G03', 'GREEN', 'Dining Out Lover'],
+               ['Y01', 'YELLOW', 'New to UAE'], ['Y02', 'YELLOW', '3M History Shared'], ['R01', 'RED', 'Fraud Suspicious']];
+  ok(SIX.every(([c, col, label]) => { const e = L.find(x => x.code === c); return e && e.colour === col && e.labelEn === label && e.source === 'NOOR_STANDARD' && e.status === 'ACTIVE'; }),
+     'the request’s six codes, verbatim: Green Detected Additional Income · Saver · Dining Out Lover; Yellow New to UAE · 3M History Shared; Red Fraud Suspicious');
+  ok(L.every(e => ARABIC.test(e.labelAr) && e.tells && !/[\r\n]/.test(e.tells)), 'every code has an Arabic label and a one-line “what it tells the lender”');
+
+  // ---- §1 — label hygiene (an independent check) ----
+  const SMALL = ['a', 'an', 'and', 'as', 'at', 'by', 'for', 'from', 'in', 'of', 'on', 'or', 'the', 'to', 'via', 'with'];
+  const titleCase = (s) => s.split(/\s+/).every((w, i) => w.split('-').every(p => (i > 0 && SMALL.includes(p)) || /^[A-Z0-9]/.test(p)));
+  const numbersOk = (s) => s.split(/[\s-]+/).every(w => !/\d/.test(w) || /^\d{1,2}M\+?$/.test(w)) && !/%|AED|\bpoints?\b|\bweights?\b|threshold/i.test(s);
+  const SOURCES = /\b(aecb|al ?tareq|credit ?passport|uae ?pass|emirates ?id|footprint|statements?|bureau|telecom|enbd|fab|adcb|mashreq|hdfc|sbi)\b/i;
+  const SENSITIVE = /\b(nationality|national|citizen|emirati|indian|pakistani|egyptian|filipino|arab|male|female|woman|man|gender|sex|religio\w*|muslim|christian|hindu|mosque|church|health|medical|hospital|pregnan\w*|married|single|divorced|family|spouse|children|political|politics|party)\b/i;
+  const hyg = L.filter(e => !(titleCase(e.labelEn) && numbersOk(e.labelEn) && !SOURCES.test(e.labelEn.replace(/open finance/ig, '')) && !SENSITIVE.test(e.labelEn) && !SENSITIVE.test(e.tells) &&
+                             !SOURCES.test(e.tells.replace(/open finance/ig, '')) && !/\d/.test(e.tells) && !/[A-Za-z%]/.test(e.labelAr)));
+  ok(hyg.length === 0, 'label hygiene: Title Case; month counts only (3M, 12M+) — no thresholds, points or weights; no data source but Open Finance; never a sensitive category' +
+     (hyg.length ? ' (' + hyg.map(e => e.code).join(', ') + ')' : ''));
+  ok(titleCase('Pays Cards and Loans on Time') && !titleCase('dining out lover') && !numbersOk('Salary Above 20,000') && !numbersOk('Variable Pay Above 30%') && numbersOk('12M+ History Shared') &&
+     SOURCES.test('AECB Clean File') && SENSITIVE.test('Married With Children'), 'the hygiene check bites (lower case, a threshold, a percentage, a data source, family status)');
+  eq(L.find(e => e.code === 'PR-LB-Y01').labelEn, 'High Variable Pay', 'the seeded Lender B request "Variable Pay Above 30%" is labelled "High Variable Pay": the 30% stays in its rule, inside Noor');
+
+  // ---- §2 — every RC_* the engine can emit maps to exactly one library code ----
+  const src = fs.readFileSync(path.join(__dirname, 'engine.js'), 'utf8');
+  const fromSource = new Set((src.match(/'RC_[A-Z0-9_]+'/g) || []).map(x => x.slice(1, -1)));
+  E.RED_FLAG_CODES.concat(E.RED_FLAG_BUSINESS_CODES).forEach(c => fromSource.add('RC_' + c));
+  const allRc = Array.from(new Set(Object.keys(D.reasonCodes).concat(Array.from(emittedCodes), Array.from(fromSource))));
+  const inverse = {};
+  for (const e of E.reasonCodeLibrary()) for (const rc of e.mapsRc) inverse[rc] = (inverse[rc] || []).concat([e.code]);
+  const notOne = allRc.filter(rc => !inverse[rc] || inverse[rc].length !== 1 || E.REASON_CODE_MAP[rc] !== inverse[rc][0]);
+  ok(allRc.length >= 52 && notOne.length === 0, 'every RC_* (' + allRc.length + ': the data, every code emitted in this run, every literal in engine.js) maps to exactly one library code' +
+     (notOne.length ? ' (not exactly one: ' + notOne.join(', ') + ')' : ''));
+  ok(Object.keys(inverse).every(rc => D.reasonCodes[rc]) && Object.values(E.REASON_CODE_MAP).every(c => L.some(e => e.code === c && e.source === 'NOOR_STANDARD')),
+     'the mapping names real RC_* codes and standard library codes only');
+  ok(E.REASON_CODE_MAP.RC_LIMIT_REDUCED === 'Y09' && E.REASON_CODE_MAP.RC_LTV_CAP === 'Y09' && E.REASON_CODE_MAP.RC_RETIREE_CAP === 'Y09' && E.REASON_CODE_MAP.RC_TENOR_CAP === 'Y10' &&
+     E.REASON_CODE_MAP.RC_STATEMENTS_INTEGRITY === 'R01' && E.REASON_CODE_MAP.RC_RED_FLAGS_REVIEW === 'R02' && E.REASON_CODE_MAP.RC_DELINQUENCY === 'R03' && E.REASON_CODE_MAP.RC_SCORE_LOW === 'R06' &&
+     E.REASON_CODE_MAP.RC_THIN_FILE === 'Y04' && E.REASON_CODE_MAP.RC_INCOME_VOLATILITY === 'Y05' && E.REASON_CODE_MAP.RC_STATEMENTS_USED === 'Y14' && E.REASON_CODE_MAP.RC_STARTER_LATE === 'R09' &&
+     E.REASON_CODE_MAP.RC_DATA_INCOMPLETE === 'Y13' && E.REASON_CODE_MAP.RC_EMPLOYER_MISMATCH === 'Y11' && E.REASON_CODE_MAP.RC_ID_EXPIRED === 'Y12' && E.REASON_CODE_MAP.RC_AGE === 'R08',
+     'the spec’s mappings: RC_LIMIT_REDUCED / LTV / retiree cap → Y09, tenor → Y10, integrity → R01, red flags → R02, delinquency → R03, score → R06, …');
+
+  // ---- §2 — Ravi and the other personas ----
+  const r = ravi();
+  const RAVI = 'G02,G03,G04,G05,G06,G07,G08,G09,G10,G11';
+  eq(codesOf(r, 'partner-bank').join(), RAVI + ',PR-PB-G01', 'Ravi, Partner Bank: G02 Saver · G03 Dining Out Lover · G04 · G05 · G06 · G07 · G08 · G09 Low Debt Burden · G10 · G11, plus PR-PB-G01 Salary Through WPS');
+  eq(codesOf(r, 'lender-b').join(), RAVI, 'Ravi, Lender B: the same standard codes — never Partner Bank’s PR-PB-G01');
+  ok(E.creditMemo(r.id).decision.reasonCodes.every(c => c.colour === 'GREEN'), 'Ravi: no yellow or red');
+  const lb = E.libraryCodesFor(r.id, 'partner-bank');
+  ok(lb.find(c => c.code === 'PR-PB-G01').rule === 'salaryViaWps = true' && /SALARY\/WPS/.test(j.connected.salaryPayer) && E.reasonCodeTrace(r.id).metrics.savingsMonths === 1.33 &&
+     E.reasonCodeTrace(r.id).metrics.dbrPct === 18.4, 'PR-PB-G01 fires on Ravi’s “SALARY/WPS …” payer; internally savings cover 1.33 months, DBR 18.4%');
+  ok(JSON.stringify(E.libraryCodesFor(r, 'partner-bank')) === JSON.stringify(lb) && E.libraryCodesFor(r.id).length === lb.length, 'libraryCodesFor takes a record or an id; the default lender is Partner Bank');
+  throwsWith(() => E.libraryCodesFor('MZN-999999', 'partner-bank'), 'unknown decision id', 'libraryCodesFor: an unknown decision → throws');
+  const P26 = (label, rec) => ({ label, rec, codes: codesOf(rec, 'partner-bank') });
+  const a1of = P26('a1 OF', E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: OF }));
+  const a1dc = P26('a1 docs', E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: { aecb: true, openFinance: false } }));
+  ok(a1of.codes.includes('G01') && a1dc.codes.includes('Y09') && !a1dc.codes.includes('G01') && a1dc.rec.reasonCodes.includes('RC_LIMIT_REDUCED'),
+     'a1 (car loan): G01 Detected Additional Income on Open Finance; Y09 Amount Adjusted to Fit on the documents path (RC_LIMIT_REDUCED)');
+  const r6 = P26('r6', decidePersona('personal_loan', P.r6));
+  ok(r6.rec.outcome === 'REFER' && r6.codes.includes('R02') && r6.codes.filter(c => /^[YR]/.test(c)).join() === 'R02', 'r6: R02 Recent Changes in Account Activity (the only yellow or red code)');
+  const r2 = P26('r2', decidePersona('personal_loan', P.r2)), c4 = P26('c4', decidePersona('split', P.c4)), u1 = P26('u1', E.decide({ productId: 'starter_loan', applicant: D.personasUpgrade[0], consents: OF }));
+  ok([r2, c4, u1].every(x => x.codes.includes('Y01')), 'newcomers (r2, c4, u1): Y01 New to UAE');
+  ok(c4.codes.includes('Y02') && u1.codes.includes('Y02') && E.reasonCodeTrace(c4.rec.id).metrics.monthsHistory === 5, 'short history (c4, u1 — 5 months shared): Y02 3M History Shared');
+  const tampered = E.parseStatements({ country: 'IN', file: 'SBI_Statement_Jan–Jun_2026_edited.pdf', applicantId: 'u1', productId: 'starter_loan' });
+  const fr = E.decide({ productId: 'starter_loan', applicant: D.personasUpgrade[0], consents: OF, statements: tampered });
+  ok(fr.outcome === 'REFER' && fr.reasonCodes[0] === 'RC_STATEMENTS_INTEGRITY' && codesOf(fr, 'partner-bank').includes('R01') && codesOf(fr, 'lender-b').includes('R01'),
+     'a statements integrity FAIL: R01 Fraud Suspicious (for every lender)');
+  const r3 = decidePersona('personal_loan', P.r3), r4 = decidePersona('personal_loan', P.r4), c2 = decidePersona('split', P.c2);
+  ok(codesOf(r3, 'partner-bank').includes('Y09') && codesOf(r4, 'partner-bank').filter(c => /^R/.test(c)).join() === 'R03,R06' && codesOf(c2, 'partner-bank').includes('Y05'),
+     'r3 (limit reduced) Y09; r4 (declined) R03 Past-Due History + R06 Weak Credit Profile; c2 (volatile income) Y05 Irregular Income');
+  const j70 = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF, dataSources: { approvedAccounts: ['4821', '0193'], months: 12 } });
+  ok(codesOf(j70, 'partner-bank').includes('Y07') && !codesOf(j70, 'partner-bank').includes('G11'), 'Ravi at 70% complete: Y07 Partial Financial Picture instead of G11');
+  const sBiz = E.decide({ productId: 'sme_working_capital', applicant: s1, amount: 150000, tenorMonths: 12, consents: OF });
+  eq(codesOf(sBiz, 'partner-bank').join(), 'Y09', 'SME (business accounts only): RC_GUARANTEE_UNVERIFIED travels as Y09 — no consumer codes for a business');
+  const tr = E.reasonCodeTrace(r3.id);
+  ok(tr.rcMap.map(x => x.rc + ' → ' + x.code).join() === 'RC_LIMIT_REDUCED → Y09' && tr.codes.find(c => c.code === 'Y09').via.join() === 'RC_LIMIT_REDUCED' && tr.codes.every(c => c.rule && Array.isArray(c.receivedBy)),
+     'reasonCodeTrace (the Decision log): the customer’s RC_* beside its library code ("RC_LIMIT_REDUCED → Y09"), each code with its internal rule and receivers');
+
+  // ---- §3 — partner-requested codes: propose → 4-eyes approve → the lender's agreement, versioned ----
+  E.init(D);
+  const rv = ravi();
+  ok(E.sharingAgreement('partner-bank').label === 'Partner Bank v1' && E.sharingAgreement('partner-bank').libraryCodes.partner.join() === 'PR-PB-G01' &&
+     E.sharingAgreement('lender-b').libraryCodes.partner.length === 0 && E.sharingAgreement('partner-bank').libraryCodes.standard === 'ALL',
+     'seeded: Partner Bank v1 carries every standard code and PR-PB-G01; Lender B v1 every standard code');
+  ok(E.reasonCodeLibrary().find(e => e.code === 'PR-LB-Y01').status === 'PROPOSED' && E.reasonCodeLibrary().find(e => e.code === 'PR-PB-G01').receivedBy.join() === 'partner-bank' &&
+     E.reasonCodeLibrary().find(e => e.code === 'G02').receivedBy.join() === 'partner-bank,lender-b', 'seeded: PR-LB-Y01 awaits 4-eyes; each code lists who receives it');
+  const SSB = { requestedBy: 'partner-bank', colour: 'GREEN', labelEn: 'Strong Savings Buffer', labelAr: 'احتياطي ادخار قوي', tells: 'Savings cover at least a month of spending',
+                component: 'CREDIT_BEHAVIOUR', rule: { metric: 'savingsMonths', op: '≥', value: 1 } };
+  const n0 = E.listDecisions().length;
+  const pr = E.proposeReasonCode(SSB, { author: 'L. Haddad' });
+  ok(pr.code === 'PR-PB-G02' && pr.status === 'PROPOSED' && pr.source === 'PARTNER_REQUEST' && pr.requestedBy === 'partner-bank' && pr.author === 'L. Haddad' && pr.ruleRef === 'RULE-PR-PB-G02',
+     'propose (Partner Bank, GREEN, "Strong Savings Buffer", savingsMonths ≥ 1) → PR-PB-G02, PROPOSED');
+  ok(!codesOf(rv, 'partner-bank').includes('PR-PB-G02') && E.sharingAgreement('partner-bank').label === 'Partner Bank v1', 'a PROPOSED code fires nowhere; the agreement stays v1');
+  throwsWith(() => E.approveReasonCode('PR-PB-G02', { approver: 'L. Haddad' }), '4-eyes', 'approving as the author → 4-eyes violation');
+  throwsWith(() => E.approveReasonCode('PR-PB-G02', { approver: '  l. haddad ' }), '4-eyes', 'the same person in other case and spacing → still refused');
+  throwsWith(() => E.approveReasonCode('PR-PB-G02', {}), 'approver', 'approving without an approver → refused');
+  const ap = E.approveReasonCode('PR-PB-G02', { approver: 'S. Iyer' });
+  ok(ap.status === 'ACTIVE' && ap.approver === 'S. Iyer' && ap.agreement.line === 'Partner Bank v2 — adds PR-PB-G02' && E.sharingAgreement('partner-bank').label === 'Partner Bank v2' &&
+     E.sharingAgreement('partner-bank').version === 'v2' && E.sharingAgreement('partner-bank').id === 'SA-PARTNER-BANK-V2' && E.sharingAgreement('partner-bank').libraryCodes.partner.join() === 'PR-PB-G01,PR-PB-G02',
+     'a different approver → ACTIVE; the agreement becomes Partner Bank v2 — adds PR-PB-G02');
+  eq(E.sharingAgreement('partner-bank').history.map(hh => hh.version + ' ' + hh.change).join(' | '), 'v1 agreed | v2 adds PR-PB-G02', 'the agreement keeps its version history');
+  const mPb = E.creditMemo(rv.id, { lenderId: 'partner-bank' }), mLb = E.creditMemo(rv.id, { lenderId: 'lender-b' });
+  ok(mPb.decision.reasonCodes.slice(-2).map(c => c.code).join() === 'PR-PB-G01,PR-PB-G02' && mPb.decision.reasonCodes.find(c => c.code === 'PR-PB-G02').en === 'Strong Savings Buffer' &&
+     mPb.sharingAgreement.label === 'Partner Bank v2' && E.memoSftpRow(mPb).row[E.memoSftpRow(mPb).header.indexOf('reason_codes')] === RAVI.split(',').join('|') + '|PR-PB-G01|PR-PB-G02' &&
+     E.memoSftpRow(mPb).row[E.memoSftpRow(mPb).header.indexOf('sharing_agreement')] === 'Partner Bank v2',
+     'PR-PB-G02 fires in Ravi’s Partner Bank memo (savings 1.33 months) and its SFTP row: reason_codes G02|…|G11|PR-PB-G01|PR-PB-G02, Partner Bank v2');
+  ok(!mLb.decision.reasonCodes.some(c => /^PR-/.test(c.code)) && mLb.sharingAgreement.label === 'Lender B v1 (illustrative)', '… and not in Lender B’s (still v1)');
+  ok(!codesOf(decidePersona('personal_loan', P.r1), 'partner-bank').includes('PR-PB-G02'), 'it fires only where its rule holds (r1 has no savings seen)');
+  ok(E.listDecisions().length === n0 + 1 && fingerprint(rv) === V27_FINGERPRINTS.j1 && E.reproduceDecision(rv.id).identical && fingerprint(ravi()) === V27_FINGERPRINTS.j1,
+     'the library never touches a decision: no record created by propose/approve, Ravi’s fingerprint and reproduction unchanged');
+  throwsWith(() => E.approveReasonCode('PR-PB-G02', { approver: 'M. Rashid' }), 'only a PROPOSED code', 'approving twice → refused');
+  throwsWith(() => E.approveReasonCode('G02', { approver: 'M. Rashid' }), 'Noor standard code', 'a standard code is not approved through this flow');
+  throwsWith(() => E.approveReasonCode('PR-XX-G99', { approver: 'M. Rashid' }), 'unknown reason code', 'an unknown code → refused');
+  // the seeded Lender B request
+  const apLb = E.approveReasonCode('PR-LB-Y01', { approver: 'S. Iyer' });
+  ok(apLb.status === 'ACTIVE' && apLb.agreement.line === 'Lender B v2 (illustrative) — adds PR-LB-Y01' && E.sharingAgreement('partner-bank').label === 'Partner Bank v2',
+     'approving the seeded PR-LB-Y01 versions Lender B’s agreement only: "Lender B v2 (illustrative) — adds PR-LB-Y01"');
+  E.init(D);
+  const c2b = decidePersona('split', P.c2), rvb = ravi();
+  E.approveReasonCode('PR-LB-Y01', { approver: 'S. Iyer' });
+  ok(codesOf(c2b, 'lender-b').includes('PR-LB-Y01') && !codesOf(c2b, 'partner-bank').includes('PR-LB-Y01') && !codesOf(rvb, 'lender-b').includes('PR-LB-Y01') &&
+     E.sharingAgreement('lender-b').label === 'Lender B v2 (illustrative)' && E.sharingAgreement('partner-bank').label === 'Partner Bank v1',
+     'approving the seeded PR-LB-Y01: Lender B v2 (illustrative); it fires for c2 (volatile pay) in Lender B’s memo only, not for Ravi');
+
+  // ---- §3 — the rule builder is safe by construction ----
+  E.init(D);
+  const bad = (patch, needle, msg) => throwsWith(() => E.proposeReasonCode(Object.assign({}, SSB, { labelEn: 'Probe Code' }, patch), { author: 'L. Haddad' }), needle, msg);
+  bad({ rule: { metric: 'nationality', op: '=', value: 1 } }, 'never allowed', 'a nationality metric → refused');
+  bad({ rule: { metric: 'age', op: '≥', value: 40 } }, 'never allowed', 'an age metric → refused');
+  bad({ rule: { metric: 'sex', op: '=', value: 1 } }, 'never allowed', 'a sex metric → refused');
+  bad({ rule: { metric: 'religion', op: '=', value: 1 } }, 'never allowed', 'a religion metric → refused');
+  bad({ rule: { metric: 'healthSpendPct', op: '≥', value: 5 } }, 'never allowed', 'a health metric → refused');
+  bad({ rule: { metric: 'familySize', op: '≥', value: 3 } }, 'never allowed', 'a family metric → refused');
+  bad({ rule: 'customers who seem reliable' }, 'free text', 'a free-text rule → refused');
+  bad({ rule: { metric: 'savingsMonths', op: '≥', value: 1, text: 'and looks reliable' } }, 'free text', 'free text beside the rule → refused');
+  bad({ rule: { metric: 'merchantName', op: '=', value: 1 } }, 'whitelist', 'any metric off the whitelist → refused');
+  bad({ rule: { metric: 'savingsMonths', op: '>', value: 1 } }, 'op must be', 'an operator other than ≥ ≤ = → refused');
+  bad({ rule: { metric: 'savingsMonths', op: '≥', value: '1' } }, 'takes a number', 'a typed value: savingsMonths needs a number');
+  bad({ rule: { metric: 'salaryViaWps', op: '≥', value: true } }, 'use the = operator', 'a true/false metric takes =');
+  bad({ rule: { metric: 'aecbHit', op: '=', value: 'yes' } }, 'true or false', 'a true/false metric takes true or false');
+  bad({ colour: 'AMBER' }, 'GREEN, YELLOW or RED', 'a fourth colour (AMBER) → refused');
+  bad({ colour: 'BLUE' }, 'exactly three colours', 'a fourth colour (BLUE) → refused');
+  bad({ labelEn: 'Savings Above AED 10,000' }, 'no thresholds', 'a label with a threshold → refused');
+  bad({ labelEn: 'Saves 30% of Pay' }, 'no thresholds', 'a label with a percentage → refused');
+  bad({ labelEn: 'strong savings buffer' }, 'Title Case', 'a label not in Title Case → refused');
+  bad({ labelEn: 'Clean AECB File' }, 'data-source', 'a label naming a data source → refused');
+  bad({ labelEn: 'Married Saver' }, 'never nationality', 'a label naming family status → refused');
+  bad({ labelEn: 'Saver' }, 'already in the library', 'a duplicate label → refused');
+  bad({ labelAr: 'Strong buffer' }, 'Arabic', 'an Arabic label without Arabic → refused');
+  bad({ tells: 'Savings above AED 10,000 in the AECB file' }, 'tells the lender', 'a "tells" line with a threshold or source → refused');
+  bad({ component: 'LIFESTYLE' }, 'component must be', 'a component outside the seven → refused');
+  bad({ requestedBy: 'unknown-bank' }, 'unknown lender', 'an unknown partner → refused');
+  throwsWith(() => E.proposeReasonCode(SSB, {}), 'author', 'propose without an author → refused');
+  ok(E.reasonCodeLibrary().length === L.length, 'nothing refused reached the library');
+  const yl = E.proposeReasonCode(Object.assign({}, SSB, { colour: 'YELLOW', labelEn: 'Thin Savings Buffer', labelAr: 'احتياطي ادخار محدود', tells: 'Savings cover little of monthly spending',
+                                                          rule: { metric: 'savingsMonths', op: '<=', value: 0.5 } }), { author: 'L. Haddad' });
+  ok(yl.code === 'PR-PB-Y01' && yl.rule.op === '≤' && /^\d{4}-\d{2}-\d{2}T/.test(yl.proposedAt), 'a YELLOW request numbers on its own: PR-PB-Y01; "<=" is stored as ≤');
+
+  // ---- §3 — retire ----
+  E.init(D);
+  const rr = ravi();
+  E.proposeReasonCode(SSB, { author: 'L. Haddad' }); E.approveReasonCode('PR-PB-G02', { approver: 'S. Iyer' });
+  throwsWith(() => E.retireReasonCode('PR-PB-G02', { author: 'S. Iyer', approver: 'S. Iyer' }), '4-eyes', 'retire with one person → 4-eyes violation');
+  throwsWith(() => E.retireReasonCode('PR-LB-Y01', { author: 'L. Haddad', approver: 'S. Iyer' }), 'only an ACTIVE code', 'retire a PROPOSED code → refused');
+  throwsWith(() => E.retireReasonCode('R01', { author: 'L. Haddad', approver: 'S. Iyer' }), 'Noor standard code', 'retire a standard code → refused');
+  const rt = E.retireReasonCode('PR-PB-G02', { author: 'L. Haddad', approver: 'S. Iyer' });
+  ok(rt.status === 'RETIRED' && rt.agreement.line === 'Partner Bank v3 — retires PR-PB-G02' && !codesOf(rr, 'partner-bank').includes('PR-PB-G02') && codesOf(rr, 'partner-bank').includes('PR-PB-G01') &&
+     E.sharingAgreement('partner-bank').libraryCodes.partner.join() === 'PR-PB-G01' && E.reasonCodeLibrary().find(e => e.code === 'PR-PB-G02').receivedBy.length === 0,
+     'retire works: RETIRED, Partner Bank v3 — retires PR-PB-G02; it no longer fires; PR-PB-G01 still does');
+
+  // ---- §4/§5 — no RC_*, no FND_*, no rule text in any memo or SFTP row, every persona × both lenders ----
+  E.init(D);
+  E.proposeReasonCode(SSB, { author: 'L. Haddad' }); E.approveReasonCode('PR-PB-G02', { approver: 'S. Iyer' }); E.approveReasonCode('PR-LB-Y01', { approver: 'S. Iyer' });
+  const set = [];
+  for (const p of D.personasLoan) set.push(decidePersona('personal_loan', p));
+  set.push(decidePersona('personal_loan', P.r2, { consents: { aecb: true, openFinance: true, creditPassport: true } }), decidePersona('personal_loan', P.r2, { consents: { aecb: true, openFinance: true, homeStatements: true } }));
+  for (const p of D.personasSplit) set.push(decidePersona('split', p));
+  for (const p of D.personasUpgrade) set.push(E.decide({ productId: 'starter_loan', applicant: p, consents: OF }), E.decide({ productId: 'starter_loan', applicant: p, consents: { aecb: true, openFinance: true, homeStatements: true } }));
+  set.push(ravi(), j70Again(), E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: OF }),
+           E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: { aecb: true, openFinance: false } }),
+           E.decide({ productId: 'salary_advance', applicant: P.r1, amount: 20000, tenorMonths: 1, consents: { aecb: true, openFinance: false } }),
+           E.decide({ productId: 'sme_working_capital', applicant: s1, amount: 150000, tenorMonths: 12, consents: { aecb: true, openFinance: true, ownerOpenFinance: true } }),
+           E.decide({ productId: 'sme_working_capital', applicant: s1, amount: 150000, tenorMonths: 12, consents: OF }),
+           E.decide({ productId: 'starter_loan', applicant: D.personasUpgrade[0], consents: OF, statements: tampered }));
+  function j70Again() { return E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: OF, dataSources: { approvedAccounts: ['4821', '0193'], months: 12 } }); }
+  const lib = E.reasonCodeLibrary();
+  const ruleTexts = lib.map(e => e.ruleText).filter(t => t && t !== '—');
+  /* metric names that are also memo field names (terms.tenorMonths; EXACT agreements' dbrPct) are checked as "metric op value" only */
+  const metricNames = Object.keys(E.REASON_CODE_METRICS).filter(mn => !['tenorMonths', 'dbrPct'].includes(mn));
+  const metricRule = new RegExp('\\b(' + Object.keys(E.REASON_CODE_METRICS).join('|') + ') (≥|≤|=) ');
+  const vocab = new Set(lib.map(e => e.code));
+  let dirty = 0, n = 0;
+  for (const rec of set) for (const lenderId of ['partner-bank', 'lender-b']) {
+    const memo = E.creditMemo(rec.id, { lenderId }), row = E.memoSftpRow(memo);
+    const t = JSON.stringify(memo) + '\n' + row.header.join(',') + '\n' + row.row.join(',');
+    n++;
+    const probs = [];
+    if (/RC_|FND_|RF_/.test(t)) probs.push('an RC_ / FND_ / RF_ name');
+    if (ruleTexts.some(rt => t.includes(rt))) probs.push('rule text');
+    if (metricNames.some(mn => t.includes(mn)) || metricRule.test(t) || /ruleRef|RULE-|"rule"|"ruleText"|"mapsRc"/.test(t)) probs.push('a metric, rule or ruleRef');
+    if (/amber/i.test(t)) probs.push('amber');
+    if (!memo.decision.reasonCodes.every(c => vocab.has(c.code) && Object.keys(c).join() === 'code,colour,en,ar')) probs.push('a code outside the library');
+    if (row.row[row.header.indexOf('reason_codes')] !== memo.decision.reasonCodes.map(c => c.code).join('|')) probs.push('SFTP reason_codes ≠ the memo');
+    if (!rec.reasonCodes.every(rc => memo.decision.reasonCodes.some(c => c.code === E.REASON_CODE_MAP[rc]))) probs.push('a customer RC_* without its library code');
+    if (memo.decision.reasonCodes.some(c => /^PR-/.test(c.code) && !c.code.startsWith(lenderId === 'partner-bank' ? 'PR-PB-' : 'PR-LB-'))) probs.push('another partner’s code');
+    if (probs.length) { dirty++; ok(false, rec.id + ' (' + lenderId + '): ' + probs.join('; ')); }
+  }
+  ok(n === set.length * 2 && n >= 50 && dirty === 0, 'every memo and SFTP row (' + n + ': ' + set.length + ' decisions × 2 lenders): library codes only — no RC_ or FND_ name, no rule text, metric or ruleRef, no amber; every customer RC_* present as its library code; partner codes in their own lender’s memo only');
+  ok(set.every(rec => !/RC_|FND_/.test(E.creditMemo(rec.id).outputs.map(o => o.tells + ' ' + o.value).join(' '))) && !/RC_/.test(JSON.stringify(E.MEMO_OUTPUTS)),
+     'the output table’s Reason codes row names no RC_* (what it tells the lender, and its value)');
+  ok(set.every(rec => rec.reasonCodes.every(rc => D.reasonCodes[rc] && ARABIC.test(D.reasonCodes[rc].ar))), 'the customer still has every RC_* reason on the record, in English and Arabic (CBUAE disclosure)');
+
+  // ---- amber → yellow; fingerprints; determinism; vocabulary ----
+  ok(set.filter(rec => rec.productId !== 'sme_working_capital').every(rec => E.noorScoreComponents(rec.id).components.every(c => ['green', 'yellow', 'red', 'neutral'].includes(c.tone))) &&
+     set.some(rec => E.noorScoreComponents(rec.id).components.some(c => c.tone === 'yellow')), 'component tones: green / yellow / red or neutral — amber is gone');
+  E.init(D);
+  E.proposeReasonCode(SSB, { author: 'L. Haddad' }); E.approveReasonCode('PR-PB-G02', { approver: 'S. Iyer' });
+  const fp = { r1: decidePersona('personal_loan', P.r1), r2: decidePersona('personal_loan', P.r2), r3: decidePersona('personal_loan', P.r3), r4: decidePersona('personal_loan', P.r4),
+               r5: decidePersona('personal_loan', P.r5), c1: decidePersona('split', P.c1), c2: decidePersona('split', P.c2), c3: decidePersona('split', P.c3), c4: decidePersona('split', P.c4),
+               c5: decidePersona('split', P.c5), j1: ravi(), 'a1+of': E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: OF }),
+               'a1+docs': E.decide({ productId: 'car_loan', applicant: a1, amount: 180000, tenorMonths: 60, consents: { aecb: true, openFinance: false } }) };
+  const changed = Object.keys(fp).filter(k => fingerprint(fp[k]) !== V27_FINGERPRINTS[k]);
+  ok(changed.length === 0, 'the v2.9 fingerprints still match with a partner code approved (' + Object.keys(fp).join(', ') + ')' + (changed.length ? ' — changed: ' + changed.join(', ') : ''));
+  const snap = () => { E.init(D); const x = ravi(); E.proposeReasonCode(SSB, { author: 'L. Haddad' }); E.approveReasonCode('PR-PB-G02', { approver: 'S. Iyer' });
+    return JSON.stringify([E.creditMemo(x.id), E.memoSftpRow(E.creditMemo(x.id)), E.creditMemo(x.id, { lenderId: 'lender-b' }), E.reasonCodeLibrary(), E.reasonCodeTrace(x.id), E.sharingAgreement('partner-bank')]); };
+  ok(snap() === snap(), 'two fresh init() runs: identical memos, library, trace and agreement versions');
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|cash now/i;
+  const txt26 = JSON.stringify([D.reasonCodeLibrary, D.sharingAgreements, E.reasonCodeLibrary(), snap()]);
+  ok(!banned.test(txt26) && !mentionsSalaryTransfer(txt26), 'no banned vocabulary in the v2.19 library, agreements or memos');
   E.init(D);
 });
 

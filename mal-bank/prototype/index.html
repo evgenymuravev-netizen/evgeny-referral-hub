@@ -1754,7 +1754,7 @@ label.bk-acct { position:relative; cursor:pointer; }
   font-family:var(--font-display); font-weight:800; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
 .dc-side { flex:1 1 180px; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .dc-counts { font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
-/* v2.18 — the Lender view: "What lenders receive" (slide 8), the component bars, findings chips, the agreement bar, Noor IP vs lender view */
+/* v2.18 — the Lender view: "What lenders receive" (slide 8), the component bars, the agreement bar, Noor IP vs lender view (v2.19: reason-code chips below) */
 .lv-lines { margin:10px 0 0; display:flex; flex-direction:column; gap:2px; }
 .lv-lines p { margin:0; }
 .lv-ext { color:var(--ink); font-weight:600; }
@@ -1788,17 +1788,15 @@ label.bk-acct { position:relative; cursor:pointer; }
 .mcb-bar { height:6px; border-radius:4px; background:var(--hairline); }
 .mcb-f { font-size:13px; color:var(--muted); }
 .mcb-green .mcb-bar, .lgt-green .mcb-dot, .mcb-green .mcb-dot { background:var(--ok); }
-.mcb-amber .mcb-bar, .lgt-amber .mcb-dot, .mcb-amber .mcb-dot { background:var(--warn); }
+.mcb-yellow .mcb-bar, .lgt-yellow .mcb-dot, .mcb-yellow .mcb-dot { background:var(--warn); }   /* v2.19 — yellow (was amber), the warn token */
 .mcb-red .mcb-bar, .lgt-red .mcb-dot, .mcb-red .mcb-dot { background:var(--bad); }
 .mcb-neutral .mcb-bar { background:repeating-linear-gradient(135deg, var(--hairline) 0 6px, transparent 6px 10px); }
-.fnd-chips { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
-.fnd-chip { display:inline-flex; align-items:center; border:1.5px solid var(--ink); border-radius:var(--radius-pill); padding:3px 11px; font-size:13px; font-weight:600; color:var(--ink); background:transparent; white-space:nowrap; }
 .mon-line { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; color:var(--ink); }
 .mon-st { display:inline-flex; border-radius:var(--radius-pill); padding:2px 10px; font-family:var(--font-label); font-size:12px; font-weight:600; color:var(--ok); background:var(--ok-soft); }
 .mon-elevated { color:var(--warn); background:var(--warn-soft); }
 .mon-not-applicable { color:var(--muted); background:var(--ground); }
 #lv-sharing .sw-shared li { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
-/* v2.18 — the Decision log: Reproduce, the contribution chart (Phase 1 points), the six components, findings with their rules */
+/* v2.18 — the Decision log: Reproduce, the contribution chart (Phase 1 points), the six components, the reason codes with their rules */
 .replay-acts { display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .lg-repro-l { margin:6px 0 4px; padding-left:18px; }
 .lg-sub { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--muted); margin:0 0 6px; }
@@ -1849,6 +1847,83 @@ label.bk-acct { position:relative; cursor:pointer; }
 .jr-scn-s { font-family:var(--font-ui); font-weight:400; font-size:12px; opacity:.8; }
 .fm-orig { align-self:flex-start; margin-top:3px; font-family:var(--font-label); font-size:10.5px; font-weight:600; letter-spacing:.02em; color:var(--muted);
   border:1px solid var(--hairline); border-radius:var(--radius-pill); padding:0 7px; }
+/* v2.19 — the reason-code library: three colours (green --ok · yellow --warn · red --bad) as chips, the legend, the Policy console block */
+#pc-grid[hidden], #pc-rclib[hidden] { display:none; }
+.rc-chips { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+.rc-chip { display:inline-flex; flex-direction:column; gap:1px; min-width:0; max-width:100%; border:1.5px solid var(--hairline); border-radius:12px; padding:4px 10px;
+  background:var(--panel); color:var(--ink); font-size:13px; line-height:1.35; }
+.rc-chip-top { display:inline-flex; align-items:baseline; gap:6px; flex-wrap:wrap; min-width:0; }
+.rc-code { font-family:var(--font-label); font-weight:700; font-size:12px; letter-spacing:.02em; white-space:nowrap; }
+.rc-en { font-weight:600; overflow-wrap:anywhere; }
+.rc-chip .rc-ar { font-size:12.5px; color:var(--ink-2); }
+.rc-sm { flex-direction:row; align-items:baseline; gap:6px; padding:2px 9px; border-radius:var(--radius-pill); font-size:12.5px; }
+.rc-sm .rc-en { font-weight:500; }
+.rc-GREEN { border-color:var(--ok); background:var(--ok-soft); }
+.rc-GREEN .rc-code { color:var(--ok); }
+.rc-YELLOW { border-color:var(--warn); background:var(--warn-soft); }
+.rc-YELLOW .rc-code { color:var(--warn); }
+.rc-RED { border-color:var(--bad); background:var(--bad-soft); }
+.rc-RED .rc-code { color:var(--bad); }
+.rc-legend { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; margin:2px 0 6px; font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.rc-lg { display:inline-flex; align-items:center; gap:5px; color:var(--ink-2); font-weight:600; }
+.rc-dot { display:inline-block; width:9px; height:9px; border-radius:50%; flex:0 0 9px; background:var(--faint); }
+.rc-dot-GREEN { background:var(--ok); }
+.rc-dot-YELLOW { background:var(--warn); }
+.rc-dot-RED { background:var(--bad); }
+.mo-val-chips { display:flex; flex-wrap:wrap; gap:4px; }
+.rcl-intro { margin:0 0 6px; }
+.rcl-group { margin-top:14px; }
+.rcl-gh { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--ink); margin:0 0 6px; }
+.rcl-gh .h3-note { font-family:var(--font-ui); font-size:13px; font-weight:400; color:var(--faint); }
+.rcl-rows { display:flex; flex-direction:column; border:1px solid var(--hairline-soft); border-radius:10px; overflow:hidden; }
+.rcl-row { display:grid; grid-template-columns:minmax(170px,1.25fr) minmax(170px,1fr) minmax(190px,1.25fr); gap:6px 14px; padding:10px 12px;
+  border-top:1px solid var(--hairline-soft); align-items:start; min-width:0; }
+.rcl-row:first-child { border-top:0; }
+.rcl-head { background:var(--ground); font-family:var(--font-label); font-size:11.5px; font-weight:600; color:var(--muted); padding:7px 12px; }
+.rcl-row > * { min-width:0; }
+.rcl-ar { font-size:13px; color:var(--ink-2); margin-top:3px; }
+.rcl-tells { font-size:13px; color:var(--muted); margin-top:2px; }
+.rcl-meta { display:flex; flex-wrap:wrap; gap:4px 6px; align-items:center; font-size:12.5px; color:var(--ink-2); }
+.rcl-tag { display:inline-flex; align-items:center; border-radius:var(--radius-pill); padding:1px 8px; font-family:var(--font-label); font-size:11.5px; font-weight:600;
+  border:1px solid var(--hairline); color:var(--ink-2); background:var(--panel); white-space:nowrap; }
+.rcl-st-ACTIVE { color:var(--ok); border-color:transparent; background:var(--ok-soft); }
+.rcl-st-PROPOSED { color:var(--warn); border-color:transparent; background:var(--warn-soft); }
+.rcl-st-RETIRED { color:var(--muted); border-color:transparent; background:var(--ground); text-decoration:line-through; }
+.rcl-to { flex:1 1 100%; font-size:12.5px; color:var(--muted); }
+.rcl-rule { font-size:12.5px; color:var(--ink-2); overflow-wrap:anywhere; }
+.rcl-inside { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-label); font-size:11px; font-weight:600; color:var(--muted);
+  border:1px dashed var(--hairline); border-radius:var(--radius-pill); padding:0 7px; margin-right:4px; }
+.rcl-act { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; padding-top:2px; }
+.rcl-act .field { margin:0; flex:1 1 200px; max-width:320px; }
+.rcl-act details { width:100%; }
+.rcl-act summary { cursor:pointer; font-size:13px; color:var(--brand-ink); font-weight:600; }
+.rcl-act .rcl-retire { display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-top:6px; }
+.rcl-msg { grid-column:1 / -1; }
+.rcl-msg .callout { margin:0; }
+.rcl-ags { display:flex; flex-direction:column; gap:8px; }
+.rcl-ag { padding:8px 10px; border-radius:var(--radius-sm); background:var(--panel-2); }
+.rcl-ag-line { font-weight:600; color:var(--ink); }
+.rcl-ag-hist { font-size:12.5px; color:var(--muted); margin-top:2px; }
+.rc-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+.rc-form-grid .rc-wide { grid-column:1 / -1; }
+.field .rc-radio { display:inline-flex; align-items:center; gap:6px; margin:0; border:1.5px solid var(--hairline); border-radius:var(--radius-pill); padding:5px 12px;
+  cursor:pointer; font-family:var(--font-ui); font-size:13.5px; font-weight:500; color:var(--ink); }
+.rc-radio input { margin:0; }
+.rc-radios { display:flex; flex-wrap:wrap; gap:8px; border:0; padding:0; margin:0; }
+.rc-radios[aria-invalid="true"] .rc-radio { border-color:var(--bad); }
+.rc-rule { display:grid; grid-template-columns:minmax(0,2fr) minmax(64px,.7fr) minmax(0,1fr); gap:8px; }
+.field input[aria-invalid="true"], .field select[aria-invalid="true"] { border-color:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+#pc-rc-colour-GREEN { accent-color:var(--ok); }
+#pc-rc-colour-YELLOW { accent-color:var(--warn); }
+#pc-rc-colour-RED { accent-color:var(--bad); }
+.field .rc-radio:has(input:checked) { border-color:var(--ink); }
+.lg-rc-map code { font-size:12.5px; }
+@media (max-width:760px) {
+  .rcl-row { grid-template-columns:1fr; }
+  .rcl-head { display:none; }
+  .rc-form-grid { grid-template-columns:1fr; }
+  .rcl-act .field { max-width:none; }
+}
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -2292,7 +2367,7 @@ var Overview = {
         'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.'),
       /* v2.18 — Noor's external line (methodology slide 6) */
       h('p', { class: 'lead', id: 'ov-external' }, h('strong', { text: 'NoorScore, as lenders hear it. ' }), ME.EXTERNAL_LINE || '',
-        h('span', { class: 'muted', text: ' Lenders receive scores, findings, reason codes and derived aggregates per sharing agreement — the methodology, thresholds, data-source mix and raw data stay inside Noor.' }))));
+        h('span', { class: 'muted', text: ' Lenders receive scores, reason codes from one library (green, yellow, red) and derived aggregates per sharing agreement — the methodology, thresholds, data-source mix and raw data stay inside Noor.' }))));
 
     var positions = [
       ['Share the pipes, not the brain', 'One platform, one data layer, one decision store — with product-specific policy packs. Split underwrites on connected-account cash flow; the personal loan on salary + bureau. No unified scoring model.'],
@@ -2317,7 +2392,7 @@ var Overview = {
       ['Step 5', 'Monitoring', 'STP vs targets per product and day-zero early warning.', function () { showScreen('monitoring'); }],
       ['Step 6', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
       ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
-      ['Step 8', 'Lender view — the credit memo', 'What lenders receive, per sharing agreement: NoorScore, findings and banded aggregates; Open Finance data never leaves Noor. Switch to Lender B, then Reproduce the decision in the Decision log.', function () { showScreen('lender'); }],
+      ['Step 8', 'Lender view — the credit memo', 'What lenders receive, per sharing agreement: NoorScore, reason codes (green · yellow · red) and banded aggregates; Open Finance data never leaves Noor. Switch to Lender B, then Reproduce the decision in the Decision log.', function () { showScreen('lender'); }],
       ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }],
       ['Step 10', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }],
       ['Step 11', 'SME working capital — Sara (s1)', 'The company’s accounts support AED 100,000; with Sara’s personal accounts AED 150,000, 2.5 points cheaper — business and owner watched while the loan is open.', function () { showScreen('sme'); Sme.reset(); }]
@@ -5566,7 +5641,7 @@ var RedFlagsUI = {
   /* ---- Policy console: the shared early-warning block ---- */
   pickerButton: function () {
     var on = Policy.pid === 'earlyWarning';
-    return h('span', { class: 'pc-shared' }, h('span', { class: 'pc-shared-l', text: 'Shared block' }),
+    return h('span', { class: 'pc-shared' }, h('span', { class: 'pc-shared-l', text: 'Shared blocks' }),
       h('button', { class: 'btn' + (on ? ' btn-primary' : ''), id: 'pc-pick-earlyWarning', 'aria-pressed': on ? 'true' : 'false', type: 'button',
         onclick: function () { Policy.load('earlyWarning'); } }, 'Early warning ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: 'الإنذار المبكر' })));
   },
@@ -5649,6 +5724,210 @@ var RedFlagsUI = {
     var a = $('#ln-c-aecb'), o = $('#ln-c-of');
     if (a) a.checked = true;
     if (o) o.checked = true;
+  }
+};
+/* ================= v2.19 — Policy console: the reason-code library (internal) ================= */
+/* One library, three colours: the only vocabulary lenders see. Noor standard codes and partner-requested codes; a partner code
+   is proposed by one person and approved by another (4-eyes, enforced by the engine), and approving it issues a new version of
+   that lender's sharing agreement. The rule behind each code stays inside Noor. */
+var RC_COMPONENT_LABEL = { FRAUD_INTEGRITY: 'Fraud & Integrity', NEWCOMER: 'Newcomer', STACKING_SKIP: 'Stacking & Skip', CREDIT_BEHAVIOUR: 'Credit Behaviour',
+  AFFORDABILITY: 'Affordability', DATA: 'Data', MONITORING: 'Monitoring' };
+var RC_METRIC_LABEL = { monthsHistory: 'months of connected history', completenessPct: 'data completeness %', dbrPct: 'DBR % after the loan', fcfMonthly: 'free cash flow, AED a month',
+  incomeVolatilityPct: 'income volatility %', savingsMonths: 'savings, in months of spending', diningSharePct: 'dining share of spending %', additionalIncomeMonthly: 'additional income, AED a month',
+  salaryViaWps: 'salary paid through WPS (true / false)', monthsInUae: 'months in the UAE', onTimeRepayments: 'repayments on time (true / false)', redFlagCount: 'origination red flags',
+  aecbHit: 'credit file found (true / false)', approvedAmount: 'approved amount, AED', tenorMonths: 'term, months' };
+var RC_GROUPS = [['GREEN', 'Green', 'positive'], ['YELLOW', 'Yellow', 'caution'], ['RED', 'Red', 'adverse']];
+function rcErrText(e) { return String(e && e.message ? e.message : e).replace(/^Mizan: /, ''); }
+var RcLibUI = {
+  notice: null,
+  pickerButton: function () {
+    var on = Policy.pid === 'reasonCodes';
+    return h('button', { class: 'btn' + (on ? ' btn-primary' : ''), id: 'pc-pick-reasonCodes', 'aria-pressed': on ? 'true' : 'false', type: 'button',
+      onclick: function () { Policy.load('reasonCodes'); } }, 'Reason-code library ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: 'مكتبة رموز الأسباب' }));
+  },
+  show: function (on) {
+    var g = $('#pc-grid'), b = $('#pc-rclib');
+    if (g) g.hidden = !!on;
+    if (b) b.hidden = !on;
+  },
+  lenders: function () { var out = {}; try { ME.lenders().forEach(function (l) { out[l.id] = l.name; }); } catch (e) {} return out; },
+  render: function () {
+    var root = clear($('#pc-rclib'));
+    root.appendChild(h('div', { class: 'panel', id: 'pc-rc-lib' }));
+    root.appendChild(h('div', { class: 'grid2' },
+      h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-rc-propose' })),
+      h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-rc-agreements' }))));
+    RcLibUI.renderLib(); RcLibUI.renderForm(); RcLibUI.renderAgreements();
+  },
+  /* after any library change: the block, the agreements, and every lender-facing screen (the memos re-read the library) */
+  refresh: function () { RcLibUI.renderLib(); RcLibUI.renderAgreements(); afterEngineMutation(); },
+  renderLib: function () {
+    var box = clear($('#pc-rc-lib'));
+    if (!box) return;
+    var lib = [];
+    try { lib = ME.reasonCodeLibrary(); } catch (e) { box.appendChild(h('div', { class: 'callout callout-error', text: 'Reason-code library unavailable from engine.' })); return; }
+    var names = RcLibUI.lenders();
+    box.appendChild(h('h3', null, 'Reason-code library ', h('span', { class: 'h3-note', text: '— the only vocabulary lenders see · internal: the rules stay inside Noor' })));
+    box.appendChild(h('p', { class: 'small muted rcl-intro', text: 'One library, exactly three colours. Lenders receive the code and its label (English + Arabic) — in the memo, the API and the SFTP row — never the rule. ' +
+      'The customer still reads the RC_* reasons in English and Arabic; each one maps to exactly one code here.' }));
+    box.appendChild(rcLegend('pc-rc-legend'));
+    var std = lib.filter(function (e) { return e.source === 'NOOR_STANDARD'; }).length, prq = lib.length - std;
+    box.appendChild(h('div', { class: 'small', id: 'pc-rc-counts', text: std + ' Noor standard codes · ' + prq + ' partner request' + (prq === 1 ? '' : 's') }));
+    if (RcLibUI.notice) box.appendChild(h('div', { class: 'callout callout-ok small', id: 'pc-rc-notice', role: 'status', style: 'margin-top:8px;' },
+      h('div', { class: 'co-title', text: RcLibUI.notice[0] }), h('div', { text: RcLibUI.notice[1] })));
+    RC_GROUPS.forEach(function (g) {
+      var rows = lib.filter(function (e) { return e.colour === g[0]; });
+      var list = h('div', { class: 'rcl-rows', role: 'table', 'aria-label': g[1] + ' reason codes' },
+        h('div', { class: 'rcl-row rcl-head', role: 'row' }, h('span', { role: 'columnheader', text: 'Code · label · what it tells the lender' }),
+          h('span', { role: 'columnheader', text: 'Component · source · status · partners' }), h('span', { role: 'columnheader', text: 'Internal rule — inside Noor' })));
+      rows.forEach(function (e) { list.appendChild(RcLibUI.row(e, names)); });
+      box.appendChild(h('section', { class: 'rcl-group', id: 'pc-rc-group-' + g[0], dataset: { colour: g[0], count: String(rows.length) } },
+        h('h4', { class: 'rcl-gh' }, h('span', { class: 'rc-dot rc-dot-' + g[0], 'aria-hidden': 'true' }), g[1], h('span', { class: 'h3-note', text: '— ' + g[2] + ' · ' + rows.length + ' codes' })),
+        list));
+    });
+  },
+  row: function (e, names) {
+    var partner = e.source === 'PARTNER_REQUEST';
+    var to = (e.receivedBy || []).map(function (id) { return names[id] || id; });
+    var r = h('div', { class: 'rcl-row', role: 'row', id: 'pc-rc-row-' + e.code, dataset: { code: e.code, colour: e.colour, status: e.status, source: e.source } },
+      h('div', { role: 'cell' }, rcChip(e, 'sm'), h('div', { class: 'rcl-ar ar', lang: 'ar', dir: 'rtl', text: e.labelAr }), h('div', { class: 'rcl-tells', text: e.tells })),
+      h('div', { role: 'cell', class: 'rcl-meta' },
+        h('span', { class: 'rcl-tag', text: RC_COMPONENT_LABEL[e.component] || e.component }),
+        h('span', { class: 'rcl-tag rcl-src', text: partner ? 'Partner request: ' + (names[e.requestedBy] || e.requestedBy) : 'Noor standard' }),
+        h('span', { class: 'rcl-tag rcl-st rcl-st-' + e.status, text: e.status }),
+        h('span', { class: 'rcl-to', text: 'Sent to: ' + (to.length ? to.join(' · ') : (e.status === 'PROPOSED' ? 'nobody until approved' : 'nobody')) }),
+        partner ? h('span', { class: 'rcl-to', text: 'Proposed by ' + e.author + (e.approver ? ' · approved by ' + e.approver : '') + (e.retiredBy ? ' · retired by ' + e.retiredBy.author + ' / ' + e.retiredBy.approver : '') }) : null),
+      h('div', { role: 'cell', class: 'rcl-rule' }, h('span', { class: 'rcl-inside' }, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), 'Inside Noor'), h('code', { text: e.ruleRef }),
+        h('div', { text: e.ruleText }), e.mapsRc && e.mapsRc.length ? h('div', { class: 'small muted', text: 'Maps ' + e.mapsRc.join(', ') }) : null));
+    if (partner && e.status === 'PROPOSED') {
+      var appr = h('input', { type: 'text', id: 'pc-rc-approver-' + e.code, placeholder: 'Must differ from ' + e.author, 'aria-label': 'Approver for ' + e.code });
+      var msg = h('div', { class: 'rcl-msg', id: 'pc-rc-msg-' + e.code, 'aria-live': 'polite' });
+      r.appendChild(h('div', { class: 'rcl-act' },
+        h('div', { class: 'field' }, h('label', { for: 'pc-rc-approver-' + e.code, text: 'Approver (4-eyes)' }), appr),
+        h('button', { class: 'btn btn-primary', type: 'button', id: 'pc-rc-approve-' + e.code, text: 'Approve (4-eyes)', onclick: function () {
+          clear(msg); appr.removeAttribute('aria-invalid');
+          var res;
+          try { res = ME.approveReasonCode(e.code, { approver: appr.value.trim() }); }
+          catch (err) { appr.setAttribute('aria-invalid', 'true');
+            msg.appendChild(h('div', { class: 'callout callout-error small', id: 'pc-rc-err-' + e.code, role: 'alert' }, h('div', { class: 'co-title', text: 'Not approved' }), h('div', { text: rcErrText(err) }))); return; }
+          RcLibUI.notice = [res.code + ' is ACTIVE', res.agreement.line + ' — approved by ' + res.approver + '. It now fires in ' + (names[res.requestedBy] || res.requestedBy) + '’s memos only.'];
+          RcLibUI.refresh();
+        } })));
+      r.appendChild(msg);
+    } else if (partner && e.status === 'ACTIVE') {
+      var ra = h('input', { type: 'text', id: 'pc-rc-retire-author-' + e.code, placeholder: 'Your name', 'aria-label': 'Retire ' + e.code + ' — author' });
+      var rp = h('input', { type: 'text', id: 'pc-rc-retire-approver-' + e.code, placeholder: 'A second person', 'aria-label': 'Retire ' + e.code + ' — approver' });
+      var rmsg = h('div', { class: 'rcl-msg', id: 'pc-rc-msg-' + e.code, 'aria-live': 'polite' });
+      r.appendChild(h('div', { class: 'rcl-act' }, h('details', { id: 'pc-rc-retire-box-' + e.code }, h('summary', { text: 'Retire' }),
+        h('div', { class: 'rcl-retire' },
+          h('div', { class: 'field' }, h('label', { for: 'pc-rc-retire-author-' + e.code, text: 'Author' }), ra),
+          h('div', { class: 'field' }, h('label', { for: 'pc-rc-retire-approver-' + e.code, text: 'Approver (4-eyes)' }), rp),
+          h('button', { class: 'btn', type: 'button', id: 'pc-rc-retire-' + e.code, text: 'Retire (4-eyes)', onclick: function () {
+            clear(rmsg);
+            var res;
+            try { res = ME.retireReasonCode(e.code, { author: ra.value.trim(), approver: rp.value.trim() }); }
+            catch (err) { rmsg.appendChild(h('div', { class: 'callout callout-error small', id: 'pc-rc-err-' + e.code, role: 'alert' }, h('div', { class: 'co-title', text: 'Not retired' }), h('div', { text: rcErrText(err) }))); return; }
+            RcLibUI.notice = [res.code + ' is RETIRED', res.agreement.line + '. It no longer fires in any memo.'];
+            RcLibUI.refresh();
+          } })))));
+      r.appendChild(rmsg);
+    }
+    return r;
+  },
+  renderForm: function () {
+    var box = clear($('#pc-rc-propose'));
+    if (!box) return;
+    var metrics = ME.REASON_CODE_METRICS || {}, comps = ME.REASON_CODE_COMPONENTS || [];
+    box.appendChild(h('h3', null, 'New code — partner request ', h('span', { class: 'h3-note', text: '— proposed here, approved by a second person' })));
+    box.appendChild(h('p', { class: 'small muted', text: 'The rule builder takes one whitelisted engine metric, an operator and a value — nothing else. Nationality, sex, age, religion, health, family and free text are refused by the engine.' }));
+    var partner = h('select', { id: 'pc-rc-partner', 'aria-label': 'Partner' });
+    try { ME.lenders().forEach(function (l) { partner.appendChild(h('option', { value: l.id, text: l.name })); }); } catch (e) {}
+    var colours = h('div', { class: 'rc-radios', id: 'pc-rc-colour', role: 'radiogroup', 'aria-label': 'Colour' });
+    RC_GROUPS.forEach(function (g) {
+      colours.appendChild(h('label', { class: 'rc-radio', for: 'pc-rc-colour-' + g[0] },
+        h('input', { type: 'radio', name: 'pc-rc-colour', id: 'pc-rc-colour-' + g[0], value: g[0] }), h('span', { class: 'rc-dot rc-dot-' + g[0], 'aria-hidden': 'true' }), g[1]));
+    });
+    var en = h('input', { type: 'text', id: 'pc-rc-label-en', placeholder: 'Title Case, no numbers — e.g. Strong Savings Buffer' });
+    var ar = h('input', { type: 'text', id: 'pc-rc-label-ar', dir: 'rtl', lang: 'ar', placeholder: 'بالعربية' });
+    var tells = h('input', { type: 'text', id: 'pc-rc-tells', placeholder: 'One line, e.g. Savings cover at least a month of spending' });
+    var comp = h('select', { id: 'pc-rc-component' }, h('option', { value: '', text: 'Choose a component' }));
+    comps.forEach(function (c) { comp.appendChild(h('option', { value: c, text: RC_COMPONENT_LABEL[c] || c })); });
+    var metric = h('select', { id: 'pc-rc-metric', 'aria-label': 'Metric (whitelist)' });
+    Object.keys(metrics).forEach(function (k) { metric.appendChild(h('option', { value: k, text: k + ' — ' + (RC_METRIC_LABEL[k] || metrics[k]) })); });
+    var op = h('select', { id: 'pc-rc-op', 'aria-label': 'Operator' });
+    (ME.REASON_CODE_OPS || ['≥', '≤', '=']).forEach(function (o) { op.appendChild(h('option', { value: o, text: o })); });
+    var valWrap = h('span', { id: 'pc-rc-value-wrap' });
+    function paintValue() {
+      clear(valWrap);
+      if (metrics[metric.value] === 'boolean') {
+        valWrap.appendChild(h('select', { id: 'pc-rc-value', 'aria-label': 'Value' }, h('option', { value: 'true', text: 'true' }), h('option', { value: 'false', text: 'false' })));
+        op.value = '=';
+      } else valWrap.appendChild(h('input', { type: 'text', id: 'pc-rc-value', inputmode: 'decimal', placeholder: 'number', 'aria-label': 'Value' }));
+    }
+    metric.addEventListener('change', paintValue);
+    paintValue();
+    var author = h('input', { type: 'text', id: 'pc-rc-author', placeholder: 'Your name — someone else approves' });
+    var out = h('div', { id: 'pc-rc-form-out', 'aria-live': 'polite' });
+    var fields = { partner: partner, colour: colours, labelEn: en, labelAr: ar, tells: tells, component: comp, metric: metric, op: op, author: author };
+    function field(id, label, ctl, wide) { return h('div', { class: 'field' + (wide ? ' rc-wide' : '') }, h('label', { for: id, text: label }), ctl); }
+    box.appendChild(h('div', { class: 'rc-form-grid', id: 'pc-rc-form' },
+      field('pc-rc-partner', 'Partner', partner),
+      h('div', { class: 'field' }, h('span', { class: 'band-label', id: 'pc-rc-colour-l', style: 'display:block;font-family:var(--font-label);font-size:13px;color:var(--ink-2);margin-bottom:4px;', text: 'Colour — exactly three' }), colours),
+      field('pc-rc-label-en', 'Label (English)', en),
+      field('pc-rc-label-ar', 'Label (Arabic)', ar),
+      field('pc-rc-tells', 'What it tells the lender', tells, true),
+      field('pc-rc-component', 'Component', comp),
+      field('pc-rc-author', 'Author', author),
+      h('div', { class: 'field rc-wide' }, h('label', { for: 'pc-rc-metric', text: 'Rule — metric (whitelist) · operator · value' }), h('div', { class: 'rc-rule' }, metric, op, valWrap),
+        h('div', { class: 'bounds', text: 'The rule stays inside Noor; the lender sees the code and its label only.' }))));
+    box.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', type: 'button', id: 'pc-rc-propose-btn', text: 'Propose', onclick: function () {
+      clear(out);
+      Object.keys(fields).forEach(function (k) { fields[k].removeAttribute('aria-invalid'); });
+      var vEl = $('#pc-rc-value'); if (vEl) vEl.removeAttribute('aria-invalid');
+      var picked = $('input[name="pc-rc-colour"]:checked');
+      var raw = vEl ? vEl.value.trim() : '';
+      var value = metrics[metric.value] === 'boolean' ? raw === 'true' : (raw !== '' && isFinite(Number(raw)) ? Number(raw) : raw);
+      var res;
+      try {
+        res = ME.proposeReasonCode({ requestedBy: partner.value, colour: picked ? picked.value : null, labelEn: en.value, labelAr: ar.value, tells: tells.value,
+          component: comp.value, rule: { metric: metric.value, op: op.value, value: value } }, { author: author.value.trim() });
+      } catch (err) {
+        var m = rcErrText(err);
+        var bad = /author/i.test(m) ? author : (/^Arabic/.test(m) ? ar : (/^label/.test(m) ? en : (/tells the lender/.test(m) ? tells : (/^component/.test(m) ? comp
+          : (/^colour/.test(m) ? colours : (/^op /.test(m) ? op : (/takes a number|true or false|= operator/.test(m) ? vEl : (/metric|whitelist|free text/.test(m) ? metric
+          : (/lender|partner/i.test(m) ? partner : null)))))))));
+        if (bad) bad.setAttribute('aria-invalid', 'true');
+        out.appendChild(h('div', { class: 'callout callout-error', id: 'pc-rc-form-err', role: 'alert' }, h('div', { class: 'co-title', text: 'Not proposed' }), h('div', { class: 'co-body', text: m })));
+        return;
+      }
+      out.appendChild(h('div', { class: 'callout callout-ok', id: 'pc-rc-form-ok', role: 'status' }, h('div', { class: 'co-title', text: res.code + ' proposed — ' + res.status }),
+        h('div', { class: 'co-body', text: '“' + res.labelEn + '” waits for a second person: approve it in the ' + (res.colour === 'GREEN' ? 'Green' : (res.colour === 'YELLOW' ? 'Yellow' : 'Red')) + ' group. Nothing fires until then.' })));
+      en.value = ''; ar.value = ''; tells.value = ''; if (vEl && vEl.tagName === 'INPUT') vEl.value = '';
+      RcLibUI.notice = null;
+      RcLibUI.renderLib(); RcLibUI.renderAgreements();
+    } })));
+    box.appendChild(out);
+  },
+  renderAgreements: function () {
+    var box = clear($('#pc-rc-agreements'));
+    if (!box) return;
+    box.appendChild(h('h3', null, 'Sharing agreements — versions ', h('span', { class: 'h3-note', text: '— which codes each lender receives' })));
+    var wrap = h('div', { class: 'rcl-ags', id: 'pc-rc-agreement-lines' });
+    var lenders = [];
+    try { lenders = ME.lenders(); } catch (e) {}
+    lenders.forEach(function (l) {
+      var ag = null;
+      try { ag = ME.sharingAgreement(l.id); } catch (e) { return; }
+      var hist = ag.history || [], last = hist[hist.length - 1] || { label: ag.label, change: 'agreed' };
+      var line = last.change === 'agreed' ? ag.label + ' — agreed ' + fmtD(last.at) : last.label + ' — ' + last.change;
+      wrap.appendChild(h('div', { class: 'rcl-ag', id: 'pc-rc-ag-' + l.id, dataset: { lender: l.id, version: ag.version } },
+        h('div', { class: 'rcl-ag-line', text: line }),
+        h('div', { class: 'small', text: 'Reason codes: ' + (ag.libraryCodes.standard === 'ALL' ? 'every Noor standard code' : ag.libraryCodes.standard.join(', ')) +
+          (ag.libraryCodes.partner.length ? ' + ' + ag.libraryCodes.partner.join(', ') : ' · no partner codes') }),
+        h('div', { class: 'rcl-ag-hist', text: hist.map(function (x) { return x.version + ' ' + x.change + (x.by ? ' (' + x.by + ')' : ''); }).join(' → ') })));
+    });
+    box.appendChild(wrap);
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-top:8px;', text: 'Approving or retiring a partner code issues a new version of that lender’s agreement. The memo and the SFTP row name the version in force.' }));
   }
 };
 /* ================= Policy console ================= */
@@ -5816,9 +6095,10 @@ var Policy = {
     root.appendChild(screenHead('Credit risk self-service', 'Policy console',
       'Versioned policy packs per product: draft → simulate → approve (4-eyes) → publish, without an engineering release. Regulatory primitives are locked — referenced, never editable; the engine enforces them regardless.'));
     root.appendChild(h('div', { class: 'btnrow', id: 'pc-picker', style: 'margin-bottom:12px;' }));
-    root.appendChild(h('div', { class: 'grid2' },
+    root.appendChild(h('div', { class: 'grid2', id: 'pc-grid' },
       h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-reg' }), h('div', { class: 'panel', id: 'pc-params' })),
       h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-sim' }), h('div', { class: 'panel', id: 'pc-publish' }), h('div', { class: 'panel', id: 'pc-history' }))));
+    root.appendChild(h('div', { class: 'stack', id: 'pc-rclib', hidden: 'hidden' }));   /* v2.19 — the reason-code library block */
     Policy.load('split');
   },
   buildPicker: function () {
@@ -5830,10 +6110,15 @@ var Policy = {
         onclick: function () { Policy.load(m.productId); } },
         (m.nameEn || m.productId) + ' ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: m.nameAr || '' })));
     });
-    pk.appendChild(RedFlagsUI.pickerButton());   /* v2.9 — the shared early-warning block */
+    var shared = RedFlagsUI.pickerButton();   /* v2.9 — the shared early-warning block */
+    shared.appendChild(RcLibUI.pickerButton());   /* v2.19 — the reason-code library, beside it */
+    pk.appendChild(shared);
   },
   load: function (pid) {
     Policy.pid = pid;
+    /* v2.19 — the reason-code library is a block of its own: full width, not a policy pack */
+    if (pid === 'reasonCodes') { Policy.policy = null; Policy.buildPicker(); RcLibUI.show(true); RcLibUI.render(); return; }
+    RcLibUI.show(false);
     try { Policy.policy = ME.getPolicy(pid); } catch (e) { Policy.policy = null; }
     Policy.buildPicker();
     Policy.renderReg(); Policy.renderParams();
@@ -6630,13 +6915,13 @@ function contributionChart(cc) {
   box.setAttribute('aria-label', 'Contribution chart: ' + cc.baseLabel + ' ' + cc.base + cc.steps.map(function (s) { return ', ' + s.name + ' ' + (s.delta > 0 ? 'plus ' : 'minus ') + Math.abs(s.delta); }).join('') + ', NoorScore ' + cc.points);
   return box;
 }
-var LG_TONE_WORD = { green: 'green', amber: 'amber', red: 'red', neutral: 'neutral' };
+var LG_TONE_WORD = { green: 'green', yellow: 'yellow', red: 'red', neutral: 'neutral' };   /* v2.19 — yellow (was amber) */
 function logExplain(rec) {
   var wrap = h('div', { id: 'lg-explain', style: 'margin:0 0 12px;' });
-  var cc = null, comps = null, finds = [];
+  var cc = null, comps = null, trace = null;
   try { cc = ME.scoreContributions(rec.id); } catch (e) {}
   try { comps = ME.noorScoreComponents(rec.id); } catch (e) {}
-  try { finds = ME.customerFindings(rec.id); } catch (e) {}
+  try { trace = ME.reasonCodeTrace(rec.id); } catch (e) {}
   wrap.appendChild(h('h3', null, 'Explainable — inside Noor ', h('span', { class: 'h3-note', text: '— never sent to a lender' })));
   if (cc) wrap.appendChild(h('div', { class: 'small', id: 'lg-model' }, h('strong', { text: 'Model: ' }), cc.phase + ' ' + (cc.model || '—') + ' ' + (cc.version || '') +
     ' · every feature, weight and point is traceable; Phase 2 (a model trained on repayment behaviour) stays explainable with SHAP values per feature.'));
@@ -6657,11 +6942,25 @@ function logExplain(rec) {
     wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Six components — ' + comps.derivation.toLowerCase() + ', with what drove each one' }),
       h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl lg-six', id: 'lg-components' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'Level' }), h('th', { text: 'What drove it (internal)' }))), tb))));
   }
-  /* findings, with the internal rule behind each (the memo carries the words only) */
-  var fl = h('ul', { class: 'lg-findings', id: 'lg-findings' });
-  finds.forEach(function (x) { fl.appendChild(h('li', { dataset: { code: x.code } }, h('span', { class: 'fnd-chip', text: x.en }), h('span', { class: 'small muted', text: ' ' + x.code + ' — ' + x.rule }))); });
-  if (!finds.length) fl.appendChild(h('li', { class: 'small muted', text: 'No findings.' }));
-  wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Findings — with the rule behind each (stays inside Noor)' }), fl));
+  /* v2.19 — the library codes that fired, with the internal rule behind each and who receives it (the memo carries code + label only);
+     the customer's RC_* reasons beside them, each with its one library code */
+  var lenderNames = {};
+  try { ME.lenders().forEach(function (l) { lenderNames[l.id] = l.name; }); } catch (e) {}
+  var codes = trace ? trace.codes : [];
+  var fl = h('ul', { class: 'lg-findings', id: 'lg-rc' });
+  codes.forEach(function (x) {
+    fl.appendChild(h('li', { dataset: { code: x.code, colour: x.colour } }, h('div', null, rcChip(x, 'sm')),
+      h('div', { class: 'small muted', text: x.ruleRef + ' — ' + x.rule + ' · ' + (x.receivedBy.length ? 'sent to ' + x.receivedBy.map(function (id) { return lenderNames[id] || id; }).join(', ') : 'no partner receives it') })));
+  });
+  if (!codes.length) fl.appendChild(h('li', { class: 'small muted', text: 'No library code fired.' }));
+  wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Reason codes — the library codes that fired, with the rule behind each (stays inside Noor)' }), rcLegend(null), fl));
+  var ml = h('ul', { class: 'lg-findings lg-rc-map', id: 'lg-rc-map' });
+  (trace ? trace.rcMap : []).forEach(function (x) {
+    ml.appendChild(h('li', { dataset: { rc: x.rc, code: x.code || '' } }, h('div', null, h('code', { text: x.rc }), ' → ', x.code ? rcChip({ code: x.code, colour: x.colour, en: x.labelEn }, 'sm') : h('span', { text: '—' })),
+      h('div', { class: 'small muted', text: rcEn(x.rc) }), h('div', { class: 'small ar', lang: 'ar', dir: 'rtl', text: rcAr(x.rc) })));
+  });
+  if (!trace || !trace.rcMap.length) ml.appendChild(h('li', { class: 'small muted', text: 'No adverse-action reason on this decision.' }));
+  wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Customer reasons (EN + AR) → the library code the lender reads' }), ml));
   return wrap;
 }
 function logReproduceBox(rec) {
@@ -6797,7 +7096,7 @@ var LogScreen = {
           (ldc.aboveThreshold ? 'scored' + (ldc.scoreOverlay ? ' — NoorScore ' + ldc.scoreOverlay : ' — nothing to add') : 'below the threshold — referred (' + ldc.ask.join(', ') + ' missing)') }),
         h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'What we have' }), h('th', { class: 'num', text: 'Points / weight' }))), ltb))));
     }
-    panel.appendChild(logExplain(rec));   /* v2.18 — the contribution chart, the six components and the findings (internal) */
+    panel.appendChild(logExplain(rec));   /* v2.18 — the contribution chart, the six components; v2.19 — the reason codes with their rules (internal) */
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
@@ -6931,6 +7230,31 @@ function memoKv(rows) {
   });
   return grid;
 }
+/* v2.19 — a reason code from the library as a coloured chip: the code id + its label (green --ok · yellow --warn · red --bad).
+   Accepts a memo code {code, colour, en, ar} or a library entry {code, colour, labelEn, labelAr}; size 'sm' is one line, EN only. */
+var RC_COLOUR_WORD = { GREEN: 'Green — positive', YELLOW: 'Yellow — caution', RED: 'Red — adverse' };
+function rcChip(c, size, role) {
+  var en = c.en || c.labelEn || c.code, ar = c.ar || c.labelAr || '';
+  var top = h('span', { class: 'rc-chip-top' }, h('span', { class: 'rc-code', text: c.code }), ' ', h('span', { class: 'rc-en', text: en }));
+  return h('span', { class: 'rc-chip rc-' + c.colour + (size === 'sm' ? ' rc-sm' : ''), role: role || null, title: (RC_COLOUR_WORD[c.colour] || c.colour) + (size === 'sm' && ar ? ' · ' + ar : ''),
+    dataset: { code: c.code, colour: c.colour } }, top, size === 'sm' || !ar ? null : h('span', { class: 'ar rc-ar', lang: 'ar', dir: 'rtl', text: ar }));
+}
+/* A row of chips; the whitespace between them is ignored by the flex layout but keeps the text readable ("G02 Saver G03 …") */
+function rcChipList(codes, size) {
+  var out = [];
+  (codes || []).forEach(function (c, i) { if (i) out.push(document.createTextNode(' ')); out.push(rcChip(c, size)); });
+  return out;
+}
+/* The three colours, as a small legend: Green · Yellow · Red */
+function rcLegend(id) {
+  var box = h('div', { class: 'rc-legend', id: id || null, role: 'note', 'aria-label': 'Reason-code colours' });
+  [['GREEN', 'Green'], ['YELLOW', 'Yellow'], ['RED', 'Red']].forEach(function (x, i) {
+    if (i) box.appendChild(h('span', { 'aria-hidden': 'true', text: ' · ' }));
+    box.appendChild(h('span', { class: 'rc-lg', dataset: { colour: x[0] } }, h('span', { class: 'rc-dot rc-dot-' + x[0], 'aria-hidden': 'true' }), x[1]));
+  });
+  box.appendChild(h('span', { text: ' — positive · caution · adverse' }));
+  return box;
+}
 /* v2.18 — the memo opens with "What lenders receive" (methodology slide 8): output · what it tells the lender · status · value */
 function memoOutputsTable(m) {
   var box = h('div', { class: 'mo-table', id: 'lv-outputs', role: 'table', 'aria-label': 'What lenders receive' },
@@ -6941,12 +7265,15 @@ function memoOutputsTable(m) {
       h('span', { class: 'mo-name', role: 'cell', text: o.output }),
       h('span', { class: 'mo-tells', role: 'cell', text: o.tells }),
       h('span', { class: 'mo-st', role: 'cell' }, h('span', { class: 'mo-tag mo-' + o.status.toLowerCase(), text: o.status })),
-      h('span', { class: 'mo-val', role: 'cell', text: o.value })));
+      /* v2.19 — the Reason codes row shows the library codes as coloured chips */
+      o.key === 'reasonCodes' && m.decision && m.decision.reasonCodes && m.decision.reasonCodes.length
+        ? h('span', { class: 'mo-val mo-val-chips', role: 'cell', id: 'lv-outputs-rc', 'aria-label': o.value }, rcChipList(m.decision.reasonCodes, 'sm'))
+        : h('span', { class: 'mo-val', role: 'cell', text: o.value })));
   });
   return box;
 }
 /* v2.18 — the four score components as colour-coded bars: a level word and up to two factor words (never weights or points) */
-var MEMO_TONE_WORD = { green: 'green', amber: 'amber', red: 'red', neutral: 'not applicable' };
+var MEMO_TONE_WORD = { green: 'green', yellow: 'yellow', red: 'red', neutral: 'not applicable' };   /* v2.19 — yellow (was amber) */
 function memoComponentBars(sc) {
   var wrap = h('div', { class: 'mcb-list', id: 'lv-components', dataset: { derivation: sc.derivation } });
   sc.components.forEach(function (c) {
@@ -6999,20 +7326,19 @@ function memoDoc(m) {
       bandChip(ns.band, 'lv-band'),
       h('span', { class: 'ns-scale', id: 'lv-ns-note', text: ns.value === null ? (m.product.productId === 'starter_loan' ? 'decided on the repayment record' : 'no score yet — thin file') : 'Risk band, to be mapped to expected default once calibrated' })),
     (ns.factors && ns.factors.length) ? h('div', { class: 'ns-factors' }, h('span', { class: 'ns-fl', text: 'What moved it' }), factors) : null));
-  /* §1c — findings, next to the reason codes (outlined chips); RC_* still explain any refer, decline or reduction */
-  var rc = h('div', { class: 'memo-rc' });
-  var fchips = h('div', { class: 'fnd-chips', id: 'lv-findings', role: 'list', 'aria-label': 'Findings' });
-  (m.findings || []).forEach(function (x) { fchips.appendChild(h('span', { class: 'fnd-chip', role: 'listitem', dataset: { code: x.code }, title: x.ar, text: x.en })); });
-  if (!(m.findings || []).length) fchips.appendChild(h('span', { class: 'small muted', text: 'No findings for this customer.' }));
-  if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
-  d.reasonCodes.forEach(function (c) {
-    rc.appendChild(h('div', { class: 'reason-line', dataset: { code: c.code }, style: 'display:flex;justify-content:space-between;gap:6px 14px;padding:6px 0;border-bottom:1px solid var(--hairline-soft);align-items:baseline;flex-wrap:wrap;' },
-      h('span', { style: 'min-width:0;flex:1 1 220px;' }, h('code', { class: 'small muted', text: c.code }), ' ', h('span', { class: 'rc-en', text: c.en })),
-      h('span', { class: 'ar rc-ar', lang: 'ar', dir: 'rtl', style: 'flex:1 1 200px;text-align:right;', text: c.ar })));
-  });
-  body.appendChild(h('section', { class: 'memo-sec', id: 'lv-reasons' }, h('h4', { text: 'Reason codes and findings — English · العربية' }),
-    h('div', { class: 'small muted', style: 'margin-bottom:6px;', text: 'Findings describe the customer — what drove the score, without the formula. Reason codes (RC_*) explain any refer, decline or reduction.' }),
-    fchips, rc));
+  /* v2.19 — the reason-code library: the only vocabulary a lender sees. Coloured chips with the code id + label (EN + AR),
+     a legend for the three colours; partner-requested codes (PR-…) show only in that partner's memo. */
+  var rcs = d.reasonCodes || [];
+  var rcChips = h('div', { class: 'rc-chips', id: 'lv-rc-chips', role: 'list', 'aria-label': 'Reason codes' });
+  rcs.forEach(function (c, i) { if (i) rcChips.appendChild(document.createTextNode(' ')); rcChips.appendChild(rcChip(c, null, 'listitem')); });
+  if (!rcs.length) rcChips.appendChild(h('span', { class: 'small muted', text: 'No reason codes for this decision.' }));
+  var partnerCodes = rcs.filter(function (c) { return /^PR-/.test(c.code); });
+  body.appendChild(h('section', { class: 'memo-sec', id: 'lv-reasons', dataset: { codes: rcs.map(function (c) { return c.code; }).join('|') } },
+    h('h4', { text: 'Reason codes — English · العربية' }), rcLegend('lv-rc-legend'),
+    h('div', { class: 'small muted', style: 'margin-bottom:6px;', text: 'From Noor’s reason-code library — one vocabulary, three colours. Each code says what drove the score or the decision; the rule behind it stays inside Noor.' }),
+    rcChips,
+    partnerCodes.length ? h('div', { class: 'small muted', id: 'lv-rc-partner', text: partnerCodes.map(function (c) { return c.code; }).join(', ') + ' — requested by ' +
+      String(m.lenderName || '').replace(/ \(.*\)$/, '') + ' and agreed in ' + (m.sharingAgreement ? m.sharingAgreement.label : 'its sharing agreement') + '; no other lender receives ' + (partnerCodes.length === 1 ? 'it' : 'them') + '.' }) : null));
   /* §1 — the four score components (Proposed extra) */
   if (m.scoreComponents) {
     body.appendChild(h('section', { class: 'memo-sec', id: 'lv-score-components' },
@@ -7075,7 +7401,7 @@ function memoDoc(m) {
   }
   doc.appendChild(body);
   doc.appendChild(h('footer', { class: 'memo-foot', text: 'Built by Mizan from ' + (m.sharingAgreement ? 'the sharing agreement ' + m.sharingAgreement.label : 'an allowlist') +
-    '. Scores, findings, reason codes and derived aggregates only — the methodology, its cut-offs and raw data stay inside Noor. Noor arranges the loan; ' + String(m.lenderName || lenderName()).replace(/ \(.*\)$/, '') + ' is the lender of record.' }));
+    '. Scores, reason codes from the library and derived aggregates only — the methodology, its cut-offs and raw data stay inside Noor. Noor arranges the loan; ' + String(m.lenderName || lenderName()).replace(/ \(.*\)$/, '') + ' is the lender of record.' }));
   return doc;
 }
 /* v2.18 §1b — "Noor IP vs lender view" (methodology slide 6): the panel next to the memo, never part of it */
@@ -7104,7 +7430,7 @@ var Lender = {
     var root = clear($('#scr-lender'));
     root.appendChild(screenHead('Shared with the lender of record', 'Lender view — credit memos',
       lenderName() + ' books, funds and collects the loan; Noor decides with Mizan and sends the bank a credit memo — the same memo in the bank’s portal, over the API and in the SFTP file. The Decision log stays Noor’s internal record.'));
-    root.appendChild(scopeBanner('lender', 'lv-banner', 'What the lender receives.', 'Built from an allowlist — Open Finance data is never shared, only ranges and verification flags. The allowlist is each lender’s sharing agreement: scores, findings, reason codes and derived aggregates.'));
+    root.appendChild(scopeBanner('lender', 'lv-banner', 'What the lender receives.', 'Built from an allowlist — Open Finance data is never shared, only ranges and verification flags. The allowlist is each lender’s sharing agreement: scores, reason codes (one library, three colours) and derived aggregates.'));
     root.appendChild(h('div', { class: 'lv-lines' },
       h('p', { class: 'lv-ext', id: 'lv-external', text: ME.EXTERNAL_LINE || '' }),
       h('p', { class: 'small muted', id: 'lv-method', text: ME.METHODOLOGY_LINE || '' })));
@@ -7132,6 +7458,9 @@ var Lender = {
     box.appendChild(h('span', { class: 'lv-agree-l', id: 'lv-agreement-label' }, 'Sharing agreement: ', h('strong', { text: ag ? ag.label : '—' })));
     box.appendChild(seg);
     box.appendChild(h('span', { class: 'small muted lv-agree-s', text: ag ? (ag.groups.length === 2 ? 'Core outputs only' : 'Core, every Proposed output and the extras') + ' · DBR ' + (ag.dbrPrecision === 'EXACT' ? 'exact' : 'banded') : '' }));
+    /* v2.19 — a partner code approved or retired issues a new version of the agreement: show the latest change */
+    var last = ag && ag.history && ag.history.length > 1 ? ag.history[ag.history.length - 1] : null;
+    if (last) box.appendChild(h('span', { class: 'small lv-agree-s', id: 'lv-agreement-change', text: last.label + ' — ' + last.change }));
   },
   refresh: function () {
     var box = $('#lv-list');
@@ -9162,7 +9491,7 @@ var Journey = {
           'An approval is not a loan: offer → KFS → e-sign → repayment set-up → cooling-off → disbursement, enforced in order by the engine.']],
       11: ['Mizan sends Partner Bank the credit memo', [
           'Partner Bank is the lender of record: it books, funds and collects. Noor arranges and decides.',
-          'The memo carries outcome, terms, NoorScore and band, affordability bands, verification flags and consent references — built from an allowlist. Nothing from Open Finance leaves Noor; nor do the email, the contact preferences or any vendor footprint field.']],
+          'The memo carries outcome, terms, NoorScore and band, reason codes from Noor’s library (green, yellow, red), affordability bands, verification flags and consent references — built from an allowlist. Nothing from Open Finance leaves Noor; nor do the email, the contact preferences or any vendor footprint field.']],
       12: ['Key Facts Statement, in Arabic and English', ['CBUAE consumer protection: the KFS comes before any signature, in both languages.', '“I’ve read the Key Facts” records the first two execution steps.']],
       13: ['E-signature via UAE PASS', ['The loan agreement with Partner Bank, signed with the customer’s UAE PASS (simulated here).']],
       14: ['Repayment collection — one platform rule', ['Above AED 1,000: a direct debit mandate in favour of Partner Bank on the customer’s own account. AED 1,000 or less: an Al Tareq recurring payment approved in the bank app. No salary transfer required.',
@@ -9275,6 +9604,16 @@ var Journey = {
         h('li', { text: 'Noor’s part: the assessment, the recommendation and the credit memo. This screen is Noor’s pre-offer.' }),
         h('li', { text: 'Origination stays with botim and its lender: lender confirmation, Key Facts, e-sign, repayment set-up, cooling-off and payout run in botim’s loan flow.' }),
         h('li', { text: 'The lender’s policy can be loaded into Mizan, so the pre-offer is what the lender approves (Policy console: “Lender policy: Partner Bank — loaded into Mizan for end-to-end decisioning”).' }))));
+    /* v2.19 — what Partner Bank receives as reason codes: library codes only, as coloured chips */
+    if (r && st === 10) {
+      var pbCodes = [];
+      try { pbCodes = ME.libraryCodesFor(r.id, 'partner-bank'); } catch (e) {}
+      wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-rc-out', dataset: { codes: pbCodes.map(function (c) { return c.code; }).join('|') } },
+        h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Partner Bank receives:' }), h('span', { class: 'small muted', text: ' reason codes from the library — libraryCodesFor(' + r.id + ', partner-bank)' })),
+        h('div', { class: 'rc-chips', id: 'jr-rc-chips' }, pbCodes.length ? rcChipList(pbCodes, 'sm') : h('span', { class: 'small muted', text: 'No reason codes.' })),
+        rcLegend(null),
+        h('div', { class: 'small muted', text: 'Codes and labels only: the rule behind each stays inside Noor, and the customer keeps the decision’s own reasons in English and Arabic. PR-PB-… codes were requested by Partner Bank — Lender B would not receive them.' })));
+    }
     if (jrInBotimFrame()) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-orig-note' }, h('div', { class: 'co-title', text: 'Origination — botim' }),
       h('div', { class: 'co-body', text: 'This step runs in botim’s loan flow with Partner Bank (the botim frame, not Noor’s web-view). Its content and the execution events are unchanged: they come back to Noor as status events for monitoring. Repayments are run by botim’s loan flow — a direct debit mandate above AED 1,000; at or below, an Al Tareq payment (Noor is applying for a payment-initiation licence).' })));
     if (st === 16 && sub === 1) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-back-noor-note' }, h('div', { class: 'co-title', text: 'Back in Noor' }),

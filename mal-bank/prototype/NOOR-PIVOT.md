@@ -1772,3 +1772,101 @@ to v2.17's, except for the new `inputs` field and j1's new `spendCategories` in 
     - v2.12's All toast, surface checks and 390px toast;
     - the two v2.17 "illustrative" scans.
 - The Noor skin `<style>` block is byte-identical; the v2.18 CSS sits at the end of "Noor additions".
+
+### As built — v2.19 (reason-code library: three colours, Noor standard codes, partner-requested codes)
+
+Built as REASON-CODES-SPEC.md specifies. Selftest 1891 green: the 1806 earlier checks (their number unchanged; the
+ones listed below were rewritten in place) plus 85 in group 26. Acceptance 1380 green: the 1290 earlier checks
+(rewritten in place where listed below) plus 90 in the new "v2.19 — reason-code library" section. Every persona outcome,
+score, limit and price is unchanged, and the v2.9 fingerprints match — also with a partner code approved. The library never
+touches a decision record: propose, approve and retire create no record, and `reproduceDecision()` stays identical.
+Decisions and deviations:
+
+- **Data.**
+  - `MizanData.reasonCodeLibrary`: 36 Noor standard codes (G01–G11, Y01–Y16, R01–R09) and two seeded partner codes, each
+    `{ code, colour, labelEn, labelAr, tells, component, source, requestedBy, status, version, ruleRef }`. A partner code adds
+    `{ rule: {metric, op, value}, author, approver, proposedAt, approvedAt }`.
+  - The request's six codes are verbatim with their colours: G01 Detected Additional Income, G02 Saver, G03 Dining Out
+    Lover (green); Y01 New to UAE, Y02 3M History Shared (yellow); R01 Fraud Suspicious (red).
+  - `sharingAgreements` gain `libraryCodes: { standard: 'ALL', partner: [...] }`: Partner Bank v1 carries PR-PB-G01;
+    Lender B v1 none. `lenders` gain `short` (PB, LB) for the partner-code ids.
+  - `reasonCodesLender` (v2.18's 14 lender wordings) is removed: lenders read library labels now. `findings` stays as an
+    internal vocabulary for `customerFindings()` (the what-if API), commented as such; no FND_* code or finding word reaches a
+    lender.
+- **Engine.**
+  - `LIBRARY_RC_MAP`: every RC_* the engine can emit (all 52 in `MizanData.reasonCodes`) maps to exactly one code; exported as
+    `REASON_CODE_MAP` (RC_* → code). The spec's mappings as written, plus: RC_CASH_FLOW_UNDERWRITTEN → Y04;
+    RC_DRAWDOWN_LIMIT, RC_GUARANTEE_UNVERIFIED / _WEAK → Y09; RC_PLAN_ADJUSTED → Y10; RC_CONNECTED_HISTORY,
+    RC_INCOME_UNVERIFIED, RC_STATEMENTS_REQUESTED / _INCOMPLETE, RC_BUSINESS_HISTORY, RC_TOKEN_EXPIRED → Y13;
+    RC_FOOTPRINT_IDENTITY / _OVERLAY → Y14; RC_RF_* (all seven, consumer and business) → R02; RC_OPTION_UNAFFORDABLE,
+    RC_BUSINESS_CASH_FLOW → R07; RC_VEHICLE_INELIGIBLE, RC_BELOW_MIN_AMOUNT, RC_PURCHASE_UNVERIFIED, RC_TRADING_HISTORY → R08;
+    RC_DRAWDOWN_ARREARS → R09.
+  - `LIBRARY_RULES`: a standard code fires on its internal rule (illustrative, in a code comment and the console) or when one
+    of its mapped RC_* is on the record. Rules read the same signals as v2.18 (G02–G05 and Y01 keep the findings' thresholds).
+    SME decisions get the RC_*-mapped codes only.
+  - `libraryCodesFor(rec | id, lenderId)`: the standard codes in the lender's agreement, then that lender's ACTIVE partner codes.
+    `reasonCodeLibrary()` (with the rule text, the RC_* each code maps and its receivers) and `reasonCodeTrace(id)` (the codes
+    that fired with their rule, and "RC_* → code") serve the console and the Decision log.
+  - `proposeReasonCode(def, {author})` → `PR-<SHORT>-<G|Y|R><nn>`, PROPOSED. Refused: a colour other than GREEN / YELLOW / RED;
+    a metric off the 15-metric whitelist (nationality, sex, age, religion, health, family named as "never allowed"); free
+    text or extra rule keys; an untyped value; labels that break the §1 rules (Title Case, month counts only, no data
+    source but Open Finance, no sensitive category); a duplicate label; an unknown partner or component.
+  - `approveReasonCode(code, {approver})` (4-eyes against the author) → ACTIVE and a new agreement version ("Partner Bank v2 —
+    adds PR-PB-G02"). `retireReasonCode(code, {author, approver})` (4-eyes) → RETIRED and a new version ("… v3 — retires …").
+    Agreements are cloned into the session at `init()` and keep a version history; the memo's and the SFTP row's agreement
+    label follows the version in force.
+  - Memo: `decision.reasonCodes` carries `{code, colour, en, ar}` library codes only; `findings` left the memo; the output
+    table's Reason codes row reads "G02 Saver · G03 Dining Out Lover · …". SFTP: `reason_codes` carries the library codes
+    (`G02|…|PR-PB-G01`); the `findings` column is gone.
+  - Component tones: amber → yellow (the levels are unchanged).
+- **UI.**
+  - Policy console: "Reason-code library" beside the Early-warning block (the picker label is now "Shared blocks"). Full width:
+    the legend, Green · Yellow · Red groups (12 · 17 · 9 rows as seeded), each row with the chip, label EN + AR, what it
+    tells the lender, component, source, status, the partners receiving it and the internal rule marked "Inside Noor".
+    "Approve (4-eyes)" with an approver field on PROPOSED rows; "Retire" (author + approver) on ACTIVE partner codes. The
+    "New code — partner request" form (partner, three colour radios, labels, tells, component, whitelisted metric · op ·
+    value, author) shows the engine's refusal inline and marks the field. The agreement lines update on approval.
+  - Lender view: coloured chips (code + label EN + AR) in `--ok`, `--warn` and `--bad`, with the legend "Green · Yellow ·
+    Red"; the output table's Reason codes row as one-line chips; a note on partner codes. Switching to Lender B hides
+    PR-PB-G01. The agreement bar shows the latest version change.
+  - Decision log: the codes that fired with `ruleRef — rule · sent to …`; the customer's RC_* (EN + AR) beside each code.
+  - Journey step 10, behind the scenes: "Partner Bank receives:" and the chips.
+  - Bars: `.mcb-yellow` / `.lgt-yellow` (was amber), the warn token.
+- **Deviations.**
+  - The seeded PR-LB-Y01 is labelled "High Variable Pay", not "Variable Pay Above 30%": the §1 label rules forbid thresholds
+    in labels. The 30% stays in its rule; with no variable-pay share on the whitelist, the rule reads
+    `incomeVolatilityPct ≥ 30`.
+  - Two yellow codes beyond the spec's table, so that every RC_* has a home that reads right to a lender:
+    Y15 Analyst Review Needed (RC_MANUAL_REVIEW) and Y16 Extra Security Check (RC_STEP_UP_AUTH — account-takeover risk is
+    not fraud, so not R01).
+  - G01 also fires on variable pay of AED 1,000+ a month (the spec's rule); c1, c2 and c5 gain it. Ravi (overtime below
+    AED 1,000) does not.
+  - `customerFindings()` and `MizanData.findings` remain as internal API; nothing lender-facing reads them.
+- **Changed existing checks.**
+  - Selftest: each keeps its intent.
+    - The `MEMO_KEYS` and `SFTP_HEADER` constants lose `findings` (groups 14, 16, 19, 24 and 25: the memo keys, the SFTP
+      header and its width).
+    - Group 14: the SFTP `reason_codes` cell equals the memo's library codes; "every reason code in English and Arabic" now
+      means every RC_* on the record is present as its library code, with its colour, EN and AR.
+    - Group 18: r6's memo has R02 as its only yellow or red code and no RC_ / RF_ name (was RC_RED_FLAGS_REVIEW).
+    - Group 19: SME memos have no `findings` key; the SME REFER memo carries R02.
+    - Group 23: "every other memo field unchanged" also sets aside G08 Employer Confirmed (the scan makes it fire, like the
+      "Employment confirmed" factor); the WPS leak scans ignore the partner label "Salary Through WPS" (the payment channel,
+      never the payer); the mismatch memo carries Y11 Employer Differs From ID with its Arabic.
+    - Group 25: `reasonCodesLender` is asserted gone and the library labels name no source or threshold; Ravi's Reason codes
+      row; Lender B's memo keys and SFTP header; the Core rows match across lenders except PR-PB-G01; r2 with statements
+      carries Y14; tones `yellow` (r2, c4, c2); memos carry `{code, colour, en, ar}` from the library, no finding rule and no
+      FND_*; the SFTP `reason_codes` column; r4's record keeps RC_DELINQUENCY / RC_SCORE_LOW while its memo shows R03 / R06;
+      the vocabulary scan reads the library.
+  - Acceptance: each keeps its intent.
+    - v2.5: "memo reason codes carry Arabic in dir=rtl" now counts the library chips (the old `.reason-line` selector
+      would pass on zero); the SFTP tab header has no `findings` column.
+    - v2.9: the section title and "r6 memo: REFER + R02 Recent Changes in Account Activity"; "no signal, no terms" checks R02
+      as the only yellow or red code and no RC_ name.
+    - v2.16: the Lender-view memo and API + SFTP leak checks ignore the partner label "Salary Through WPS".
+    - v2.18: Ravi's values (the Reason codes row read from the chips' label); the findings chips became the library chips;
+      Lender B shows the ten standard chips without PR-PB-G01; Lender B's SFTP header; Partner Bank's SFTP row carries
+      `G02|…|PR-PB-G01` in `reason_codes`; the Decision log shows "RULE-G03 — Dining is at least 20% of spending" in
+      `#lg-rc` (was `#lg-findings` with FND_DINING_OUT).
+- The Noor skin `<style>` block is byte-identical; the v2.19 CSS sits at the end of "Noor additions". The v2.18 bar rule
+  was renamed in place (`.mcb-amber` → `.mcb-yellow`).

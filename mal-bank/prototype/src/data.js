@@ -25,7 +25,10 @@
  *    80 starter-loan rows, + 17 hand-written car-loan rows) for policy simulation.
  *  - Sharing agreements per lender (Addendum v2.18): Partner Bank v1 (full set)
  *    and an illustrative Lender B (Core outputs only); the findings vocabulary
- *    (EN + Arabic) that lenders see in place of the rules behind a score.
+ *    (EN + Arabic), internal since v2.19.
+ *  - The reason-code library (Addendum v2.19): three colours (green, yellow, red),
+ *    Noor standard codes and partner-requested codes (EN + Arabic) — the only
+ *    vocabulary a lender sees.
  *  - SME working capital (Addendum v2.10): persona s1 (an owner-managed trading
  *    company, its business accounts and the owner's optional personal accounts),
  *    a hand-written SME sample book (15 rows) and two SME loans under monitoring.
@@ -670,26 +673,6 @@
       ar: 'كان تحويل من الشركة إلى المالك أكبر بكثير من المسحوبات المعتادة.' }
   };
 
-  // v2.18 — the lender-facing wording of the reason codes whose customer text names a data source, a check's
-  // internals or a threshold (Noor IP vs lender view, MEETING-1008-SPEC.md §1b). The customer still reads the
-  // full text above (CBUAE disclosure); the credit memo carries the same code with this source-agnostic wording.
-  const reasonCodesLender = {
-    RC_SCORE_LOW: { en: 'Credit score too low for this product.', ar: 'درجة الائتمان منخفضة جدًا لهذا المنتج.' },
-    RC_CROSS_BORDER: { en: 'Approved using consented home-country credit history.', ar: 'تمت الموافقة باستخدام سجل ائتماني من بلد الموطن بموافقة العميل.' },
-    RC_INCOME_VOLATILITY: { en: 'Monthly income varies too much for an automatic approval — routed for review.', ar: 'يتفاوت الدخل الشهري بدرجة لا تسمح بالموافقة التلقائية — أُحيل الطلب للمراجعة.' },
-    RC_UPGRADE_ENHANCED: { en: 'Upgraded on connected UAE accounts and additional verified evidence.', ar: 'تمت الترقية بناءً على الحسابات الإماراتية المربوطة وأدلة إضافية موثّقة.' },
-    RC_UPGRADE_BASE: { en: 'Upgraded on connected UAE accounts — additional evidence could support a larger limit and a lower rate.', ar: 'تمت الترقية بناءً على الحسابات الإماراتية المربوطة — يمكن لأدلة إضافية أن تدعم حدًا أعلى وسعرًا أقل.' },
-    RC_STATEMENTS_REQUESTED: { en: 'Additional evidence requested to review a higher amount.', ar: 'طُلبت أدلة إضافية لمراجعة مبلغ أعلى.' },
-    RC_STATEMENTS_INCOMPLETE: { en: 'Additional evidence incomplete — the missing months were requested.', ar: 'الأدلة الإضافية غير مكتملة — طُلبت الأشهر الناقصة.' },
-    RC_STATEMENTS_INTEGRITY: { en: 'Additional evidence could not be verified — referred for review.', ar: 'تعذّر التحقق من الأدلة الإضافية — أُحيل الطلب للمراجعة.' },
-    RC_STATEMENTS_USED: { en: 'Decided with additional verified evidence.', ar: 'اتُّخذ القرار بالاستناد إلى أدلة إضافية موثّقة.' },
-    RC_FOOTPRINT_IDENTITY: { en: 'Identity confirmed with an additional check the customer agreed to.', ar: 'تم تأكيد الهوية بفحص إضافي وافق عليه العميل.' },
-    RC_FOOTPRINT_OVERLAY: { en: 'With little credit history, an additional check the customer agreed to added to the score.', ar: 'مع سجل ائتماني محدود، أضاف فحص إضافي وافق عليه العميل إلى الدرجة.' },
-    RC_STEP_UP_AUTH: { en: 'Extra sign-in check required before payout.', ar: 'يلزم تحقق إضافي من الدخول قبل صرف المبلغ.' },
-    RC_EMPLOYER_MISMATCH: { en: 'Employment details differ — referred for review.', ar: 'تختلف بيانات التوظيف — أُحيل الطلب للمراجعة.' },
-    RC_ID_EXPIRED: { en: 'Identity document expired — referred for review.', ar: 'وثيقة الهوية منتهية الصلاحية — أُحيل الطلب للمراجعة.' }
-  };
-
   // ---------------------------------------------------------------------------
   // Early warning — day-zero consumer signals. Seeded, deterministic: detected
   // within the last 3 days of TODAY, each paired with a same-day action.
@@ -1122,9 +1105,10 @@
   // built from an allowlist (never Open Finance data).
   // ---------------------------------------------------------------------------
   const lenders = [
-    { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record' },
+    { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record', short: 'PB' },
     // v2.18 — an illustrative second lender with a narrower sharing agreement (Core outputs only)
-    { id: 'lender-b', name: 'Lender B (illustrative)', nameAr: 'المُقرِض ب (توضيحي)', role: 'Lender of record' }
+    // v2.19 — `short` names the lender in its partner-requested reason codes (PR-PB-G01, PR-LB-Y01)
+    { id: 'lender-b', name: 'Lender B (illustrative)', nameAr: 'المُقرِض ب (توضيحي)', role: 'Lender of record', short: 'LB' }
   ];
 
   // ---------------------------------------------------------------------------
@@ -1139,22 +1123,28 @@
   // The envelope (memo id, lender, agreement, product, versions, borrower, outcome, terms) always goes.
   // dbrPrecision: 'BAND' (default) or 'EXACT' — exact DBR % and headroom let a lender back out the
   // exact income from the AECB obligations it pulls itself, so EXACT is a per-agreement trade-off.
+  // v2.19 — libraryCodes: which reason codes from the library the lender receives. standard: 'ALL' (every
+  // ACTIVE Noor standard code) or a list of codes; partner: the lender's own approved partner codes. Approving
+  // or retiring a partner code issues a new version of that lender's agreement (Partner Bank v1 → v2).
   // ---------------------------------------------------------------------------
   const sharingAgreements = {
     'partner-bank': { id: 'SA-PARTNER-BANK-V1', lenderId: 'partner-bank', label: 'Partner Bank v1', version: 'v1', agreedOn: '2026-10-08', dbrPrecision: 'BAND',
                       groups: ['noorScore', 'reasonCodes', 'dataCompleteness', 'incomeBucket', 'additionalIncomeBucket', 'dbr',
-                               'scoreComponents', 'cashFlowBands', 'monitoring', 'verificationFlags', 'bureauFlags', 'consentReferences'] },
+                               'scoreComponents', 'cashFlowBands', 'monitoring', 'verificationFlags', 'bureauFlags', 'consentReferences'],
+                      libraryCodes: { standard: 'ALL', partner: ['PR-PB-G01'] } },
     'lender-b': { id: 'SA-LENDER-B-V1', lenderId: 'lender-b', label: 'Lender B v1 (illustrative)', version: 'v1', agreedOn: '2026-10-08', dbrPrecision: 'BAND',
-                  groups: ['noorScore', 'reasonCodes'] }
+                  groups: ['noorScore', 'reasonCodes'],
+                  libraryCodes: { standard: 'ALL', partner: [] } }
   };
 
   // ---------------------------------------------------------------------------
   // Findings (Addendum v2.18, §1c — "Reason codes are findings"). A controlled
-  // vocabulary of statements about the customer, shared with lenders as words
-  // (EN + Arabic), never with the rule behind them. customerFindings() derives them;
-  // the rules and their thresholds stay inside Noor. Never derived from sensitive
-  // categories (health, religion, family status, politics) or nationality, and
-  // gambling is never a shared finding. {N} is the number of months.
+  // vocabulary of statements about the customer (EN + Arabic). customerFindings()
+  // derives them; the rules and their thresholds stay inside Noor. Never derived from
+  // sensitive categories (health, religion, family status, politics) or nationality,
+  // and gambling is never a finding. {N} is the number of months.
+  // v2.19 — internal only: lenders no longer receive FND_* codes or finding words. The
+  // reason-code library below replaces them (G01–G06 and Y01 carry these statements).
   // ---------------------------------------------------------------------------
   const findings = {
     FND_ADDITIONAL_INCOME: { en: 'Detected additional income', ar: 'تم رصد دخل إضافي' },
@@ -1165,6 +1155,79 @@
     FND_STABLE_INCOME: { en: 'Stable income', ar: 'دخل مستقر' },
     FND_ON_TIME_PAYER: { en: 'Pays cards and loans on time', ar: 'يسدد البطاقات والقروض في مواعيدها' }
   };
+
+  // ---------------------------------------------------------------------------
+  // Reason-code library (Addendum v2.19, ../REASON-CODES-SPEC.md). The ONLY vocabulary a
+  // lender sees: the credit memo, the SFTP row and the Lender view carry these codes and
+  // labels, never an RC_* name or an FND_* finding. Exactly three colours — GREEN
+  // (positive), YELLOW (caution), RED (adverse). The customer still reads the RC_*
+  // adverse-action reasons above (CBUAE disclosure); every RC_* maps to exactly one code
+  // here (the mapping table lives in the engine, LIBRARY_RC_MAP).
+  // Entry: { code, colour, labelEn, labelAr, tells (what it tells the lender, one line),
+  //   component, source: NOOR_STANDARD | PARTNER_REQUEST, requestedBy (lender id or null),
+  //   status: ACTIVE | PROPOSED | RETIRED, version, ruleRef }. ruleRef points to the
+  //   internal rule in the engine; the rule itself stays inside Noor.
+  // Label rules: Title Case; no data-source name except Open Finance; no thresholds,
+  // points or weights (a month count such as "3M" or "12M+" is a finding, not a
+  // threshold); never nationality, sex, religion, health, family status or politics.
+  // G01–G03, Y01, Y02 and R01 are the product request's six codes, verbatim; the rest
+  // are Noor additions for review. A partner code adds { rule: {metric, op, value},
+  // author, approver, proposedAt, approvedAt } — its metric comes from a whitelist.
+  // ---------------------------------------------------------------------------
+  const LIB = (code, colour, labelEn, labelAr, tells, component) =>
+    ({ code, colour, labelEn, labelAr, tells, component, source: 'NOOR_STANDARD', requestedBy: null, status: 'ACTIVE', version: 1, ruleRef: 'RULE-' + code });
+  const reasonCodeLibrary = [
+    // GREEN — positive
+    LIB('G01', 'GREEN', 'Detected Additional Income', 'تم رصد دخل إضافي', 'Regular income beyond the base salary was detected and verified', 'AFFORDABILITY'),
+    LIB('G02', 'GREEN', 'Saver', 'مُدّخِر', 'Keeps savings or saves regularly', 'CREDIT_BEHAVIOUR'),
+    LIB('G03', 'GREEN', 'Dining Out Lover', 'يحب تناول الطعام خارج المنزل', 'Dining out is a notable share of everyday spending', 'CREDIT_BEHAVIOUR'),
+    LIB('G04', 'GREEN', 'Stable Income', 'دخل مستقر', 'Monthly income is steady', 'CREDIT_BEHAVIOUR'),
+    LIB('G05', 'GREEN', 'Pays Cards and Loans on Time', 'يسدد البطاقات والقروض في مواعيدها', 'Card and loan repayments are made on time, with no missed payments on file', 'CREDIT_BEHAVIOUR'),
+    LIB('G06', 'GREEN', '12M+ History Shared', 'سجل 12 شهرًا فأكثر تمت مشاركته', 'A year or more of account history was shared through Open Finance', 'DATA'),
+    LIB('G07', 'GREEN', 'Salary Verified', 'الراتب موثّق', 'Salary credits are seen in the connected accounts', 'AFFORDABILITY'),
+    LIB('G08', 'GREEN', 'Employer Confirmed', 'جهة العمل مؤكّدة', 'The employer matches the company paying the salary', 'FRAUD_INTEGRITY'),
+    LIB('G09', 'GREEN', 'Low Debt Burden', 'عبء دين منخفض', 'Repayments, including this loan, take a small share of income', 'AFFORDABILITY'),
+    LIB('G10', 'GREEN', 'Settled in UAE', 'مستقر في الإمارات', 'Established in the UAE, with anchors such as a steady job', 'STACKING_SKIP'),
+    LIB('G11', 'GREEN', 'Full Financial Picture', 'صورة مالية كاملة', 'Noor sees most of the customer’s financial life', 'DATA'),
+    // YELLOW — caution
+    LIB('Y01', 'YELLOW', 'New to UAE', 'جديد في الإمارات', 'Recently arrived in the UAE, so local history is short', 'NEWCOMER'),
+    LIB('Y02', 'YELLOW', '3M History Shared', 'سجل 3 أشهر تمت مشاركته', 'A few months of account history was shared through Open Finance', 'DATA'),
+    LIB('Y03', 'YELLOW', '6M History Shared', 'سجل 6 أشهر تمت مشاركته', 'Several months of account history was shared, short of a full year', 'DATA'),
+    LIB('Y04', 'YELLOW', 'Thin Credit File', 'سجل ائتماني محدود', 'Little or no local credit history on file', 'CREDIT_BEHAVIOUR'),
+    LIB('Y05', 'YELLOW', 'Irregular Income', 'دخل غير منتظم', 'Monthly income varies noticeably', 'CREDIT_BEHAVIOUR'),
+    LIB('Y06', 'YELLOW', 'High Debt Burden', 'عبء دين مرتفع', 'Repayments, including this loan, take a large share of income', 'AFFORDABILITY'),
+    LIB('Y07', 'YELLOW', 'Partial Financial Picture', 'صورة مالية جزئية', 'Part of the customer’s financial life is not connected', 'DATA'),
+    LIB('Y08', 'YELLOW', 'Home-Country Obligations', 'التزامات في بلد الموطن', 'Repayments to lenders in the home country are seen', 'NEWCOMER'),
+    LIB('Y09', 'YELLOW', 'Amount Adjusted to Fit', 'تم تعديل المبلغ ليناسب القدرة على السداد', 'The approved amount is below the request, to stay affordable and within the rules', 'AFFORDABILITY'),
+    LIB('Y10', 'YELLOW', 'Term Adjusted to Rules', 'تم تعديل المدة وفق القواعد', 'The repayment term was set to a permitted or more affordable term', 'AFFORDABILITY'),
+    LIB('Y11', 'YELLOW', 'Employer Differs From ID', 'جهة العمل تختلف عن الهوية', 'The employer differs from the company paying the salary — referred for review', 'FRAUD_INTEGRITY'),
+    LIB('Y12', 'YELLOW', 'ID Renewal Needed', 'يلزم تجديد الهوية', 'The identity document has expired — referred for review', 'FRAUD_INTEGRITY'),
+    LIB('Y13', 'YELLOW', 'More Data Needed', 'يلزم مزيد من البيانات', 'More information is needed before a full decision', 'DATA'),
+    LIB('Y14', 'YELLOW', 'Additional Evidence Used', 'استُخدمت أدلة إضافية', 'Consented evidence beyond Open Finance supported the decision', 'DATA'),
+    LIB('Y15', 'YELLOW', 'Analyst Review Needed', 'تلزم مراجعة محلل ائتمان', 'A credit analyst reviews the application before a final decision', 'CREDIT_BEHAVIOUR'),
+    LIB('Y16', 'YELLOW', 'Extra Security Check', 'تحقق أمني إضافي', 'An extra sign-in check is required before payout', 'FRAUD_INTEGRITY'),
+    // RED — adverse
+    LIB('R01', 'RED', 'Fraud Suspicious', 'اشتباه في احتيال', 'Documents or identity details did not check out — referred to fraud review', 'FRAUD_INTEGRITY'),
+    LIB('R02', 'RED', 'Recent Changes in Account Activity', 'تغييرات حديثة في نشاط الحساب', 'Account activity changed recently against the customer’s own history — referred for review', 'STACKING_SKIP'),
+    LIB('R03', 'RED', 'Past-Due History', 'سجل تأخر في السداد', 'Serious past-due history or a write-off on file', 'CREDIT_BEHAVIOUR'),
+    LIB('R04', 'RED', 'Returned Cheques', 'شيكات مرتجعة', 'Returned cheques above the permitted level', 'CREDIT_BEHAVIOUR'),
+    LIB('R05', 'RED', 'Debt Burden Over Limit', 'عبء الدين فوق الحد', 'Repayments would exceed the permitted debt burden', 'AFFORDABILITY'),
+    LIB('R06', 'RED', 'Weak Credit Profile', 'ملف ائتماني ضعيف', 'The credit profile is too weak for this product', 'CREDIT_BEHAVIOUR'),
+    LIB('R07', 'RED', 'Cash Flow Too Tight', 'تدفق نقدي ضيق جدًا', 'Free cash flow is too low to support the repayments', 'AFFORDABILITY'),
+    LIB('R08', 'RED', 'Outside Product Eligibility', 'خارج شروط الأهلية للمنتج', 'The application falls outside the product’s eligibility rules', 'AFFORDABILITY'),
+    LIB('R09', 'RED', 'Late Repayment on Noor Credit', 'تأخر في سداد ائتمان نور', 'A previous Noor credit was repaid late', 'CREDIT_BEHAVIOUR'),
+    // Partner-requested codes (seeded). PR-<lender short>-<colour letter><nn>.
+    { code: 'PR-PB-G01', colour: 'GREEN', labelEn: 'Salary Through WPS', labelAr: 'الراتب عبر نظام حماية الأجور', tells: 'The salary is paid through the UAE Wage Protection System',
+      component: 'AFFORDABILITY', source: 'PARTNER_REQUEST', requestedBy: 'partner-bank', status: 'ACTIVE', version: 1, ruleRef: 'RULE-PR-PB-G01',
+      rule: { metric: 'salaryViaWps', op: '=', value: true }, author: 'N. Rahman (Partnerships)', approver: 'S. Iyer (Credit Risk)',
+      proposedAt: '2026-10-08T10:00:00.000Z', approvedAt: '2026-10-08T15:30:00.000Z' },
+    // Requested as "Variable Pay Above 30%": the label rules allow no thresholds, so the label names the finding and the
+    // 30% stays in the rule (inside Noor). The whitelist has no variable-pay share; income volatility is the nearest metric.
+    { code: 'PR-LB-Y01', colour: 'YELLOW', labelEn: 'High Variable Pay', labelAr: 'نسبة مرتفعة من الأجر المتغيّر', tells: 'A large part of monthly pay is variable',
+      component: 'CREDIT_BEHAVIOUR', source: 'PARTNER_REQUEST', requestedBy: 'lender-b', status: 'PROPOSED', version: 1, ruleRef: 'RULE-PR-LB-Y01',
+      rule: { metric: 'incomeVolatilityPct', op: '≥', value: 30 }, author: 'N. Rahman (Partnerships)', approver: null,
+      proposedAt: '2026-10-12T11:00:00.000Z', approvedAt: null }
+  ];
 
   const MizanData = {
     VERSION: 'data-2.0',
@@ -1181,7 +1244,7 @@
     sharingAgreements: sharingAgreements,
     findings: findings,
     reasonCodes: reasonCodes,
-    reasonCodesLender: reasonCodesLender,
+    reasonCodeLibrary: reasonCodeLibrary,
     earlyWarning: earlyWarning,
     monitoredLoans: monitoredLoans,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook(),
