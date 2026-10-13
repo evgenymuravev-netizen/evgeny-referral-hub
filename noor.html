@@ -1754,7 +1754,7 @@ label.bk-acct { position:relative; cursor:pointer; }
   font-family:var(--font-display); font-weight:800; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
 .dc-side { flex:1 1 180px; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .dc-counts { font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
-/* v2.18 — the Lender view: "What lenders receive" (slide 8), the component bars, findings chips, the agreement bar, Noor IP vs lender view */
+/* v2.18 — the Lender view: "What lenders receive" (slide 8), the component bars, the agreement bar, Noor IP vs lender view (v2.19: reason-code chips below) */
 .lv-lines { margin:10px 0 0; display:flex; flex-direction:column; gap:2px; }
 .lv-lines p { margin:0; }
 .lv-ext { color:var(--ink); font-weight:600; }
@@ -1788,17 +1788,15 @@ label.bk-acct { position:relative; cursor:pointer; }
 .mcb-bar { height:6px; border-radius:4px; background:var(--hairline); }
 .mcb-f { font-size:13px; color:var(--muted); }
 .mcb-green .mcb-bar, .lgt-green .mcb-dot, .mcb-green .mcb-dot { background:var(--ok); }
-.mcb-amber .mcb-bar, .lgt-amber .mcb-dot, .mcb-amber .mcb-dot { background:var(--warn); }
+.mcb-yellow .mcb-bar, .lgt-yellow .mcb-dot, .mcb-yellow .mcb-dot { background:var(--warn); }   /* v2.19 — yellow (was amber), the warn token */
 .mcb-red .mcb-bar, .lgt-red .mcb-dot, .mcb-red .mcb-dot { background:var(--bad); }
 .mcb-neutral .mcb-bar { background:repeating-linear-gradient(135deg, var(--hairline) 0 6px, transparent 6px 10px); }
-.fnd-chips { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
-.fnd-chip { display:inline-flex; align-items:center; border:1.5px solid var(--ink); border-radius:var(--radius-pill); padding:3px 11px; font-size:13px; font-weight:600; color:var(--ink); background:transparent; white-space:nowrap; }
 .mon-line { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; color:var(--ink); }
 .mon-st { display:inline-flex; border-radius:var(--radius-pill); padding:2px 10px; font-family:var(--font-label); font-size:12px; font-weight:600; color:var(--ok); background:var(--ok-soft); }
 .mon-elevated { color:var(--warn); background:var(--warn-soft); }
 .mon-not-applicable { color:var(--muted); background:var(--ground); }
 #lv-sharing .sw-shared li { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
-/* v2.18 — the Decision log: Reproduce, the contribution chart (Phase 1 points), the six components, findings with their rules */
+/* v2.18 — the Decision log: Reproduce, the contribution chart (Phase 1 points), the six components, the reason codes with their rules */
 .replay-acts { display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .lg-repro-l { margin:6px 0 4px; padding-left:18px; }
 .lg-sub { font-family:var(--font-label); font-size:12.5px; font-weight:600; color:var(--muted); margin:0 0 6px; }
@@ -1849,6 +1847,83 @@ label.bk-acct { position:relative; cursor:pointer; }
 .jr-scn-s { font-family:var(--font-ui); font-weight:400; font-size:12px; opacity:.8; }
 .fm-orig { align-self:flex-start; margin-top:3px; font-family:var(--font-label); font-size:10.5px; font-weight:600; letter-spacing:.02em; color:var(--muted);
   border:1px solid var(--hairline); border-radius:var(--radius-pill); padding:0 7px; }
+/* v2.19 — the reason-code library: three colours (green --ok · yellow --warn · red --bad) as chips, the legend, the Policy console block */
+#pc-grid[hidden], #pc-rclib[hidden] { display:none; }
+.rc-chips { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+.rc-chip { display:inline-flex; flex-direction:column; gap:1px; min-width:0; max-width:100%; border:1.5px solid var(--hairline); border-radius:12px; padding:4px 10px;
+  background:var(--panel); color:var(--ink); font-size:13px; line-height:1.35; }
+.rc-chip-top { display:inline-flex; align-items:baseline; gap:6px; flex-wrap:wrap; min-width:0; }
+.rc-code { font-family:var(--font-label); font-weight:700; font-size:12px; letter-spacing:.02em; white-space:nowrap; }
+.rc-en { font-weight:600; overflow-wrap:anywhere; }
+.rc-chip .rc-ar { font-size:12.5px; color:var(--ink-2); }
+.rc-sm { flex-direction:row; align-items:baseline; gap:6px; padding:2px 9px; border-radius:var(--radius-pill); font-size:12.5px; }
+.rc-sm .rc-en { font-weight:500; }
+.rc-GREEN { border-color:var(--ok); background:var(--ok-soft); }
+.rc-GREEN .rc-code { color:var(--ok); }
+.rc-YELLOW { border-color:var(--warn); background:var(--warn-soft); }
+.rc-YELLOW .rc-code { color:var(--warn); }
+.rc-RED { border-color:var(--bad); background:var(--bad-soft); }
+.rc-RED .rc-code { color:var(--bad); }
+.rc-legend { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; margin:2px 0 6px; font-family:var(--font-label); font-size:12px; color:var(--muted); }
+.rc-lg { display:inline-flex; align-items:center; gap:5px; color:var(--ink-2); font-weight:600; }
+.rc-dot { display:inline-block; width:9px; height:9px; border-radius:50%; flex:0 0 9px; background:var(--faint); }
+.rc-dot-GREEN { background:var(--ok); }
+.rc-dot-YELLOW { background:var(--warn); }
+.rc-dot-RED { background:var(--bad); }
+.mo-val-chips { display:flex; flex-wrap:wrap; gap:4px; }
+.rcl-intro { margin:0 0 6px; }
+.rcl-group { margin-top:14px; }
+.rcl-gh { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--ink); margin:0 0 6px; }
+.rcl-gh .h3-note { font-family:var(--font-ui); font-size:13px; font-weight:400; color:var(--faint); }
+.rcl-rows { display:flex; flex-direction:column; border:1px solid var(--hairline-soft); border-radius:10px; overflow:hidden; }
+.rcl-row { display:grid; grid-template-columns:minmax(170px,1.25fr) minmax(170px,1fr) minmax(190px,1.25fr); gap:6px 14px; padding:10px 12px;
+  border-top:1px solid var(--hairline-soft); align-items:start; min-width:0; }
+.rcl-row:first-child { border-top:0; }
+.rcl-head { background:var(--ground); font-family:var(--font-label); font-size:11.5px; font-weight:600; color:var(--muted); padding:7px 12px; }
+.rcl-row > * { min-width:0; }
+.rcl-ar { font-size:13px; color:var(--ink-2); margin-top:3px; }
+.rcl-tells { font-size:13px; color:var(--muted); margin-top:2px; }
+.rcl-meta { display:flex; flex-wrap:wrap; gap:4px 6px; align-items:center; font-size:12.5px; color:var(--ink-2); }
+.rcl-tag { display:inline-flex; align-items:center; border-radius:var(--radius-pill); padding:1px 8px; font-family:var(--font-label); font-size:11.5px; font-weight:600;
+  border:1px solid var(--hairline); color:var(--ink-2); background:var(--panel); white-space:nowrap; }
+.rcl-st-ACTIVE { color:var(--ok); border-color:transparent; background:var(--ok-soft); }
+.rcl-st-PROPOSED { color:var(--warn); border-color:transparent; background:var(--warn-soft); }
+.rcl-st-RETIRED { color:var(--muted); border-color:transparent; background:var(--ground); text-decoration:line-through; }
+.rcl-to { flex:1 1 100%; font-size:12.5px; color:var(--muted); }
+.rcl-rule { font-size:12.5px; color:var(--ink-2); overflow-wrap:anywhere; }
+.rcl-inside { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-label); font-size:11px; font-weight:600; color:var(--muted);
+  border:1px dashed var(--hairline); border-radius:var(--radius-pill); padding:0 7px; margin-right:4px; }
+.rcl-act { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; padding-top:2px; }
+.rcl-act .field { margin:0; flex:1 1 200px; max-width:320px; }
+.rcl-act details { width:100%; }
+.rcl-act summary { cursor:pointer; font-size:13px; color:var(--brand-ink); font-weight:600; }
+.rcl-act .rcl-retire { display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-top:6px; }
+.rcl-msg { grid-column:1 / -1; }
+.rcl-msg .callout { margin:0; }
+.rcl-ags { display:flex; flex-direction:column; gap:8px; }
+.rcl-ag { padding:8px 10px; border-radius:var(--radius-sm); background:var(--panel-2); }
+.rcl-ag-line { font-weight:600; color:var(--ink); }
+.rcl-ag-hist { font-size:12.5px; color:var(--muted); margin-top:2px; }
+.rc-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+.rc-form-grid .rc-wide { grid-column:1 / -1; }
+.field .rc-radio { display:inline-flex; align-items:center; gap:6px; margin:0; border:1.5px solid var(--hairline); border-radius:var(--radius-pill); padding:5px 12px;
+  cursor:pointer; font-family:var(--font-ui); font-size:13.5px; font-weight:500; color:var(--ink); }
+.rc-radio input { margin:0; }
+.rc-radios { display:flex; flex-wrap:wrap; gap:8px; border:0; padding:0; margin:0; }
+.rc-radios[aria-invalid="true"] .rc-radio { border-color:var(--bad); }
+.rc-rule { display:grid; grid-template-columns:minmax(0,2fr) minmax(64px,.7fr) minmax(0,1fr); gap:8px; }
+.field input[aria-invalid="true"], .field select[aria-invalid="true"] { border-color:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+#pc-rc-colour-GREEN { accent-color:var(--ok); }
+#pc-rc-colour-YELLOW { accent-color:var(--warn); }
+#pc-rc-colour-RED { accent-color:var(--bad); }
+.field .rc-radio:has(input:checked) { border-color:var(--ink); }
+.lg-rc-map code { font-size:12.5px; }
+@media (max-width:760px) {
+  .rcl-row { grid-template-columns:1fr; }
+  .rcl-head { display:none; }
+  .rc-form-grid { grid-template-columns:1fr; }
+  .rcl-act .field { max-width:none; }
+}
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -1913,7 +1988,10 @@ label.bk-acct { position:relative; cursor:pointer; }
  *    80 starter-loan rows, + 17 hand-written car-loan rows) for policy simulation.
  *  - Sharing agreements per lender (Addendum v2.18): Partner Bank v1 (full set)
  *    and an illustrative Lender B (Core outputs only); the findings vocabulary
- *    (EN + Arabic) that lenders see in place of the rules behind a score.
+ *    (EN + Arabic), internal since v2.19.
+ *  - The reason-code library (Addendum v2.19): three colours (green, yellow, red),
+ *    Noor standard codes and partner-requested codes (EN + Arabic) — the only
+ *    vocabulary a lender sees.
  *  - SME working capital (Addendum v2.10): persona s1 (an owner-managed trading
  *    company, its business accounts and the owner's optional personal accounts),
  *    a hand-written SME sample book (15 rows) and two SME loans under monitoring.
@@ -2558,26 +2636,6 @@ label.bk-acct { position:relative; cursor:pointer; }
       ar: 'كان تحويل من الشركة إلى المالك أكبر بكثير من المسحوبات المعتادة.' }
   };
 
-  // v2.18 — the lender-facing wording of the reason codes whose customer text names a data source, a check's
-  // internals or a threshold (Noor IP vs lender view, MEETING-1008-SPEC.md §1b). The customer still reads the
-  // full text above (CBUAE disclosure); the credit memo carries the same code with this source-agnostic wording.
-  const reasonCodesLender = {
-    RC_SCORE_LOW: { en: 'Credit score too low for this product.', ar: 'درجة الائتمان منخفضة جدًا لهذا المنتج.' },
-    RC_CROSS_BORDER: { en: 'Approved using consented home-country credit history.', ar: 'تمت الموافقة باستخدام سجل ائتماني من بلد الموطن بموافقة العميل.' },
-    RC_INCOME_VOLATILITY: { en: 'Monthly income varies too much for an automatic approval — routed for review.', ar: 'يتفاوت الدخل الشهري بدرجة لا تسمح بالموافقة التلقائية — أُحيل الطلب للمراجعة.' },
-    RC_UPGRADE_ENHANCED: { en: 'Upgraded on connected UAE accounts and additional verified evidence.', ar: 'تمت الترقية بناءً على الحسابات الإماراتية المربوطة وأدلة إضافية موثّقة.' },
-    RC_UPGRADE_BASE: { en: 'Upgraded on connected UAE accounts — additional evidence could support a larger limit and a lower rate.', ar: 'تمت الترقية بناءً على الحسابات الإماراتية المربوطة — يمكن لأدلة إضافية أن تدعم حدًا أعلى وسعرًا أقل.' },
-    RC_STATEMENTS_REQUESTED: { en: 'Additional evidence requested to review a higher amount.', ar: 'طُلبت أدلة إضافية لمراجعة مبلغ أعلى.' },
-    RC_STATEMENTS_INCOMPLETE: { en: 'Additional evidence incomplete — the missing months were requested.', ar: 'الأدلة الإضافية غير مكتملة — طُلبت الأشهر الناقصة.' },
-    RC_STATEMENTS_INTEGRITY: { en: 'Additional evidence could not be verified — referred for review.', ar: 'تعذّر التحقق من الأدلة الإضافية — أُحيل الطلب للمراجعة.' },
-    RC_STATEMENTS_USED: { en: 'Decided with additional verified evidence.', ar: 'اتُّخذ القرار بالاستناد إلى أدلة إضافية موثّقة.' },
-    RC_FOOTPRINT_IDENTITY: { en: 'Identity confirmed with an additional check the customer agreed to.', ar: 'تم تأكيد الهوية بفحص إضافي وافق عليه العميل.' },
-    RC_FOOTPRINT_OVERLAY: { en: 'With little credit history, an additional check the customer agreed to added to the score.', ar: 'مع سجل ائتماني محدود، أضاف فحص إضافي وافق عليه العميل إلى الدرجة.' },
-    RC_STEP_UP_AUTH: { en: 'Extra sign-in check required before payout.', ar: 'يلزم تحقق إضافي من الدخول قبل صرف المبلغ.' },
-    RC_EMPLOYER_MISMATCH: { en: 'Employment details differ — referred for review.', ar: 'تختلف بيانات التوظيف — أُحيل الطلب للمراجعة.' },
-    RC_ID_EXPIRED: { en: 'Identity document expired — referred for review.', ar: 'وثيقة الهوية منتهية الصلاحية — أُحيل الطلب للمراجعة.' }
-  };
-
   // ---------------------------------------------------------------------------
   // Early warning — day-zero consumer signals. Seeded, deterministic: detected
   // within the last 3 days of TODAY, each paired with a same-day action.
@@ -3010,9 +3068,10 @@ label.bk-acct { position:relative; cursor:pointer; }
   // built from an allowlist (never Open Finance data).
   // ---------------------------------------------------------------------------
   const lenders = [
-    { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record' },
+    { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record', short: 'PB' },
     // v2.18 — an illustrative second lender with a narrower sharing agreement (Core outputs only)
-    { id: 'lender-b', name: 'Lender B (illustrative)', nameAr: 'المُقرِض ب (توضيحي)', role: 'Lender of record' }
+    // v2.19 — `short` names the lender in its partner-requested reason codes (PR-PB-G01, PR-LB-Y01)
+    { id: 'lender-b', name: 'Lender B (illustrative)', nameAr: 'المُقرِض ب (توضيحي)', role: 'Lender of record', short: 'LB' }
   ];
 
   // ---------------------------------------------------------------------------
@@ -3027,22 +3086,28 @@ label.bk-acct { position:relative; cursor:pointer; }
   // The envelope (memo id, lender, agreement, product, versions, borrower, outcome, terms) always goes.
   // dbrPrecision: 'BAND' (default) or 'EXACT' — exact DBR % and headroom let a lender back out the
   // exact income from the AECB obligations it pulls itself, so EXACT is a per-agreement trade-off.
+  // v2.19 — libraryCodes: which reason codes from the library the lender receives. standard: 'ALL' (every
+  // ACTIVE Noor standard code) or a list of codes; partner: the lender's own approved partner codes. Approving
+  // or retiring a partner code issues a new version of that lender's agreement (Partner Bank v1 → v2).
   // ---------------------------------------------------------------------------
   const sharingAgreements = {
     'partner-bank': { id: 'SA-PARTNER-BANK-V1', lenderId: 'partner-bank', label: 'Partner Bank v1', version: 'v1', agreedOn: '2026-10-08', dbrPrecision: 'BAND',
                       groups: ['noorScore', 'reasonCodes', 'dataCompleteness', 'incomeBucket', 'additionalIncomeBucket', 'dbr',
-                               'scoreComponents', 'cashFlowBands', 'monitoring', 'verificationFlags', 'bureauFlags', 'consentReferences'] },
+                               'scoreComponents', 'cashFlowBands', 'monitoring', 'verificationFlags', 'bureauFlags', 'consentReferences'],
+                      libraryCodes: { standard: 'ALL', partner: ['PR-PB-G01'] } },
     'lender-b': { id: 'SA-LENDER-B-V1', lenderId: 'lender-b', label: 'Lender B v1 (illustrative)', version: 'v1', agreedOn: '2026-10-08', dbrPrecision: 'BAND',
-                  groups: ['noorScore', 'reasonCodes'] }
+                  groups: ['noorScore', 'reasonCodes'],
+                  libraryCodes: { standard: 'ALL', partner: [] } }
   };
 
   // ---------------------------------------------------------------------------
   // Findings (Addendum v2.18, §1c — "Reason codes are findings"). A controlled
-  // vocabulary of statements about the customer, shared with lenders as words
-  // (EN + Arabic), never with the rule behind them. customerFindings() derives them;
-  // the rules and their thresholds stay inside Noor. Never derived from sensitive
-  // categories (health, religion, family status, politics) or nationality, and
-  // gambling is never a shared finding. {N} is the number of months.
+  // vocabulary of statements about the customer (EN + Arabic). customerFindings()
+  // derives them; the rules and their thresholds stay inside Noor. Never derived from
+  // sensitive categories (health, religion, family status, politics) or nationality,
+  // and gambling is never a finding. {N} is the number of months.
+  // v2.19 — internal only: lenders no longer receive FND_* codes or finding words. The
+  // reason-code library below replaces them (G01–G06 and Y01 carry these statements).
   // ---------------------------------------------------------------------------
   const findings = {
     FND_ADDITIONAL_INCOME: { en: 'Detected additional income', ar: 'تم رصد دخل إضافي' },
@@ -3053,6 +3118,79 @@ label.bk-acct { position:relative; cursor:pointer; }
     FND_STABLE_INCOME: { en: 'Stable income', ar: 'دخل مستقر' },
     FND_ON_TIME_PAYER: { en: 'Pays cards and loans on time', ar: 'يسدد البطاقات والقروض في مواعيدها' }
   };
+
+  // ---------------------------------------------------------------------------
+  // Reason-code library (Addendum v2.19, ../REASON-CODES-SPEC.md). The ONLY vocabulary a
+  // lender sees: the credit memo, the SFTP row and the Lender view carry these codes and
+  // labels, never an RC_* name or an FND_* finding. Exactly three colours — GREEN
+  // (positive), YELLOW (caution), RED (adverse). The customer still reads the RC_*
+  // adverse-action reasons above (CBUAE disclosure); every RC_* maps to exactly one code
+  // here (the mapping table lives in the engine, LIBRARY_RC_MAP).
+  // Entry: { code, colour, labelEn, labelAr, tells (what it tells the lender, one line),
+  //   component, source: NOOR_STANDARD | PARTNER_REQUEST, requestedBy (lender id or null),
+  //   status: ACTIVE | PROPOSED | RETIRED, version, ruleRef }. ruleRef points to the
+  //   internal rule in the engine; the rule itself stays inside Noor.
+  // Label rules: Title Case; no data-source name except Open Finance; no thresholds,
+  // points or weights (a month count such as "3M" or "12M+" is a finding, not a
+  // threshold); never nationality, sex, religion, health, family status or politics.
+  // G01–G03, Y01, Y02 and R01 are the product request's six codes, verbatim; the rest
+  // are Noor additions for review. A partner code adds { rule: {metric, op, value},
+  // author, approver, proposedAt, approvedAt } — its metric comes from a whitelist.
+  // ---------------------------------------------------------------------------
+  const LIB = (code, colour, labelEn, labelAr, tells, component) =>
+    ({ code, colour, labelEn, labelAr, tells, component, source: 'NOOR_STANDARD', requestedBy: null, status: 'ACTIVE', version: 1, ruleRef: 'RULE-' + code });
+  const reasonCodeLibrary = [
+    // GREEN — positive
+    LIB('G01', 'GREEN', 'Detected Additional Income', 'تم رصد دخل إضافي', 'Regular income beyond the base salary was detected and verified', 'AFFORDABILITY'),
+    LIB('G02', 'GREEN', 'Saver', 'مُدّخِر', 'Keeps savings or saves regularly', 'CREDIT_BEHAVIOUR'),
+    LIB('G03', 'GREEN', 'Dining Out Lover', 'يحب تناول الطعام خارج المنزل', 'Dining out is a notable share of everyday spending', 'CREDIT_BEHAVIOUR'),
+    LIB('G04', 'GREEN', 'Stable Income', 'دخل مستقر', 'Monthly income is steady', 'CREDIT_BEHAVIOUR'),
+    LIB('G05', 'GREEN', 'Pays Cards and Loans on Time', 'يسدد البطاقات والقروض في مواعيدها', 'Card and loan repayments are made on time, with no missed payments on file', 'CREDIT_BEHAVIOUR'),
+    LIB('G06', 'GREEN', '12M+ History Shared', 'سجل 12 شهرًا فأكثر تمت مشاركته', 'A year or more of account history was shared through Open Finance', 'DATA'),
+    LIB('G07', 'GREEN', 'Salary Verified', 'الراتب موثّق', 'Salary credits are seen in the connected accounts', 'AFFORDABILITY'),
+    LIB('G08', 'GREEN', 'Employer Confirmed', 'جهة العمل مؤكّدة', 'The employer matches the company paying the salary', 'FRAUD_INTEGRITY'),
+    LIB('G09', 'GREEN', 'Low Debt Burden', 'عبء دين منخفض', 'Repayments, including this loan, take a small share of income', 'AFFORDABILITY'),
+    LIB('G10', 'GREEN', 'Settled in UAE', 'مستقر في الإمارات', 'Established in the UAE, with anchors such as a steady job', 'STACKING_SKIP'),
+    LIB('G11', 'GREEN', 'Full Financial Picture', 'صورة مالية كاملة', 'Noor sees most of the customer’s financial life', 'DATA'),
+    // YELLOW — caution
+    LIB('Y01', 'YELLOW', 'New to UAE', 'جديد في الإمارات', 'Recently arrived in the UAE, so local history is short', 'NEWCOMER'),
+    LIB('Y02', 'YELLOW', '3M History Shared', 'سجل 3 أشهر تمت مشاركته', 'A few months of account history was shared through Open Finance', 'DATA'),
+    LIB('Y03', 'YELLOW', '6M History Shared', 'سجل 6 أشهر تمت مشاركته', 'Several months of account history was shared, short of a full year', 'DATA'),
+    LIB('Y04', 'YELLOW', 'Thin Credit File', 'سجل ائتماني محدود', 'Little or no local credit history on file', 'CREDIT_BEHAVIOUR'),
+    LIB('Y05', 'YELLOW', 'Irregular Income', 'دخل غير منتظم', 'Monthly income varies noticeably', 'CREDIT_BEHAVIOUR'),
+    LIB('Y06', 'YELLOW', 'High Debt Burden', 'عبء دين مرتفع', 'Repayments, including this loan, take a large share of income', 'AFFORDABILITY'),
+    LIB('Y07', 'YELLOW', 'Partial Financial Picture', 'صورة مالية جزئية', 'Part of the customer’s financial life is not connected', 'DATA'),
+    LIB('Y08', 'YELLOW', 'Home-Country Obligations', 'التزامات في بلد الموطن', 'Repayments to lenders in the home country are seen', 'NEWCOMER'),
+    LIB('Y09', 'YELLOW', 'Amount Adjusted to Fit', 'تم تعديل المبلغ ليناسب القدرة على السداد', 'The approved amount is below the request, to stay affordable and within the rules', 'AFFORDABILITY'),
+    LIB('Y10', 'YELLOW', 'Term Adjusted to Rules', 'تم تعديل المدة وفق القواعد', 'The repayment term was set to a permitted or more affordable term', 'AFFORDABILITY'),
+    LIB('Y11', 'YELLOW', 'Employer Differs From ID', 'جهة العمل تختلف عن الهوية', 'The employer differs from the company paying the salary — referred for review', 'FRAUD_INTEGRITY'),
+    LIB('Y12', 'YELLOW', 'ID Renewal Needed', 'يلزم تجديد الهوية', 'The identity document has expired — referred for review', 'FRAUD_INTEGRITY'),
+    LIB('Y13', 'YELLOW', 'More Data Needed', 'يلزم مزيد من البيانات', 'More information is needed before a full decision', 'DATA'),
+    LIB('Y14', 'YELLOW', 'Additional Evidence Used', 'استُخدمت أدلة إضافية', 'Consented evidence beyond Open Finance supported the decision', 'DATA'),
+    LIB('Y15', 'YELLOW', 'Analyst Review Needed', 'تلزم مراجعة محلل ائتمان', 'A credit analyst reviews the application before a final decision', 'CREDIT_BEHAVIOUR'),
+    LIB('Y16', 'YELLOW', 'Extra Security Check', 'تحقق أمني إضافي', 'An extra sign-in check is required before payout', 'FRAUD_INTEGRITY'),
+    // RED — adverse
+    LIB('R01', 'RED', 'Fraud Suspicious', 'اشتباه في احتيال', 'Documents or identity details did not check out — referred to fraud review', 'FRAUD_INTEGRITY'),
+    LIB('R02', 'RED', 'Recent Changes in Account Activity', 'تغييرات حديثة في نشاط الحساب', 'Account activity changed recently against the customer’s own history — referred for review', 'STACKING_SKIP'),
+    LIB('R03', 'RED', 'Past-Due History', 'سجل تأخر في السداد', 'Serious past-due history or a write-off on file', 'CREDIT_BEHAVIOUR'),
+    LIB('R04', 'RED', 'Returned Cheques', 'شيكات مرتجعة', 'Returned cheques above the permitted level', 'CREDIT_BEHAVIOUR'),
+    LIB('R05', 'RED', 'Debt Burden Over Limit', 'عبء الدين فوق الحد', 'Repayments would exceed the permitted debt burden', 'AFFORDABILITY'),
+    LIB('R06', 'RED', 'Weak Credit Profile', 'ملف ائتماني ضعيف', 'The credit profile is too weak for this product', 'CREDIT_BEHAVIOUR'),
+    LIB('R07', 'RED', 'Cash Flow Too Tight', 'تدفق نقدي ضيق جدًا', 'Free cash flow is too low to support the repayments', 'AFFORDABILITY'),
+    LIB('R08', 'RED', 'Outside Product Eligibility', 'خارج شروط الأهلية للمنتج', 'The application falls outside the product’s eligibility rules', 'AFFORDABILITY'),
+    LIB('R09', 'RED', 'Late Repayment on Noor Credit', 'تأخر في سداد ائتمان نور', 'A previous Noor credit was repaid late', 'CREDIT_BEHAVIOUR'),
+    // Partner-requested codes (seeded). PR-<lender short>-<colour letter><nn>.
+    { code: 'PR-PB-G01', colour: 'GREEN', labelEn: 'Salary Through WPS', labelAr: 'الراتب عبر نظام حماية الأجور', tells: 'The salary is paid through the UAE Wage Protection System',
+      component: 'AFFORDABILITY', source: 'PARTNER_REQUEST', requestedBy: 'partner-bank', status: 'ACTIVE', version: 1, ruleRef: 'RULE-PR-PB-G01',
+      rule: { metric: 'salaryViaWps', op: '=', value: true }, author: 'N. Rahman (Partnerships)', approver: 'S. Iyer (Credit Risk)',
+      proposedAt: '2026-10-08T10:00:00.000Z', approvedAt: '2026-10-08T15:30:00.000Z' },
+    // Requested as "Variable Pay Above 30%": the label rules allow no thresholds, so the label names the finding and the
+    // 30% stays in the rule (inside Noor). The whitelist has no variable-pay share; income volatility is the nearest metric.
+    { code: 'PR-LB-Y01', colour: 'YELLOW', labelEn: 'High Variable Pay', labelAr: 'نسبة مرتفعة من الأجر المتغيّر', tells: 'A large part of monthly pay is variable',
+      component: 'CREDIT_BEHAVIOUR', source: 'PARTNER_REQUEST', requestedBy: 'lender-b', status: 'PROPOSED', version: 1, ruleRef: 'RULE-PR-LB-Y01',
+      rule: { metric: 'incomeVolatilityPct', op: '≥', value: 30 }, author: 'N. Rahman (Partnerships)', approver: null,
+      proposedAt: '2026-10-12T11:00:00.000Z', approvedAt: null }
+  ];
 
   const MizanData = {
     VERSION: 'data-2.0',
@@ -3069,7 +3207,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     sharingAgreements: sharingAgreements,
     findings: findings,
     reasonCodes: reasonCodes,
-    reasonCodesLender: reasonCodesLender,
+    reasonCodeLibrary: reasonCodeLibrary,
     earlyWarning: earlyWarning,
     monitoredLoans: monitoredLoans,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook(),
@@ -3174,6 +3312,12 @@ label.bk-acct { position:relative; cursor:pointer; }
  *    lender's sharing agreement. Methodology, thresholds, the data-source mix and raw
  *    data stay inside Noor; DBR and headroom are banded unless an agreement says
  *    EXACT. Every decision logs its inputs, so reproduceDecision() re-runs it purely.
+ *  - The reason-code library (v2.19, ../REASON-CODES-SPEC.md): the only vocabulary a
+ *    lender sees — exactly three colours (green, yellow, red), Noor standard codes and
+ *    partner-requested codes. Every RC_* maps to exactly one library code; the customer
+ *    still reads the RC_* reasons (EN + AR). A partner code's rule reads a whitelisted
+ *    engine metric only (never nationality, sex, age, religion, health, family or free
+ *    text), is approved with 4-eyes, and versions the lender's sharing agreement.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -6299,6 +6443,16 @@ label.bk-acct { position:relative; cursor:pointer; }
                                   publishedBy: pol.publishedBy, approvedBy: pol.approvedBy, changes: [] });
       S.policySnapshots[pid] = { 1: clone(pol) };
     }
+    // v2.19 — the reason-code library store (partner codes are proposed, approved and retired with 4-eyes) and the
+    // sharing agreements, now versioned in the session: approving or retiring a partner code issues a new version.
+    S.library = clone(Array.isArray(D.reasonCodeLibrary) ? D.reasonCodeLibrary : []);
+    S.libraryLog = [];
+    S.agreements = clone(D.sharingAgreements && typeof D.sharingAgreements === 'object' ? D.sharingAgreements : DEFAULT_AGREEMENTS);
+    S.agreementHistory = {};
+    for (const id of Object.keys(S.agreements)) {
+      const a = S.agreements[id] || {};
+      S.agreementHistory[id] = [{ version: a.version || 'v1', label: a.label || id, change: 'agreed', at: a.agreedOn || D.TODAY, by: null }];
+    }
     seedHistory();
     return true;
   }
@@ -7106,7 +7260,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     label: 'Noor-only explanation — not part of the memo',
     staysInside: [
       { group: 'Methodology', detail: 'Features, component weights, how the components combine and, later, the trained model' },
-      { group: 'Thresholds and cut-offs', detail: 'The completeness threshold, the risk-band boundaries and the rules behind each flag' },
+      { group: 'Thresholds and cut-offs', detail: 'The completeness threshold, the risk-band boundaries and the rules behind each flag and reason code' },
       { group: 'Data-source mix', detail: 'Which alternative data sources are used, when, and how much each counts' },
       { group: 'Raw customer data', detail: 'Transactions, balances, account details and Emirates ID images' }
     ],
@@ -7119,7 +7273,7 @@ label.bk-acct { position:relative; cursor:pointer; }
   // The memo's groups, by key (sharing agreements list these). Core goes to every lender.
   const MEMO_GROUPS = [
     { key: 'noorScore', status: 'Core', kind: 'output', label: 'NoorScore and risk band' },
-    { key: 'reasonCodes', status: 'Core', kind: 'output', label: 'Reason codes and findings' },
+    { key: 'reasonCodes', status: 'Core', kind: 'output', label: 'Reason codes (green · yellow · red)' },
     { key: 'dataCompleteness', status: 'Proposed', kind: 'output', label: 'Data completeness' },
     { key: 'incomeBucket', status: 'Proposed', kind: 'output', label: 'Income bucket' },
     { key: 'additionalIncomeBucket', status: 'Proposed', kind: 'output', label: 'Additional income bucket' },
@@ -7135,7 +7289,7 @@ label.bk-acct { position:relative; cursor:pointer; }
   // The output table (slide 8), in its order.
   const MEMO_OUTPUTS = [
     { key: 'noorScore', output: 'NoorScore and risk band', tells: 'The applicant’s overall risk level, in bands mapped to expected default once calibrated', status: 'Core' },
-    { key: 'reasonCodes', output: 'Reason codes', tells: 'Findings behind the score, such as Saver or New to the UAE, plus any adverse reason (RC_*)', status: 'Core' },
+    { key: 'reasonCodes', output: 'Reason codes', tells: 'What drove the score and the decision, from the reason-code library: green positive, yellow caution, red adverse', status: 'Core' },
     { key: 'dataCompleteness', output: 'Data completeness', tells: 'How much of the customer’s financial life we can see, 0 to 100%', status: 'Proposed' },
     { key: 'incomeBucket', output: 'Income bucket', tells: 'Verified regular income range', status: 'Proposed' },
     { key: 'additionalIncomeBucket', output: 'Additional income bucket', tells: 'Variable and secondary income range', status: 'Proposed' },
@@ -7165,7 +7319,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     const role = String(lender.role || 'lender of record').toLowerCase();
     return /\)$/.test(lender.name) ? lender.name.replace(/\)$/, ', ' + role + ')') : lender.name + ' (' + role + ')';
   }
-  function agreementsAll() { return (D && D.sharingAgreements && typeof D.sharingAgreements === 'object') ? D.sharingAgreements : DEFAULT_AGREEMENTS; }
+  // v2.19 — the session's agreements (cloned from MizanData at init, versioned by approveReasonCode / retireReasonCode)
+  function agreementsAll() { return S && S.agreements ? S.agreements : ((D && D.sharingAgreements && typeof D.sharingAgreements === 'object') ? D.sharingAgreements : DEFAULT_AGREEMENTS); }
   // v2.18 — the lender's sharing agreement, validated: known groups only, Core always, dbrPrecision BAND (default) or EXACT.
   function agreementFor(lender) {
     const a = agreementsAll()[lender.id];
@@ -7178,13 +7333,23 @@ label.bk-acct { position:relative; cursor:pointer; }
     const precision = a.dbrPrecision === undefined || a.dbrPrecision === null ? 'BAND' : a.dbrPrecision;
     if (precision !== 'BAND' && precision !== 'EXACT') throw err('dbrPrecision must be BAND or EXACT (sharing agreement ' + name + ')');
     return { id: a.id || null, lenderId: lender.id, label: name, version: a.version || 'v1', dbrPrecision: precision,
-             groups: MEMO_GROUP_KEYS.filter(k => groups.includes(k)) };
+             groups: MEMO_GROUP_KEYS.filter(k => groups.includes(k)), libraryCodes: agreementLibraryCodes(a, name) };
   }
-  // Public: the agreement as the UI shows it (with each group's status and label).
+  // v2.19 — the library codes an agreement carries: standard 'ALL' (default) or a list of standard codes; partner: the
+  // lender's approved partner codes (kept in step by approveReasonCode / retireReasonCode).
+  function agreementLibraryCodes(a, name) {
+    const lc = a.libraryCodes || {};
+    const standard = lc.standard === undefined || lc.standard === null ? 'ALL' : lc.standard;
+    if (standard !== 'ALL' && !Array.isArray(standard)) throw err('libraryCodes.standard must be "ALL" or a list of codes (sharing agreement ' + name + ')');
+    return { standard: standard === 'ALL' ? 'ALL' : standard.slice(), partner: Array.isArray(lc.partner) ? lc.partner.slice() : [] };
+  }
+  // Public: the agreement as the UI shows it (with each group's status and label; v2.19 — its library codes and versions).
   function sharingAgreement(lenderId) {
     ensureInit();
-    const ag = agreementFor(lenderFor(lenderId));
-    return clone(Object.assign({}, ag, { groupsDetail: MEMO_GROUPS.filter(g => ag.groups.includes(g.key)) }));
+    const lender = lenderFor(lenderId);
+    const ag = agreementFor(lender);
+    return clone(Object.assign({}, ag, { groupsDetail: MEMO_GROUPS.filter(g => ag.groups.includes(g.key)),
+                                         history: (S.agreementHistory && S.agreementHistory[lender.id]) || [] }));
   }
   const thousands = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   // Income: AED 5,000 steps up to 20,000, AED 10,000 steps above.
@@ -7474,29 +7639,30 @@ label.bk-acct { position:relative; cursor:pointer; }
   // each level, with the internal rules) stay inside Noor — the memo carries the level word and up to two plain
   // factor words per score component, never these rules, weights or points.
   //  Fraud & Integrity (score) — red: a mismatch or an integrity FAIL (ID name ≠ account holder, employer ≠ salary
-  //    payer, an expired card, documents failing integrity or the name check) — as built, these REFER; amber: identity
+  //    payer, an expired card, documents failing integrity or the name check) — as built, these REFER; yellow: identity
   //    only partly confirmed (footprint MEDIUM/LOW) or account-takeover risk ELEVATED (step-up sign-in); else green.
   //    Device intelligence and mule / income-manipulation patterns: not connected yet.
   //  Newcomer Score (score) — applies under 12 months in the UAE, else "Established — not applicable" (neutral).
   //    green: home-country history used (Credit Passport consented, or statements verified) and a regular salary since
-  //    arrival; red: neither home-country data nor a salary seen; amber otherwise (settling in).
+  //    arrival; red: neither home-country data nor a salary seen; yellow otherwise (settling in).
   //  Stacking & Skip Risk (score) — red: 2+ departure markers (the v2.9 origination flags) or 3+ new credit lines in
-  //    90 days; amber: 1 marker, 2 new lines, or no anchor; green otherwise. Anchors: 24+ months in the UAE, employer
+  //    90 days; yellow: 1 marker, 2 new lines, or no anchor; green otherwise. Anchors: 24+ months in the UAE, employer
   //    tenure 12+ months, a salary account active 12+ months. New lines read aecb.newCreditLines90d where the data
   //    has it, else "none seen".
-  //  Credit Behaviour (score) — red: DPD90 / write-off, returned cheques, or negative free cash flow; amber: DPD30,
+  //  Credit Behaviour (score) — red: DPD90 / write-off, returned cheques, or negative free cash flow; yellow: DPD30,
   //    income volatility 40%+, free cash flow under AED 1,500, or no bureau file; else green.
   //  Affordability & Capacity (aggregates, not scored) — bands only: income, obligations, essential expenses, DBR,
   //    the maximum affordable instalment.
   //  Monitoring & Collections (post-disbursement, not part of the score) — early-warning triggers (v2.9): Elevated
   //    when origination red flags fired; best debit date = the day after the usual salary credit; the next monthly
   //    score refresh one month after the decision.
+  // v2.19 — three colours, as in the reason-code library: green / yellow / red, or neutral "not applicable" (was amber).
   // ---------------------------------------------------------------------------
   const COMPONENT_LEVELS = {
-    fraudIntegrity: { green: 'Clear', amber: 'Check', red: 'Review' },
-    newcomer: { green: 'Strong', amber: 'Building', red: 'Thin', neutral: 'Established — not applicable' },
-    stackingSkip: { green: 'Low', amber: 'Medium', red: 'High' },
-    creditBehaviour: { green: 'Strong', amber: 'Fair', red: 'Weak' }
+    fraudIntegrity: { green: 'Clear', yellow: 'Check', red: 'Review' },
+    newcomer: { green: 'Strong', yellow: 'Building', red: 'Thin', neutral: 'Established — not applicable' },
+    stackingSkip: { green: 'Low', yellow: 'Medium', red: 'High' },
+    creditBehaviour: { green: 'Strong', yellow: 'Fair', red: 'Weak' }
   };
   const SCORE_COMPONENT_KEYS = ['fraudIntegrity', 'newcomer', 'stackingSkip', 'creditBehaviour'];
   function ordinalDay(d) { const s = ['th', 'st', 'nd', 'rd'], v = d % 100; return d + (s[(v - 20) % 10] || s[v] || s[0]); }
@@ -7529,7 +7695,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     const mk = (key, name, group, question, tone, factors, drivers) => ({ key, name, group, question, tone,
       level: COMPONENT_LEVELS[key] ? COMPONENT_LEVELS[key][tone] : null, factors: pick(factors), drivers });
     // 1 · Fraud & Integrity
-    const fiRed = [], fiAmber = [], fiDrv = ['Identity: verified at onboarding (UAE PASS)'];
+    const fiRed = [], fiYellow = [], fiDrv = ['Identity: verified at onboarding (UAE PASS)'];
     if (rec.emiratesId) {
       fiDrv.push('Emirates ID front + back · card ' + (f.idExpiryValid === false ? 'EXPIRED' : 'valid'));
       fiDrv.push('ID name ↔ account holder: ' + (f.idNameMatch === true ? 'match' : (f.idNameMatch === false ? 'MISMATCH' : 'not checked (no Open Finance)')));
@@ -7540,17 +7706,17 @@ label.bk-acct { position:relative; cursor:pointer; }
     }
     if (f.footprintIdentity) {
       fiDrv.push('Digital footprint: identity ' + f.footprintIdentity + ' · account-takeover risk ' + f.footprintAtoRisk);
-      if (f.footprintIdentity !== 'HIGH') fiAmber.push('Identity partly confirmed');
-      if (f.footprintAtoRisk === 'ELEVATED') fiAmber.push('Extra sign-in check before payout');
+      if (f.footprintIdentity !== 'HIGH') fiYellow.push('Identity partly confirmed');
+      if (f.footprintAtoRisk === 'ELEVATED') fiYellow.push('Extra sign-in check before payout');
     }
     if (st) {
       fiDrv.push('Home-country statements: integrity ' + st.integrity + (st.integrity === 'PASS' ? ' · name ' + (st.nameMatch ? 'match' : 'MISMATCH') : ''));
       if (st.integrity !== 'PASS' || st.nameMatch !== true) fiRed.push('Documents under review');
     }
     fiDrv.push('Not connected yet: device intelligence; mule and income-manipulation patterns');
-    const fiTone = fiRed.length ? 'red' : (fiAmber.length ? 'amber' : 'green');
+    const fiTone = fiRed.length ? 'red' : (fiYellow.length ? 'yellow' : 'green');
     const fi = mk('fraudIntegrity', 'Fraud & Integrity', 'score', 'Is the applicant real and honest?', fiTone,
-      fiTone === 'red' ? fiRed : (fiTone === 'amber' ? fiAmber : ['Identity verified', f.employerMatch === true ? 'Employment confirmed'
+      fiTone === 'red' ? fiRed : (fiTone === 'yellow' ? fiYellow : ['Identity verified', f.employerMatch === true ? 'Employment confirmed'
         : (f.footprintIdentity === 'HIGH' ? 'Consistent identity signals' : (st && st.usable ? 'Documents consistent' : null))]), fiDrv);
     // 2 · Newcomer Score
     let nc;
@@ -7564,7 +7730,7 @@ label.bk-acct { position:relative; cursor:pointer; }
       const vol = Number.isFinite(cn.incomeVolatilityPct) ? cn.incomeVolatilityPct : (Number.isFinite(f.incomeVolatilityPct) ? f.incomeVolatilityPct : null);
       const salaryRegular = bd.salaryDetected === true || (uaeMonths > 0 && vol !== null && vol <= 10);
       const homeUsed = cpUsed || stUsable, homeAvail = homeUsed || cpAvail || stAvail;
-      const tone = homeUsed && salaryRegular ? 'green' : (!homeAvail && !salaryRegular ? 'red' : 'amber');
+      const tone = homeUsed && salaryRegular ? 'green' : (!homeAvail && !salaryRegular ? 'red' : 'yellow');
       nc = mk('newcomer', 'Newcomer Score', 'score', 'Under 12 months of UAE financial footprint?', tone,
         tone === 'green' ? ['Home-country history verified', 'Regular salary since arrival']
           : (tone === 'red' ? ['Settling in', 'Little history yet']
@@ -7584,7 +7750,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     const anchors = [inUae !== null && inUae >= 24 ? 'months in the UAE' : null, tenure !== null && tenure >= 12 ? 'employer tenure' : null,
                      salaryAcct >= 12 && salarySeen ? 'salary account active 12+ months' : null].filter(Boolean);
     const skTone = (codes.length >= 2 || (newLines !== null && newLines >= 3)) ? 'red'
-      : ((codes.length === 1 || (newLines !== null && newLines >= 2) || !anchors.length) ? 'amber' : 'green');
+      : ((codes.length === 1 || (newLines !== null && newLines >= 2) || !anchors.length) ? 'yellow' : 'green');
     const sk = mk('stackingSkip', 'Stacking & Skip Risk', 'score', 'Will they take as much credit as possible and leave the UAE?', skTone,
       skTone === 'green' ? [inUae >= 24 ? 'Settled in the UAE' : null, tenure !== null && tenure >= 24 ? 'Long employment tenure' : null, 'No new credit lines seen']
         : [codes.length ? 'Recent changes in account activity' : null, codes.includes('RF_CARDS_MAXED') ? 'Card use rising' : null,
@@ -7600,10 +7766,10 @@ label.bk-acct { position:relative; cursor:pointer; }
     const vol = Number.isFinite(f.incomeVolatilityPct) ? f.incomeVolatilityPct : (Number.isFinite(cn.incomeVolatilityPct) ? cn.incomeVolatilityPct : null);
     const onTime = Number(cn.observedObligationsMonthly) > 0 && dq === 'NONE' && !chq;
     const cbTone = (dq === 'DPD90' || dq === 'WRITEOFF' || chq > 0 || (fcf !== null && fcf < 0)) ? 'red'
-      : ((dq === 'DPD30' || priorLate || (vol !== null && vol >= 40) || (fcf !== null && fcf < 1500) || !ae.hit) ? 'amber' : 'green');
+      : ((dq === 'DPD30' || priorLate || (vol !== null && vol >= 40) || (fcf !== null && fcf < 1500) || !ae.hit) ? 'yellow' : 'green');
     const cb = mk('creditBehaviour', 'Credit Behaviour', 'score', 'Will they pay?', cbTone,
       cbTone === 'red' ? [dq !== 'NONE' ? 'Missed payments in history' : null, chq > 0 ? 'Returned cheques' : null, fcf !== null && fcf < 0 ? 'Spending exceeds income' : null]
-        : (cbTone === 'amber' ? [dq === 'DPD30' || priorLate ? 'Late payment in history' : null, vol !== null && vol >= 40 ? 'Income varies a lot' : null,
+        : (cbTone === 'yellow' ? [dq === 'DPD30' || priorLate ? 'Late payment in history' : null, vol !== null && vol >= 40 ? 'Income varies a lot' : null,
                                 fcf !== null && fcf < 1500 ? 'Thin margin after bills' : null, !ae.hit ? 'No credit file yet' : null]
           : [fcf !== null && fcf >= 3000 ? 'Strong cash flow' : null, onTime ? 'Pays cards and loans on time' : (ae.hit ? 'Clean credit file' : null),
              vol !== null && vol <= 20 ? 'Stable income' : null]),
@@ -7640,7 +7806,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     // 6 · Monitoring & Collections — post-disbursement
     const mon = monitoringOf(rec);
     const mo = { key: 'monitoring', name: 'Monitoring & Collections', group: 'post', question: 'What changed after disbursement?',
-      tone: mon.status === 'Elevated' ? 'amber' : 'neutral', level: mon.status, factors: [],
+      tone: mon.status === 'Elevated' ? 'yellow' : 'neutral', level: mon.status, factors: [],
       bestDebitDate: mon.bestDebitDate, nextRefresh: mon.nextRefresh, line: mon.line,
       drivers: ['Early-warning triggers (v2.9): ' + (mon.flags.length ? mon.flags.join(' · ') + ' at origination' : 'none at origination') +
                   ' · watched monthly against the customer’s own baseline',
@@ -7654,6 +7820,406 @@ label.bk-acct { position:relative; cursor:pointer; }
     const rec = getDecisionRef(decisionId);
     if (rec.productId === SME_PID) return { derivation: COMPONENTS_BASIS, note: 'Not derived for a business borrower — the SME memo carries the business bands', components: [] };
     return { derivation: COMPONENTS_BASIS, note: COMPONENTS_NOTE, components: clone(componentsOf(rec)) };
+  }
+
+  // ---------------------------------------------------------------------------
+  // v2.19 — the reason-code library (../REASON-CODES-SPEC.md). MizanData.reasonCodeLibrary is the ONLY vocabulary a
+  // lender sees: exactly three colours (GREEN positive · YELLOW caution · RED adverse), Noor standard codes and
+  // partner-requested codes. It replaces the v2.18 findings (FND_*) and every lender-facing RC_*: the memo, the SFTP row
+  // and the Lender view carry library codes only. The customer still reads the RC_* adverse-action reasons (EN + AR,
+  // CBUAE disclosure) and the decision record keeps them.
+  //  - LIBRARY_RC_MAP: every RC_* the engine can emit maps to exactly one library code (the selftest iterates them all).
+  //  - LIBRARY_RULES: each standard code fires on its internal rule OR when one of its mapped RC_* is on the record. The
+  //    rules (illustrative) stay inside Noor — an entry's ruleRef points here; the memo carries code, colour and label.
+  //    G01–G05 and Y01 carry the v2.18 findings' statements; G06 is the history finding at 12 months or more.
+  //  - Partner codes are built from LIBRARY_METRICS, a whitelist of engine features — never nationality, sex, age,
+  //    religion, health, family or free text. Proposed by one person, approved by another (4-eyes); approval adds the
+  //    code to the requesting lender's sharing agreement as a new version, and the code fires in that lender's memo only.
+  // ---------------------------------------------------------------------------
+  const LIBRARY_COLOURS = ['GREEN', 'YELLOW', 'RED'];
+  const LIBRARY_COMPONENTS = ['FRAUD_INTEGRITY', 'NEWCOMER', 'STACKING_SKIP', 'CREDIT_BEHAVIOUR', 'AFFORDABILITY', 'DATA', 'MONITORING'];
+  const LIBRARY_STATUSES = ['ACTIVE', 'PROPOSED', 'RETIRED'];
+  const LIBRARY_SOURCES = ['NOOR_STANDARD', 'PARTNER_REQUEST'];
+  const LIBRARY_RC_MAP = {
+    Y04: ['RC_THIN_FILE', 'RC_CASH_FLOW_UNDERWRITTEN'],
+    Y05: ['RC_INCOME_VOLATILITY'],
+    Y09: ['RC_LIMIT_REDUCED', 'RC_LTV_CAP', 'RC_RETIREE_CAP', 'RC_DRAWDOWN_LIMIT', 'RC_GUARANTEE_UNVERIFIED', 'RC_GUARANTEE_WEAK'],
+    Y10: ['RC_TENOR_CAP', 'RC_PLAN_ADJUSTED'],
+    Y11: ['RC_EMPLOYER_MISMATCH'],
+    Y12: ['RC_ID_EXPIRED'],
+    Y13: ['RC_DATA_INCOMPLETE', 'RC_CONNECTED_HISTORY', 'RC_INCOME_UNVERIFIED', 'RC_STATEMENTS_REQUESTED', 'RC_STATEMENTS_INCOMPLETE',
+          'RC_BUSINESS_HISTORY', 'RC_TOKEN_EXPIRED'],
+    Y14: ['RC_CROSS_BORDER', 'RC_STATEMENTS_USED', 'RC_UPGRADE_ENHANCED', 'RC_UPGRADE_BASE', 'RC_FOOTPRINT_IDENTITY', 'RC_FOOTPRINT_OVERLAY'],
+    Y15: ['RC_MANUAL_REVIEW'],
+    Y16: ['RC_STEP_UP_AUTH'],
+    R01: ['RC_STATEMENTS_INTEGRITY'],
+    R02: ['RC_RED_FLAGS_REVIEW', 'RC_RF_CARDS_MAXED', 'RC_RF_REMITTANCE_SURGE', 'RC_RF_TRAVEL_AFTER_DISBURSAL', 'RC_RF_PAYMENTS_STOPPED',
+          'RC_RF_BALANCES_DRAINED', 'RC_RF_REVENUE_DROP', 'RC_RF_FUNDS_TO_OWNER'],
+    R03: ['RC_DELINQUENCY'],
+    R04: ['RC_CHEQUE_RETURNS'],
+    R05: ['RC_DBR_EXCEEDED'],
+    R06: ['RC_SCORE_LOW'],
+    R07: ['RC_FREE_CASH_FLOW', 'RC_OPTION_UNAFFORDABLE', 'RC_BUSINESS_CASH_FLOW'],
+    R08: ['RC_AGE', 'RC_SALARY_FLOOR', 'RC_VEHICLE_INELIGIBLE', 'RC_BELOW_MIN_AMOUNT', 'RC_PURCHASE_UNVERIFIED', 'RC_TRADING_HISTORY'],
+    R09: ['RC_STARTER_LATE', 'RC_DRAWDOWN_ARREARS']
+  };
+  const RC_TO_LIBRARY = {};
+  for (const code of Object.keys(LIBRARY_RC_MAP)) for (const rc of LIBRARY_RC_MAP[code]) RC_TO_LIBRARY[rc] = code;
+  const LIB_SETTLED_MIN_MONTHS = 24, LIB_ANCHOR_MONTHS = 12, LIB_HISTORY_FULL = 12, LIB_HISTORY_MID = 6, LIB_HISTORY_SHORT = 3;
+  const LIB_DBR_LOW_BELOW = 30, LIB_DBR_HIGH_FROM = 40, LIB_IRREGULAR_ABOVE_PCT = 20, LIB_PICTURE_FULL = 85, LIB_PICTURE_PARTIAL = 70;
+  // [internal rule, test(metrics, context)] — a test of null means the code fires only through its mapped RC_* codes.
+  const LIBRARY_RULES = {
+    G01: ['Verified regular non-salary income (rent through Open Finance; home-country income in verified statements), or variable pay of at least AED 1,000 a month',
+          (m, x) => x.otherIncomeVerified || (m.additionalIncomeMonthly !== null && m.additionalIncomeMonthly >= ADDITIONAL_INCOME_MIN)],
+    G02: ['Savings hold at least 1 month of spending, or regular transfers to savings are seen', (m, x) => (m.savingsMonths !== null && m.savingsMonths >= 1) || x.savingsTransfers],
+    G03: ['Dining is at least ' + FINDING_DINING_MIN_PCT + '% of spending (the only spending category read)', (m) => m.diningSharePct !== null && m.diningSharePct >= FINDING_DINING_MIN_PCT],
+    G04: ['Income volatility at or below ' + FINDING_STABLE_MAX_PCT + '%', (m) => m.incomeVolatilityPct !== null && m.incomeVolatilityPct <= FINDING_STABLE_MAX_PCT],
+    G05: ['Card and loan repayments seen leaving the accounts every month; no delinquency or returned cheque on file', (m) => m.onTimeRepayments === true],
+    G06: ['At least ' + LIB_HISTORY_FULL + ' months of connected history', (m) => m.monthsHistory >= LIB_HISTORY_FULL],
+    G07: ['Salary credits seen in the connected accounts', (m, x) => x.salarySeen],
+    G08: ['Employer on the Emirates ID = the WPS salary payer (the v2.16 employer match)', (m, x) => x.employerMatch === true],
+    G09: ['DBR after the loan below ' + LIB_DBR_LOW_BELOW + '%', (m) => m.dbrPct !== null && m.dbrPct < LIB_DBR_LOW_BELOW],
+    G10: ['At least ' + LIB_SETTLED_MIN_MONTHS + ' months in the UAE, plus an anchor (employer tenure ' + LIB_ANCHOR_MONTHS + '+ months, or a salary account active ' + LIB_ANCHOR_MONTHS + '+ months)',
+          (m, x) => m.monthsInUae !== null && m.monthsInUae >= LIB_SETTLED_MIN_MONTHS && x.anchored],
+    G11: ['Data completeness at least ' + LIB_PICTURE_FULL + '%', (m) => m.completenessPct !== null && m.completenessPct >= LIB_PICTURE_FULL],
+    Y01: ['Under ' + FINDING_NEW_MAX_MONTHS + ' months of UAE financial footprint (months in the UAE — never nationality)', (m) => m.monthsInUae !== null && m.monthsInUae < FINDING_NEW_MAX_MONTHS],
+    Y02: [LIB_HISTORY_SHORT + '–' + (LIB_HISTORY_MID - 1) + ' months of connected history', (m) => m.monthsHistory >= LIB_HISTORY_SHORT && m.monthsHistory < LIB_HISTORY_MID],
+    Y03: [LIB_HISTORY_MID + '–' + (LIB_HISTORY_FULL - 1) + ' months of connected history', (m) => m.monthsHistory >= LIB_HISTORY_MID && m.monthsHistory < LIB_HISTORY_FULL],
+    Y04: ['AECB no-hit or thin file (consumer)', (m) => m.aecbHit === false],
+    Y05: ['Income volatility above ' + LIB_IRREGULAR_ABOVE_PCT + '%', (m) => m.incomeVolatilityPct !== null && m.incomeVolatilityPct > LIB_IRREGULAR_ABOVE_PCT],
+    Y06: ['DBR after the loan ' + LIB_DBR_HIGH_FROM + '–' + HARD.dbrCapPct + '%', (m) => m.dbrPct !== null && m.dbrPct >= LIB_DBR_HIGH_FROM && m.dbrPct <= HARD.dbrCapPct],
+    Y07: ['Data completeness ' + LIB_PICTURE_PARTIAL + '–' + (LIB_PICTURE_FULL - 1) + '%', (m) => m.completenessPct !== null && m.completenessPct >= LIB_PICTURE_PARTIAL && m.completenessPct < LIB_PICTURE_FULL],
+    Y08: ['EMIs seen in verified home-country statements', (m, x) => x.homeEmis],
+    Y09: ['The approved amount is below the request (limit reduced; LTV, retiree, drawdown or guarantee cap)', (m, x) => x.amountReduced],
+    Y10: ['The tenor was clamped to a permitted term, or the plan set to a longer term', (m, x) => x.termAdjusted],
+    Y11: ['Employer on the Emirates ID ≠ the WPS salary payer', (m, x) => x.employerMatch === false],
+    Y12: ['The Emirates ID has expired', (m, x) => x.idExpired],
+    Y13: ['Below the completeness threshold, or income, history or documents still missing', null],
+    Y14: ['Home-country evidence used (Credit Passport, verified statements), an upgrade on it, or a consented footprint check', (m, x) => x.homeEvidenceUsed],
+    Y15: ['Referred to an analyst: UAE tenure, the spending ratio or the score refer band', null],
+    Y16: ['Account-takeover risk elevated — step-up sign-in before payout', null],
+    R01: ['Statement integrity FAIL or account holder ≠ applicant; ID name ≠ account holder', (m, x) => x.integrityFail],
+    R02: ['Any v2.9 origination red flag (cards maxed, remittance surge, balances drained)', (m) => m.redFlagCount !== null && m.redFlagCount >= 1],
+    R03: ['DPD90 or a write-off on the AECB file', (m, x) => x.seriousDelinquency],
+    R04: ['Returned cheques above the pack’s tolerance', null],
+    R05: ['DBR cap exceeded', null],
+    R06: ['Below the score cut-off', null],
+    R07: ['Free cash flow insufficient for the instalments (consumer or business)', null],
+    R08: ['Age, salary floor, vehicle, minimum amount, purchase or trading history outside the product', null],
+    R09: ['Starter loan repaid late, or an overdue Noor instalment', (m, x) => x.priorLate]
+  };
+  // The rule builder's whitelist: engine features a partner code may read, with their type.
+  const LIBRARY_METRICS = {
+    monthsHistory: 'number', completenessPct: 'number', dbrPct: 'number', fcfMonthly: 'number', incomeVolatilityPct: 'number',
+    savingsMonths: 'number', diningSharePct: 'number', additionalIncomeMonthly: 'number', salaryViaWps: 'boolean', monthsInUae: 'number',
+    onTimeRepayments: 'boolean', redFlagCount: 'number', aecbHit: 'boolean', approvedAmount: 'number', tenorMonths: 'number'
+  };
+  const LIBRARY_OPS = ['≥', '≤', '='];
+  const LIBRARY_OP_ALIAS = { '>=': '≥', '<=': '≤', '==': '=', '===': '=' };
+  // Never a metric, a label or a "tells" line (the guardrail, by design).
+  const LIB_SENSITIVE = /\b(nationality|nationalities|national|citizen\w*|ethnic\w*|race|emirati|indian|pakistani|egyptian|filipin\w*|arab|asian|african|european|western|male|female|man|woman|men|women|gender|sex|sexual\w*|religio\w*|muslim|christian|hindu|jewish|buddhist|mosque|church|temple|pray\w*|health|medical|hospital|clinic|pharmacy|disease|illness|pregnan\w*|disab\w*|marital|married|single|divorced|widow\w*|family|families|spouse|wife|husband|child\w*|kids?|political|politics|party|vote|voting|age|aged|ages|young|elderly|senior)\b/i;
+  const LIB_SOURCE = /\b(aecb|al ?tareq|credit ?passport|uae ?pass|emirates ?id|footprint|statements?|bureau|telecom|utility|salary certificate|nebras|enbd|emirates nbd|fab|adcb|mashreq|rakbank|wio|hdfc|sbi|hbl|cib)\b/i;
+  const LIB_INTERNAL = /\b(points?|pts|weights?|thresholds?|cut-?offs?|scorecard|formula)\b|%|‰|\bAED\b/i;
+  const LIB_SMALL_WORDS = ['a', 'an', 'and', 'as', 'at', 'by', 'for', 'from', 'in', 'of', 'on', 'or', 'the', 'to', 'via', 'with'];
+  const LIB_MONTH_COUNT = /^\d{1,2}M\+?$/;
+  // Label hygiene (§1): Title Case; no data-source name except Open Finance; no thresholds, points or weights (a month count
+  // such as "3M" or "12M+" is a finding); never a sensitive category. Returns the problems (empty when clean).
+  function libraryLabelProblems(label) {
+    const out = [];
+    const s = typeof label === 'string' ? label.trim() : '';
+    if (!s) return ['a label is required'];
+    if (s.length > 40) out.push('keep it to 40 characters');
+    const words = s.split(/\s+/);
+    words.forEach((w, i) => {
+      for (const part of w.split('-')) {
+        if (!part) continue;
+        if (/\d/.test(part) && !LIB_MONTH_COUNT.test(part)) out.push('no thresholds or numbers ("' + part + '") — only a month count such as 3M or 12M+');
+        else if (i > 0 && LIB_SMALL_WORDS.includes(part)) continue;
+        else if (!/^[A-Z0-9]/.test(part)) out.push('Title Case — "' + part + '" should start with a capital letter');
+      }
+    });
+    if (LIB_INTERNAL.test(s) && !out.some(x => /^no thresholds/.test(x))) out.push('no thresholds, points or weights');
+    if (LIB_SOURCE.test(s.replace(/open finance/ig, ''))) out.push('no data-source names (Open Finance is the only one a label may name)');
+    if (LIB_SENSITIVE.test(s)) out.push('never nationality, sex, age, religion, health, family status or politics');
+    return out.filter((x, i, a) => a.indexOf(x) === i);
+  }
+  function libraryArabicProblems(labelAr, labelEn) {
+    const s = typeof labelAr === 'string' ? labelAr.trim() : '';
+    if (!s || !/[؀-ۿ]/.test(s)) return ['an Arabic label is required'];
+    const out = [];
+    if (/[A-Za-z%‰]/.test(s)) out.push('the Arabic label takes Arabic words only (no Latin letters or %)');
+    const monthCount = String(labelEn || '').split(/\s+/).some(w => LIB_MONTH_COUNT.test(w));
+    if (/[0-9٠-٩]/.test(s) && !monthCount) out.push('no numbers in the Arabic label — only a month count matching the English label');
+    if (s.length > 60) out.push('keep the Arabic label to 60 characters');
+    return out;
+  }
+  function libraryTellsProblems(tells) {
+    const s = typeof tells === 'string' ? tells.trim() : '';
+    if (!s) return ['say in one line what the code tells the lender'];
+    const out = [];
+    if (/[\r\n]/.test(s) || s.length > 160) out.push('one line, up to 160 characters');
+    if (/\d/.test(s.replace(/\b\d{1,2}M\+?\b/g, ''))) out.push('no thresholds or numbers in what it tells the lender');
+    if (LIB_INTERNAL.test(s)) out.push('no thresholds, points or weights');
+    if (LIB_SOURCE.test(s.replace(/open finance/ig, ''))) out.push('no data-source names (Open Finance is the only one it may name)');
+    if (LIB_SENSITIVE.test(s)) out.push('never nationality, sex, age, religion, health, family status or politics');
+    return out;
+  }
+  // The rule builder — safe by construction: { metric (whitelist), op (≥ ≤ =), value (typed) } and nothing else.
+  function validateLibraryRule(rule) {
+    if (typeof rule === 'string') throw err('the rule must be { metric, op, value } — free text is never accepted');
+    if (!rule || typeof rule !== 'object' || Array.isArray(rule)) throw err('the rule must be { metric, op, value }');
+    const extra = Object.keys(rule).filter(k => !['metric', 'op', 'value'].includes(k));
+    if (extra.length) throw err('the rule takes { metric, op, value } only — free text and expressions are never accepted (got ' + extra.join(', ') + ')');
+    const metric = rule.metric;
+    if (typeof metric !== 'string' || !Object.prototype.hasOwnProperty.call(LIBRARY_METRICS, metric)) {
+      const word = String(metric === undefined ? '' : metric);
+      if (LIB_SENSITIVE.test(word.replace(/([a-z])([A-Z])/g, '$1 $2')) || /sex|gender|nationalit|religio|health|famil|marital|ethnic|age/i.test(word)) {
+        throw err('metric "' + word + '" is never allowed — nationality, sex, age, religion, health, family and free text are excluded by design; use the whitelist: ' + Object.keys(LIBRARY_METRICS).join(', '));
+      }
+      throw err('metric "' + word + '" is not on the whitelist of engine features: ' + Object.keys(LIBRARY_METRICS).join(', '));
+    }
+    const op = LIBRARY_OP_ALIAS[rule.op] || rule.op;
+    if (!LIBRARY_OPS.includes(op)) throw err('op must be ≥, ≤ or = (got "' + rule.op + '")');
+    const type = LIBRARY_METRICS[metric];
+    if (type === 'boolean') {
+      if (typeof rule.value !== 'boolean') throw err(metric + ' takes true or false (got ' + JSON.stringify(rule.value) + ')');
+      if (op !== '=') throw err(metric + ' is true or false — use the = operator');
+    } else if (typeof rule.value !== 'number' || !Number.isFinite(rule.value)) {
+      throw err(metric + ' takes a number (got ' + JSON.stringify(rule.value) + ')');
+    }
+    return { metric, op, value: rule.value };
+  }
+  function libraryRuleText(rule) { return rule.metric + ' ' + rule.op + ' ' + (typeof rule.value === 'number' ? String(rule.value) : String(rule.value)); }
+  function partnerRuleFires(rule, m) {
+    const v = m[rule.metric];
+    if (v === null || v === undefined) return false;
+    if (rule.op === '=') return v === rule.value;
+    if (typeof v !== 'number') return false;
+    return rule.op === '≥' ? v >= rule.value : v <= rule.value;
+  }
+  // The whitelisted metrics and the internal context, for one decision record (pure).
+  function libraryInputs(rec) {
+    const a = rec.applicantSnapshot || {}, f = rec.features || {};
+    const sme = rec.productId === SME_PID || a.segment === 'SME';
+    const of = ofGranted(rec), cn = (of && a.connected) || {}, bd = a.bankData || {};
+    const ae = aecbOf(rec);
+    const st = rec.homeStatements || null;
+    const terms = rec.outcome === 'APPROVE' ? memoTerms(rec) : null;
+    const curve = rec.pricing && rec.pricing.mode === 'TENOR_CURVE_APR';
+    const monthsHistory = sme ? null : (of ? (cn.monthsAvailable || (bd.source === 'ALTAREQ_TPP' ? bd.monthsAvailable : 0) || f.connectedMonths || 0) : 0);
+    const spend = Number(cn.avgMonthlySpend);
+    const savings = (cn.accounts || []).filter(acc => /savings/i.test(String(acc.type || '')));
+    const maxSaved = savings.length ? Math.max.apply(null, savings.map(acc => Number(acc.balance) || 0)) : 0;
+    const vol = Number.isFinite(cn.incomeVolatilityPct) ? cn.incomeVolatilityPct : (of && Number.isFinite(f.incomeVolatilityPct) ? f.incomeVolatilityPct : null);
+    const dq = ae.worstDelinquency || 'NONE';
+    const ip = sme ? null : incomeParts(rec), dp = sme ? null : dbrParts(rec);
+    const approvedAmount = terms && Number.isFinite(terms.amount) ? terms.amount : (rec.limit && Number.isFinite(rec.limit.approved) ? rec.limit.approved : null);
+    const termMonths = terms ? (terms.tenorMonths || terms.planMonths || null) : null;
+    const reqAmount = rec.request && Number.isFinite(rec.request.amount) ? rec.request.amount : null;
+    const reqMonths = rec.request && Number.isFinite(rec.request.tenorMonths) ? rec.request.tenorMonths : null;
+    const salarySeen = !sme && of && ((bd.source === 'ALTAREQ_TPP' && bd.salaryDetected === true) || !!cn.salaryPayer || Number.isFinite(cn.salaryCreditDay));
+    const inUae = Number.isFinite(a.monthsInUae) ? a.monthsInUae : null;
+    const tenure = a.employment && Number.isFinite(a.employment.tenureMonths) ? a.employment.tenureMonths : null;
+    const metrics = {
+      monthsHistory,
+      completenessPct: rec.dataCompleteness && Number.isFinite(rec.dataCompleteness.pct) ? rec.dataCompleteness.pct : null,
+      dbrPct: dp && Number.isFinite(dp.dbrPct) ? dp.dbrPct : null,
+      fcfMonthly: Number.isFinite(f.freeCashFlowMonthly) ? f.freeCashFlowMonthly : null,
+      incomeVolatilityPct: sme ? null : vol,
+      savingsMonths: !sme && spend > 0 ? round2(maxSaved / spend) : null,
+      diningSharePct: !sme && cn.spendCategories && Number.isFinite(Number(cn.spendCategories.Dining)) ? Number(cn.spendCategories.Dining) : null,
+      additionalIncomeMonthly: ip && ip.assessed ? ip.additional : null,
+      salaryViaWps: !sme && of && /\bWPS\b/i.test(String(cn.salaryPayer || bd.salaryPayer || '')),
+      monthsInUae: sme ? null : inUae,
+      onTimeRepayments: !sme && Number(cn.observedObligationsMonthly) > 0 && dq === 'NONE' && !(ae.chequeReturns12m > 0),
+      redFlagCount: rec.redFlags && Array.isArray(rec.redFlags.flags) ? rec.redFlags.flags.length : 0,
+      aecbHit: ae.hit === true,
+      approvedAmount,
+      tenorMonths: termMonths !== null ? termMonths : reqMonths
+    };
+    const ctx = {
+      sme,
+      otherIncomeVerified: !sme && ((rec.productId === 'car_loan' && f.openFinance && f.regularIncomeVerifiedMonthly > 0) || !!(st && st.usable && Number(st.otherIncomeMonthlyAed) > 0)),
+      savingsTransfers: Number(cn.savingsTransfersMonthly) > 0,
+      salarySeen,
+      anchored: (tenure !== null && tenure >= LIB_ANCHOR_MONTHS) || (monthsHistory >= LIB_ANCHOR_MONTHS && salarySeen),
+      employerMatch: f.employerMatch === true ? true : (f.employerMatch === false ? false : null),
+      idExpired: f.idExpiryValid === false,
+      homeEmis: !!(st && st.usable && Array.isArray(st.emis) && st.emis.length),
+      homeEvidenceUsed: !!f.crossBorder || !!(st && st.usable),
+      amountReduced: rec.outcome === 'APPROVE' && !curve && !sme && reqAmount !== null && approvedAmount !== null && approvedAmount < reqAmount,
+      termAdjusted: rec.outcome === 'APPROVE' && !curve && !sme && reqMonths !== null && termMonths !== null && termMonths !== reqMonths,
+      integrityFail: !!(st && (st.integrity !== 'PASS' || st.nameMatch === false)) || f.idNameMatch === false,
+      seriousDelinquency: dq === 'DPD90' || dq === 'WRITEOFF',
+      priorLate: !!(rec.priorLoan && rec.priorLoan.dpd > 0)
+    };
+    return { metrics, ctx };
+  }
+  function libraryEntry(code) { return (S.library || []).find(e => e.code === code) || null; }
+  function lenderShort(lender) { return lender.short || String(lender.id).split('-').map(x => x.charAt(0)).join('').toUpperCase(); }
+  function libraryReceivers(e) {
+    const out = [];
+    for (const l of lendersList()) {
+      const a = agreementsAll()[l.id];
+      if (!a) continue;
+      if (e.source === 'NOOR_STANDARD') {
+        const lc = agreementLibraryCodes(a, l.id);
+        if (e.status === 'ACTIVE' && (lc.standard === 'ALL' || lc.standard.includes(e.code))) out.push(l.id);
+      } else if (e.status === 'ACTIVE' && e.requestedBy === l.id) out.push(l.id);
+    }
+    return out;
+  }
+  // Every ACTIVE code that fires for this decision (every lender's partner codes included), with what fired it — internal.
+  function libraryFired(rec) {
+    const { metrics, ctx } = libraryInputs(rec);
+    const rcs = rec.reasonCodes || [];
+    const out = [];
+    for (const e of S.library || []) {
+      if (e.status !== 'ACTIVE') continue;
+      let fired = false, via = [], ruleText;
+      if (e.source === 'NOOR_STANDARD') {
+        const r = LIBRARY_RULES[e.code] || [null, null];
+        ruleText = r[0] || '—';
+        via = (LIBRARY_RC_MAP[e.code] || []).filter(rc => rcs.includes(rc));
+        const byRule = !ctx.sme && typeof r[1] === 'function' ? !!r[1](metrics, ctx) : false;
+        fired = byRule || via.length > 0;
+        if (fired && !byRule) ruleText = ruleText + ' (on the record as ' + via.join(', ') + ')';
+      } else {
+        ruleText = e.rule ? libraryRuleText(e.rule) : '—';
+        fired = !!(e.rule && partnerRuleFires(e.rule, metrics));
+      }
+      if (!fired) continue;
+      out.push({ code: e.code, colour: e.colour, labelEn: e.labelEn, labelAr: e.labelAr, tells: e.tells, component: e.component, source: e.source,
+                 requestedBy: e.requestedBy || null, ruleRef: e.ruleRef, rule: ruleText, via });
+    }
+    return out;
+  }
+  // Public: libraryCodesFor(decision id | record, lenderId) → the codes that fire for that decision and that lender: the
+  // standard codes in the lender's agreement, plus that lender's ACTIVE partner codes. Standard codes first (library order:
+  // green, yellow, red), then partner codes. Each carries its internal rule — the memo keeps code, colour and label only.
+  function libraryCodesFor(x, lenderId) {
+    ensureInit();
+    const rec = typeof x === 'string' ? getDecisionRef(x) : x;
+    if (!rec || typeof rec !== 'object' || !rec.applicantSnapshot) throw err('libraryCodesFor needs a decision id or a decision record');
+    const lender = lenderFor(lenderId);
+    const lc = agreementFor(lender).libraryCodes;
+    const fired = libraryFired(rec).filter(e => e.source === 'NOOR_STANDARD' ? (lc.standard === 'ALL' || lc.standard.includes(e.code)) : e.requestedBy === lender.id);
+    return clone(fired.filter(e => e.source === 'NOOR_STANDARD').concat(fired.filter(e => e.source !== 'NOOR_STANDARD')));
+  }
+  // The memo's view of a code: id, colour and label (EN + AR) — never the rule.
+  function memoLibraryCodes(rec, lender) {
+    return libraryCodesFor(rec, lender.id).map(e => ({ code: e.code, colour: e.colour, en: e.labelEn, ar: e.labelAr }));
+  }
+  // Public: the library as the Policy console shows it (internal): every entry, its rule text (inside Noor), the RC_* it
+  // maps and the lenders receiving it.
+  function reasonCodeLibrary() {
+    ensureInit();
+    return clone((S.library || []).map(e => Object.assign({}, e, {
+      ruleText: e.source === 'NOOR_STANDARD' ? ((LIBRARY_RULES[e.code] || [])[0] || '—') : (e.rule ? libraryRuleText(e.rule) : '—'),
+      mapsRc: e.source === 'NOOR_STANDARD' ? (LIBRARY_RC_MAP[e.code] || []).slice() : [],
+      receivedBy: libraryReceivers(e)
+    })));
+  }
+  // Public (internal, the Decision log): every code that fired with its rule and its receivers; the customer's RC_* beside
+  // them with the mapping ("RC_LIMIT_REDUCED → Y09"); the whitelisted metrics as read.
+  function reasonCodeTrace(decisionId) {
+    ensureInit();
+    const rec = getDecisionRef(decisionId);
+    const codes = libraryFired(rec).map(e => Object.assign(e, { receivedBy: libraryReceivers(libraryEntry(e.code)) }));
+    const rcMap = (rec.reasonCodes || []).map(rc => {
+      const code = RC_TO_LIBRARY[rc] || null, e = code ? libraryEntry(code) : null;
+      return { rc, code, colour: e ? e.colour : null, labelEn: e ? e.labelEn : null };
+    });
+    return clone({ codes, rcMap, metrics: libraryInputs(rec).metrics });
+  }
+  function libraryAuthor(meta, key) {
+    const v = meta && typeof meta[key] === 'string' ? meta[key].trim() : '';
+    return v;
+  }
+  // A new version of the lender's sharing agreement: "Partner Bank v2 — adds PR-PB-G02".
+  function bumpAgreement(lenderId, change, at, by, edit) {
+    const lender = lenderFor(lenderId);
+    const cur = agreementFor(lender);
+    const raw = agreementsAll()[lender.id];
+    const n = (parseInt(String(cur.version).replace(/\D/g, ''), 10) || 1) + 1;
+    const version = 'v' + n;
+    const label = /\bv\d+\b/.test(cur.label) ? cur.label.replace(/\bv\d+\b/, version) : cur.label + ' ' + version;
+    raw.libraryCodes = { standard: cur.libraryCodes.standard, partner: edit(cur.libraryCodes.partner.slice()) };
+    raw.version = version; raw.label = label; raw.agreedOn = String(at).slice(0, 10);
+    if (typeof raw.id === 'string') raw.id = /-V\d+$/.test(raw.id) ? raw.id.replace(/-V\d+$/, '-V' + n) : raw.id + '-V' + n;
+    if (!S.agreementHistory[lender.id]) S.agreementHistory[lender.id] = [];
+    S.agreementHistory[lender.id].push({ version, label, change, at, by });
+    return { lenderId: lender.id, label, version, change, line: label + ' — ' + change };
+  }
+  // Public: proposeReasonCode({ requestedBy, colour, labelEn, labelAr, tells, component, rule: {metric, op, value} }, { author })
+  // → a PROPOSED partner code PR-<LENDERSHORT>-<colour letter><nn>. Nothing fires until a second person approves it.
+  function proposeReasonCode(def, meta) {
+    ensureInit();
+    const d = def || {};
+    const author = libraryAuthor(meta, 'author');
+    if (!author) throw err('proposeReasonCode needs { author } — the person drafting the code (a different person approves it)');
+    if (typeof d.requestedBy !== 'string' || !d.requestedBy.trim()) throw err('requestedBy must name the partner asking for the code (a lender id)');
+    const lender = lenderFor(d.requestedBy.trim());
+    if (!agreementsAll()[lender.id]) throw err('no sharing agreement on file for lender "' + lender.id + '" — a partner code joins the lender’s agreement');
+    if (!LIBRARY_COLOURS.includes(d.colour)) {
+      throw err('colour must be GREEN, YELLOW or RED — the library keeps exactly three colours (' + (d.colour === null || d.colour === undefined || d.colour === '' ? 'none chosen' : 'got "' + d.colour + '"') + ')');
+    }
+    const pe = libraryLabelProblems(d.labelEn);
+    if (pe.length) throw err('label "' + (d.labelEn || '') + '" — ' + pe.join('; '));
+    const pa = libraryArabicProblems(d.labelAr, d.labelEn);
+    if (pa.length) throw err('Arabic label — ' + pa.join('; '));
+    const pt = libraryTellsProblems(d.tells);
+    if (pt.length) throw err('what it tells the lender — ' + pt.join('; '));
+    if (!LIBRARY_COMPONENTS.includes(d.component)) throw err('component must be one of ' + LIBRARY_COMPONENTS.join(', ') + ' (got "' + d.component + '")');
+    const rule = validateLibraryRule(d.rule);
+    const labelEn = d.labelEn.trim();
+    const dup = (S.library || []).find(e => e.status !== 'RETIRED' && e.labelEn.toLowerCase() === labelEn.toLowerCase());
+    if (dup) throw err('"' + labelEn + '" is already in the library (' + dup.code + ')');
+    const prefix = 'PR-' + lenderShort(lender) + '-' + d.colour.charAt(0);
+    const used = (S.library || []).filter(e => e.code.indexOf(prefix) === 0).map(e => parseInt(e.code.slice(prefix.length), 10) || 0);
+    const code = prefix + String((used.length ? Math.max.apply(null, used) : 0) + 1).padStart(2, '0');
+    const at = nowIso();
+    const entry = { code, colour: d.colour, labelEn, labelAr: d.labelAr.trim(), tells: d.tells.trim(), component: d.component, source: 'PARTNER_REQUEST',
+                    requestedBy: lender.id, status: 'PROPOSED', version: 1, ruleRef: 'RULE-' + code, rule, author, approver: null, proposedAt: at, approvedAt: null };
+    S.library.push(entry);
+    S.libraryLog.push({ at, action: 'PROPOSED', code, by: author });
+    return clone(entry);
+  }
+  // Public: approveReasonCode(code, { approver }) — 4-eyes: the approver must differ from the author. The code becomes
+  // ACTIVE and joins the requesting lender's sharing agreement as a new version.
+  function approveReasonCode(code, meta) {
+    ensureInit();
+    const e = libraryEntry(code);
+    if (!e) throw err('unknown reason code "' + code + '"');
+    if (e.source !== 'PARTNER_REQUEST') throw err(code + ' is a Noor standard code — only partner-requested codes are proposed and approved');
+    if (e.status !== 'PROPOSED') throw err(code + ' is ' + e.status + ' — only a PROPOSED code can be approved');
+    const approver = libraryAuthor(meta, 'approver');
+    if (!approver) throw err('approveReasonCode needs { approver } — a second person');
+    if (approver.toLowerCase() === String(e.author || '').trim().toLowerCase()) {
+      throw err('4-eyes violation — the approver must differ from the author (' + e.author + ' proposed ' + code + ')');
+    }
+    const at = nowIso();
+    e.status = 'ACTIVE'; e.approver = approver; e.approvedAt = at;
+    const ag = bumpAgreement(e.requestedBy, 'adds ' + code, at, approver, list => list.includes(code) ? list : list.concat([code]));
+    S.libraryLog.push({ at, action: 'APPROVED', code, by: approver, agreement: ag.line });
+    return Object.assign(clone(e), { agreement: ag });
+  }
+  // Public: retireReasonCode(code, { author, approver }) — 4-eyes; an ACTIVE partner code stops firing and leaves the
+  // lender's agreement (a new version).
+  function retireReasonCode(code, meta) {
+    ensureInit();
+    const e = libraryEntry(code);
+    if (!e) throw err('unknown reason code "' + code + '"');
+    if (e.source !== 'PARTNER_REQUEST') throw err(code + ' is a Noor standard code — retire partner-requested codes only');
+    if (e.status !== 'ACTIVE') throw err(code + ' is ' + e.status + ' — only an ACTIVE code can be retired');
+    const author = libraryAuthor(meta, 'author'), approver = libraryAuthor(meta, 'approver');
+    if (!author || !approver) throw err('retireReasonCode needs { author, approver }');
+    if (author.toLowerCase() === approver.toLowerCase()) throw err('4-eyes violation — retiring a code needs two different people');
+    const at = nowIso();
+    e.status = 'RETIRED'; e.retiredAt = at; e.retiredBy = { author, approver };
+    const ag = bumpAgreement(e.requestedBy, 'retires ' + code, at, approver, list => list.filter(c => c !== code));
+    S.libraryLog.push({ at, action: 'RETIRED', code, by: author + ' / ' + approver, agreement: ag.line });
+    return Object.assign(clone(e), { agreement: ag });
   }
   // v2.10 — SME bands. Annual revenue (turnover) bands are the usual SME segmentation; none of their
   // boundaries is a monthly figure, so a band can never reveal the company's average month.
@@ -7695,13 +8261,6 @@ label.bk-acct { position:relative; cursor:pointer; }
         return { type: lv ? lv[0] : k, grantedAt: rec.consents[k].at, reference: 'CNS-' + seq + '-' + (lv ? lv[1] : code) };
       });
   }
-  // v2.18 — the code with its lender-facing wording where the customer text names a source or a threshold (§1b)
-  function memoReasonCodes(rec) {
-    return (rec.reasonCodes || []).map(code => {
-      const rc = (D.reasonCodesLender && D.reasonCodesLender[code]) || D.reasonCodes[code] || {};
-      return { code, en: rc.en || code, ar: rc.ar || '' };
-    });
-  }
   function memoAgreement(ag) { return { id: ag.id, label: ag.label, version: ag.version, dbrPrecision: ag.dbrPrecision, groups: ag.groups.slice() }; }
   // The output table rows the agreement carries, in the slide's order, each with its value for this decision.
   function memoOutputs(rows, ag, values) {
@@ -7709,9 +8268,9 @@ label.bk-acct { position:relative; cursor:pointer; }
       .map(r => ({ key: r.key, output: r.output, tells: r.tells, status: r.status, value: values[r.key] === null || values[r.key] === undefined ? '—' : values[r.key] }));
   }
   function noorScoreValueText(value, band, upgrade) { return value === null ? (upgrade ? 'Not scored yet — decided on the repayment record' : 'Not scored yet') : value + ' · ' + band; }
-  function reasonValueText(findings, rcs) {
-    const words = findings.map(x => x.en).concat(rcs.map(x => x.code));
-    return words.length ? words.join(' · ') : 'None';
+  // v2.19 — the "Reason codes" row: each library code with its label ("G02 Saver · G03 Dining Out Lover · …")
+  function reasonValueText(codes) {
+    return codes.length ? codes.map(x => x.code + ' ' + x.en).join(' · ') : 'None';
   }
   function smeMemo(rec, lender, ag) {
     const a = rec.applicantSnapshot || {}, f = rec.features || {}, sc = rec.score || {};
@@ -7728,7 +8287,7 @@ label.bk-acct { position:relative; cursor:pointer; }
         G('verificationFlags') ? { guaranteeStatus: f.guaranteeStatus || null, guaranteeFlag: SME_GUARANTEE_FLAG[f.guaranteeStatus] || null } : {});
     }
     const g = rec.guarantee || {};
-    const rcs = memoReasonCodes(rec);
+    const rcs = memoLibraryCodes(rec, lender);   // v2.19 — library codes only, never an RC_* name
     const memo = {
       memoId: 'CM-' + rec.id, noorRef: rec.id,
       lenderId: lender.id, lenderName: memoLenderName(lender), sharingAgreement: memoAgreement(ag),
@@ -7742,11 +8301,10 @@ label.bk-acct { position:relative; cursor:pointer; }
       decision: { outcome: rec.outcome, status: rec.status, route: rec.override ? 'ANALYST_REVIEW' : 'STRAIGHT_THROUGH', reasonCodes: rcs,
                   validUntil: rec.token ? rec.token.expiresAt : null },
       terms,
-      outputs: memoOutputs(MEMO_OUTPUTS_SME, ag, { noorScore: noorScoreValueText(value, noorScoreBand(value)), reasonCodes: reasonValueText([], rcs),
+      outputs: memoOutputs(MEMO_OUTPUTS_SME, ag, { noorScore: noorScoreValueText(value, noorScoreBand(value)), reasonCodes: reasonValueText(rcs),
                                                    incomeBucket: smeRevenueBand(f.avgMonthlyRevenue), dbr: smeDscrBand(f.dscr) }),
       outputsNote: OUTPUTS_NOTE,
-      noorScore: { value, band: noorScoreBand(value), factors: noorScoreFactors(sc, 3) },
-      findings: []
+      noorScore: { value, band: noorScoreBand(value), factors: noorScoreFactors(sc, 3) }
     };
     if (G('incomeBucket') || G('dbr') || G('cashFlowBands')) {
       memo.affordability = Object.assign({ note: AGGREGATES_NOTE },
@@ -7786,8 +8344,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     const value = Number.isFinite(sc.points) ? sc.points : null;
     const band = noorScoreBand(value);
     const car = rec.productId === 'car_loan';
-    const rcs = memoReasonCodes(rec);
-    const findings = customerFindings(rec).map(x => ({ code: x.code, en: x.en, ar: x.ar }));   // the words only, never the rule
+    // v2.19 — the reason-code library replaces the findings and every RC_* name: code, colour and label (EN + AR) only
+    const rcs = memoLibraryCodes(rec, lender);
     const ip = incomeParts(rec), dp = dbrParts(rec);
     const exact = ag.dbrPrecision === 'EXACT';
     const dcm = rec.dataCompleteness || null;
@@ -7820,7 +8378,7 @@ label.bk-acct { position:relative; cursor:pointer; }
       // v2.18 §1a — the output table opens the memo
       outputs: memoOutputs(MEMO_OUTPUTS, ag, {
         noorScore: noorScoreValueText(value, band, rec.kind === 'UPGRADE'),
-        reasonCodes: reasonValueText(findings, rcs),
+        reasonCodes: reasonValueText(rcs),
         dataCompleteness: dcText,
         incomeBucket: incomeBand(ip.regular) || 'Not verified',
         additionalIncomeBucket: additionalIncomeBand(ip),
@@ -7831,8 +8389,7 @@ label.bk-acct { position:relative; cursor:pointer; }
         value,
         band,
         factors: rec.kind === 'UPGRADE' ? memoUpgradeFactors(rec) : noorScoreFactors(sc, 3)
-      },
-      findings
+      }
     };
     if (G('scoreComponents')) {
       const comps = componentsOf(rec);
@@ -7909,11 +8466,10 @@ label.bk-acct { position:relative; cursor:pointer; }
     if (G('incomeBucket')) col('income_band', sme ? null : af.incomeBand);
     if (G('dbr')) col('dbr_band', sme ? null : af.dbrBand);
     if (G('bureauFlags')) col('aecb_band', bu.aecbScoreBand);
-    col('reason_codes', memo.decision.reasonCodes.map(r => r.code).join('|'));
+    col('reason_codes', memo.decision.reasonCodes.map(r => r.code).join('|'));   // v2.19 — library codes, e.g. G02|G03|…|PR-PB-G01
     col('created_at', memo.createdAt);
-    // v2.18
+    // v2.18 (v2.19: the findings column is gone — the library codes in reason_codes replace it)
     col('sharing_agreement', memo.sharingAgreement ? memo.sharingAgreement.label : '');
-    col('findings', (memo.findings || []).map(x => x.code).join('|'));
     if (!sme) {
       if (G('additionalIncomeBucket')) col('additional_income_band', af.additionalIncomeBand);
       if (G('dbr')) {
@@ -9186,6 +9742,11 @@ label.bk-acct { position:relative; cursor:pointer; }
     sharingAgreement, customerFindings, noorScoreComponents, scoreContributions, reproduceDecision,
     MEMO_GROUPS: MEMO_GROUPS.map(g => Object.assign({}, g)), MEMO_OUTPUTS: MEMO_OUTPUTS.map(o => Object.assign({}, o)),
     NOOR_IP: JSON.parse(JSON.stringify(NOOR_IP)), EXTERNAL_LINE, METHODOLOGY_LINE, OUTPUTS_NOTE, COMPONENTS_NOTE, AGGREGATES_NOTE,
+    // v2.19 — the reason-code library: three colours, Noor standard codes, partner-requested codes (4-eyes), RC_* → one code
+    reasonCodeLibrary, libraryCodesFor, reasonCodeTrace, proposeReasonCode, approveReasonCode, retireReasonCode,
+    REASON_CODE_COLOURS: LIBRARY_COLOURS.slice(), REASON_CODE_COMPONENTS: LIBRARY_COMPONENTS.slice(), REASON_CODE_STATUSES: LIBRARY_STATUSES.slice(),
+    REASON_CODE_SOURCES: LIBRARY_SOURCES.slice(), REASON_CODE_METRICS: Object.assign({}, LIBRARY_METRICS), REASON_CODE_OPS: LIBRARY_OPS.slice(),
+    REASON_CODE_MAP: Object.assign({}, RC_TO_LIBRARY),
     // v2.6 — the customer journey: pre-qualification on connected accounts only
     prequalify, loanInstalment,
     // v2.8 — digital footprint (identity · account security · shadow thin-file overlay), pure
@@ -9619,7 +10180,7 @@ var Overview = {
         'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.'),
       /* v2.18 — Noor's external line (methodology slide 6) */
       h('p', { class: 'lead', id: 'ov-external' }, h('strong', { text: 'NoorScore, as lenders hear it. ' }), ME.EXTERNAL_LINE || '',
-        h('span', { class: 'muted', text: ' Lenders receive scores, findings, reason codes and derived aggregates per sharing agreement — the methodology, thresholds, data-source mix and raw data stay inside Noor.' }))));
+        h('span', { class: 'muted', text: ' Lenders receive scores, reason codes from one library (green, yellow, red) and derived aggregates per sharing agreement — the methodology, thresholds, data-source mix and raw data stay inside Noor.' }))));
 
     var positions = [
       ['Share the pipes, not the brain', 'One platform, one data layer, one decision store — with product-specific policy packs. Split underwrites on connected-account cash flow; the personal loan on salary + bureau. No unified scoring model.'],
@@ -9644,7 +10205,7 @@ var Overview = {
       ['Step 5', 'Monitoring', 'STP vs targets per product and day-zero early warning.', function () { showScreen('monitoring'); }],
       ['Step 6', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
       ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
-      ['Step 8', 'Lender view — the credit memo', 'What lenders receive, per sharing agreement: NoorScore, findings and banded aggregates; Open Finance data never leaves Noor. Switch to Lender B, then Reproduce the decision in the Decision log.', function () { showScreen('lender'); }],
+      ['Step 8', 'Lender view — the credit memo', 'What lenders receive, per sharing agreement: NoorScore, reason codes (green · yellow · red) and banded aggregates; Open Finance data never leaves Noor. Switch to Lender B, then Reproduce the decision in the Decision log.', function () { showScreen('lender'); }],
       ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }],
       ['Step 10', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }],
       ['Step 11', 'SME working capital — Sara (s1)', 'The company’s accounts support AED 100,000; with Sara’s personal accounts AED 150,000, 2.5 points cheaper — business and owner watched while the loan is open.', function () { showScreen('sme'); Sme.reset(); }]
@@ -12893,7 +13454,7 @@ var RedFlagsUI = {
   /* ---- Policy console: the shared early-warning block ---- */
   pickerButton: function () {
     var on = Policy.pid === 'earlyWarning';
-    return h('span', { class: 'pc-shared' }, h('span', { class: 'pc-shared-l', text: 'Shared block' }),
+    return h('span', { class: 'pc-shared' }, h('span', { class: 'pc-shared-l', text: 'Shared blocks' }),
       h('button', { class: 'btn' + (on ? ' btn-primary' : ''), id: 'pc-pick-earlyWarning', 'aria-pressed': on ? 'true' : 'false', type: 'button',
         onclick: function () { Policy.load('earlyWarning'); } }, 'Early warning ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: 'الإنذار المبكر' })));
   },
@@ -12976,6 +13537,210 @@ var RedFlagsUI = {
     var a = $('#ln-c-aecb'), o = $('#ln-c-of');
     if (a) a.checked = true;
     if (o) o.checked = true;
+  }
+};
+/* ================= v2.19 — Policy console: the reason-code library (internal) ================= */
+/* One library, three colours: the only vocabulary lenders see. Noor standard codes and partner-requested codes; a partner code
+   is proposed by one person and approved by another (4-eyes, enforced by the engine), and approving it issues a new version of
+   that lender's sharing agreement. The rule behind each code stays inside Noor. */
+var RC_COMPONENT_LABEL = { FRAUD_INTEGRITY: 'Fraud & Integrity', NEWCOMER: 'Newcomer', STACKING_SKIP: 'Stacking & Skip', CREDIT_BEHAVIOUR: 'Credit Behaviour',
+  AFFORDABILITY: 'Affordability', DATA: 'Data', MONITORING: 'Monitoring' };
+var RC_METRIC_LABEL = { monthsHistory: 'months of connected history', completenessPct: 'data completeness %', dbrPct: 'DBR % after the loan', fcfMonthly: 'free cash flow, AED a month',
+  incomeVolatilityPct: 'income volatility %', savingsMonths: 'savings, in months of spending', diningSharePct: 'dining share of spending %', additionalIncomeMonthly: 'additional income, AED a month',
+  salaryViaWps: 'salary paid through WPS (true / false)', monthsInUae: 'months in the UAE', onTimeRepayments: 'repayments on time (true / false)', redFlagCount: 'origination red flags',
+  aecbHit: 'credit file found (true / false)', approvedAmount: 'approved amount, AED', tenorMonths: 'term, months' };
+var RC_GROUPS = [['GREEN', 'Green', 'positive'], ['YELLOW', 'Yellow', 'caution'], ['RED', 'Red', 'adverse']];
+function rcErrText(e) { return String(e && e.message ? e.message : e).replace(/^Mizan: /, ''); }
+var RcLibUI = {
+  notice: null,
+  pickerButton: function () {
+    var on = Policy.pid === 'reasonCodes';
+    return h('button', { class: 'btn' + (on ? ' btn-primary' : ''), id: 'pc-pick-reasonCodes', 'aria-pressed': on ? 'true' : 'false', type: 'button',
+      onclick: function () { Policy.load('reasonCodes'); } }, 'Reason-code library ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: 'مكتبة رموز الأسباب' }));
+  },
+  show: function (on) {
+    var g = $('#pc-grid'), b = $('#pc-rclib');
+    if (g) g.hidden = !!on;
+    if (b) b.hidden = !on;
+  },
+  lenders: function () { var out = {}; try { ME.lenders().forEach(function (l) { out[l.id] = l.name; }); } catch (e) {} return out; },
+  render: function () {
+    var root = clear($('#pc-rclib'));
+    root.appendChild(h('div', { class: 'panel', id: 'pc-rc-lib' }));
+    root.appendChild(h('div', { class: 'grid2' },
+      h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-rc-propose' })),
+      h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-rc-agreements' }))));
+    RcLibUI.renderLib(); RcLibUI.renderForm(); RcLibUI.renderAgreements();
+  },
+  /* after any library change: the block, the agreements, and every lender-facing screen (the memos re-read the library) */
+  refresh: function () { RcLibUI.renderLib(); RcLibUI.renderAgreements(); afterEngineMutation(); },
+  renderLib: function () {
+    var box = clear($('#pc-rc-lib'));
+    if (!box) return;
+    var lib = [];
+    try { lib = ME.reasonCodeLibrary(); } catch (e) { box.appendChild(h('div', { class: 'callout callout-error', text: 'Reason-code library unavailable from engine.' })); return; }
+    var names = RcLibUI.lenders();
+    box.appendChild(h('h3', null, 'Reason-code library ', h('span', { class: 'h3-note', text: '— the only vocabulary lenders see · internal: the rules stay inside Noor' })));
+    box.appendChild(h('p', { class: 'small muted rcl-intro', text: 'One library, exactly three colours. Lenders receive the code and its label (English + Arabic) — in the memo, the API and the SFTP row — never the rule. ' +
+      'The customer still reads the RC_* reasons in English and Arabic; each one maps to exactly one code here.' }));
+    box.appendChild(rcLegend('pc-rc-legend'));
+    var std = lib.filter(function (e) { return e.source === 'NOOR_STANDARD'; }).length, prq = lib.length - std;
+    box.appendChild(h('div', { class: 'small', id: 'pc-rc-counts', text: std + ' Noor standard codes · ' + prq + ' partner request' + (prq === 1 ? '' : 's') }));
+    if (RcLibUI.notice) box.appendChild(h('div', { class: 'callout callout-ok small', id: 'pc-rc-notice', role: 'status', style: 'margin-top:8px;' },
+      h('div', { class: 'co-title', text: RcLibUI.notice[0] }), h('div', { text: RcLibUI.notice[1] })));
+    RC_GROUPS.forEach(function (g) {
+      var rows = lib.filter(function (e) { return e.colour === g[0]; });
+      var list = h('div', { class: 'rcl-rows', role: 'table', 'aria-label': g[1] + ' reason codes' },
+        h('div', { class: 'rcl-row rcl-head', role: 'row' }, h('span', { role: 'columnheader', text: 'Code · label · what it tells the lender' }),
+          h('span', { role: 'columnheader', text: 'Component · source · status · partners' }), h('span', { role: 'columnheader', text: 'Internal rule — inside Noor' })));
+      rows.forEach(function (e) { list.appendChild(RcLibUI.row(e, names)); });
+      box.appendChild(h('section', { class: 'rcl-group', id: 'pc-rc-group-' + g[0], dataset: { colour: g[0], count: String(rows.length) } },
+        h('h4', { class: 'rcl-gh' }, h('span', { class: 'rc-dot rc-dot-' + g[0], 'aria-hidden': 'true' }), g[1], h('span', { class: 'h3-note', text: '— ' + g[2] + ' · ' + rows.length + ' codes' })),
+        list));
+    });
+  },
+  row: function (e, names) {
+    var partner = e.source === 'PARTNER_REQUEST';
+    var to = (e.receivedBy || []).map(function (id) { return names[id] || id; });
+    var r = h('div', { class: 'rcl-row', role: 'row', id: 'pc-rc-row-' + e.code, dataset: { code: e.code, colour: e.colour, status: e.status, source: e.source } },
+      h('div', { role: 'cell' }, rcChip(e, 'sm'), h('div', { class: 'rcl-ar ar', lang: 'ar', dir: 'rtl', text: e.labelAr }), h('div', { class: 'rcl-tells', text: e.tells })),
+      h('div', { role: 'cell', class: 'rcl-meta' },
+        h('span', { class: 'rcl-tag', text: RC_COMPONENT_LABEL[e.component] || e.component }),
+        h('span', { class: 'rcl-tag rcl-src', text: partner ? 'Partner request: ' + (names[e.requestedBy] || e.requestedBy) : 'Noor standard' }),
+        h('span', { class: 'rcl-tag rcl-st rcl-st-' + e.status, text: e.status }),
+        h('span', { class: 'rcl-to', text: 'Sent to: ' + (to.length ? to.join(' · ') : (e.status === 'PROPOSED' ? 'nobody until approved' : 'nobody')) }),
+        partner ? h('span', { class: 'rcl-to', text: 'Proposed by ' + e.author + (e.approver ? ' · approved by ' + e.approver : '') + (e.retiredBy ? ' · retired by ' + e.retiredBy.author + ' / ' + e.retiredBy.approver : '') }) : null),
+      h('div', { role: 'cell', class: 'rcl-rule' }, h('span', { class: 'rcl-inside' }, h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), 'Inside Noor'), h('code', { text: e.ruleRef }),
+        h('div', { text: e.ruleText }), e.mapsRc && e.mapsRc.length ? h('div', { class: 'small muted', text: 'Maps ' + e.mapsRc.join(', ') }) : null));
+    if (partner && e.status === 'PROPOSED') {
+      var appr = h('input', { type: 'text', id: 'pc-rc-approver-' + e.code, placeholder: 'Must differ from ' + e.author, 'aria-label': 'Approver for ' + e.code });
+      var msg = h('div', { class: 'rcl-msg', id: 'pc-rc-msg-' + e.code, 'aria-live': 'polite' });
+      r.appendChild(h('div', { class: 'rcl-act' },
+        h('div', { class: 'field' }, h('label', { for: 'pc-rc-approver-' + e.code, text: 'Approver (4-eyes)' }), appr),
+        h('button', { class: 'btn btn-primary', type: 'button', id: 'pc-rc-approve-' + e.code, text: 'Approve (4-eyes)', onclick: function () {
+          clear(msg); appr.removeAttribute('aria-invalid');
+          var res;
+          try { res = ME.approveReasonCode(e.code, { approver: appr.value.trim() }); }
+          catch (err) { appr.setAttribute('aria-invalid', 'true');
+            msg.appendChild(h('div', { class: 'callout callout-error small', id: 'pc-rc-err-' + e.code, role: 'alert' }, h('div', { class: 'co-title', text: 'Not approved' }), h('div', { text: rcErrText(err) }))); return; }
+          RcLibUI.notice = [res.code + ' is ACTIVE', res.agreement.line + ' — approved by ' + res.approver + '. It now fires in ' + (names[res.requestedBy] || res.requestedBy) + '’s memos only.'];
+          RcLibUI.refresh();
+        } })));
+      r.appendChild(msg);
+    } else if (partner && e.status === 'ACTIVE') {
+      var ra = h('input', { type: 'text', id: 'pc-rc-retire-author-' + e.code, placeholder: 'Your name', 'aria-label': 'Retire ' + e.code + ' — author' });
+      var rp = h('input', { type: 'text', id: 'pc-rc-retire-approver-' + e.code, placeholder: 'A second person', 'aria-label': 'Retire ' + e.code + ' — approver' });
+      var rmsg = h('div', { class: 'rcl-msg', id: 'pc-rc-msg-' + e.code, 'aria-live': 'polite' });
+      r.appendChild(h('div', { class: 'rcl-act' }, h('details', { id: 'pc-rc-retire-box-' + e.code }, h('summary', { text: 'Retire' }),
+        h('div', { class: 'rcl-retire' },
+          h('div', { class: 'field' }, h('label', { for: 'pc-rc-retire-author-' + e.code, text: 'Author' }), ra),
+          h('div', { class: 'field' }, h('label', { for: 'pc-rc-retire-approver-' + e.code, text: 'Approver (4-eyes)' }), rp),
+          h('button', { class: 'btn', type: 'button', id: 'pc-rc-retire-' + e.code, text: 'Retire (4-eyes)', onclick: function () {
+            clear(rmsg);
+            var res;
+            try { res = ME.retireReasonCode(e.code, { author: ra.value.trim(), approver: rp.value.trim() }); }
+            catch (err) { rmsg.appendChild(h('div', { class: 'callout callout-error small', id: 'pc-rc-err-' + e.code, role: 'alert' }, h('div', { class: 'co-title', text: 'Not retired' }), h('div', { text: rcErrText(err) }))); return; }
+            RcLibUI.notice = [res.code + ' is RETIRED', res.agreement.line + '. It no longer fires in any memo.'];
+            RcLibUI.refresh();
+          } })))));
+      r.appendChild(rmsg);
+    }
+    return r;
+  },
+  renderForm: function () {
+    var box = clear($('#pc-rc-propose'));
+    if (!box) return;
+    var metrics = ME.REASON_CODE_METRICS || {}, comps = ME.REASON_CODE_COMPONENTS || [];
+    box.appendChild(h('h3', null, 'New code — partner request ', h('span', { class: 'h3-note', text: '— proposed here, approved by a second person' })));
+    box.appendChild(h('p', { class: 'small muted', text: 'The rule builder takes one whitelisted engine metric, an operator and a value — nothing else. Nationality, sex, age, religion, health, family and free text are refused by the engine.' }));
+    var partner = h('select', { id: 'pc-rc-partner', 'aria-label': 'Partner' });
+    try { ME.lenders().forEach(function (l) { partner.appendChild(h('option', { value: l.id, text: l.name })); }); } catch (e) {}
+    var colours = h('div', { class: 'rc-radios', id: 'pc-rc-colour', role: 'radiogroup', 'aria-label': 'Colour' });
+    RC_GROUPS.forEach(function (g) {
+      colours.appendChild(h('label', { class: 'rc-radio', for: 'pc-rc-colour-' + g[0] },
+        h('input', { type: 'radio', name: 'pc-rc-colour', id: 'pc-rc-colour-' + g[0], value: g[0] }), h('span', { class: 'rc-dot rc-dot-' + g[0], 'aria-hidden': 'true' }), g[1]));
+    });
+    var en = h('input', { type: 'text', id: 'pc-rc-label-en', placeholder: 'Title Case, no numbers — e.g. Strong Savings Buffer' });
+    var ar = h('input', { type: 'text', id: 'pc-rc-label-ar', dir: 'rtl', lang: 'ar', placeholder: 'بالعربية' });
+    var tells = h('input', { type: 'text', id: 'pc-rc-tells', placeholder: 'One line, e.g. Savings cover at least a month of spending' });
+    var comp = h('select', { id: 'pc-rc-component' }, h('option', { value: '', text: 'Choose a component' }));
+    comps.forEach(function (c) { comp.appendChild(h('option', { value: c, text: RC_COMPONENT_LABEL[c] || c })); });
+    var metric = h('select', { id: 'pc-rc-metric', 'aria-label': 'Metric (whitelist)' });
+    Object.keys(metrics).forEach(function (k) { metric.appendChild(h('option', { value: k, text: k + ' — ' + (RC_METRIC_LABEL[k] || metrics[k]) })); });
+    var op = h('select', { id: 'pc-rc-op', 'aria-label': 'Operator' });
+    (ME.REASON_CODE_OPS || ['≥', '≤', '=']).forEach(function (o) { op.appendChild(h('option', { value: o, text: o })); });
+    var valWrap = h('span', { id: 'pc-rc-value-wrap' });
+    function paintValue() {
+      clear(valWrap);
+      if (metrics[metric.value] === 'boolean') {
+        valWrap.appendChild(h('select', { id: 'pc-rc-value', 'aria-label': 'Value' }, h('option', { value: 'true', text: 'true' }), h('option', { value: 'false', text: 'false' })));
+        op.value = '=';
+      } else valWrap.appendChild(h('input', { type: 'text', id: 'pc-rc-value', inputmode: 'decimal', placeholder: 'number', 'aria-label': 'Value' }));
+    }
+    metric.addEventListener('change', paintValue);
+    paintValue();
+    var author = h('input', { type: 'text', id: 'pc-rc-author', placeholder: 'Your name — someone else approves' });
+    var out = h('div', { id: 'pc-rc-form-out', 'aria-live': 'polite' });
+    var fields = { partner: partner, colour: colours, labelEn: en, labelAr: ar, tells: tells, component: comp, metric: metric, op: op, author: author };
+    function field(id, label, ctl, wide) { return h('div', { class: 'field' + (wide ? ' rc-wide' : '') }, h('label', { for: id, text: label }), ctl); }
+    box.appendChild(h('div', { class: 'rc-form-grid', id: 'pc-rc-form' },
+      field('pc-rc-partner', 'Partner', partner),
+      h('div', { class: 'field' }, h('span', { class: 'band-label', id: 'pc-rc-colour-l', style: 'display:block;font-family:var(--font-label);font-size:13px;color:var(--ink-2);margin-bottom:4px;', text: 'Colour — exactly three' }), colours),
+      field('pc-rc-label-en', 'Label (English)', en),
+      field('pc-rc-label-ar', 'Label (Arabic)', ar),
+      field('pc-rc-tells', 'What it tells the lender', tells, true),
+      field('pc-rc-component', 'Component', comp),
+      field('pc-rc-author', 'Author', author),
+      h('div', { class: 'field rc-wide' }, h('label', { for: 'pc-rc-metric', text: 'Rule — metric (whitelist) · operator · value' }), h('div', { class: 'rc-rule' }, metric, op, valWrap),
+        h('div', { class: 'bounds', text: 'The rule stays inside Noor; the lender sees the code and its label only.' }))));
+    box.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', type: 'button', id: 'pc-rc-propose-btn', text: 'Propose', onclick: function () {
+      clear(out);
+      Object.keys(fields).forEach(function (k) { fields[k].removeAttribute('aria-invalid'); });
+      var vEl = $('#pc-rc-value'); if (vEl) vEl.removeAttribute('aria-invalid');
+      var picked = $('input[name="pc-rc-colour"]:checked');
+      var raw = vEl ? vEl.value.trim() : '';
+      var value = metrics[metric.value] === 'boolean' ? raw === 'true' : (raw !== '' && isFinite(Number(raw)) ? Number(raw) : raw);
+      var res;
+      try {
+        res = ME.proposeReasonCode({ requestedBy: partner.value, colour: picked ? picked.value : null, labelEn: en.value, labelAr: ar.value, tells: tells.value,
+          component: comp.value, rule: { metric: metric.value, op: op.value, value: value } }, { author: author.value.trim() });
+      } catch (err) {
+        var m = rcErrText(err);
+        var bad = /author/i.test(m) ? author : (/^Arabic/.test(m) ? ar : (/^label/.test(m) ? en : (/tells the lender/.test(m) ? tells : (/^component/.test(m) ? comp
+          : (/^colour/.test(m) ? colours : (/^op /.test(m) ? op : (/takes a number|true or false|= operator/.test(m) ? vEl : (/metric|whitelist|free text/.test(m) ? metric
+          : (/lender|partner/i.test(m) ? partner : null)))))))));
+        if (bad) bad.setAttribute('aria-invalid', 'true');
+        out.appendChild(h('div', { class: 'callout callout-error', id: 'pc-rc-form-err', role: 'alert' }, h('div', { class: 'co-title', text: 'Not proposed' }), h('div', { class: 'co-body', text: m })));
+        return;
+      }
+      out.appendChild(h('div', { class: 'callout callout-ok', id: 'pc-rc-form-ok', role: 'status' }, h('div', { class: 'co-title', text: res.code + ' proposed — ' + res.status }),
+        h('div', { class: 'co-body', text: '“' + res.labelEn + '” waits for a second person: approve it in the ' + (res.colour === 'GREEN' ? 'Green' : (res.colour === 'YELLOW' ? 'Yellow' : 'Red')) + ' group. Nothing fires until then.' })));
+      en.value = ''; ar.value = ''; tells.value = ''; if (vEl && vEl.tagName === 'INPUT') vEl.value = '';
+      RcLibUI.notice = null;
+      RcLibUI.renderLib(); RcLibUI.renderAgreements();
+    } })));
+    box.appendChild(out);
+  },
+  renderAgreements: function () {
+    var box = clear($('#pc-rc-agreements'));
+    if (!box) return;
+    box.appendChild(h('h3', null, 'Sharing agreements — versions ', h('span', { class: 'h3-note', text: '— which codes each lender receives' })));
+    var wrap = h('div', { class: 'rcl-ags', id: 'pc-rc-agreement-lines' });
+    var lenders = [];
+    try { lenders = ME.lenders(); } catch (e) {}
+    lenders.forEach(function (l) {
+      var ag = null;
+      try { ag = ME.sharingAgreement(l.id); } catch (e) { return; }
+      var hist = ag.history || [], last = hist[hist.length - 1] || { label: ag.label, change: 'agreed' };
+      var line = last.change === 'agreed' ? ag.label + ' — agreed ' + fmtD(last.at) : last.label + ' — ' + last.change;
+      wrap.appendChild(h('div', { class: 'rcl-ag', id: 'pc-rc-ag-' + l.id, dataset: { lender: l.id, version: ag.version } },
+        h('div', { class: 'rcl-ag-line', text: line }),
+        h('div', { class: 'small', text: 'Reason codes: ' + (ag.libraryCodes.standard === 'ALL' ? 'every Noor standard code' : ag.libraryCodes.standard.join(', ')) +
+          (ag.libraryCodes.partner.length ? ' + ' + ag.libraryCodes.partner.join(', ') : ' · no partner codes') }),
+        h('div', { class: 'rcl-ag-hist', text: hist.map(function (x) { return x.version + ' ' + x.change + (x.by ? ' (' + x.by + ')' : ''); }).join(' → ') })));
+    });
+    box.appendChild(wrap);
+    box.appendChild(h('div', { class: 'small muted', style: 'margin-top:8px;', text: 'Approving or retiring a partner code issues a new version of that lender’s agreement. The memo and the SFTP row name the version in force.' }));
   }
 };
 /* ================= Policy console ================= */
@@ -13143,9 +13908,10 @@ var Policy = {
     root.appendChild(screenHead('Credit risk self-service', 'Policy console',
       'Versioned policy packs per product: draft → simulate → approve (4-eyes) → publish, without an engineering release. Regulatory primitives are locked — referenced, never editable; the engine enforces them regardless.'));
     root.appendChild(h('div', { class: 'btnrow', id: 'pc-picker', style: 'margin-bottom:12px;' }));
-    root.appendChild(h('div', { class: 'grid2' },
+    root.appendChild(h('div', { class: 'grid2', id: 'pc-grid' },
       h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-reg' }), h('div', { class: 'panel', id: 'pc-params' })),
       h('div', { class: 'stack' }, h('div', { class: 'panel', id: 'pc-sim' }), h('div', { class: 'panel', id: 'pc-publish' }), h('div', { class: 'panel', id: 'pc-history' }))));
+    root.appendChild(h('div', { class: 'stack', id: 'pc-rclib', hidden: 'hidden' }));   /* v2.19 — the reason-code library block */
     Policy.load('split');
   },
   buildPicker: function () {
@@ -13157,10 +13923,15 @@ var Policy = {
         onclick: function () { Policy.load(m.productId); } },
         (m.nameEn || m.productId) + ' ', h('span', { class: 'ar', lang: 'ar', dir: 'rtl', text: m.nameAr || '' })));
     });
-    pk.appendChild(RedFlagsUI.pickerButton());   /* v2.9 — the shared early-warning block */
+    var shared = RedFlagsUI.pickerButton();   /* v2.9 — the shared early-warning block */
+    shared.appendChild(RcLibUI.pickerButton());   /* v2.19 — the reason-code library, beside it */
+    pk.appendChild(shared);
   },
   load: function (pid) {
     Policy.pid = pid;
+    /* v2.19 — the reason-code library is a block of its own: full width, not a policy pack */
+    if (pid === 'reasonCodes') { Policy.policy = null; Policy.buildPicker(); RcLibUI.show(true); RcLibUI.render(); return; }
+    RcLibUI.show(false);
     try { Policy.policy = ME.getPolicy(pid); } catch (e) { Policy.policy = null; }
     Policy.buildPicker();
     Policy.renderReg(); Policy.renderParams();
@@ -13957,13 +14728,13 @@ function contributionChart(cc) {
   box.setAttribute('aria-label', 'Contribution chart: ' + cc.baseLabel + ' ' + cc.base + cc.steps.map(function (s) { return ', ' + s.name + ' ' + (s.delta > 0 ? 'plus ' : 'minus ') + Math.abs(s.delta); }).join('') + ', NoorScore ' + cc.points);
   return box;
 }
-var LG_TONE_WORD = { green: 'green', amber: 'amber', red: 'red', neutral: 'neutral' };
+var LG_TONE_WORD = { green: 'green', yellow: 'yellow', red: 'red', neutral: 'neutral' };   /* v2.19 — yellow (was amber) */
 function logExplain(rec) {
   var wrap = h('div', { id: 'lg-explain', style: 'margin:0 0 12px;' });
-  var cc = null, comps = null, finds = [];
+  var cc = null, comps = null, trace = null;
   try { cc = ME.scoreContributions(rec.id); } catch (e) {}
   try { comps = ME.noorScoreComponents(rec.id); } catch (e) {}
-  try { finds = ME.customerFindings(rec.id); } catch (e) {}
+  try { trace = ME.reasonCodeTrace(rec.id); } catch (e) {}
   wrap.appendChild(h('h3', null, 'Explainable — inside Noor ', h('span', { class: 'h3-note', text: '— never sent to a lender' })));
   if (cc) wrap.appendChild(h('div', { class: 'small', id: 'lg-model' }, h('strong', { text: 'Model: ' }), cc.phase + ' ' + (cc.model || '—') + ' ' + (cc.version || '') +
     ' · every feature, weight and point is traceable; Phase 2 (a model trained on repayment behaviour) stays explainable with SHAP values per feature.'));
@@ -13984,11 +14755,25 @@ function logExplain(rec) {
     wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Six components — ' + comps.derivation.toLowerCase() + ', with what drove each one' }),
       h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl lg-six', id: 'lg-components' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'Level' }), h('th', { text: 'What drove it (internal)' }))), tb))));
   }
-  /* findings, with the internal rule behind each (the memo carries the words only) */
-  var fl = h('ul', { class: 'lg-findings', id: 'lg-findings' });
-  finds.forEach(function (x) { fl.appendChild(h('li', { dataset: { code: x.code } }, h('span', { class: 'fnd-chip', text: x.en }), h('span', { class: 'small muted', text: ' ' + x.code + ' — ' + x.rule }))); });
-  if (!finds.length) fl.appendChild(h('li', { class: 'small muted', text: 'No findings.' }));
-  wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Findings — with the rule behind each (stays inside Noor)' }), fl));
+  /* v2.19 — the library codes that fired, with the internal rule behind each and who receives it (the memo carries code + label only);
+     the customer's RC_* reasons beside them, each with its one library code */
+  var lenderNames = {};
+  try { ME.lenders().forEach(function (l) { lenderNames[l.id] = l.name; }); } catch (e) {}
+  var codes = trace ? trace.codes : [];
+  var fl = h('ul', { class: 'lg-findings', id: 'lg-rc' });
+  codes.forEach(function (x) {
+    fl.appendChild(h('li', { dataset: { code: x.code, colour: x.colour } }, h('div', null, rcChip(x, 'sm')),
+      h('div', { class: 'small muted', text: x.ruleRef + ' — ' + x.rule + ' · ' + (x.receivedBy.length ? 'sent to ' + x.receivedBy.map(function (id) { return lenderNames[id] || id; }).join(', ') : 'no partner receives it') })));
+  });
+  if (!codes.length) fl.appendChild(h('li', { class: 'small muted', text: 'No library code fired.' }));
+  wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Reason codes — the library codes that fired, with the rule behind each (stays inside Noor)' }), rcLegend(null), fl));
+  var ml = h('ul', { class: 'lg-findings lg-rc-map', id: 'lg-rc-map' });
+  (trace ? trace.rcMap : []).forEach(function (x) {
+    ml.appendChild(h('li', { dataset: { rc: x.rc, code: x.code || '' } }, h('div', null, h('code', { text: x.rc }), ' → ', x.code ? rcChip({ code: x.code, colour: x.colour, en: x.labelEn }, 'sm') : h('span', { text: '—' })),
+      h('div', { class: 'small muted', text: rcEn(x.rc) }), h('div', { class: 'small ar', lang: 'ar', dir: 'rtl', text: rcAr(x.rc) })));
+  });
+  if (!trace || !trace.rcMap.length) ml.appendChild(h('li', { class: 'small muted', text: 'No adverse-action reason on this decision.' }));
+  wrap.appendChild(h('div', { style: 'margin-top:10px;' }, h('h4', { class: 'lg-sub', text: 'Customer reasons (EN + AR) → the library code the lender reads' }), ml));
   return wrap;
 }
 function logReproduceBox(rec) {
@@ -14124,7 +14909,7 @@ var LogScreen = {
           (ldc.aboveThreshold ? 'scored' + (ldc.scoreOverlay ? ' — NoorScore ' + ldc.scoreOverlay : ' — nothing to add') : 'below the threshold — referred (' + ldc.ask.join(', ') + ' missing)') }),
         h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', { text: 'Component' }), h('th', { text: 'What we have' }), h('th', { class: 'num', text: 'Points / weight' }))), ltb))));
     }
-    panel.appendChild(logExplain(rec));   /* v2.18 — the contribution chart, the six components and the findings (internal) */
+    panel.appendChild(logExplain(rec));   /* v2.18 — the contribution chart, the six components; v2.19 — the reason codes with their rules (internal) */
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
@@ -14258,6 +15043,31 @@ function memoKv(rows) {
   });
   return grid;
 }
+/* v2.19 — a reason code from the library as a coloured chip: the code id + its label (green --ok · yellow --warn · red --bad).
+   Accepts a memo code {code, colour, en, ar} or a library entry {code, colour, labelEn, labelAr}; size 'sm' is one line, EN only. */
+var RC_COLOUR_WORD = { GREEN: 'Green — positive', YELLOW: 'Yellow — caution', RED: 'Red — adverse' };
+function rcChip(c, size, role) {
+  var en = c.en || c.labelEn || c.code, ar = c.ar || c.labelAr || '';
+  var top = h('span', { class: 'rc-chip-top' }, h('span', { class: 'rc-code', text: c.code }), ' ', h('span', { class: 'rc-en', text: en }));
+  return h('span', { class: 'rc-chip rc-' + c.colour + (size === 'sm' ? ' rc-sm' : ''), role: role || null, title: (RC_COLOUR_WORD[c.colour] || c.colour) + (size === 'sm' && ar ? ' · ' + ar : ''),
+    dataset: { code: c.code, colour: c.colour } }, top, size === 'sm' || !ar ? null : h('span', { class: 'ar rc-ar', lang: 'ar', dir: 'rtl', text: ar }));
+}
+/* A row of chips; the whitespace between them is ignored by the flex layout but keeps the text readable ("G02 Saver G03 …") */
+function rcChipList(codes, size) {
+  var out = [];
+  (codes || []).forEach(function (c, i) { if (i) out.push(document.createTextNode(' ')); out.push(rcChip(c, size)); });
+  return out;
+}
+/* The three colours, as a small legend: Green · Yellow · Red */
+function rcLegend(id) {
+  var box = h('div', { class: 'rc-legend', id: id || null, role: 'note', 'aria-label': 'Reason-code colours' });
+  [['GREEN', 'Green'], ['YELLOW', 'Yellow'], ['RED', 'Red']].forEach(function (x, i) {
+    if (i) box.appendChild(h('span', { 'aria-hidden': 'true', text: ' · ' }));
+    box.appendChild(h('span', { class: 'rc-lg', dataset: { colour: x[0] } }, h('span', { class: 'rc-dot rc-dot-' + x[0], 'aria-hidden': 'true' }), x[1]));
+  });
+  box.appendChild(h('span', { text: ' — positive · caution · adverse' }));
+  return box;
+}
 /* v2.18 — the memo opens with "What lenders receive" (methodology slide 8): output · what it tells the lender · status · value */
 function memoOutputsTable(m) {
   var box = h('div', { class: 'mo-table', id: 'lv-outputs', role: 'table', 'aria-label': 'What lenders receive' },
@@ -14268,12 +15078,15 @@ function memoOutputsTable(m) {
       h('span', { class: 'mo-name', role: 'cell', text: o.output }),
       h('span', { class: 'mo-tells', role: 'cell', text: o.tells }),
       h('span', { class: 'mo-st', role: 'cell' }, h('span', { class: 'mo-tag mo-' + o.status.toLowerCase(), text: o.status })),
-      h('span', { class: 'mo-val', role: 'cell', text: o.value })));
+      /* v2.19 — the Reason codes row shows the library codes as coloured chips */
+      o.key === 'reasonCodes' && m.decision && m.decision.reasonCodes && m.decision.reasonCodes.length
+        ? h('span', { class: 'mo-val mo-val-chips', role: 'cell', id: 'lv-outputs-rc', 'aria-label': o.value }, rcChipList(m.decision.reasonCodes, 'sm'))
+        : h('span', { class: 'mo-val', role: 'cell', text: o.value })));
   });
   return box;
 }
 /* v2.18 — the four score components as colour-coded bars: a level word and up to two factor words (never weights or points) */
-var MEMO_TONE_WORD = { green: 'green', amber: 'amber', red: 'red', neutral: 'not applicable' };
+var MEMO_TONE_WORD = { green: 'green', yellow: 'yellow', red: 'red', neutral: 'not applicable' };   /* v2.19 — yellow (was amber) */
 function memoComponentBars(sc) {
   var wrap = h('div', { class: 'mcb-list', id: 'lv-components', dataset: { derivation: sc.derivation } });
   sc.components.forEach(function (c) {
@@ -14326,20 +15139,19 @@ function memoDoc(m) {
       bandChip(ns.band, 'lv-band'),
       h('span', { class: 'ns-scale', id: 'lv-ns-note', text: ns.value === null ? (m.product.productId === 'starter_loan' ? 'decided on the repayment record' : 'no score yet — thin file') : 'Risk band, to be mapped to expected default once calibrated' })),
     (ns.factors && ns.factors.length) ? h('div', { class: 'ns-factors' }, h('span', { class: 'ns-fl', text: 'What moved it' }), factors) : null));
-  /* §1c — findings, next to the reason codes (outlined chips); RC_* still explain any refer, decline or reduction */
-  var rc = h('div', { class: 'memo-rc' });
-  var fchips = h('div', { class: 'fnd-chips', id: 'lv-findings', role: 'list', 'aria-label': 'Findings' });
-  (m.findings || []).forEach(function (x) { fchips.appendChild(h('span', { class: 'fnd-chip', role: 'listitem', dataset: { code: x.code }, title: x.ar, text: x.en })); });
-  if (!(m.findings || []).length) fchips.appendChild(h('span', { class: 'small muted', text: 'No findings for this customer.' }));
-  if (!d.reasonCodes.length) rc.appendChild(h('div', { class: 'small muted', text: 'No adverse reason codes.' }));
-  d.reasonCodes.forEach(function (c) {
-    rc.appendChild(h('div', { class: 'reason-line', dataset: { code: c.code }, style: 'display:flex;justify-content:space-between;gap:6px 14px;padding:6px 0;border-bottom:1px solid var(--hairline-soft);align-items:baseline;flex-wrap:wrap;' },
-      h('span', { style: 'min-width:0;flex:1 1 220px;' }, h('code', { class: 'small muted', text: c.code }), ' ', h('span', { class: 'rc-en', text: c.en })),
-      h('span', { class: 'ar rc-ar', lang: 'ar', dir: 'rtl', style: 'flex:1 1 200px;text-align:right;', text: c.ar })));
-  });
-  body.appendChild(h('section', { class: 'memo-sec', id: 'lv-reasons' }, h('h4', { text: 'Reason codes and findings — English · العربية' }),
-    h('div', { class: 'small muted', style: 'margin-bottom:6px;', text: 'Findings describe the customer — what drove the score, without the formula. Reason codes (RC_*) explain any refer, decline or reduction.' }),
-    fchips, rc));
+  /* v2.19 — the reason-code library: the only vocabulary a lender sees. Coloured chips with the code id + label (EN + AR),
+     a legend for the three colours; partner-requested codes (PR-…) show only in that partner's memo. */
+  var rcs = d.reasonCodes || [];
+  var rcChips = h('div', { class: 'rc-chips', id: 'lv-rc-chips', role: 'list', 'aria-label': 'Reason codes' });
+  rcs.forEach(function (c, i) { if (i) rcChips.appendChild(document.createTextNode(' ')); rcChips.appendChild(rcChip(c, null, 'listitem')); });
+  if (!rcs.length) rcChips.appendChild(h('span', { class: 'small muted', text: 'No reason codes for this decision.' }));
+  var partnerCodes = rcs.filter(function (c) { return /^PR-/.test(c.code); });
+  body.appendChild(h('section', { class: 'memo-sec', id: 'lv-reasons', dataset: { codes: rcs.map(function (c) { return c.code; }).join('|') } },
+    h('h4', { text: 'Reason codes — English · العربية' }), rcLegend('lv-rc-legend'),
+    h('div', { class: 'small muted', style: 'margin-bottom:6px;', text: 'From Noor’s reason-code library — one vocabulary, three colours. Each code says what drove the score or the decision; the rule behind it stays inside Noor.' }),
+    rcChips,
+    partnerCodes.length ? h('div', { class: 'small muted', id: 'lv-rc-partner', text: partnerCodes.map(function (c) { return c.code; }).join(', ') + ' — requested by ' +
+      String(m.lenderName || '').replace(/ \(.*\)$/, '') + ' and agreed in ' + (m.sharingAgreement ? m.sharingAgreement.label : 'its sharing agreement') + '; no other lender receives ' + (partnerCodes.length === 1 ? 'it' : 'them') + '.' }) : null));
   /* §1 — the four score components (Proposed extra) */
   if (m.scoreComponents) {
     body.appendChild(h('section', { class: 'memo-sec', id: 'lv-score-components' },
@@ -14402,7 +15214,7 @@ function memoDoc(m) {
   }
   doc.appendChild(body);
   doc.appendChild(h('footer', { class: 'memo-foot', text: 'Built by Mizan from ' + (m.sharingAgreement ? 'the sharing agreement ' + m.sharingAgreement.label : 'an allowlist') +
-    '. Scores, findings, reason codes and derived aggregates only — the methodology, its cut-offs and raw data stay inside Noor. Noor arranges the loan; ' + String(m.lenderName || lenderName()).replace(/ \(.*\)$/, '') + ' is the lender of record.' }));
+    '. Scores, reason codes from the library and derived aggregates only — the methodology, its cut-offs and raw data stay inside Noor. Noor arranges the loan; ' + String(m.lenderName || lenderName()).replace(/ \(.*\)$/, '') + ' is the lender of record.' }));
   return doc;
 }
 /* v2.18 §1b — "Noor IP vs lender view" (methodology slide 6): the panel next to the memo, never part of it */
@@ -14431,7 +15243,7 @@ var Lender = {
     var root = clear($('#scr-lender'));
     root.appendChild(screenHead('Shared with the lender of record', 'Lender view — credit memos',
       lenderName() + ' books, funds and collects the loan; Noor decides with Mizan and sends the bank a credit memo — the same memo in the bank’s portal, over the API and in the SFTP file. The Decision log stays Noor’s internal record.'));
-    root.appendChild(scopeBanner('lender', 'lv-banner', 'What the lender receives.', 'Built from an allowlist — Open Finance data is never shared, only ranges and verification flags. The allowlist is each lender’s sharing agreement: scores, findings, reason codes and derived aggregates.'));
+    root.appendChild(scopeBanner('lender', 'lv-banner', 'What the lender receives.', 'Built from an allowlist — Open Finance data is never shared, only ranges and verification flags. The allowlist is each lender’s sharing agreement: scores, reason codes (one library, three colours) and derived aggregates.'));
     root.appendChild(h('div', { class: 'lv-lines' },
       h('p', { class: 'lv-ext', id: 'lv-external', text: ME.EXTERNAL_LINE || '' }),
       h('p', { class: 'small muted', id: 'lv-method', text: ME.METHODOLOGY_LINE || '' })));
@@ -14459,6 +15271,9 @@ var Lender = {
     box.appendChild(h('span', { class: 'lv-agree-l', id: 'lv-agreement-label' }, 'Sharing agreement: ', h('strong', { text: ag ? ag.label : '—' })));
     box.appendChild(seg);
     box.appendChild(h('span', { class: 'small muted lv-agree-s', text: ag ? (ag.groups.length === 2 ? 'Core outputs only' : 'Core, every Proposed output and the extras') + ' · DBR ' + (ag.dbrPrecision === 'EXACT' ? 'exact' : 'banded') : '' }));
+    /* v2.19 — a partner code approved or retired issues a new version of the agreement: show the latest change */
+    var last = ag && ag.history && ag.history.length > 1 ? ag.history[ag.history.length - 1] : null;
+    if (last) box.appendChild(h('span', { class: 'small lv-agree-s', id: 'lv-agreement-change', text: last.label + ' — ' + last.change }));
   },
   refresh: function () {
     var box = $('#lv-list');
@@ -16489,7 +17304,7 @@ var Journey = {
           'An approval is not a loan: offer → KFS → e-sign → repayment set-up → cooling-off → disbursement, enforced in order by the engine.']],
       11: ['Mizan sends Partner Bank the credit memo', [
           'Partner Bank is the lender of record: it books, funds and collects. Noor arranges and decides.',
-          'The memo carries outcome, terms, NoorScore and band, affordability bands, verification flags and consent references — built from an allowlist. Nothing from Open Finance leaves Noor; nor do the email, the contact preferences or any vendor footprint field.']],
+          'The memo carries outcome, terms, NoorScore and band, reason codes from Noor’s library (green, yellow, red), affordability bands, verification flags and consent references — built from an allowlist. Nothing from Open Finance leaves Noor; nor do the email, the contact preferences or any vendor footprint field.']],
       12: ['Key Facts Statement, in Arabic and English', ['CBUAE consumer protection: the KFS comes before any signature, in both languages.', '“I’ve read the Key Facts” records the first two execution steps.']],
       13: ['E-signature via UAE PASS', ['The loan agreement with Partner Bank, signed with the customer’s UAE PASS (simulated here).']],
       14: ['Repayment collection — one platform rule', ['Above AED 1,000: a direct debit mandate in favour of Partner Bank on the customer’s own account. AED 1,000 or less: an Al Tareq recurring payment approved in the bank app. No salary transfer required.',
@@ -16602,6 +17417,16 @@ var Journey = {
         h('li', { text: 'Noor’s part: the assessment, the recommendation and the credit memo. This screen is Noor’s pre-offer.' }),
         h('li', { text: 'Origination stays with botim and its lender: lender confirmation, Key Facts, e-sign, repayment set-up, cooling-off and payout run in botim’s loan flow.' }),
         h('li', { text: 'The lender’s policy can be loaded into Mizan, so the pre-offer is what the lender approves (Policy console: “Lender policy: Partner Bank — loaded into Mizan for end-to-end decisioning”).' }))));
+    /* v2.19 — what Partner Bank receives as reason codes: library codes only, as coloured chips */
+    if (r && st === 10) {
+      var pbCodes = [];
+      try { pbCodes = ME.libraryCodesFor(r.id, 'partner-bank'); } catch (e) {}
+      wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-rc-out', dataset: { codes: pbCodes.map(function (c) { return c.code; }).join('|') } },
+        h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Partner Bank receives:' }), h('span', { class: 'small muted', text: ' reason codes from the library — libraryCodesFor(' + r.id + ', partner-bank)' })),
+        h('div', { class: 'rc-chips', id: 'jr-rc-chips' }, pbCodes.length ? rcChipList(pbCodes, 'sm') : h('span', { class: 'small muted', text: 'No reason codes.' })),
+        rcLegend(null),
+        h('div', { class: 'small muted', text: 'Codes and labels only: the rule behind each stays inside Noor, and the customer keeps the decision’s own reasons in English and Arabic. PR-PB-… codes were requested by Partner Bank — Lender B would not receive them.' })));
+    }
     if (jrInBotimFrame()) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-orig-note' }, h('div', { class: 'co-title', text: 'Origination — botim' }),
       h('div', { class: 'co-body', text: 'This step runs in botim’s loan flow with Partner Bank (the botim frame, not Noor’s web-view). Its content and the execution events are unchanged: they come back to Noor as status events for monitoring. Repayments are run by botim’s loan flow — a direct debit mandate above AED 1,000; at or below, an Al Tareq payment (Noor is applying for a payment-initiation licence).' })));
     if (st === 16 && sub === 1) wrap.appendChild(h('div', { class: 'callout callout-info', id: 'jr-back-noor-note' }, h('div', { class: 'co-title', text: 'Back in Noor' }),
