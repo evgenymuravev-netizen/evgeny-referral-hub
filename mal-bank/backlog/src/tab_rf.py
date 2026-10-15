@@ -706,7 +706,7 @@ f("RF-98", "Monthly refresh while a loan is open", E, "Phase 2",
   "Re-read connected accounts each month and recompute features.",
   ["Runs one month after the decision and monthly after, within the Al Tareq consent", "Recomputes income, FCF, DBR, red flags; stores a snapshot"],
   ["Scheduled job per loan"],
-  ["PL-04", "PL-30"], ["monthly snapshot", "Early warning, Phase 2 model data"],
+  ["PL-04", "PL-23"], ["monthly snapshot", "Early warning, Phase 2 model data"],
   "Data, BE", "M", "engine monitoringOf()")
 f("RF-99", "Best debit date", E, "MVP",
   "The day after the usual salary credit.",
@@ -726,5 +726,42 @@ f("RF-101", "Monitoring status per loan", E, "Phase 2",
   ["From RF-100 and RF-99"],
   ["RF-99", "RF-100"], ["status line", "Memo, Lender view, customer"],
   "BE", "S", "Lender view monitoring line")
+
+
+# ---- School fees (main product, prototype v2.21)
+E = "School fees (main product)"
+f("RF-102", "School fees: capacity and approved amount", E, "MVP",
+  "The most a parent can split over 12 months, and the amount approved for an invoice.",
+  ["budget = min(DBR headroom, 50% of free cash flow); FCF part only when spending is seen",
+   "Partner school max = floor1000(12 × budget); other school max = floor1000(budget ÷ (1/12 + monthly fee rate))",
+   "approved = min(invoice, max, 20× salary, product cap 120,000), binding cap recorded; below the invoice → Y09",
+   "Ravi: budget 1,850 → max AED 22,000 (partner) and 20,000 (other, band B); invoice 15,000 approved in full; DBR after (900 + 1,250) / 12,000 = 17.9%"],
+  ["Term fixed at 12 months (locked); minimum AED 2,000; DBR cap enforced again on the approved amount"],
+  ["RF-17", "RF-28", "RF-29", "RF-30", "RP-19"], ["approved, binding, maxPartner, maxOther", "SF-04 to SF-06, memo"],
+  "BE", "S", "engine decide(school_fees), prequalify() schoolFees")
+f("RF-103", "School fees: pricing", E, "MVP",
+  "What the parent pays: 0% at partner schools, a monthly fee elsewhere.",
+  ["Partner school: 0% to the parent; the school pays a merchant fee (illustrative 5%) settled with the lender",
+   "Other school: monthly fee by band A 0.50%, B 0.75%, C 1.00%; instalment = amount × (1/12 + rate); APR equivalent from the monthly IRR",
+   "Example: AED 15,000 at band B → 12 × AED 1,362.50, fees AED 1,350, APR equivalent about 16%",
+   "The merchant fee is never shown to the parent or put in the memo"],
+  ["Rates are policy params (A ≤ B ≤ C, 0 to 2% a month); partner parent fee locked at 0%"],
+  ["RF-31", "RF-73", "RP-20"], ["instalment, totalFees, aprEquivalent", "Plan, KFS"],
+  "BE", "S", "engine quoteSchoolFees(), splitPlan()")
+f("RF-104", "School and invoice verification", E, "MVP",
+  "Pay only licensed schools, to the right account, once per invoice.",
+  ["School must be in the verified directory (KHDA, ADEK, SPEA licensed); payee IBAN = directory IBAN",
+   "Invoice amount = requested amount; same invoice reference and school never financed twice",
+   "Parent's name on the invoice (where shown) matches the applicant", "POL_SCHOOL_VERIFIED; any mismatch → REFER (UW-22), never an automatic decline"],
+  ["Checks run at decide() and again before payout"],
+  ["PL-32", "PL-33", "PL-16"], ["schoolVerified, invoiceChecks", "Policy rule, memo flag"],
+  "BE", "M", "engine POL_SCHOOL_VERIFIED")
+f("RF-105", "School-fee payments seen in Open Finance", E, "Phase 2",
+  "Past payments to schools in the connected accounts.",
+  ["Detect payments to school counterparties (Education category) in the last 12 months",
+   "Use: pre-fill the school, confirm the parent pays this school, spot fees already paid (route to Split a purchase)"],
+  ["Counterparty match against the school directory"],
+  ["PL-06", "PL-32"], ["schoolPaymentsSeen", "SF-02, SF-09"],
+  "Data", "M", "Mariam (c1) school-fee purchase in the prototype")
 
 RF.sort(key=lambda r: int(r[0].split("-")[1]))

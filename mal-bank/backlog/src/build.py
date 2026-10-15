@@ -6,6 +6,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 from common import COLUMNS, TECH_COLS
 from tab_cj import CJ
+from tab_sf import SF
 from tab_ops import UW, LP, RP
 from tab_rf import RF
 from tab_pl import PL
@@ -13,7 +14,7 @@ from tab_pl import PL
 OUT = sys.argv[1]
 
 # The non-platform tabs were written against an earlier platform numbering; map them once.
-PL_MAP = {"PL-15": "PL-14", "PL-22": "PL-15", "PL-30": "PL-23", "PL-32": "PL-24"}
+PL_MAP = {}
 
 
 def remap(rows):
@@ -24,11 +25,11 @@ def remap(rows):
                 r[i] = rx.sub(lambda m: PL_MAP.get(m.group(0), m.group(0)), v)
 
 
-for t in (CJ, UW, LP, RP, RF):
+for t in (SF, CJ, UW, LP, RP, RF):
     remap(t)
 
 TABS = [
-    ("Customer journey", CJ, "Noor customer journey inside botim: entry, onboarding, Open Finance, pre-qualification, decision, offer, after payout, other products."),
+    ("Customer journey", SF + CJ, "Noor customer journey inside botim. Starts with the main product, split school fees over 12 months (SF rows), then entry, onboarding, Open Finance, pre-qualification, decision, offer, after payout and the other products."),
     ("Underwriter", UW, "Mizan back office for underwriters, fraud analysts and collections: refer queue, case file, overrides, Decision log, monitoring cases."),
     ("Lending partner", LP, "What lending partners get from Noor: sharing agreements, the credit memo (UI, API, SFTP), callbacks, status feeds, partner reason codes."),
     ("Risk and policy", RP, "Risk policy owner, model risk and compliance: policy console, 4-eyes, simulation, reason-code library, models, dashboards."),
@@ -46,7 +47,7 @@ for _, rows, _ in TABS:
     for r in rows:
         for v in r[1:]:
             if isinstance(v, str):
-                for m in re.findall(r"\b(?:CJ|UW|LP|RP|RF|PL)-\d+\b", v):
+                for m in re.findall(r"\b(?:SF|CJ|UW|LP|RP|RF|PL)-\d+\b", v):
                     if m not in known:
                         missing.add((r[0], m))
 assert not missing, sorted(missing)
@@ -135,7 +136,7 @@ r = 1
 ws.cell(row=r, column=1, value="Noor × Mizan product backlog").font = f_title
 r += 1
 ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
-c0 = ws.cell(row=r, column=1, value="Build backlog for the Noor customer journey inside botim and the Mizan back office. Written from the working prototype (v2.20) and its specs, so most rows point at a screen or rule that already exists there.")
+c0 = ws.cell(row=r, column=1, value="Build backlog for the Noor customer journey inside botim and the Mizan back office. Written from the working prototype (v2.21) and its specs, so most rows point at a screen or rule that already exists there.")
 c0.font = f_body
 c0.alignment = Alignment(wrap_text=True, vertical="top")
 ws.row_dimensions[r].height = 30
@@ -148,7 +149,7 @@ howto = [
     "PM size is the product team's rough guess (S up to 3 person-days, M 4 to 10, L 11 to 20, XL more than 20). Keep it; it helps compare with your estimate.",
     "Built by says whose team builds it. Estimate only Noor's part; rows built by botim or the lender are listed so the dependencies are visible.",
     "Inputs and dependencies names the other rows a story needs (for example RF-17, PL-04). Risk features (RF) are separate tasks so they can be estimated and built on their own.",
-    "Release assumes the MVP is the personal loan through botim with one lending partner (Partner Bank). Change the Release column if the scope changes.",
+    "Release assumes the MVP is the main product, split school fees over 12 months (the journey's default), plus the personal loan, through botim with one lending partner (Partner Bank). Change the Release column if the scope changes.",
 ]
 for t in howto:
     ws.cell(row=r, column=1, value="•").alignment = Alignment(horizontal="right", vertical="top")
@@ -211,11 +212,11 @@ r += 2
 ws.cell(row=r, column=1, value="Columns").font = f_bold
 r += 1
 legend = [
-    ("ID", "CJ customer journey, UW underwriter, LP lending partner, RP risk and policy, RF risk feature, PL platform and integrations."),
+    ("ID", "SF school fees (the main product), CJ customer journey, UW underwriter, LP lending partner, RP risk and policy, RF risk feature, PL platform and integrations."),
     ("Type", "User story, Feature, Risk feature, Integration, Tech enabler or Compliance."),
     ("Actor", "Who the story is for (customer, underwriter, Partner Bank credit officer, risk policy owner, system)."),
     ("Built by", "Noor, botim, Partner Bank or a combination. Estimate Noor's share."),
-    ("Release", "MVP: first funded personal loans through botim with Partner Bank. Phase 2: monitoring, car loan, split, newcomer evidence, second lender, data pipelines for the model. Later: SME, starter and upgrade, salary advance, trained model, NoorScore v2."),
+    ("Release", "MVP: school fees split over 12 months (the default product) and the personal loan, through botim with Partner Bank. Phase 2: monitoring, car loan, split, newcomer evidence, second lender, data pipelines for the model. Later: SME, starter and upgrade, salary advance, trained model, NoorScore v2."),
     ("Business rules / calculation", "For risk features: the formula, parameters and their bounds as in the prototype engine. Parameter values are illustrative until the risk team signs them off."),
     ("Prototype reference", "Screen and step in the prototype, the engine function, or the spec file in the repository."),
     ("Components", "FE front end, BE back end (Mizan services), Data (pipelines, features), ML, Integration, Ops, QA."),
@@ -292,6 +293,8 @@ terms = [
     ("SHADOW and LIVE", "SHADOW: computed and logged but not applied. LIVE: applied to decisions."),
     ("SHAP", "Method to show how much each feature moved a model's output; used for Phase 2 explanations."),
     ("Credit Passport", "Import of a home-country bureau file with the customer's consent (newcomers)."),
+    ("Split school fees", "The main product: a school's fee invoice paid directly to the school by the lender and repaid in 12 equal monthly payments."),
+    ("Partner school", "A school that pays Noor a merchant fee so parents pay 0%. Other licensed schools can be paid too, with a monthly fee to the parent."),
     ("pickMin", "Approved amount is the lowest of all caps (request, DBR, free cash flow, salary multiple, product cap and product-specific caps)."),
 ]
 for i, (k, v) in enumerate(terms, start=2):

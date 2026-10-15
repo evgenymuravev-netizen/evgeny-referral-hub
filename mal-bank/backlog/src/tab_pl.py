@@ -183,3 +183,19 @@ p(row("PL-30", "Observability and alerting", E, "Tech enabler", SYS, "Noor", "MV
   ["Logs, metrics, traces", "Alerts: bank connection failures per bank, AECB timeouts, partner callback delays, job failures", "Integration health dashboard"],
   ["On-call rota"], ["PL-15"], ["Ops"],
   "Ops", "M", "Not in prototype"))
+
+E = "School fees"
+p(row("PL-32", "School directory and onboarding", E, "Tech enabler", SYS, "Noor", "MVP",
+  "The list of schools Noor can pay, with verified bank details.",
+  ["Seeded from the regulators' public lists (KHDA, ADEK, SPEA) and refreshed", "Per school: name, city, regulator, partner flag, verified IBAN (bank letter), contacts",
+   "Operations screen to add or edit; IBAN changes need a second approver"],
+  ["Directory is the only source of payee details"],
+  ["RP-20"], ["SF-02", "RF-104", "LP-23"],
+  "BE, FE, Ops", "L", "MizanData.schools (illustrative)"))
+p(row("PL-33", "Fee invoice intake", E, "Tech enabler", SYS, "Noor", "MVP",
+  "Receive and store school fee invoices.",
+  ["PDF upload with virus scan, stored in the document store (PL-20)", "MVP: details typed by the parent and checked against the file on refer",
+   "Phase 2: extract amount, due date, grade and reference automatically; partner schools send invoices by API"],
+  ["Invoices never leave Noor"],
+  ["PL-20"], ["SF-03", "RF-104", "UW-22"],
+  "BE, FE", "M", "Journey school-fees form"))

@@ -36,7 +36,7 @@ u(row("UW-05", "Ask the customer", E, "User story", A, "Noor", "MVP",
   ["Templates: explain a transfer, confirm employer, renew ID, connect another account, upload statements", "Sent on the customer's channel; answer comes back into the case",
    "Case goes to 'Waiting for customer' and returns to the queue on answer or after N days"],
   ["askCustomer()"],
-  ["PL-15", "CJ-33"], ["Customer task, case state"],
+  ["PL-14", "CJ-33"], ["Customer task, case state"],
   "FE, BE", "M", "Workbench · engine askCustomer()"))
 u(row("UW-06", "Request and review documents", E, "User story", A, "Noor", "Phase 2",
   "As an underwriter, I request home-country statements or other documents and see the parse and integrity result.",
@@ -62,7 +62,7 @@ u(row("UW-09", "SLA timers and escalation", E, "Feature", "Team lead", "Noor", "
   "As a team lead, I see cases near their SLA and get alerts on breaches.",
   ["SLA per referral type (e.g. 4 business hours, to be set)", "Business-hours calendar (UAE week, public holidays)", "Escalation alert to team lead; customer ETA shown in the journey"],
   ["SLA values are a policy setting"],
-  ["UW-01", "PL-30 jobs"], ["Alerts"],
+  ["UW-01", "PL-23 jobs"], ["Alerts"],
   "BE", "S", "Not in prototype"))
 
 E = "Decision log and audit"
@@ -77,7 +77,7 @@ u(row("UW-11", "Reproduce a decision", E, "User story", "Auditor, Underwriter", 
   "As an auditor, I re-run a stored decision with its stored inputs, policy version and engine version and get the same result.",
   ["Identical output, or a diff that names the field that changed", "Works for any decision in retention"],
   ["reproduceDecision(): stored inputs + stored policy version + engine version"],
-  ["PL-16", "PL-22 engine versioning"], ["Reproduce report"],
+  ["PL-16", "PL-15 engine versioning"], ["Reproduce report"],
   "FE, BE", "M", "Decision log 'Reproduce' · MEETING-1008-SPEC.md §1c"))
 u(row("UW-12", "Score explanation", E, "User story", A, "Noor", "MVP",
   "As an underwriter, I see how each feature moved the score.",
@@ -108,13 +108,13 @@ u(row("UW-15", "Early-warning case queue", E, "User story", "Collections special
   ["Cases from RF-100 with severity, pattern, SLA (8 h, 4 h, 24 h)", "Action ladder shown; offers: payment-date move, restructure, payment holiday (SME)",
    "Outcome codes; case closes with outcome", "No default, legal step or account action from signals alone"],
   ["Ladder from RF-48"],
-  ["RF-100", "RF-48", "PL-15"], ["Contact outcome", "Lender status (LP-14)"],
+  ["RF-100", "RF-48", "PL-14"], ["Contact outcome", "Lender status (LP-14)"],
   "FE, BE", "L", "Monitoring screen"))
 u(row("UW-16", "Contact log and scripts", E, "User story", "Collections specialist, Underwriter", "Noor", "Phase 2",
   "As a specialist, I record every call or message with the customer and use approved scripts in EN and AR.",
   ["Log: channel, time, outcome, note", "Scripts generated from the reason codes and flags"],
   ["Collections conduct rules (CBUAE consumer protection)"],
-  ["PL-15"], ["Contact history"],
+  ["PL-14"], ["Contact history"],
   "FE, BE", "M", "Monitoring screen"))
 u(row("UW-17", "Customer 360", E, "User story", "Underwriter, Collections specialist", "Noor", "Phase 2",
   "As a staff member, I see one customer's applications, decisions, loans, consents and contact preferences in one place.",
@@ -135,13 +135,21 @@ u(row("UW-19", "Lender decline or counter handling", E, "User story", A, "Noor",
 u(row("UW-20", "Underwriting team metrics", E, "Feature", "Team lead", "Noor", "Phase 2",
   "As a team lead, I see cases per underwriter, time to decide, override rate and approval rate.",
   ["Daily and weekly views", "Drill-down to cases"],
-  ["From the decision store"], ["PL-32"], ["Dashboard"],
+  ["From the decision store"], ["PL-24"], ["Dashboard"],
   "FE, Data", "M", "engine metrics()"))
 u(row("UW-21", "Back-office roles and permissions", E, "Feature", "Admin", "Noor", "MVP",
   "As an admin, I give each staff member a role: underwriter, senior underwriter, fraud analyst, collections specialist, risk policy owner, compliance, auditor (read-only), partner user.",
   ["Least privilege; raw data access separate permission", "SSO; every view of customer data logged"],
   ["RBAC in PL-21"], ["PL-21"], ["Access control"],
   "BE", "M", "Not in prototype"))
+
+u(row("UW-22", "Invoice review on referred school-fees cases", "Refer queue and case file", "User story", A, "Noor", "MVP",
+  "As an underwriter, I check the school invoice when a school-fees case is referred.",
+  ["View the invoice file (inside Noor only), the directory match, the payee IBAN check, the amount and the duplicate check",
+   "Outcomes: approve, ask the parent for a clearer invoice (UW-05), decline with a reason"],
+  ["Child details are visible only to staff with the role and never leave Noor"],
+  ["RF-104", "PL-33"], ["Case outcome"],
+  "FE", "S", "SCHOOL-FEES-SPEC.md"))
 
 LP = []
 p = LP.append
@@ -180,7 +188,7 @@ p(row("LP-05", "Credit memo SFTP file", E, "Integration", PI, "Noor", "Phase 2",
   "As a partner without an API, I receive a daily file with one row per memo.",
   ["CSV columns follow the agreement (incl. reason_codes as G02|G03|…, data_completeness_pct, data_sources)", "PGP-encrypted, checksum, naming convention, delivery report"],
   ["memoSftpRow()"],
-  ["PL-11", "PL-30"], ["File at partner"],
+  ["PL-11", "PL-23"], ["File at partner"],
   "BE, Integration", "M", "Lender view SFTP tab"))
 p(row("LP-06", "Lender decision callback", E, "Integration", PI, "Noor", "MVP",
   "As the lender, I send accept, decline or counter for each memo back to Noor.",
@@ -240,7 +248,7 @@ p(row("LP-14", "Early-warning status flag to the lender", E, "Feature", PB, "Noo
 p(row("LP-15", "Partner portfolio dashboard", E, "User story", "Partner Bank risk manager", "Noor", "Phase 2",
   "As the lender's risk manager, I see volumes, approval rates, band mix, funded loans and early-warning counts for my portfolio.",
   ["Filters by month, product, band", "Only aggregated data"],
-  ["From the decision store and the lender feed"], ["PL-32", "LP-13"], ["Dashboard"],
+  ["From the decision store and the lender feed"], ["PL-24", "LP-13"], ["Dashboard"],
   "FE, Data", "M", "Not in prototype"))
 p(row("LP-16", "Partner sandbox and test personas", E, "Feature", PI, "Noor", "MVP",
   "As the integration engineer, I test against a sandbox with synthetic customers that give known outcomes.",
@@ -271,6 +279,21 @@ p(row("LP-21", "Commercial reporting and billing data", E, "Feature", "Noor fina
   "As Noor finance, we get monthly funded volumes and fees per lender for invoicing.",
   ["Monthly export by lender and product"], ["Fee model per agreement"], ["LP-12"], ["Invoice data"],
   "Data", "S", "Not in prototype"))
+
+p(row("LP-22", "School-fees block in the credit memo", "Partner set-up and agreements", "Feature", PB, "Noor", "MVP",
+  "As a lender, the memo tells me the plan is school fees paid directly to a verified school.",
+  ["Product 'School fees, 12 months'; purpose 'Education, paid directly to the school'", "Flag 'Paid to the school, funds cannot be diverted'; 'school verified (licensed, in the directory)'",
+   "Never: the school's name, the child's details, the merchant fee, the invoice file", "SFTP product = school_fees"],
+  ["Same score, codes and aggregates as other products per agreement"],
+  ["RF-104", "LP-02"], ["Memo"],
+  "BE", "S", "Lender view (#lender default) · SCHOOL-FEES-SPEC.md"))
+p(row("LP-23", "Payment to the school and merchant-fee settlement", "Execution and servicing", "Integration", "Partner Bank operations", "Partner Bank + Noor", "MVP",
+  "As Partner Bank, we pay the school's verified account on disbursal and settle the school's merchant fee.",
+  ["Disbursal instruction carries the directory IBAN; returned payments raised to operations", "Merchant fee netted from the payment or invoiced to the school, per the school agreement",
+   "Monthly reconciliation per school; school refunds (SF-12) applied to the plan"],
+  ["Commercial terms per partner school (RP-20)"],
+  ["PL-12", "RP-20", "PL-32"], ["Payment status event", "Reconciliation"],
+  "BE, Integration", "M", "Journey step 16 · SCHOOL-FEES-SPEC.md"))
 
 RP = []
 r = RP.append
@@ -351,12 +374,12 @@ r(row("RP-12", "Phase 2 model trained on repayments", E, "Feature", "Data scient
 r(row("RP-13", "Shadow mode for challengers", E, "Tech enabler", "Data scientist", "Noor", "Phase 2",
   "As a data scientist, I run a challenger model or overlay in shadow and compare it with the champion.",
   ["Challenger output logged, never applied", "Comparison report"],
-  ["Same inputs as champion"], ["PL-22"], ["Shadow logs"],
+  ["Same inputs as champion"], ["PL-15"], ["Shadow logs"],
   "BE, Data", "M", "Footprint SHADOW mode"))
 r(row("RP-14", "Fair lending and disparate-impact testing", E, "Compliance", "Model risk, Compliance", "Noor", "MVP",
   "As compliance, we test outcomes across customer groups before any rule or model goes live.",
   ["Group labels used only for the test, never as features", "Report per release", "Required before LIVE for red flags and overlays"],
-  ["Offline test"], ["PL-32"], ["Test report"],
+  ["Offline test"], ["PL-24"], ["Test report"],
   "Data", "M", "Early-warning guardrails"))
 r(row("RP-15", "NoorScore v2 design (independent of AECB)", E, "Feature", "Head of risk", "Noor", "Later",
   "As Noor, we define a NoorScore on 0 to 1,000 scale, relative to the loan amount, with AECB as an optional add-on.",
@@ -368,15 +391,31 @@ E = "Analytics and reporting"
 r(row("RP-16", "Portfolio risk dashboard", E, "User story", "Head of risk", "Noor", "MVP",
   "As head of risk, I see approval, refer and decline rates, reasons, grade mix, override rate, completeness distribution and early-warning counts.",
   ["Daily refresh", "Filters by product, lender, variant", "Drill-down to decisions"],
-  ["From the decision store"], ["PL-32"], ["Dashboard"],
+  ["From the decision store"], ["PL-24"], ["Dashboard"],
   "Data, FE", "M", "engine metrics()"))
 r(row("RP-17", "A/B experiment analysis", E, "User story", "Product analyst", "Noor", "MVP",
   "As a product analyst, I compare variant A and B on the funnel and on funded rate with a significance test.",
   ["Funnel by variant and surface", "Sample-size tracker (about 13,809 per arm)", "Two-proportion test on funded rate"],
-  ["Pre-registered metric and stop rule"], ["CJ-41", "CJ-42", "PL-32"], ["Experiment report"],
+  ["Pre-registered metric and stop rule"], ["CJ-41", "CJ-42", "PL-24"], ["Experiment report"],
   "Data", "M", "Journey experiment panel"))
 r(row("RP-18", "Regulatory and audit export", E, "Compliance", "Compliance", "Noor", "MVP",
   "As compliance, I export decisions, policy versions, approvals and overrides for a period on request.",
   ["Export by date range", "Includes policy and model versions", "Access restricted and logged"],
   ["From PL-16 and PL-17"], ["PL-16", "PL-17"], ["Export file"],
   "BE", "S", "Decision log export"))
+
+r(row("RP-19", "School-fees policy pack", "Policy console", "User story", RO, "Noor", "MVP",
+  "As the risk policy owner, I manage the school-fees pack like any other product.",
+  ["Locked: 12 months, DBR 50% (retirees 30%), 20× salary, AECB required, cooling-off 5 days, payee = school",
+   "Params with bounds: min salary 5,000, cut-offs 620 / 680, min amount 2,000, cap 120,000, instalment ≤ 50% of FCF, merchant fee 5%, other-school fee rates A ≤ B ≤ C, completeness 70%",
+   "4-eyes publish and simulation on the sample book"],
+  ["Same governance as RP-02"],
+  ["RP-02", "PL-17"], ["Pack version"],
+  "FE, BE", "S", "Policy console · SCHOOL-FEES-SPEC.md §1"))
+r(row("RP-20", "Partner schools programme", "Policy console", "User story", "Noor partnerships manager", "Noor", "MVP",
+  "As the partnerships manager, I manage which schools are partners (0% for parents) and their merchant fee.",
+  ["Partner list with merchant fee, contract dates and status", "Changes need a second approver; IBAN changes are fraud-sensitive and re-verified",
+   "Volume and fee report per school"],
+  ["Partner flag drives pricing (RF-103)"],
+  ["PL-32", "PL-17"], ["Partner list"],
+  "FE, BE", "M", "SCHOOL-FEES-SPEC.md §1"))
