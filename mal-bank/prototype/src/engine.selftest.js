@@ -15,6 +15,7 @@
  * Group 25 = v2.18 what lenders receive, Noor IP vs lender view, findings, six components, reproduce (MEETING-1008-SPEC.md).
  * Group 26 = v2.19 the reason-code library: three colours, standard and partner-requested codes, 4-eyes (REASON-CODES-SPEC.md).
  * Group 27 = v2.20 rely on botim’s phone and email verification; one-time codes only as a fallback (BOTIM-RELIANCE-SPEC.md).
+ * Group 28 = v2.21 split school fees over 12 months, the default product; underwritten like the personal loan (SCHOOL-FEES-SPEC.md).
  * Plain Node script: loads data.js + engine.js, asserts the acceptance groups,
  * exits non-zero on any failure with clear messages. Fully deterministic.
  *
@@ -108,12 +109,12 @@ const recs = {};
 // ---------------------------------------------------------------------------
 group('1. Persona intended outcomes at default policy (r1–r5 personal loan, c1–c5 split)', () => {
   // Manifests: five consumer products, in order (starter_loan third — Addendum v2.1; car_loan appended fifth — Addendum v2.7),
-  // then the SME route appended sixth (Addendum v2.10).
+  // then the SME route appended sixth (Addendum v2.10), then split school fees appended seventh (Addendum v2.21).
   const mans = E.manifests();
-  eq(mans.map(m => m.productId).join(','), 'split,personal_loan,starter_loan,salary_advance,car_loan,sme_working_capital', 'manifests are split, personal_loan, starter_loan, salary_advance, car_loan, sme_working_capital in order');
+  eq(mans.map(m => m.productId).join(','), 'split,personal_loan,starter_loan,salary_advance,car_loan,sme_working_capital,school_fees', 'manifests are split, personal_loan, starter_loan, salary_advance, car_loan, sme_working_capital, school_fees (v2.21) in order');
   ok(mans.every(m => m.segment === (m.productId === 'sme_working_capital' ? 'SME' : 'CONSUMER') && m.nameEn && m.nameAr && m.structure && m.pricingMode),
      'every consumer manifest is CONSUMER (the v2.10 SME route is SME) with names, structure, pricingMode');
-  eq(mans.map(m => m.pricingMode).join(','), 'MONTHLY_FEE,BANDED_APR,TENOR_CURVE_APR,FLAT_FEE,BANDED_APR,BANDED_APR', 'pricing modes per product');
+  eq(mans.map(m => m.pricingMode).join(','), 'MONTHLY_FEE,BANDED_APR,TENOR_CURVE_APR,FLAT_FEE,BANDED_APR,BANDED_APR,SCHOOL_FEES', 'pricing modes per product (v2.21: SCHOOL_FEES)');
   eq(mans[0].structure, 'Instalment plan (revolving split capacity)', 'split structure string');
   eq(mans[1].structure, 'Amortising loan (reducing balance)', 'personal_loan structure string');
   eq(mans[3].structure, 'Single-repayment advance', 'salary_advance structure string');
@@ -1241,7 +1242,7 @@ function bucketsOf(rec) {
   const f = rec.features || {}, a = rec.applicantSnapshot || {}, cn = a.connected || {};
   const of = rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted;
   const xs = of ? (cn.monthlyIncome || []).filter(v => typeof v === 'number') : [];
-  const salaryBased = ['personal_loan', 'salary_advance', 'car_loan'].includes(rec.productId);
+  const salaryBased = ['personal_loan', 'salary_advance', 'car_loan', 'school_fees'].includes(rec.productId);   /* v2.21 — school fees reads the salary */
   const salary = a.employment && typeof a.employment.salaryMonthly === 'number' ? a.employment.salaryMonthly : null;
   const base = salaryBased && salary !== null ? salary : (xs.length ? median3(xs) : null);
   const regular = rec.productId === 'car_loan' ? (typeof f.salaryMonthly === 'number' ? f.salaryMonthly : f.verifiedIncome)
@@ -2288,10 +2289,10 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
   ok(b6.intlTransfersShareOfIncome6m === 0.22 && b6.avgBalance3m === 11600 && n6.intlTransfersAed === 12400 && n6.balanceNowAed === 1850 &&
      n6.largestOutboundTransferAed === 7000 && n6.salaryLateDays === 0 && r6.defaultRequest.amount === 40000 && r6.defaultRequest.tenorMonths === 24,
      'r6 redFlagData as specified (22% usual, avg 11,600; 12,400 sent, balance 1,850, one 7,000 transfer out, salary on time); requests 40,000 over 24 months');
-  ok(Array.isArray(D.monitoredLoans) && D.monitoredLoans.length === 8 && D.monitoredLoans.map(l => l.id).join(',') === 'ML-01,ML-02,ML-03,ML-04,ML-05,ML-06,ML-07,ML-08',
-     'MizanData.monitoredLoans: 8 funded loans ML-01 … ML-08 (v2.10 adds the two SME loans)');
+  ok(Array.isArray(D.monitoredLoans) && D.monitoredLoans.length === 9 && D.monitoredLoans.map(l => l.id).join(',') === 'ML-01,ML-02,ML-03,ML-04,ML-05,ML-06,ML-07,ML-08,ML-09',
+     'MizanData.monitoredLoans: 9 funded loans ML-01 … ML-09 (v2.10 adds the two SME loans, v2.21 the school-fees plan)');
   const surnames = D.monitoredLoans.map(l => l.customer.split(' ').slice(-1)[0]);
-  ok(new Set(surnames).size === 8 && new Set(D.monitoredLoans.map(l => l.customer.split(' ')[0])).size === 8, 'monitored loans carry eight different names (' + D.monitoredLoans.map(l => l.customer).join(', ') + ')');
+  ok(new Set(surnames).size === 9 && new Set(D.monitoredLoans.map(l => l.customer.split(' ')[0])).size === 9, 'monitored loans carry nine different names (' + D.monitoredLoans.map(l => l.customer).join(', ') + ')');
   const badKeys = keysDeep(D.monitoredLoans).concat(keysDeep(r6.redFlagData)).filter(k => FORBIDDEN_KEY.test(k));
   ok(badKeys.length === 0, 'no nationality, country, destination, religion or service field anywhere in monitoredLoans or r6.redFlagData (' + badKeys.join(', ') + ')');
   ok(D.earlyWarning.length === 5, 'the seeded day-zero earlyWarning table is kept (5 rows)');
@@ -2314,7 +2315,7 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
 
   // ---- the shared early-warning block ----
   const blk = E.getPolicy('earlyWarning');
-  ok(blk.kind === 'SHARED_BLOCK' && blk.version === 1 && blk.appliesTo.join(',') === 'personal_loan,car_loan,split,sme_working_capital,monitoring', 'getPolicy("earlyWarning"): a shared block for personal loan, car loan, split, SME working capital (v2.10) and monitoring, v1');
+  ok(blk.kind === 'SHARED_BLOCK' && blk.version === 1 && blk.appliesTo.join(',') === 'personal_loan,car_loan,split,sme_working_capital,school_fees,monitoring', 'getPolicy("earlyWarning"): a shared block for personal loan, car loan, split, SME working capital (v2.10), school fees (v2.21) and monitoring, v1');
   eq(JSON.stringify(blk.params), JSON.stringify({ redFlagsAtOrigination: true, cardsMaxedUtilisationPct: 90, cardsMaxedMinCards: 2, cardsMaxedRisePp: 30,
     remittanceShareOfIncomePct: 80, remittanceMultipleOfBaseline: 2, travelMinAmountAed: 1000, travelWindowDays: 30, salaryLateDays: 7, onTimeRunMin: 3,
     balanceDropPct: 80, outboundShareOfAvgBalancePct: 50 }), 'default thresholds = the spec (90% / 2 cards / +30 pp · 80% and 2× · AED 1,000 in 30 days · 7 days or 3 on time · −80% and 50%)');
@@ -2439,7 +2440,7 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
 
   // ---- earlyWarningScan: pure, deterministic, sorted ----
   const scan = E.earlyWarningScan();
-  eq(scan.map(r => r.loanId + ':' + r.severityLabel).join(' '), 'ML-01:HIGH ML-07:HIGH ML-02:MEDIUM ML-03:MEDIUM ML-06:MEDIUM ML-08:MEDIUM ML-04:LOW ML-05:NONE', 'scan: one row per loan, sorted HIGH → NONE (v2.10 adds ML-07 HIGH and ML-08 MEDIUM)');
+  eq(scan.map(r => r.loanId + ':' + r.severityLabel).join(' '), 'ML-01:HIGH ML-07:HIGH ML-02:MEDIUM ML-03:MEDIUM ML-06:MEDIUM ML-08:MEDIUM ML-04:LOW ML-05:NONE ML-09:NONE', 'scan: one row per loan, sorted HIGH → NONE (v2.10 adds ML-07 HIGH and ML-08 MEDIUM; v2.21 ML-09 NONE)');
   ok(scan.every(r => r.customer && r.productId && r.action && Array.isArray(r.flags) && Array.isArray(r.guardrailNotes) && r.guardrailNotes.length) &&
      scan.every(r => r.flags.every(f => f.en && ARABIC.test(f.ar) && f.observed && f.baseline && f.threshold)), 'every row: severity, flags (observed / baseline / threshold, EN + AR), action, guardrail notes');
   ok(scan.find(r => r.loanId === 'ML-02').action.channel === 'In-app message' && scan.find(r => r.loanId === 'ML-06').action.channel === 'SMS' &&
@@ -2449,7 +2450,7 @@ group('18. UAE red flags and early warning (v2.9): own-baseline signals, refer-o
   const tick1 = E.decide({ productId: 'split', applicant: P.c4, amount: 4800, tenorMonths: 6, consents: ALL });
   ok(scanJson === JSON.stringify(scan) && new Date(tick1.createdAt) - new Date(tick0.createdAt) === 37000, 'earlyWarningScan() is pure: identical output, no clock tick');
   const mm = E.metrics().exitRiskWatch;
-  ok(mm && JSON.stringify(mm.counts) === JSON.stringify({ HIGH: 2, MEDIUM: 4, LOW: 1, NONE: 1 }) && mm.rows.length === 8, 'metrics().exitRiskWatch: HIGH 2 · MEDIUM 4 · LOW 1 · NONE 1 (v2.10: + ML-07 HIGH, + ML-08 MEDIUM)');
+  ok(mm && JSON.stringify(mm.counts) === JSON.stringify({ HIGH: 2, MEDIUM: 4, LOW: 1, NONE: 2 }) && mm.rows.length === 9, 'metrics().exitRiskWatch: HIGH 2 · MEDIUM 4 · LOW 1 · NONE 2 (v2.10: + ML-07 HIGH, + ML-08 MEDIUM; v2.21: + ML-09 NONE)');
 
   // ---- redFlags never reads nationality, country or destination fields ----
   const tagged = clone(r6);
@@ -2926,7 +2927,7 @@ group('19. SME working capital (v2.10): business accounts + the owner’s person
   const r7 = scan.find(r => r.loanId === 'ML-07'), r8 = scan.find(r => r.loanId === 'ML-08');
   ok(r7.segment === 'SME' && r7.guarantor === ML7.owner && r7.action.channel === 'Phone — specialist' && r8.action.channel === 'Email' && r8.severityLabel === 'MEDIUM',
      'scan rows: SME segment and guarantor; ML-07 a specialist phone call, ML-08 a check-in on the chosen channel (Email)');
-  ok(scan.filter(r => r.productId !== PID).map(r => r.loanId + ':' + r.severityLabel).join(' ') === 'ML-01:HIGH ML-02:MEDIUM ML-03:MEDIUM ML-06:MEDIUM ML-04:LOW ML-05:NONE',
+  ok(scan.filter(r => r.productId !== PID && r.productId !== 'school_fees').map(r => r.loanId + ':' + r.severityLabel).join(' ') === 'ML-01:HIGH ML-02:MEDIUM ML-03:MEDIUM ML-06:MEDIUM ML-04:LOW ML-05:NONE',
      'ML-01 … ML-06 keep their v2.9 severities');
   const blk = E.getPolicy('earlyWarning');
   ok(blk.businessSignals.map(b => b.code).join() === 'RF_REVENUE_DROP,RF_FUNDS_TO_OWNER,FUNDS_DIVERSION' && /while the business loan you guarantee is open/.test(blk.consentWhyOwner),
@@ -4302,6 +4303,342 @@ group('27. Addendum v2.20: rely on botim’s phone and email verification — on
   const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|cash now/i;
   const txt27 = JSON.stringify([d0, s120, ato, ov, ch, ne, lines]);
   ok(!banned.test(txt27) && !mentionsSalaryTransfer(txt27), 'no banned vocabulary in the v2.20 reliance results or driver lines');
+  E.init(D);
+});
+
+// ---------------------------------------------------------------------------
+// Group 28 — Addendum v2.21 (SCHOOL-FEES-SPEC.md): split school fees over 12 months, the default product. Underwritten
+// like the personal loan (same NoorScore, grade, reason codes and completeness for the same customer); paid to the school.
+// ---------------------------------------------------------------------------
+group('28. Addendum v2.21: split school fees over 12 months — the default product; the personal loan’s underwriting, paid to the school', () => {
+  E.init(D);
+  const j = D.personasJourney[0], r6 = D.personasLoan.find(p => p.id === 'r6');
+  const OF = { aecb: true, openFinance: true };
+  const META = { author: 'R. Haddad (Credit Policy)', approver: 'S. Nair (CRO)' };
+  const JUNIPER = { schoolId: 'sch-juniper', invoiceRef: 'INV-26-0815', dueDate: '2026-08-20' };
+  const FALCON = { schoolId: 'sch-falcon', invoiceRef: 'INV-26-0815', dueDate: '2026-08-20' };
+  const ALL_ACC = ['4821', '0193', '7702', '3317'], NO_CARD_LOAN = ['4821', '0193'], NO_CURRENT = ['0193', '7702', '3317'];
+  const TERMS = { basis: 'TERMS', termsVersion: 'T&C v1.0 · Privacy policy v1.0', acceptedAt: '2026-07-19T08:58:00.000Z' };
+  const sf = (over, applicant) => { const r = E.decide(Object.assign({ productId: 'school_fees', applicant: applicant || j, amount: 15000, tenorMonths: 12, school: JUNIPER,
+    consents: OF, lenderId: 'partner-bank' }, over || {})); collect(r.reasonCodes); return r; };
+  const pl = (over, applicant) => { const r = E.decide(Object.assign({ productId: 'personal_loan', applicant: applicant || j, amount: 15000, tenorMonths: 12,
+    consents: OF, lenderId: 'partner-bank' }, over || {})); collect(r.reasonCodes); return r; };
+  // the journey's application: the terms-based footprint check, the Emirates ID, the approved accounts, botim's verification relied on
+  const JOURNEY = { consents: Object.assign({}, OF, { digitalFootprint: TERMS }), emiratesId: true, dataSources: { approvedAccounts: ALL_ACC, months: 12 },
+                    contactVerification: { phone: 'BOTIM', email: 'BOTIM' } };
+  const codes = (r, lender) => E.libraryCodesFor(r.id, lender || 'partner-bank').map(c => c.code).join('|');
+  const rule = (r, id) => r.rules.find(x => x.id === id) || {};
+  const keysDeep = (x, out) => { out = out || []; if (x && typeof x === 'object') for (const kk of Object.keys(x)) { out.push(kk); keysDeep(x[kk], out); } return out; };
+
+  // ---- the manifest, the directory, j1 ----
+  const man = E.manifests().find(m => m.productId === 'school_fees');
+  ok(man && man.nameEn === 'Split school fees' && man.nameAr === 'تقسيط الرسوم المدرسية' && man.segment === 'CONSUMER' && man.pricingMode === 'SCHOOL_FEES' &&
+     E.manifests().length === 7 && E.manifests()[6].productId === 'school_fees', 'manifest school_fees appended seventh: "Split school fees" / تقسيط الرسوم المدرسية, CONSUMER, pricing mode SCHOOL_FEES');
+  eq(JSON.stringify(D.schools), JSON.stringify([
+    { id: 'sch-juniper', name: 'Juniper Hill Primary School', city: 'Dubai', regulator: 'KHDA', partner: true, ibanMasked: 'AE•• •••• •••• •••• •••• 4410' },
+    { id: 'sch-falcon', name: 'Falcon Ridge Academy', city: 'Dubai', regulator: 'KHDA', partner: false, ibanMasked: 'AE•• •••• •••• •••• •••• 7783' }]),
+    'MizanData.schools: the illustrative directory exactly as specified (Juniper Hill — partner; Falcon Ridge — other licensed school)');
+  ok(E.schools().length === 2 && E.schools()[0].partner === true && E.schools()[1].partner === false, 'MizanEngine.schools() serves the directory');
+  eq(JSON.stringify(j.schoolFees), JSON.stringify({ schoolId: 'sch-juniper', child: 'Child 1 · Grade 1', academicYear: '2026–27', terms: 'Terms 1–3', amount: 15000,
+    dueDate: '2026-08-20', invoiceRef: 'INV-26-0815' }), 'j1.schoolFees: the invoice exactly as specified');
+  ok(j.tagline === 'Warehouse supervisor, 3 years in the UAE, botim user — his daughter starts Grade 1 in September' && j.purpose === 'Family wedding' &&
+     j.defaultRequest.amount === 15000 && j.defaultRequest.tenorMonths === 12, 'j1: the new tagline; purpose and defaultRequest kept for the personal-loan path');
+  ok(!keysDeep(j.schoolFees).some(k => /name/i.test(k)) && j.schoolFees.child === 'Child 1 · Grade 1', 'the child is "Child 1 · Grade 1" — no name key, no name');
+
+  // ---- the pack: locked block, params, bounds, the fixed term ----
+  const pol = E.getPolicy('school_fees');
+  eq(JSON.stringify(pol.regulatory), JSON.stringify({ dbrCapPct: 50, dbrCapRetireePct: 30, salaryMultipleCap: 20, fixedTenorMonths: 12, aecbCheckRequired: true,
+    coolingOffDays: 5, payee: 'SCHOOL', earlySettlementFee: 'None' }), 'the locked block exactly as specified (fixedTenorMonths 12, payee SCHOOL)');
+  eq(JSON.stringify(pol.params), JSON.stringify({ minSalary: 5000, minAge: 21, maxAge: 65, scoreDecline: 620, scoreRefer: 680, maxEsrPct: 60, thinFileAction: 'REFER',
+    minMonthsInUae: 6, chequeReturnsMax: 1, minAmount: 2000, productCap: 120000, instalmentToFcfMaxPct: 50, partnerSchoolParentFeePct: 0, merchantFeePct: 5,
+    nonPartnerMonthlyFeeRate: { A: 0.005, B: 0.0075, C: 0.01 }, completenessThresholdPct: 70, footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20, tokenValidityDays: 14 }),
+    'the params exactly as specified');
+  ok(pol.version === 1 && E.policyHistory('school_fees').length === 1 && pol.platform && pol.platform.repaymentCollection && pol.platform.repaymentCollection.altareqMaxAmount === 1000,
+     'pack v1 with its own history; the v2.3 platform rule rides on it');
+  throwsWith(() => E.publishPolicy('school_fees', { fixedTenorMonths: 6 }, META), ['fixedTenorMonths', 'locked rule'], 'publish refuses fixedTenorMonths (12 months is a locked rule of the pack)');
+  throwsWith(() => E.publishPolicy('school_fees', { payee: 'CUSTOMER' }, META), ['payee', 'locked rule'], 'publish refuses the payee (always the school)');
+  throwsWith(() => E.publishPolicy('school_fees', { dbrCapPct: 55 }, META), 'locked regulatory primitive', 'publish refuses the DBR cap (regulatory)');
+  throwsWith(() => E.publishPolicy('school_fees', { monthlyFeeRate: { A: 0.01, B: 0.01, C: 0.01 } }, META), 'unknown policy parameter', 'an unknown param is refused');
+  const BOUNDS = [['minSalary', 3000, 25000], ['minAge', 18, 25], ['maxAge', 60, 70], ['maxEsrPct', 30, 90], ['minMonthsInUae', 0, 24], ['chequeReturnsMax', 0, 5],
+                  ['minAmount', 500, 10000], ['productCap', 20000, 300000], ['instalmentToFcfMaxPct', 10, 80], ['merchantFeePct', 0, 10],
+                  ['completenessThresholdPct', 50, 90], ['footprintOverlayCap', 0, 30], ['tokenValidityDays', 3, 30]];
+  for (const [k, lo, hi] of BOUNDS) {
+    const okLo = (() => { try { E.simulateBook('school_fees', { [k]: lo }); return true; } catch (e) { return false; } })();
+    const okHi = (() => { try { E.simulateBook('school_fees', { [k]: hi }); return true; } catch (e) { return false; } })();
+    const below = (() => { try { E.simulateBook('school_fees', { [k]: lo - (lo >= 100 ? 100 : 1) }); return false; } catch (e) { return /outside allowed bounds/.test(e.message); } })();
+    const above = (() => { try { E.simulateBook('school_fees', { [k]: hi + (hi >= 100 ? 100 : 1) }); return false; } catch (e) { return /outside allowed bounds/.test(e.message); } })();
+    ok(okLo && okHi && below && above, 'bounds ' + k + ' [' + lo + ', ' + hi + ']: both ends accepted, outside refused');
+  }
+  ok((() => { try { E.simulateBook('school_fees', { scoreDecline: 550, scoreRefer: 600 }); E.simulateBook('school_fees', { scoreDecline: 720, scoreRefer: 780 }); return true; } catch (e) { return false; } })(),
+     'bounds scoreDecline [550, 720] and scoreRefer [600, 780]: the ends accepted');
+  throwsWith(() => E.simulateBook('school_fees', { scoreDecline: 549 }), 'outside allowed bounds', 'scoreDecline 549 refused');
+  throwsWith(() => E.simulateBook('school_fees', { scoreRefer: 781 }), 'outside allowed bounds', 'scoreRefer 781 refused');
+  throwsWith(() => E.simulateBook('school_fees', { scoreDecline: 700, scoreRefer: 690 }), 'must be at or above scoreDecline', 'the refer line can never sit below the decline cut-off');
+  throwsWith(() => E.simulateBook('school_fees', { partnerSchoolParentFeePct: 1 }), ['partnerSchoolParentFeePct', 'product promise'], 'partnerSchoolParentFeePct is [0, 0] — 0% is the product promise');
+  ok((() => { try { E.simulateBook('school_fees', { partnerSchoolParentFeePct: 0 }); return true; } catch (e) { return false; } })(), 'partnerSchoolParentFeePct 0 accepted');
+  throwsWith(() => E.simulateBook('school_fees', { nonPartnerMonthlyFeeRate: { A: 0.005, B: 0.0075, C: 0.021 } }), 'must be in [0, 0.02]', 'a non-partner rate above 2% a month is refused');
+  throwsWith(() => E.simulateBook('school_fees', { nonPartnerMonthlyFeeRate: { A: -0.001, B: 0.0075, C: 0.01 } }), 'must be in [0, 0.02]', 'a negative non-partner rate is refused');
+  throwsWith(() => E.simulateBook('school_fees', { nonPartnerMonthlyFeeRate: { A: 0.01, B: 0.0075, C: 0.01 } }), 'risk-ordered', 'non-partner rates must be risk-ordered A ≤ B ≤ C');
+  throwsWith(() => E.simulateBook('school_fees', { nonPartnerMonthlyFeeRate: { A: 0.005, B: 0.0075 } }), 'nonPartnerMonthlyFeeRate.C', 'all three bands are required');
+  ok((() => { try { E.simulateBook('school_fees', { nonPartnerMonthlyFeeRate: { A: 0, B: 0.01, C: 0.02 } }); return true; } catch (e) { return false; } })(), 'non-partner rates at 0 and 2% accepted');
+  throwsWith(() => E.publishPolicy('school_fees', { merchantFeePct: 4 }, { author: 'risk.lead', approver: 'Risk.Lead' }), '4-eyes', 'publishing the pack needs 4-eyes (author ≠ approver)');
+  eq(E.getPolicy('school_fees').version, 1, 'refused publishes change nothing');
+
+  // ---- Ravi, AED 15,000 at Juniper Hill (partner), 12 months ----
+  const plain = sf();
+  ok(plain.outcome === 'APPROVE' && plain.limit.approved === 15000 && plain.limit.bindingConstraint === 'REQUESTED' && plain.score.points === 737 && plain.score.grade === 'B' &&
+     plain.reasonCodes.length === 0, 'decide(school_fees, j1, AED 15,000, Juniper Hill): APPROVE AED 15,000 (the invoice binds) · NoorScore 737 · grade B · no reason codes');
+  const k = plain.pricing.kfs;
+  ok(plain.pricing.mode === 'SCHOOL_FEES' && k.tenorMonths === 12 && k.monthlyInstalment === 1250 && k.totalFees === 0 && k.aprEquivalent === 0 && k.planTotal === 15000 &&
+     plain.pricing.monthlyFeeRate === 0 && plain.pricing.partnerSchool === true, 'the plan: 12 × AED 1,250.00 · fees AED 0 · APR 0% · plan total AED 15,000 (mode SCHOOL_FEES, kfs.monthlyInstalment)');
+  ok(plain.features.dbrPct === 17.9 && plain.features.newInstallment === 1250 && plain.features.existingObligations === 900 && rule(plain, 'REG_DBR_CAP').result === 'PASS',
+     'DBR (900 + 1,250) ÷ 12,000 = 17.9% (REG_DBR_CAP PASS)');
+  ok(plain.features.instalmentBudgetMonthly === 1850 && plain.features.maxPrincipal === 22000 && plain.features.freeCashFlowMonthly === 3700 && plain.features.headroomMonthly === 5100,
+     'budget = min(DBR headroom 5,100, 50% × FCF 3,700 = 1,850) = 1,850 → partner max AED 22,000');
+  const tr = plain.limit.trace.map(t => t.key + ':' + t.value).join(' ');
+  eq(tr, 'REQUESTED:15000 DBR_HEADROOM:61000 FCF:22000 SALARY_MULTIPLE:240000 PRODUCT_CAP:120000', 'limit trace: invoice 15,000 · DBR 61,000 · FCF 22,000 · 20× salary 240,000 · cap 120,000');
+  ok(plain.repayment && plain.repayment.method === 'DIRECT_DEBIT' && plain.token.conditions.includes('Paid directly to the school against the fee invoice — never to the customer') &&
+     plain.token.conditions.includes(DD_COND) && plain.token.conditions[0] === KFS_COND, 'repayment: a direct debit mandate (above AED 1,000); the token: KFS, the mandate, paid directly to the school');
+  const sfr = plain.schoolFees;
+  ok(sfr && sfr.school.id === 'sch-juniper' && sfr.school.partner === true && sfr.school.regulator === 'KHDA' && sfr.school.ibanMasked === 'AE•• •••• •••• •••• •••• 4410' &&
+     sfr.invoice.ref === 'INV-26-0815' && sfr.invoice.amount === 15000 && sfr.invoice.dueDate === '2026-08-20' && sfr.months === 12 && sfr.monthlyInstalment === 1250 &&
+     sfr.totalFees === 0 && sfr.aprEquivalent === 0 && sfr.planTotal === 15000 && sfr.payee === 'SCHOOL', 'record.schoolFees: the school, the invoice, 12 months, 12 × 1,250, no fees, APR 0, payee the school');
+  ok(sfr.bestDebitDay === 28 && sfr.coolingOffEndsOn === '2026-07-24' && sfr.firstPaymentDate === '2026-08-28' && sfr.lastPaymentDate === '2027-07-28' && sfr.coolingOffEndsAfterDueDate === false,
+     'dates: best debit date the 28th (the day after the salary); cooling-off ends 24 Jul (5 business days); first payment 28 Aug 2026 (≥ 20 days after payout), last 28 Jul 2027; before the due date');
+  ok(!('child' in sfr) && !JSON.stringify(sfr).includes('Child 1') && !JSON.stringify(plain.inputs).includes('Child 1'), 'the record carries nothing about the child');
+  ok(rule(plain, 'POL_SCHOOL_VERIFIED').result === 'PASS' && rule(plain, 'REG_FIXED_TERM').result === 'PASS' && rule(plain, 'POL_MIN_AMOUNT').result === 'PASS' &&
+     rule(plain, 'POL_INSTALMENT_TO_FCF').result === 'PASS', 'rules: POL_SCHOOL_VERIFIED PASS (in the directory) · REG_FIXED_TERM · POL_MIN_AMOUNT · POL_INSTALMENT_TO_FCF');
+  ok(plain.dataPulls.some(x => x.source === 'SCHOOL_DIRECTORY' && x.status === 'VERIFIED') && plain.dataPulls[0].source === 'AECB_CONSUMER' && plain.dataPulls.some(x => x.source === 'OPEN_FINANCE'),
+     'data pulls: AECB, Open Finance and the school directory (internal)');
+  ok(plain.features.salaryVerifiedViaConnectedAccount === true && plain.score.overlays.some(o => /Salary verified via connected account/.test(o.name)), 'salary verified via connected accounts (+15), as on the personal loan');
+
+  // ---- the same customer on the personal loan: identical NoorScore, grade, reason codes and completeness ----
+  const sfJ = sf(JOURNEY), plJ = pl(JOURNEY);
+  ok(sfJ.outcome === 'APPROVE' && sfJ.score.points === plJ.score.points && sfJ.score.points === 737 && sfJ.score.grade === plJ.score.grade &&
+     JSON.stringify(sfJ.reasonCodes) === JSON.stringify(plJ.reasonCodes) && JSON.stringify(sfJ.dataCompleteness) === JSON.stringify(plJ.dataCompleteness) &&
+     JSON.stringify(sfJ.score.overlays) === JSON.stringify(plJ.score.overlays), 'the journey application: NoorScore 737, grade B, reason codes, completeness and score overlays identical to the personal loan');
+  eq(codes(sfJ), 'G02|G03|G04|G05|G06|G07|G08|G09|G10|G11|PR-PB-G01', 'library codes for Partner Bank: G02–G11 and PR-PB-G01');
+  eq(codes(sfJ), codes(plJ), 'the same library codes as Ravi’s personal loan');
+  eq(codes(sfJ, 'lender-b'), codes(plJ, 'lender-b'), 'the same library codes for Lender B');
+  ok(['POL_ID_VALID', 'POL_EMPLOYER_MATCH', 'POL_DATA_COMPLETENESS', 'POL_IDENTITY_FOOTPRINT'].every(id => rule(sfJ, id).result === rule(plJ, id).result) &&
+     sfJ.dataPulls.some(x => x.source === 'EMIRATES_ID') && sfJ.dataPulls.some(x => x.source === 'DIGITAL_FOOTPRINT') && sfJ.inputs.contactVerification.phone === 'BOTIM',
+     'the Emirates ID rules, data completeness, the terms-based footprint check and botim’s verification run exactly as on the personal loan');
+  ok(sfJ.limit.approved === 15000 && sfJ.pricing.kfs.monthlyInstalment === 1250 && plJ.pricing.kfs.monthlyInstalment === 1311.7, 'only the product, the instalment and the price differ (1,250.00 vs 1,311.70)');
+  const mS = E.creditMemo(sfJ.id), mP = E.creditMemo(plJ.id);
+  ok(JSON.stringify(mS.outputs) === JSON.stringify(mP.outputs), 'the memo’s output table is identical to the personal loan’s (NoorScore, codes, completeness, income, additional income, DBR)');
+  const dbrRow = mS.outputs.find(o => o.key === 'dbr');
+  ok(dbrRow.value === '15–20% · headroom AED 3,500–4,000 / month' && mS.affordability.dbrBand === '15–20%' && mS.affordability.headroomBand === 'AED 3,500–4,000 / month',
+     'memo DBR band "15–20%" and headroom "AED 3,500–4,000 / month" (3,850) — the same bands as the personal-loan memo');
+  ok(['incomeBand', 'additionalIncomeBand', 'freeCashFlowBand', 'instalmentToCashFlowBand', 'incomeVerifiedVia'].every(x => mS.affordability[x] === mP.affordability[x]) &&
+     JSON.stringify(mS.scoreComponents) === JSON.stringify(mP.scoreComponents) && JSON.stringify(mS.monitoring) === JSON.stringify(mP.monitoring) &&
+     JSON.stringify(mS.bureau) === JSON.stringify(mP.bureau) && JSON.stringify(mS.dataCompleteness) === JSON.stringify(mP.dataCompleteness),
+     'the affordability bands, score components, monitoring (best debit date the 28th), bureau flags and completeness match the personal-loan memo');
+  ok(mS.monitoring.bestDebitDate === '28th of the month', 'monitoring: best debit date the 28th');
+
+  // ---- pre-qualification ----
+  const pq = E.prequalify(j, OF);
+  eq(JSON.stringify(pq.schoolFees), JSON.stringify({ months: 12, maxPartner: 22000, maxOther: 20000, instalmentBudgetMonthly: 1850, nonPartnerBand: 'B', nonPartnerRate: 0.0075 }),
+     'prequalify().schoolFees: maxPartner AED 22,000 · maxOther (band B, 0.75%) AED 20,000 · budget 1,850');
+  ok(pq.indicativeMin === 10000 && pq.indicativeMax === 40000 && pq.maxByTermMonths[12] === 21000 && pq.assumptions.instalmentBudgetMonthly === 1850,
+     'the personal-loan fields are unchanged (AED 10,000–40,000; 12 → 21,000; budget 1,850)');
+  ok(pq.schoolFees.maxPartner === plain.features.maxPrincipal, 'pre-qualification never promises more than decide() allows (22,000 = the decision’s partner max)');
+  const pqNeed = E.prequalify(j, OF, { approvedAccounts: NO_CURRENT });
+  ok(pqNeed.status === 'NEEDS_DATA' && !('schoolFees' in pqNeed), 'below the completeness threshold: NEEDS_DATA and no school-fees block either');
+  const pqOk = E.prequalify(j, OF, { approvedAccounts: ALL_ACC });
+  eq(JSON.stringify(pqOk.schoolFees), JSON.stringify(pq.schoolFees), 'at or above the threshold the school-fees block is the same');
+
+  // ---- Falcon Ridge (another licensed school), AED 15,000, band B ----
+  const f = sf({ school: FALCON });
+  const fk = f.pricing.kfs;
+  ok(f.outcome === 'APPROVE' && f.score.points === 737 && f.pricing.partnerSchool === false && f.pricing.monthlyFeeRate === 0.0075 && fk.monthlyInstalment === 1362.5 &&
+     fk.monthlyFee === 112.5 && fk.totalFees === 1350 && fk.planTotal === 16350, 'Falcon Ridge: 12 × AED 1,362.50 (1,250 + 0.75% × 15,000) · fees AED 1,350 · total AED 16,350');
+  near(fk.aprEquivalent, independentApr(15000, 1362.5, 12), 0.0001, 'the APR equivalent matches an independent IRR (Newton)');
+  ok(fk.aprEquivalent > 0.15 && fk.aprEquivalent < 0.17 && fk.aprEquivalent === 0.1622, 'APR equivalent about 16% (16.22%)');
+  ok(f.features.dbrPct === 18.9 && f.pricing.merchantFeePct === null && plain.pricing.merchantFeePct === 5, 'DBR 18.9% with the fee; the merchant fee is internal and only at a partner school');
+  const q = E.quoteSchoolFees(15000, { schoolId: 'sch-falcon', band: 'B' });
+  ok(q.monthlyInstalment === 1362.5 && q.totalFees === 1350 && q.aprEquivalent === fk.aprEquivalent && q.line === '12 × AED 1,362.50 · monthly fee 0.75% · APR equivalent 16.22%' &&
+     q.school.name === 'Falcon Ridge Academy' && q.partner === false, 'quoteSchoolFees(15,000, Falcon Ridge, B): "12 × AED 1,362.50 · monthly fee 0.75% · APR equivalent 16.22%"');
+  const qj = E.quoteSchoolFees(15000, { schoolId: 'sch-juniper' });
+  ok(qj.monthlyInstalment === 1250 && qj.totalFees === 0 && qj.aprEquivalent === 0 && qj.line === '12 × AED 1,250 · 0% interest, no fees' && qj.partner === true,
+     'quoteSchoolFees(15,000, Juniper Hill): "12 × AED 1,250 · 0% interest, no fees"');
+  ok(E.quoteSchoolFees(15000, { schoolId: 'sch-falcon', band: 'A' }).monthlyFeeRate === 0.005 && E.quoteSchoolFees(15000, { schoolId: 'sch-falcon', band: 'C' }).monthlyFeeRate === 0.01 &&
+     E.quoteSchoolFees(15000, { schoolId: 'sch-falcon' }).monthlyFeeRate === 0.0075, 'bands A 0.50% · B 0.75% (the default) · C 1.00%');
+  ok(E.quoteSchoolFees(15500, { schoolId: 'sch-juniper' }).monthlyInstalment === 1291.67 && E.quoteSchoolFees(15500, { schoolId: 'sch-juniper' }).planTotal === 15500,
+     'AED 15,500: 12 × 1,291.67, the plan total stays 15,500 (the last instalment absorbs the fils)');
+  const nq = E.listDecisions().length, tq0 = sf({ amount: 3000 });
+  E.quoteSchoolFees(20000, { schoolId: 'sch-falcon', band: 'C' }); E.quoteSchoolFees(20000, { schoolId: 'sch-juniper' });
+  const tq1 = sf({ amount: 3000 });
+  ok(E.listDecisions().length === nq + 2 && new Date(tq1.createdAt) - new Date(tq0.createdAt) === 37000, 'quoteSchoolFees() is pure: no record, no clock tick');
+  throwsWith(() => E.quoteSchoolFees(0, { schoolId: 'sch-juniper' }), 'positive amount', 'quoteSchoolFees() needs a positive amount');
+  throwsWith(() => E.quoteSchoolFees(15000, { schoolId: 'sch-juniper', band: 'D' }), 'band must be', 'quoteSchoolFees() refuses an unknown band');
+
+  // ---- an invoice above the max: approved = the max, RC_LIMIT_REDUCED → Y09 ----
+  const big = sf({ amount: 30000 });
+  ok(big.outcome === 'APPROVE' && big.limit.approved === 22000 && big.limit.bindingConstraint === 'FCF' && big.reasonCodes.join('|') === 'RC_LIMIT_REDUCED' &&
+     big.schoolFees.shortfall === 8000 && big.pricing.kfs.monthlyInstalment === 1833.33, 'invoice AED 30,000: approved AED 22,000 (FCF binds) with RC_LIMIT_REDUCED; Noor splits 22,000, the parent pays 8,000 to the school');
+  ok(codes(big).split('|').includes('Y09') && E.REASON_CODE_MAP.RC_LIMIT_REDUCED === 'Y09', 'the memo carries Y09 Amount Adjusted to Fit');
+  const bigF = sf({ amount: 30000, school: FALCON });
+  ok(bigF.limit.approved === 20000 && bigF.limit.bindingConstraint === 'FCF', 'at Falcon Ridge (band B) the max is AED 20,000');
+
+  // ---- tenor 6 → 12, RC_TENOR_CAP → Y10 ----
+  const t6 = sf({ tenorMonths: 6 });
+  ok(t6.outcome === 'APPROVE' && t6.pricing.kfs.tenorMonths === 12 && t6.features.effectiveTenor === 12 && t6.reasonCodes.join('|') === 'RC_TENOR_CAP' &&
+     t6.request.tenorMonths === 6 && rule(t6, 'REG_FIXED_TERM').observed === '6 → set to 12', 'tenor 6 → set to 12 with RC_TENOR_CAP (the request keeps 6)');
+  ok(codes(t6).split('|').includes('Y10') && E.REASON_CODE_MAP.RC_TENOR_CAP === 'Y10', 'the memo carries Y10 Term Adjusted to Rules');
+  ok(sf({ tenorMonths: 24 }).pricing.kfs.tenorMonths === 12, 'tenor 24 → 12 too');
+
+  // ---- an unknown school throws; nothing recorded ----
+  const nU = E.listDecisions().length;
+  throwsWith(() => sf({ school: { schoolId: 'sch-nowhere', invoiceRef: 'X', dueDate: '2026-08-20' } }), 'unknown school', 'an unknown school throws');
+  const noInv = clone(j); delete noInv.schoolFees;
+  throwsWith(() => E.decide({ productId: 'school_fees', applicant: noInv, amount: 15000, tenorMonths: 12, consents: OF }), 'application.school', 'no school and no invoice on the applicant: refused');
+  throwsWith(() => sf({ school: { schoolId: 'sch-juniper', dueDate: 'soon' } }), 'dueDate', 'a malformed due date is refused');
+  throwsWith(() => E.quoteSchoolFees(15000, { schoolId: 'sch-nowhere' }), 'unknown school', 'quoteSchoolFees() with an unknown school throws');
+  throwsWith(() => sf({ consents: { aecb: false, openFinance: true } }), 'AECB consent', 'AECB consent is required, as for every product');
+  eq(E.listDecisions().length, nU, 'refusals record nothing');
+  const dflt = E.decide({ productId: 'school_fees', applicant: j, amount: 15000, tenorMonths: 12, consents: OF });
+  ok(dflt.schoolFees.school.id === 'sch-juniper' && dflt.schoolFees.invoice.ref === 'INV-26-0815', 'without application.school the applicant’s own invoice is used');
+
+  // ---- red flags REFER on school_fees (r6) — never a decline, never a price change ----
+  const rf = sf({}, r6);
+  const r6plain = clone(r6); delete r6plain.redFlagData;
+  const rfOff = sf({}, r6plain);
+  ok(rf.outcome === 'REFER' && rf.reasonCodes.includes('RC_RED_FLAGS_REVIEW') && rule(rf, 'POL_RED_FLAGS').result === 'REFER' && rf.redFlags && rf.redFlags.referred,
+     'r6 on school fees: REFER with RC_RED_FLAGS_REVIEW (POL_RED_FLAGS — cards maxed, balances drained)');
+  ok(rfOff.outcome === 'APPROVE' && JSON.stringify(rf.pricing) === JSON.stringify(rfOff.pricing) && rf.score.points === rfOff.score.points && rf.limit.approved === rfOff.limit.approved,
+     'refer only: the same score, amount and price as without the signals');
+  ok(codes(rf).split('|').includes('R02'), 'the memo carries R02 Recent Changes in Account Activity');
+
+  // ---- data completeness below the threshold → REFER (never a decline, never a price change) ----
+  const dcLow = sf({ dataSources: { approvedAccounts: NO_CURRENT, months: 12 } });
+  const dcPl = pl({ dataSources: { approvedAccounts: NO_CURRENT, months: 12 } });
+  ok(dcLow.outcome === 'REFER' && dcLow.reasonCodes.join('|') === 'RC_DATA_INCOMPLETE' && rule(dcLow, 'POL_DATA_COMPLETENESS').result === 'REFER' && dcLow.dataCompleteness.pct === 30 &&
+     dcLow.pricing.kfs.monthlyInstalment === 1250, 'completeness 30% (current unticked): REFER with RC_DATA_INCOMPLETE; the price is unchanged');
+  ok(dcPl.outcome === dcLow.outcome && JSON.stringify(dcPl.reasonCodes) === JSON.stringify(dcLow.reasonCodes) && dcPl.score.points === dcLow.score.points,
+     'the same outcome, reason code and score as the personal loan');
+  const dc70 = sf({ dataSources: { approvedAccounts: NO_CARD_LOAN, months: 12 } });
+  ok(dc70.outcome === 'APPROVE' && dc70.score.points === 727 && dc70.score.grade === 'B' && dc70.pricing.kfs.monthlyInstalment === 1250, 'completeness 70%: scored 727 (−10), still B, the same plan');
+  ok(codes(dcLow).split('|').includes('Y13'), 'below the threshold the memo carries Y13 More Data Needed');
+
+  // ---- the memo: product line, purpose, flags — never the school's name, the merchant fee, the invoice or the child ----
+  const memo = E.creditMemo(sfJ.id), sftp = E.memoSftpRow(memo);
+  ok(memo.product.productId === 'school_fees' && memo.product.nameEn === 'School fees — 12 months' && memo.product.purpose === 'Education — school fees, paid directly to the school',
+     'memo product line "School fees — 12 months", purpose "Education — school fees, paid directly to the school"');
+  ok(memo.verification.school === 'School verified (licensed, in the directory)' && memo.verification.payee === 'Paid to the school — funds cannot be diverted' &&
+     memo.verification.identity === 'Identity verified', 'memo flags: "School verified (licensed, in the directory)" and "Paid to the school — funds cannot be diverted"');
+  ok(memo.terms.amount === 15000 && memo.terms.tenorMonths === 12 && memo.terms.monthlyPayment === 1250 && memo.terms.totalRepayable === 15000 && memo.terms.totalFees === 0 &&
+     memo.terms.aprEquivalent === 0 && memo.terms.monthlyFeeRate === 0 && memo.terms.payee === 'The school — paid directly by the lender' && memo.terms.repaymentMethod === 'DIRECT_DEBIT',
+     'memo terms: AED 15,000 · 12 months · 1,250 · total 15,000 · fees 0 · APR 0 · payee the school · direct debit');
+  eq(Object.keys(memo).join(','), MEMO_KEYS.slice(0, -1).concat(['dataCompleteness', 'consents']).join(','), 'memo keys: the v2.19 consumer memo’s (with completeness)');
+  eq(sftp.header.join(), SFTP_HEADER.join(), 'SFTP header unchanged');
+  ok(sftp.row[2] === 'school_fees' && sftp.row[6] === 'No interest, no fees (APR 0.00%)' && sftp.row[7] === '1250', 'SFTP: product school_fees · "No interest, no fees (APR 0.00%)" · 1250');
+  const sftpF = E.memoSftpRow(E.creditMemo(f.id));
+  ok(sftpF.row[6] === 'Fee 0.75%/mo (APR equivalent 16.22%)' && sftpF.row[7] === '1362.5', 'SFTP at Falcon Ridge: "Fee 0.75%/mo (APR equivalent 16.22%)" · 1362.5');
+  const NO_SCHOOL = /juniper|falcon|primary school|academy|khda|merchant|partner school|partnerSchool|INV-26|invoice|\.pdf|child|grade 1|daughter|4410|7783|AE••|ibanMasked|sch-juniper|sch-falcon/i;
+  const sfMemos = [sfJ, plain, f, big, t6, rf, dcLow, dc70];
+  const leaks = [];
+  for (const r of sfMemos) for (const lender of ['partner-bank', 'lender-b']) {
+    const m = E.creditMemo(r.id, { lenderId: lender }), row = E.memoSftpRow(m);
+    const body = JSON.stringify(m) + '\n' + row.header.join(',') + '\n' + row.row.join(',');
+    const hit = body.match(NO_SCHOOL);
+    if (hit) leaks.push(r.id + '/' + lender + ': ' + hit[0]);
+    if (keysDeep(m).some(x => /merchant|partner|school(?!Fees)|invoice|child/i.test(x) && x !== 'school')) leaks.push(r.id + '/' + lender + ': key');
+  }
+  ok(leaks.length === 0, 'memos (Partner Bank and Lender B) and SFTP rows of every school-fees decision: no school name, regulator, IBAN, merchant fee, partner flag, invoice or child' + (leaks.length ? ' (' + leaks.slice(0, 3).join('; ') + ')' : ''));
+  const expect = { incomeBand: T.income(12000), dbrBand: T.dbr(sfJ.features.dbrPct), freeCashFlowBand: T.fcf(3700), instalmentToCashFlowBand: T.share(sfJ.features.instalmentToFcfPct), aecbScoreBand: T.aecb(j.aecb) };
+  /* c1's split purchase is "School fees" (a merchant word for the scan); here it is the product's own name and purpose — set aside there only */
+  const hits = privacyScan(sfJ, memo, sftp, expect).concat(ipScan(memo, sftp, sfJ)).filter(x => !/^memo\.product\.(nameEn|purpose) names "School fees"$/.test(x));
+  ok(hits.length === 0, 'the v2.5 privacy scan and the v2.18 Noor-IP scan stay clean on the school-fees memo (the product line itself may say "School fees")' + (hits.length ? ' (' + hits.slice(0, 3).join('; ') + ')' : ''));
+  ok(forbiddenKeys(memo).length === 0, 'no internal keys in the memo (' + forbiddenKeys(memo).join(', ') + ')');
+  const mB = E.creditMemo(sfJ.id, { lenderId: 'lender-b' });
+  ok(mB.product.nameEn === 'School fees — 12 months' && !('verification' in mB) && !('affordability' in mB) && mB.outputs.map(o => o.key).join(',') === 'noorScore,reasonCodes',
+     'Lender B (Core only): the product line, NoorScore and reason codes — no flags, no bands (the sharing agreement, as today)');
+
+  // ---- every RC_* maps; no new codes ----
+  ok(Object.keys(D.reasonCodes).length === 52 && Object.keys(D.reasonCodes).every(rc => typeof E.REASON_CODE_MAP[rc] === 'string'), 'no new reason codes (52); every RC_* still maps to exactly one library code');
+  ok([...emittedCodes].every(rc => E.REASON_CODE_MAP[rc]), 'every code a school-fees decision emitted maps to a library code');
+  ok(D.reasonCodeLibrary.length === 38, 'the library is unchanged (36 standard + 2 partner codes)');
+
+  // ---- execution: the six steps, unchanged; "Partner Bank pays the school directly (…)" ----
+  const steps = E.execSteps('school_fees', plain.id);
+  ok(steps.map(x => x.type).join() === E.EXEC_EVENTS.join() && steps[5].description === 'Partner Bank pays the school directly (Juniper Hill Primary School)' &&
+     steps[3].label === 'Direct debit mandate active' && /5 business days elapsed, or written waiver signed \(CPR 8\/2020\)/.test(steps[4].description),
+     'execSteps: the six steps; DISBURSED "Partner Bank pays the school directly (Juniper Hill Primary School)"; cooling-off 5 business days or a written waiver');
+  eq(E.execSteps('school_fees')[5].description, 'Partner Bank pays the school directly', 'without a decision: "Partner Bank pays the school directly"');
+  throwsWith(() => E.recordEvent(plain.id, 'KFS_ACKNOWLEDGED'), 'out of sequence', 'out-of-order execution is refused');
+  for (const t of E.EXEC_EVENTS) E.recordEvent(plain.id, t);
+  const ex = E.getDecision(plain.id);
+  ok(ex.status === 'EXECUTED' && /the 12-month school-fees plan now exists and the school is paid/.test(ex.audit[ex.audit.length - 1].detail), 'all six recorded: EXECUTED — the plan exists and the school is paid');
+  const cm = E.recordCommunications(plain.id, { service: ['SMS', 'EMAIL'], marketing: [] });
+  ok(cm.consents.communications.reference === 'CNS-' + plain.id.slice(4) + '-COMMS' && !JSON.stringify(E.creditMemo(plain.id)).includes('COMMS'), 'contact preferences on the funded plan — never in the memo');
+
+  // ---- cooling-off vs the invoice due date: said, never auto-waived ----
+  const early = sf({ school: Object.assign({}, JUNIPER, { dueDate: '2026-07-22' }) });
+  ok(early.schoolFees.coolingOffEndsAfterDueDate === true && early.schoolFees.coolingOffEndsOn === '2026-07-24' && early.events.length === 0 && early.outcome === 'APPROVE',
+     'an invoice due 22 Jul, before cooling-off ends (24 Jul): flagged on the record (the screen offers the waiver); nothing is waived automatically');
+
+  // ---- reproduce, determinism ----
+  const rp = E.reproduceDecision(sfJ.id);
+  ok(rp.identical && rp.inputs.some(x => /^School invoice: the school \(directory id sch-juniper\), INV-26-0815, due 2026-08-20$/.test(x)), 'reproduceDecision(): identical; the logged inputs name the school invoice');
+  ok(E.reproduceDecision(f.id).identical && E.reproduceDecision(big.id).identical && E.reproduceDecision(rf.id).identical, 'Falcon Ridge, the reduced plan and the red-flag refer reproduce');
+  const tampered = E.getDecision(f.id); const keep = tampered.pricing.kfs.monthlyInstalment; tampered.pricing.kfs.monthlyInstalment = 1300;
+  ok(!E.reproduceDecision(f.id).identical && /pricing/.test(E.reproduceDecision(f.id).message), 'a tampered price is caught');
+  tampered.pricing.kfs.monthlyInstalment = keep;
+
+  // ---- policy console: simulate the personal-loan book as 12-month school-fee requests (partner pricing) ----
+  const sim = E.simulateBook('school_fees', {});
+  ok(sim.size === D.sampleBook.personal_loan.length && sim.amountImpact && sim.before.APPROVE === sim.after.APPROVE && /Simulated \d+ applications/.test(sim.summary),
+     'simulateBook(school_fees): the personal-loan sample book read as 12-month school-fee requests, with the amount impact');
+  const simCap = E.simulateBook('school_fees', { productCap: 20000 });
+  ok(simCap.amountImpact.approvalsReduced > 0 && simCap.amountImpact.approvedAmountAfter < simCap.amountImpact.approvedAmountBefore, 'a lower product cap reduces approved amounts (' + simCap.amountImpact.approvalsReduced + ' reduced)');
+  const raw = E.decideRaw('school_fees', D.sampleBook.personal_loan[0]);
+  ok(raw && raw.outcome && Number.isFinite(raw.approved), 'decideRaw(school_fees) evaluates a sample row (partner pricing)');
+  const pub = E.publishPolicy('school_fees', { merchantFeePct: 4 }, META);
+  const after = sf();
+  ok(pub.version === 2 && E.policyHistory('school_fees').length === 2 && after.policyVersion === 2 && after.pricing.merchantFeePct === 4 && after.pricing.kfs.monthlyInstalment === 1250 &&
+     E.reproduceDecision(sfJ.id).identical, 'a 4-eyes publish (merchant fee 4%) versions the pack; the parent’s plan is unchanged; v1 decisions still reproduce');
+
+  // ---- monitoring: STP vs targets and the early-warning scan ----
+  const mt = E.metrics();
+  ok(mt.byProduct.school_fees && mt.byProduct.school_fees.decisions === E.listDecisions().filter(r => r.productId === 'school_fees').length && mt.stpTargets.school_fees === 85 &&
+     mt.totals.decisions === Object.keys(mt.byProduct).reduce((x, kk) => x + mt.byProduct[kk].decisions, 0), 'metrics(): a school_fees row (this session’s decisions; no seeded history), STP target 85%, totals add up');
+  const ml9 = E.earlyWarningScan().find(r => r.loanId === 'ML-09');
+  ok(ml9 && ml9.productId === 'school_fees' && ml9.severityLabel === 'NONE' && ml9.flags.length === 0 && ml9.action && ml9.tenorMonths === 12 && !/school|child|juniper|falcon/i.test(JSON.stringify(D.monitoredLoans.find(l => l.id === 'ML-09')).replace(/school_fees/g, '')),
+     'early-warning scan: ML-09, a school-fees plan, NONE — no school, invoice or child on the monitored loan');
+  ok(E.getPolicy('earlyWarning').appliesTo.includes('school_fees') && E.REFER_SLA_HOURS.school_fees === 8, 'the early-warning block applies to school fees; refer SLA 8 hours');
+  const q9 = E.referQueue().find(x => x.id === rf.id);
+  ok(q9 && q9.productId === 'school_fees' && q9.slaHoursLeft === 8 && q9.redFlags && q9.redFlags.length, 'the red-flag refer sits in the queue with an 8-hour SLA');
+
+  // ---- nationality is never an input ----
+  const natA = clone(j), natB = clone(j);
+  natA.emiratesId.front.nationality = 'Philippines'; natB.emiratesId.front.nationality = 'Egypt';
+  const nA = sf(JOURNEY, natA), nB = sf(JOURNEY, natB);
+  ok(nA.score.points === nB.score.points && nA.outcome === nB.outcome && JSON.stringify(nA.pricing) === JSON.stringify(nB.pricing) && nA.limit.approved === nB.limit.approved,
+     'nationality changes nothing: the same score, outcome, amount and price');
+
+  // ---- fingerprints, determinism, vocabulary ----
+  E.init(D);
+  const ALLc = { aecb: true, openFinance: true };
+  const fpNow = {};
+  for (const id of ['r1', 'r2', 'r3', 'r4', 'r5']) { const p = P[id]; fpNow[id] = E.decide({ productId: 'personal_loan', applicant: p, amount: p.defaultRequest.amount, tenorMonths: p.defaultRequest.tenorMonths, consents: ALLc }); }
+  fpNow['r2+cp'] = E.decide({ productId: 'personal_loan', applicant: P.r2, amount: P.r2.defaultRequest.amount, tenorMonths: P.r2.defaultRequest.tenorMonths, consents: { aecb: true, openFinance: true, creditPassport: true } });
+  for (const p of D.personasSplit) fpNow[p.id] = E.decide({ productId: 'split', applicant: p, amount: p.defaultRequest.amount, tenorMonths: p.defaultRequest.tenorMonths, consents: ALLc });
+  for (const p of D.personasUpgrade) { fpNow[p.id] = E.decide({ productId: 'starter_loan', applicant: p, consents: ALLc }); fpNow[p.id + '+st'] = E.decide({ productId: 'starter_loan', applicant: p, consents: { aecb: true, openFinance: true, homeStatements: true } }); }
+  fpNow.j1 = E.decide({ productId: 'personal_loan', applicant: j, amount: 15000, tenorMonths: 12, consents: ALLc });
+  const a1 = D.personasCar[0];
+  fpNow['a1+of'] = E.decide({ productId: 'car_loan', applicant: a1, amount: a1.defaultRequest.amount, tenorMonths: a1.defaultRequest.tenorMonths, consents: ALLc });
+  fpNow['a1+docs'] = E.decide({ productId: 'car_loan', applicant: a1, amount: a1.defaultRequest.amount, tenorMonths: a1.defaultRequest.tenorMonths, consents: { aecb: true, openFinance: false } });
+  fpNow['r1 advance'] = E.decide({ productId: 'salary_advance', applicant: P.r1, amount: 20000, tenorMonths: 1, consents: { aecb: true, openFinance: false } });
+  const changed = Object.keys(V27_FINGERPRINTS).filter(kk => !fpNow[kk] || fingerprint(fpNow[kk]) !== V27_FINGERPRINTS[kk]);
+  ok(changed.length === 0, 'every v2.9 fingerprint still matches after v2.21 (changed: ' + changed.join(', ') + ')');
+  eq(fingerprint(E.decide({ productId: 'school_fees', applicant: j, amount: 15000, tenorMonths: 12, school: JUNIPER, consents: ALLc })), 'APPROVE 15000 B 737 REQUESTED  1250 17.9',
+     'the school-fees fingerprint for Ravi: APPROVE 15000 B 737 REQUESTED · 1250 · 17.9');
+  const run = () => { E.init(D); const x = sf(JOURNEY), y = sf({ school: FALCON, amount: 30000 }); return JSON.stringify([x, y, E.creditMemo(x.id), E.memoSftpRow(E.creditMemo(y.id)), E.prequalify(j, OF), E.quoteSchoolFees(15000, { schoolId: 'sch-falcon' })]); };
+  ok(run() === run(), 'two fresh init() runs: identical records, memos, pre-qualification and quotes');
+  const banned = /shari(?!ng)|murabaha|tawarruq|qard|aaoifi|issc|wakala|commodity|profit rate|\bmal\b|cash now|better financial sleep/i;
+  const txt28 = JSON.stringify([E.getPolicy('school_fees'), E.manifests(), D.schools, E.quoteSchoolFees(15000, { schoolId: 'sch-falcon' }), E.execSteps('school_fees')]);
+  ok(!banned.test(txt28) && !mentionsSalaryTransfer(txt28), 'no banned vocabulary in the school-fees pack, manifest, directory, quotes or steps');
+  ok(D.schools.every(sch => /^(Juniper Hill Primary School|Falcon Ridge Academy)$/.test(sch.name)), 'the directory holds only the two fictitious schools');
   E.init(D);
 });
 

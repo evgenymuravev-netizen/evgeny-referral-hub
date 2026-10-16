@@ -365,7 +365,8 @@
   const personasJourney = [
     { // j1 — pre-qualifies on connected accounts only, then APPROVE (grade B) at AED 15,000 · 12 months
       id: 'j1', name: 'Ravi Kumar', nameAr: 'رافي كومار',
-      tagline: 'Warehouse supervisor, 3 years in the UAE, Botim user — a family wedding at home',
+      // v2.21 — the default journey splits school fees; purpose and defaultRequest stay for the personal-loan path
+      tagline: 'Warehouse supervisor, 3 years in the UAE, botim user — his daughter starts Grade 1 in September',
       age: 31, residency: 'RESIDENT', monthsInUae: 36,
       employment: { employer: 'Logistics company, Jebel Ali', type: 'PRIVATE',
                     salaryMonthly: 12000, tenureMonths: 30, retiree: false },
@@ -403,6 +404,11 @@
                    spendCategories: { Dining: 24, Groceries: 22, Transport: 12, Bills: 18, Shopping: 14, Other: 10 } },
       purpose: 'Family wedding',
       defaultRequest: { amount: 15000, tenorMonths: 12 },
+      // v2.21 — the school's fee invoice for the default product (split school fees over 12 months): Terms 1–3 at a partner
+      // school (fictitious, illustrative). The child is "Child 1 · Grade 1" — never a name. Read by the journey's school-fees
+      // form and decide({productId:'school_fees'}); the school's name, the invoice and the child never reach the credit memo.
+      schoolFees: { schoolId: 'sch-juniper', child: 'Child 1 · Grade 1', academicYear: '2026–27', terms: 'Terms 1–3', amount: 15000,
+                    dueDate: '2026-08-20', invoiceRef: 'INV-26-0815' },
       // v2.8 — the email botim shares at hand-off (synthetic, reserved domain). The journey shows it
       // masked; it never reaches the credit memo or the SFTP row.
       contact: { email: 'ravi.k@example.com', emailSharedBy: 'botim' },
@@ -829,7 +835,16 @@
                   balanceNowAed: 45500, largestOutboundTransferAed: 3000, missedCollection: false },
         aecb: { cards: 1, cardLimitTotal: 30000, cardBalanceTotal: 6000 },
         business: { baseline: { inflows3mAvgAed: 125000, usualDrawingsAed: 28000, sameMonthLastYearDropPct: 29 },
-                    recent: { inflowsAed: 85000, largestTransferToOwnerAed: 28000 } } } }
+                    recent: { inflowsAed: 85000, largestTransferToOwnerAed: 28000 } } } },
+    // v2.21 — a split-school-fees plan under watch: a parent paying on time, nothing changed against her own history →
+    // NONE (no flag). The school, the invoice and the child are not part of a monitored loan.
+    { id: 'ML-09', customer: 'Maya Fernandes', productId: 'school_fees', amountAed: 18000, tenorMonths: 12,
+      disbursedAt: addDaysIso(TODAY, -40), contactChannel: 'In-app message',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.08, salaryCreditDay: 26, avgBalance3m: 7800, cardUtilisationPct3mAgo: 30, onTimePaymentsRun: 1 },
+        recent: { incomeAed: 13500, intlTransfersAed: 1080, airlinePurchases: [], salaryLateDays: 0,
+                  balanceNowAed: 7400, largestOutboundTransferAed: 1080, missedCollection: false },
+        aecb: { cards: 1, cardLimitTotal: 15000, cardBalanceTotal: 4800 } } }
   ];
 
   // ---------------------------------------------------------------------------
@@ -1109,6 +1124,17 @@
   // partner bank books, funds and collects the loan, and receives a credit memo
   // built from an allowlist (never Open Finance data).
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // The school directory (Addendum v2.21, SCHOOL-FEES-SPEC.md). Fictitious schools — shown
+  // everywhere with "(illustrative)". partner: true → 0% for the parent (the school pays a
+  // merchant fee); false → another licensed school, a monthly fee by band. The masked IBAN is
+  // where the lender pays the school; the credit memo never names the school.
+  // ---------------------------------------------------------------------------
+  const schools = [
+    { id: 'sch-juniper', name: 'Juniper Hill Primary School', city: 'Dubai', regulator: 'KHDA', partner: true, ibanMasked: 'AE•• •••• •••• •••• •••• 4410' },
+    { id: 'sch-falcon', name: 'Falcon Ridge Academy', city: 'Dubai', regulator: 'KHDA', partner: false, ibanMasked: 'AE•• •••• •••• •••• •••• 7783' }
+  ];
+
   const lenders = [
     { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record', short: 'PB' },
     // v2.18 — an illustrative second lender with a narrower sharing agreement (Core outputs only)
@@ -1252,6 +1278,7 @@
     reasonCodeLibrary: reasonCodeLibrary,
     earlyWarning: earlyWarning,
     monitoredLoans: monitoredLoans,
+    schools: schools,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook(),
                   sme_working_capital: buildSmeBook() },
     history: { days: 90, seed: 20260719 }

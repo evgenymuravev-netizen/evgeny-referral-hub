@@ -22,6 +22,12 @@
  *                    separate consent) that verify the guarantee and the owner's income. Limit = the
  *                    business capacity (DSCR, revenue, product cap) × a guarantee
  *                    factor; the business and the owner are monitored while it is open
+ *   school_fees    — split a school's fee invoice into 12 equal monthly payments (Addendum
+ *                    v2.21, ../SCHOOL-FEES-SPEC.md): Partner Bank pays the school directly
+ *                    (the payee is the school, never the customer); 0% for the parent at a
+ *                    partner school (the school pays a merchant fee), a banded monthly fee
+ *                    otherwise. Underwritten exactly like the personal loan (scorecard v0,
+ *                    AECB, DBR, 20× salary, the instalment-to-FCF cap); the term is locked
  * Binding spec: ../NOOR-PIVOT.md (overrides ../CONTRACT.md where they conflict;
  * Addendum v2.1 covers the starter-loan upgrade).
  *
@@ -101,6 +107,10 @@
  *    or which fallback code is needed. decide() can record how they were verified
  *    (contactVerification) — a Fraud & Integrity driver in the Decision log only; never a
  *    score, outcome, limit or price input, never in the memo.
+ *  - Split school fees (v2.21): 12 months, always (a locked rule — publish refuses
+ *    fixedTenorMonths); paid to the school, so the funds cannot be diverted. The memo says
+ *    "school verified (licensed, in the directory)" — never the school's name, the merchant
+ *    fee, the invoice file or anything about the child.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -123,6 +133,9 @@
   // Car loan (v2.7, Reg 29/2011): ≤ 80% of the vehicle's value, tenor ≤ 60 months. No
   // salary multiple — the loan-to-value cap does that job for a secured car loan.
   const HARD_CAR = { ltvCapPct: 80, tenorCapMonths: 60 };
+  // Split school fees (v2.21): always 12 equal monthly payments — the pack's locked fixedTenorMonths.
+  const SCHOOL_PID = 'school_fees';
+  const SCHOOL_MONTHS = 12;
   const SPLIT_PLAN_MONTHS = [3, 6, 12];  // the only permitted split terms
   const CASH_FLOW_PROXY_BASE = 640;      // scorecard base on the AECB no-hit cash-flow path
 
@@ -164,7 +177,9 @@
         salary_advance: 'Advance credited to the customer\'s account',
         starter_loan: 'Upgraded loan credited to the customer\'s account',
         car_loan: 'Partner Bank pays the dealer; the car is released with the mortgage registered',
-        sme_working_capital: 'Funds credited to the company’s business account'
+        sme_working_capital: 'Funds credited to the company’s business account',
+        // v2.21 — with a decision id, execSteps() adds the school's name: "… directly (Juniper Hill Primary School)"
+        school_fees: 'Partner Bank pays the school directly'
       },
       guard: 'funds must be disbursed to complete the sequence' }
   };
@@ -204,7 +219,10 @@
       segment: 'CONSUMER', structure: 'Secured amortising loan (vehicle mortgage)', pricingMode: 'BANDED_APR' },
     // Addendum v2.10 — the SME route, appended sixth so every earlier product keeps its position.
     { productId: 'sme_working_capital', nameEn: 'Business working capital', nameAr: 'قرض رأس المال العامل',
-      segment: 'SME', structure: 'Amortising business loan with the owner\'s personal guarantee', pricingMode: 'BANDED_APR' }
+      segment: 'SME', structure: 'Amortising business loan with the owner\'s personal guarantee', pricingMode: 'BANDED_APR' },
+    // Addendum v2.21 — split school fees over 12 months, appended seventh so every earlier product keeps its position.
+    { productId: SCHOOL_PID, nameEn: 'Split school fees', nameAr: 'تقسيط الرسوم المدرسية',
+      segment: 'CONSUMER', structure: '12 equal monthly payments, paid directly to the school', pricingMode: 'SCHOOL_FEES' }
   ];
 
   // ---------------------------------------------------------------------------
@@ -311,6 +329,21 @@
                   contingentInstalmentSharePct: 50, ownerBufferMinInstalments: 3, scoreDecline: 600, scoreRefer: 650,
                   // Annual interest rate, reducing balance, by grade band.
                   pricingBands: { A: [0.095, 0.115], B: [0.12, 0.14], C: [0.15, 0.18] }, tokenValidityDays: 14 }
+      },
+      // Split school fees over 12 months (Addendum v2.21). The personal loan's underwriting (scorecard v0, AECB, DBR,
+      // 20× salary, the instalment-to-FCF cap, data completeness, red flags, the Emirates ID rules, the footprint lanes);
+      // the term is locked at 12 months and the payee is the school. Pricing: 0% for the parent at a partner school (the
+      // school pays merchantFeePct — never shown to the customer, never in the memo); otherwise a monthly fee on the
+      // amount by band (illustrative), with the APR equivalent disclosed as for split.
+      school_fees: {
+        productId: SCHOOL_PID, version: 1,
+        publishedAt: null, publishedBy: 'system (default pack)', approvedBy: 'system',
+        regulatory: { dbrCapPct: 50, dbrCapRetireePct: 30, salaryMultipleCap: 20, fixedTenorMonths: SCHOOL_MONTHS,
+                      aecbCheckRequired: true, coolingOffDays: 5, payee: 'SCHOOL', earlySettlementFee: 'None' },
+        params: { minSalary: 5000, minAge: 21, maxAge: 65, scoreDecline: 620, scoreRefer: 680, maxEsrPct: 60, thinFileAction: 'REFER',
+                  minMonthsInUae: 6, chequeReturnsMax: 1, minAmount: 2000, productCap: 120000, instalmentToFcfMaxPct: 50,
+                  partnerSchoolParentFeePct: 0, merchantFeePct: 5, nonPartnerMonthlyFeeRate: { A: 0.005, B: 0.0075, C: 0.01 },
+                  completenessThresholdPct: 70, footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20, tokenValidityDays: 14 }
       }
     };
     // Platform rules (v2.3) ride on every pack, read-only.
@@ -347,6 +380,13 @@
                            revenueMultiple: [0.25, 3], unverifiedGuaranteeFactorPct: [30, 80], ownerDbrCapPct: [30, 50],
                            contingentInstalmentSharePct: [25, 100], ownerBufferMinInstalments: [1, 12],
                            scoreDecline: [550, 700], scoreRefer: [600, 760], tokenValidityDays: [3, 30] },
+    // v2.21 — split school fees. partnerSchoolParentFeePct is [0, 0]: 0% at a partner school is the product promise.
+    // nonPartnerMonthlyFeeRate: each band in [0, 0.02], risk-ordered A ≤ B ≤ C (checked in validateParams).
+    school_fees: { minSalary: [3000, 25000], minAge: [18, 25], maxAge: [60, 70], scoreDecline: [550, 720], scoreRefer: [600, 780],
+                   maxEsrPct: [30, 90], minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5], minAmount: [500, 10000],
+                   productCap: [20000, 300000], instalmentToFcfMaxPct: [10, 80], partnerSchoolParentFeePct: [0, 0],
+                   merchantFeePct: [0, 10], nonPartnerMonthlyFeeRate: [0, 0.02], completenessThresholdPct: [50, 90],
+                   footprintOverlayCap: [0, 30], tokenValidityDays: [3, 30] },
     // v2.9 — the shared early-warning block (UAE red flags). The remittance multiple can never
     // go below 1.5×, so sending money home at the usual level can never become a flag.
     earlyWarning: { cardsMaxedUtilisationPct: [75, 100], cardsMaxedMinCards: [2, 5], cardsMaxedRisePp: [15, 60],
@@ -426,6 +466,8 @@
   const SME_GUARANTEE_CONDITION = 'Personal guarantee signed by the owner via UAE PASS';
   const SME_LICENCE_CONDITION = 'Trade licence valid on the day of disbursement';
   const SME_DD_CONDITION = 'Direct debit mandate active on the company’s business account';
+  // v2.21 — split school fees: the lender pays the school against the fee invoice; the customer never receives the money
+  const SCHOOL_PAYEE_CONDITION = 'Paid directly to the school against the fee invoice — never to the customer';
   function tokenConditions(productId, repayment) {
     const repay = repayment ? REPAYMENT_METHODS[repayment.method].condition : null;
     const byProduct = {
@@ -437,7 +479,8 @@
       car_loan: [KFS_CONDITION, repay],
       // v2.10 — a business loan: the owner acknowledges the key facts and the guarantee disclosure,
       // signs the personal guarantee, and the trade licence must still be valid when the money moves.
-      sme_working_capital: [SME_KFS_CONDITION, repayment && repayment.method === 'DIRECT_DEBIT' ? SME_DD_CONDITION : repay, SME_GUARANTEE_CONDITION, SME_LICENCE_CONDITION]
+      sme_working_capital: [SME_KFS_CONDITION, repayment && repayment.method === 'DIRECT_DEBIT' ? SME_DD_CONDITION : repay, SME_GUARANTEE_CONDITION, SME_LICENCE_CONDITION],
+      school_fees: [KFS_CONDITION, repay, SCHOOL_PAYEE_CONDITION]
     };
     return (byProduct[productId] || [KFS_CONDITION, repay]).filter(Boolean);
   }
@@ -1548,11 +1591,11 @@
     };
   }
   // decide()'s dataSources: { approvedAccounts:[masks | accounts], months? }
-  function dcFromSources(applicant, ds) {
+  function dcFromSources(applicant, ds, threshold) {
     if (!ds || typeof ds !== 'object' || Array.isArray(ds)) throw err('application.dataSources must be { approvedAccounts:[…], months }');
     if (!Array.isArray(ds.approvedAccounts)) throw err('application.dataSources.approvedAccounts must list the accounts the customer approved');
     if (ds.months !== undefined && (!Number.isFinite(ds.months) || ds.months < 0)) throw err('application.dataSources.months must be a number of months');
-    return dataCompleteness(applicant, ds.approvedAccounts, { months: ds.months });
+    return dataCompleteness(applicant, ds.approvedAccounts, Number.isFinite(threshold) ? { months: ds.months, threshold } : { months: ds.months });
   }
 
   // ---------------------------------------------------------------------------
@@ -1838,6 +1881,247 @@
     }
     return { profile: p, features, rules: rs.rules, score, limit, pricing,
              outcome, reasonCodes: rs.reasons, effTenor };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Split school fees over 12 months (Addendum v2.21, ../SCHOOL-FEES-SPEC.md)
+  //
+  // A parent splits a school's fee invoice into 12 equal monthly payments; Partner Bank pays
+  // the school directly. Underwriting is the personal loan's, rule for rule — scorecard v0
+  // (loanScore), the AECB pull, DBR double enforcement, 20× salary, the instalment-to-FCF cap,
+  // data completeness, the red-flag origination gate, the Emirates ID rules and the footprint
+  // lanes — so NoorScore, grade, reason codes and completeness match the personal loan for the
+  // same customer. Only the product, the amount, the instalment and the price differ. (The
+  // home-country evidence paths — Credit Passport, statements — stay with the personal loan.)
+  //
+  //   budget        = min(DBR headroom, instalmentToFcfMaxPct% × free cash flow)   (FCF only when spending is seen)
+  //   max principal = floor1000(12 × budget)                     at a partner school (0% for the parent)
+  //                 = floor1000(budget ÷ (1/12 + monthly fee))   at another licensed school
+  //   approved      = pickMin(invoice amount, max principal, 20× salary, productCap)
+  //   price         = splitPlan(approved, 12, fee): 12 equal instalments, the fee flat on the amount,
+  //                   the APR equivalent from monthlyIrr() (0% at a partner school)
+  // Ravi (j1), AED 15,000 at Juniper Hill Primary School (partner): 12 × AED 1,250.00, no fees, APR 0%;
+  // DBR (900 + 1,250) ÷ 12,000 = 17.9%; budget min(5,100, 50% × 3,700) = 1,850 → partner max AED 22,000.
+  // ---------------------------------------------------------------------------
+  function schoolsAll() { return (D && Array.isArray(D.schools)) ? D.schools : []; }
+  // The school as the record keeps it (internal): never the child, never the invoice file.
+  function schoolPublic(s) { return { id: s.id, name: s.name, partner: s.partner === true, regulator: s.regulator || null, city: s.city || null, ibanMasked: s.ibanMasked || null }; }
+  function schoolOf(schoolId) {
+    const s = schoolsAll().find(x => x.id === schoolId);
+    if (!s) throw err('unknown school "' + schoolId + '" — not in the school directory (MizanData.schools: ' + schoolsAll().map(x => x.id).join(', ') + ')');
+    return s;
+  }
+  // The parent's monthly fee on the amount: 0 at a partner school; else the band's non-partner rate.
+  function schoolFeeRate(prm, partner, band) {
+    if (partner) return (prm.partnerSchoolParentFeePct || 0) / 100;
+    const r = prm.nonPartnerMonthlyFeeRate || {};
+    return Number.isFinite(r[band]) ? r[band] : r.C;
+  }
+  // The largest principal whose 12-month instalment fits the monthly budget, floored to AED 1,000.
+  function schoolMaxPrincipal(budget, rate) {
+    if (!(budget > 0)) return 0;
+    return rate > 0 ? floor1000(budget / (1 / SCHOOL_MONTHS + rate)) : floor1000(SCHOOL_MONTHS * budget);
+  }
+  // Business days, Monday–Friday (the UAE working week).
+  function addBusinessDaysIso(isoDate, n) {
+    let d = isoDate, k = 0;
+    while (k < n) {
+      d = addDaysIso(d, 1);
+      const dow = new Date(d + 'T00:00:00Z').getUTCDay();
+      if (dow !== 0 && dow !== 6) k++;
+    }
+    return d;
+  }
+  // The plan's dates (v2.3 platform rule): cooling-off ends after coolingOffDays business days, the earliest payout
+  // without a waiver; the best debit date is the day after the salary credit (the 1st when the salary lands on the 28th
+  // or later); the first instalment is the first best debit date at least SCHOOL_FIRST_DUE_MIN_DAYS after payout.
+  const SCHOOL_FIRST_DUE_MIN_DAYS = 20;
+  function schoolPlanDates(decisionDate, salaryDay, coolingOffDays, dueDate) {
+    const coolingOffEndsOn = addBusinessDaysIso(decisionDate, coolingOffDays);
+    const bestDebitDay = Number.isFinite(salaryDay) ? (salaryDay < 28 ? salaryDay + 1 : 1) : 1;
+    const earliest = addDaysIso(coolingOffEndsOn, SCHOOL_FIRST_DUE_MIN_DAYS);
+    let [y, m] = earliest.split('-').map(Number);
+    const iso = (yy, mm) => new Date(Date.UTC(yy, mm - 1, bestDebitDay)).toISOString().slice(0, 10);
+    let first = iso(y, m);
+    if (first < earliest) { m += 1; if (m > 12) { m = 1; y += 1; } first = iso(y, m); }
+    const lm = m - 1 + (SCHOOL_MONTHS - 1);
+    const last = iso(y + Math.floor(lm / 12), (lm % 12) + 1);
+    return { coolingOffEndsOn, payoutEarliestOn: coolingOffEndsOn, bestDebitDay, firstPaymentDate: first, lastPaymentDate: last,
+             coolingOffEndsAfterDueDate: !!dueDate && coolingOffEndsOn > dueDate };
+  }
+  function evaluateSchoolFees(p, amount, tenorMonths, pol, consents, extra) {
+    const reg = pol.regulatory, prm = pol.params;
+    const rs = makeRuleSet();
+    // The school (decide() resolves it from the directory). Without one — a policy simulation over the sample
+    // book — the request is read as a partner school (partner pricing).
+    const school = extra && extra.school ? extra.school : null;
+    const partner = school ? school.partner === true : true;
+    const obligations = p.obligationsMonthly;
+    const openFinanceOk = !consents || consents.openFinance === true;
+    const connectedSalary = p.bankSource === 'ALTAREQ_TPP' && p.salaryDetected && openFinanceOk;
+
+    // REGULATORY — mandatory bureau check (Federal Law 6/2010; consent gated upstream)
+    rs.add('REG_AECB_CHECK', 'AECB consumer report pulled before credit decision', 'REGULATORY',
+           'PASS', p.aecbHit ? 'HIT' : 'NO_HIT', 'pull required');
+    // The term is a locked rule of the pack: 12 months. Any other request is set to 12 (RC_TENOR_CAP).
+    const effTenor = SCHOOL_MONTHS;
+    const termSet = tenorMonths !== SCHOOL_MONTHS;
+    rs.add('REG_FIXED_TERM', 'Term fixed at ' + SCHOOL_MONTHS + ' monthly payments (locked rule of the pack)', 'REGULATORY',
+           'PASS', termSet ? tenorMonths + ' → set to ' + SCHOOL_MONTHS : tenorMonths, SCHOOL_MONTHS + ' months', null);
+    if (termSet) rs.reason('RC_TENOR_CAP');
+
+    // POLICY knock-outs — the personal loan's
+    const ageOk = p.age >= prm.minAge && p.age <= prm.maxAge;
+    rs.add('POL_AGE', 'Applicant age within eligible range', 'POLICY',
+           ageOk ? 'PASS' : 'FAIL', p.age, prm.minAge + '–' + prm.maxAge, 'RC_AGE');
+    rs.add('POL_MIN_SALARY', 'Salary at or above product minimum', 'POLICY',
+           p.salaryMonthly >= prm.minSalary ? 'PASS' : 'FAIL', p.salaryMonthly, prm.minSalary, 'RC_SALARY_FLOOR');
+    rs.add('POL_MIN_MONTHS_UAE', 'Minimum UAE residency period', 'POLICY',
+           p.monthsInUae >= prm.minMonthsInUae ? 'PASS' : 'REFER', p.monthsInUae, prm.minMonthsInUae, 'RC_MANUAL_REVIEW');
+    rs.add('POL_INCOME_VERIFIED', 'Salary verified (connected accounts or documents)', 'POLICY',
+           p.salaryDetected ? 'PASS' : 'REFER',
+           p.salaryDetected ? (connectedSalary ? 'verified — connected account' : 'verified — documents') : 'not detected',
+           'verified', 'RC_INCOME_UNVERIFIED');
+    rs.add('POL_MAX_ESR', 'Bureau expense-to-salary ratio within bound', 'POLICY',
+           (p.esrPct === null || p.esrPct <= prm.maxEsrPct) ? 'PASS' : 'REFER',
+           p.esrPct === null ? 'n/a' : p.esrPct, prm.maxEsrPct, 'RC_MANUAL_REVIEW');
+    const delinq = p.worstDelinquency || 'NONE';
+    rs.add('POL_DELINQUENCY', 'Delinquency history acceptable', 'POLICY',
+           (delinq === 'DPD90' || delinq === 'WRITEOFF') ? 'FAIL' : (delinq === 'DPD30' ? 'REFER' : 'PASS'),
+           delinq, '≤ DPD30 refers, ≥ DPD90 declines', 'RC_DELINQUENCY');
+    rs.add('POL_CHEQUE_RETURNS', 'Returned cheques within tolerance', 'POLICY',
+           p.chequeReturns12m <= prm.chequeReturnsMax ? 'PASS' : 'FAIL',
+           p.chequeReturns12m, prm.chequeReturnsMax, 'RC_CHEQUE_RETURNS');
+    rs.add('POL_THIN_FILE', 'Credit file depth (thin-file strategy)', 'POLICY',
+           p.aecbHit ? 'PASS' : (prm.thinFileAction === 'DECLINE' ? 'FAIL' : 'REFER'),
+           p.aecbHit ? 'file present' : 'no-hit / thin file', 'AECB hit', 'RC_THIN_FILE');
+    // The school: licensed and in the directory (informational in the prototype — an unknown school never gets here).
+    rs.add('POL_SCHOOL_VERIFIED', 'School verified — licensed, in the directory (informational in the prototype)', 'POLICY',
+           school ? 'PASS' : 'INFO',
+           school ? 'in the directory · ' + (school.regulator || 'licensed') + ' · ' + (partner ? 'partner school' : 'other licensed school')
+                  : 'no school given — simulation, read as a partner school', 'in the directory', null);
+
+    // Scorecard v0 — the personal loan's, with the same footprint and completeness overlays
+    const dc = extra && extra.dataCompleteness;
+    const score = loanScore(p, false, connectedSalary, null, extra && extra.footprintOverlay,
+                            dc && Number.isFinite(dc.scoreOverlay) ? { delta: dc.scoreOverlay } : null);
+    const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
+    if (score.points !== null) {
+      const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
+      rs.add('POL_SCORE_CUTOFF', 'Score at or above decline cut-off (grade E auto-fails)', 'POLICY',
+             cutoffOk ? 'PASS' : 'FAIL', score.points + ' (' + (score.grade || '—') + ')', prm.scoreDecline, 'RC_SCORE_LOW');
+      const referOk = score.points >= prm.scoreRefer || overlayNet > 0;
+      rs.add('POL_SCORE_REFER', 'Score above refer line (or strong positive overlays)', 'POLICY',
+             cutoffOk ? (referOk ? 'PASS' : 'REFER') : 'PASS',
+             score.points, prm.scoreRefer, 'RC_MANUAL_REVIEW');
+    } else {
+      rs.add('POL_SCORE_CUTOFF', 'Score at or above decline cut-off', 'POLICY', 'PASS', 'no score (thin file)', prm.scoreDecline, null);
+    }
+
+    // Limit: the instalment budget is the tighter of the DBR headroom and the free-cash-flow budget; each becomes a
+    // principal over 12 months at this school's price (partner: 12 × budget; other: budget ÷ (1/12 + fee)).
+    const dbrCap = dbrCapFor(reg, p.retiree);
+    const salaryMultiple = Math.min(reg.salaryMultipleCap, HARD.salaryMultipleCap);
+    const headroomMonthly = Math.round((dbrCap / 100) * p.salaryMonthly - obligations);
+    const band = gradeToBand(score.grade) || 'C';
+    const rate = schoolFeeRate(prm, partner, band);
+    const priceWord = partner ? 'partner school, 0%' : 'monthly fee ' + pctStr(rate) + ' (band ' + band + ')';
+    const maxByDbr = schoolMaxPrincipal(headroomMonthly, rate);
+    const maxBySalary = salaryMultiple * p.salaryMonthly;
+    const fcfSeen = connectedSalary && Number.isFinite(p.spendMonthly);
+    const freeCashFlowMonthly = fcfSeen ? Math.round(p.salaryMonthly - p.spendMonthly - obligations) : null;
+    const fcfBudget = fcfSeen ? Math.max(0, Math.floor((prm.instalmentToFcfMaxPct / 100) * freeCashFlowMonthly)) : null;
+    const maxByFcf = fcfSeen ? schoolMaxPrincipal(fcfBudget, rate) : null;
+    const budget = fcfSeen ? Math.min(Math.max(0, headroomMonthly), fcfBudget) : Math.max(0, headroomMonthly);
+    const candidates = [
+      { label: 'Invoice amount (requested)', value: amount, key: 'REQUESTED' },
+      { label: 'DBR headroom @ ' + dbrCap + '% cap — ' + aed(Math.max(0, headroomMonthly)) + '/month over ' + SCHOOL_MONTHS + ' months (' + priceWord + ')',
+        value: maxByDbr, key: p.retiree ? 'RETIREE_CAP' : 'DBR_HEADROOM' }
+    ];
+    if (fcfSeen) {
+      candidates.push({ label: 'Free cash flow — ' + prm.instalmentToFcfMaxPct + '% of ' + aed(freeCashFlowMonthly) + '/month (income ' + grp(p.salaryMonthly) +
+                               ' − spending ' + grp(p.spendMonthly) + ' − obligations ' + grp(obligations) + ')' +
+                               (fcfBudget > 0 ? ' = ' + aed(fcfBudget) + '/month over ' + SCHOOL_MONTHS + ' months (' + priceWord + ')' : ' — nothing left'),
+                        value: maxByFcf, key: 'FCF' });
+    }
+    candidates.push({ label: salaryMultiple + '× salary (Reg 29/2011)', value: maxBySalary, key: 'SALARY_MULTIPLE' },
+                    { label: 'Product cap', value: prm.productCap, key: 'PRODUCT_CAP' });
+    const picked = pickMin(candidates);
+    const approvedPre = picked.approved;
+    const binding = picked.binding;
+    rs.add('POL_MIN_AMOUNT', 'Amount at or above the product minimum', 'POLICY',
+           approvedPre >= prm.minAmount ? 'PASS' : 'FAIL',
+           aed(approvedPre) + (amount < prm.minAmount ? ' (requested ' + aed(amount) + ')' : ''), aed(prm.minAmount), 'RC_BELOW_MIN_AMOUNT');
+
+    // REGULATORY — the DBR double enforcement on the approved amount's instalment.
+    const plan = approvedPre > 0 ? splitPlan(approvedPre, SCHOOL_MONTHS, rate) : null;
+    const newInstallment = plan ? plan.monthlyPayment : 0;
+    const dbrPct = p.salaryMonthly > 0 ? Math.round(((obligations + newInstallment) / p.salaryMonthly) * 1000) / 10 : 999;
+    const dbrOk = headroomMonthly > 0 && dbrPct <= dbrCap + 0.05; // rounding guard only
+    rs.add('REG_DBR_CAP', 'Debt burden ratio within ' + dbrCap + '% cap (Reg 29/2011' + (p.retiree ? ', retiree' : '') + ')',
+           'REGULATORY', dbrOk ? 'PASS' : 'FAIL', dbrPct + '%', dbrCap + '%', 'RC_DBR_EXCEEDED');
+    rs.add('REG_SALARY_MULTIPLE', 'Amount within ' + salaryMultiple + '× salary (Reg 29/2011)', 'REGULATORY',
+           approvedPre <= maxBySalary ? 'PASS' : 'FAIL', approvedPre, maxBySalary, 'RC_DBR_EXCEEDED');
+    if (fcfSeen) {
+      const share = freeCashFlowMonthly > 0 ? Math.round((newInstallment / freeCashFlowMonthly) * 1000) / 10 : null;
+      rs.add('POL_INSTALMENT_TO_FCF', 'Instalment within ' + prm.instalmentToFcfMaxPct + '% of free cash flow (spending seen in connected accounts)', 'POLICY',
+             maxByFcf > 0 ? 'PASS' : 'FAIL',
+             maxByFcf > 0 ? (approvedPre > 0 ? money(newInstallment) + '/month = ' + share + '% of free cash flow ' + aed(freeCashFlowMonthly) + '/month'
+                                             : 'no instalment — nothing approved')
+                          : 'free cash flow ' + aed(freeCashFlowMonthly) + '/month — not enough left for an instalment',
+             '≤ ' + prm.instalmentToFcfMaxPct + '%', 'RC_FREE_CASH_FLOW');
+    }
+    emiratesIdRules(rs, extra && extra.emiratesId);
+    if (dc) {
+      rs.add('POL_DATA_COMPLETENESS', 'Data completeness at or above the threshold (refer only — never a decline, never a price change)', 'POLICY',
+             dc.aboveThreshold ? 'PASS' : 'REFER',
+             dc.pct + '% complete · ' + dc.counts.banks + (dc.counts.banks === 1 ? ' bank · ' : ' banks · ') + dc.counts.accounts + (dc.counts.accounts === 1 ? ' account · ' : ' accounts · ') + dc.counts.months + ' months' +
+               (dc.aboveThreshold ? (dc.scoreOverlay ? ' · NoorScore ' + dc.scoreOverlay : '') : ' · missing: ' + dc.ask.join(', ')),
+             '≥ ' + dc.threshold + '% (illustrative)', 'RC_DATA_INCOMPLETE');
+    }
+    redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
+    const outcome = outcomeFromRules(rs.rules);
+    const approved = outcome === 'DECLINE' ? 0 : approvedPre;
+    if (outcome === 'APPROVE') {
+      if (binding === 'RETIREE_CAP') rs.reason('RC_RETIREE_CAP');
+      if (approved < amount) rs.reason('RC_LIMIT_REDUCED');
+    }
+    const features = {
+      verifiedIncome: p.salaryDetected ? p.salaryMonthly : null,
+      incomeSource: connectedSalary ? 'ALTAREQ_TPP' : (p.salaryDetected ? 'DOCUMENTS' : 'UNVERIFIED'),
+      salaryVerifiedViaConnectedAccount: connectedSalary,
+      existingObligations: obligations, esrPct: p.esrPct,
+      freeCashFlowMonthly,
+      instalmentToFcfPct: fcfSeen && freeCashFlowMonthly > 0 ? Math.round((newInstallment / freeCashFlowMonthly) * 1000) / 10 : null,
+      dbrCapApplied: dbrCap, headroomMonthly, newInstallment, dbrPct,
+      effectiveTenor: effTenor, scoreBase: score.base, overlayNet,
+      retiree: p.retiree, thinFile: !p.aecbHit,
+      // v2.21 — the school-fees figures (internal): the budget, the principal it supports, the price
+      instalmentBudgetMonthly: budget, maxPrincipal: fcfSeen ? Math.min(maxByDbr, maxByFcf) : maxByDbr,
+      schoolPartner: partner, schoolFeeRate: rate, schoolVerified: !!school
+    };
+    if (dc) features.dataCompletenessPct = dc.pct;
+    if (extra && extra.emiratesId) {
+      const ec = extra.emiratesId;
+      features.idExpiryValid = ec.expiryValid;
+      features.idNameMatch = ec.nameMatch.match;
+      features.employerMatch = ec.employerMatch.match;
+      features.employerMatchScore = ec.employerMatch.score;
+    }
+    const limit = { requested: amount, approved, bindingConstraint: binding,
+                    trace: candidates.map(c => ({ label: c.label, value: c.value, key: c.key })) };
+    // SCHOOL_FEES pricing: the 12-month plan on the approved amount (kfs.monthlyInstalment is the fingerprint's price).
+    // merchantFeePct is internal (the school's fee at a partner school): never in the memo, never shown to the customer.
+    let pricing = null;
+    if (outcome !== 'DECLINE' && plan) {
+      pricing = { mode: 'SCHOOL_FEES', band, partnerSchool: partner, monthlyFeeRate: rate, merchantFeePct: partner ? prm.merchantFeePct : null,
+                  payee: reg.payee || 'SCHOOL',
+                  kfs: { principal: approvedPre, tenorMonths: SCHOOL_MONTHS, monthlyInstalment: plan.monthlyPayment, monthlyFee: plan.monthlyFee,
+                         totalFees: plan.totalFees, planTotal: plan.planTotal, totalRepayable: plan.planTotal, aprEquivalent: plan.aprEquivalent,
+                         interest: 0, payee: reg.payee || 'SCHOOL', earlySettlementFee: reg.earlySettlementFee || 'None',
+                         coolingOffDays: reg.coolingOffDays || null } };
+    }
+    return { profile: p, features, rules: rs.rules, score, limit, pricing, outcome, reasonCodes: rs.reasons, effTenor };
   }
 
   // ---------------------------------------------------------------------------
@@ -3153,6 +3437,8 @@
     if (productId === 'car_loan') return attachRedFlags(evaluateCar(gateRedFlags(normalizeCar(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, opts && opts.vehicle));
     // v2.10 — the SME route: the red-flag gate reads the OWNER's personal accounts, under the owner's own consent
     if (productId === SME_PID) return attachRedFlags(evaluateSme(normalizeSme(rawApplicant), amount, tenorMonths, pol, consents, ew));
+    // v2.21 — split school fees: the personal loan's applicant shape and red-flag gate; opts carries the school
+    if (productId === SCHOOL_PID) return attachRedFlags(evaluateSchoolFees(gateRedFlags(normalizeLoan(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, opts));
     throw err('unknown productId "' + productId + '"');
   }
 
@@ -3292,7 +3578,7 @@
     D = data;
     S = {
       policies: defaultPolicies(),
-      policyHistory: { split: [], personal_loan: [], starter_loan: [], salary_advance: [], car_loan: [], sme_working_capital: [] },
+      policyHistory: { split: [], personal_loan: [], starter_loan: [], salary_advance: [], car_loan: [], sme_working_capital: [], school_fees: [] },
       decisions: [],           // newest first via listDecisions()
       byId: Object.create(null),
       seq: 0, clockTicks: 0,
@@ -3339,8 +3625,10 @@
       personal_loan: { base: 14.5, weekend: 0.55, friday: 0.8, A: 0.60, R: 0.18, stp: 0.78 }
     };
     const blank = () => ({ decisions: 0, APPROVE: 0, REFER: 0, DECLINE: 0, stp: 0 });
-    // car_loan (v2.7) and sme_working_capital (v2.10) are new packs: no seeded history — they count this session's decisions only.
-    const tot = { split: blank(), personal_loan: blank(), starter_loan: blank(), salary_advance: blank(), car_loan: blank(), sme_working_capital: blank() };
+    // car_loan (v2.7), sme_working_capital (v2.10) and school_fees (v2.21) are new packs: no seeded history — they count this
+    // session's decisions only, so the seeded numbers of the other products are unchanged.
+    const tot = { split: blank(), personal_loan: blank(), starter_loan: blank(), salary_advance: blank(), car_loan: blank(), sme_working_capital: blank(),
+                  school_fees: blank() };
     const daily = [];
     for (let d = 0; d < days; d++) {
       const date = addDaysIso(D.TODAY, -(days - 1 - d));
@@ -3441,7 +3729,8 @@
   }
   // Refer SLAs: split is an in-app instant product; loans allow a working-day review.
   // v2.10 — an SME referral allows one working day (24 hours): the analyst reads two sets of accounts.
-  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, starter_loan: 4, salary_advance: 4, car_loan: 8, sme_working_capital: 24 };
+  // v2.21 — school fees refers like the personal loan it is underwritten as (one working day).
+  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, starter_loan: 4, salary_advance: 4, car_loan: 8, sme_working_capital: 24, school_fees: 8 };
 
   function manifests() { ensureInit(); return clone(MANIFESTS); }
 
@@ -3452,13 +3741,15 @@
   function execSteps(productId, decisionId) {
     const pid = productId || 'personal_loan';
     if (!MANIFESTS.some(m => m.productId === pid)) throw err('unknown productId "' + productId + '"');
-    let method = null;
+    let method = null, schoolName = null;
     if (decisionId !== undefined && decisionId !== null) {
       ensureInit();
       const rec = getDecisionRef(decisionId);
       if (rec.productId !== pid) throw err('decision ' + decisionId + ' is a ' + rec.productId + ' decision, not ' + pid);
       const done = rec.events.find(e => e.type === 'REPAYMENT_SET_UP');
       method = done && done.method ? done.method : (rec.repayment ? rec.repayment.method : null);
+      // v2.21 — "Partner Bank pays the school directly (Juniper Hill Primary School)"
+      if (rec.schoolFees && rec.schoolFees.school) schoolName = rec.schoolFees.school.name;
     }
     return EXEC_EVENTS.map(type => {
       const info = EXEC_STEP_INFO[type];
@@ -3472,6 +3763,7 @@
       const sme = pid === 'sme_working_capital' ? SME_STEP_INFO[type] : null;
       if (sme && sme.description) description = sme.description;
       if (sme && sme.setup && method !== 'ALTAREQ') description = sme.setup;
+      if (type === 'DISBURSED' && schoolName) description += ' (' + schoolName + ')';
       const step = { type, label, description };
       if (type === 'REPAYMENT_SET_UP') step.method = method;
       return step;
@@ -3535,6 +3827,9 @@
         throw err('"' + key + '" is a platform rule shared by every Noor product (' + PLATFORM_RULES.repaymentCollection.rule + ') — it cannot be edited via publishPolicy');
       }
       if (key in pol.regulatory) {
+        if (productId === SCHOOL_PID && ['fixedTenorMonths', 'payee', 'earlySettlementFee'].includes(key)) {
+          throw err('"' + key + '" is a locked rule of the school-fees pack (12 equal monthly payments, paid directly to the school, no early-settlement fee) — it cannot be edited via publishPolicy');
+        }
         if (pol.lockedBasis === 'NOOR_POLICY') {
           throw err('"' + key + '" is locked Noor policy for business loans (confirm with compliance) — it cannot be edited via publishPolicy');
         }
@@ -3558,6 +3853,15 @@
           if (!(v && v[b] > 0 && v[b] <= 0.05)) throw err('monthlyFeeRate.' + b + ' must be in (0, 0.05]');
         }
         if (!(v.A <= v.B && v.B <= v.C)) throw err('monthlyFeeRate must be risk-ordered: A ≤ B ≤ C');
+      } else if (key === 'nonPartnerMonthlyFeeRate') {
+        // v2.21 — the parent's monthly fee at a school that is not a partner, by band: each in [0, 0.02], A ≤ B ≤ C
+        const bd = bounds[key];
+        if (!v || typeof v !== 'object' || Array.isArray(v)) throw err('nonPartnerMonthlyFeeRate must be {A, B, C}');
+        for (const b of Object.keys(v)) if (!['A', 'B', 'C'].includes(b)) throw err('unknown band "' + b + '" in nonPartnerMonthlyFeeRate — the bands are A, B and C');
+        for (const b of ['A', 'B', 'C']) {
+          if (!Number.isFinite(v[b]) || v[b] < bd[0] || v[b] > bd[1]) throw err('nonPartnerMonthlyFeeRate.' + b + ' must be in [' + bd[0] + ', ' + bd[1] + ']');
+        }
+        if (!(v.A <= v.B && v.B <= v.C)) throw err('nonPartnerMonthlyFeeRate must be risk-ordered: A ≤ B ≤ C');
       } else if (key === 'thinFileAction') {
         if (v !== 'REFER' && v !== 'DECLINE') throw err('thinFileAction must be REFER or DECLINE');
       } else if (key === 'footprintOverlayMode') {
@@ -3569,6 +3873,8 @@
         if (!Array.isArray(v) || !v.length || v.some(n => !Number.isInteger(n) || n < bd[0] || n > bd[1]) || v.some((n, i) => i > 0 && n <= v[i - 1])) {
           throw err('tenorMonthsAllowed must be ascending whole months, each in [' + bd[0] + ', ' + bd[1] + ']');
         }
+      } else if (key === 'partnerSchoolParentFeePct' && v !== 0) {
+        throw err('partnerSchoolParentFeePct must stay 0 — 0% for the parent at a partner school is the product promise (bounds [0, 0])');
       } else if (productId === 'starter_loan' && key === 'starter') {
         checkNested('starter', v, STARTER_BOUNDS);
       } else if (productId === 'starter_loan' && key === 'tiers') {
@@ -3789,6 +4095,20 @@
     // v2.7 — a car loan is decided on the vehicle: the dealer quote is part of the
     // application (defaults to the applicant's vehicleQuote) and is required.
     const vehicle = productId === 'car_loan' ? carVehicle(application.vehicle || applicant.vehicleQuote) : null;
+    // v2.21 — split school fees is decided on the school's invoice: { schoolId, invoiceRef, dueDate } (defaults to the
+    // applicant's schoolFees block). The school must be in the directory; an unknown school throws.
+    let school = null;
+    if (productId === SCHOOL_PID) {
+      const sIn = application.school || applicant.schoolFees || null;
+      if (!sIn || typeof sIn !== 'object' || Array.isArray(sIn) || typeof sIn.schoolId !== 'string') {
+        throw err('school fees are decided on the school’s invoice — application.school must be { schoolId, invoiceRef, dueDate }');
+      }
+      if (sIn.dueDate !== undefined && sIn.dueDate !== null && (typeof sIn.dueDate !== 'string' || isNaN(Date.parse(sIn.dueDate)))) {
+        throw err('application.school.dueDate must be an ISO date (the invoice’s due date)');
+      }
+      school = { school: schoolPublic(schoolOf(sIn.schoolId)), invoiceRef: sIn.invoiceRef ? String(sIn.invoiceRef) : null,
+                 dueDate: sIn.dueDate ? String(sIn.dueDate).slice(0, 10) : null };
+    }
 
     // v2.4 — home-country statements: a parseStatements() result (customer upload in a
     // journey, or what an underwriter requested), or the v2.1 consent flag, which
@@ -3826,19 +4146,21 @@
     // Open Finance consent; without it the check waits until the accounts are connected (INFO).
     let eid = null;
     if (application.emiratesId !== undefined && application.emiratesId !== null && application.emiratesId !== false) {
-      if (productId !== 'personal_loan') throw err('the Emirates ID scan feeds personal-loan decisions only (not ' + productId + ')');
+      if (productId !== 'personal_loan' && productId !== SCHOOL_PID) throw err('the Emirates ID scan feeds personal-loan decisions only — and school fees, underwritten the same way (not ' + productId + ')');
       eid = checkEmiratesId(applicant, application.emiratesId, { openFinance: consents.openFinance === true });
     }
     // v2.17 — data completeness from the accounts the customer approved (personal loan, Open Finance only).
     let dcmp = null;
     if (application.dataSources !== undefined && application.dataSources !== null) {
-      if (productId !== 'personal_loan') throw err('data completeness feeds personal-loan decisions only (not ' + productId + ')');
+      if (productId !== 'personal_loan' && productId !== SCHOOL_PID) throw err('data completeness feeds personal-loan decisions only — and school fees, underwritten the same way (not ' + productId + ')');
       if (consents.openFinance !== true) throw err('data completeness is measured on connected accounts — Open Finance consent is required with dataSources');
-      dcmp = dcFromSources(applicant, application.dataSources);
+      // v2.21 — the school-fees pack carries its own threshold (the personal loan's reads its pack, as before)
+      dcmp = dcFromSources(applicant, application.dataSources, productId === SCHOOL_PID ? getPolicyRef(SCHOOL_PID).params.completenessThresholdPct : undefined);
     }
     const evExtra = {};
     if (eid) evExtra.emiratesId = eid;
     if (dcmp) evExtra.dataCompleteness = dcmp;
+    if (school) evExtra.school = school.school;
 
     const pol = getPolicyRef(productId);
     let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
@@ -3854,7 +4176,7 @@
                                                    mode: pol.params.footprintOverlayMode, cap: pol.params.footprintOverlayCap });
       const co = fpa.creditOverlay;
       if (co.eligible) {
-        const scored = Number.isFinite(ev.score.points) && (productId === 'personal_loan' || productId === 'split');
+        const scored = Number.isFinite(ev.score.points) && (productId === 'personal_loan' || productId === 'split' || productId === SCHOOL_PID);
         fpOverlay = { name: 'Digital footprint (vendor score ' + applicant.footprint.vendorScore + ')', delta: co.points,
                       applied: co.applied && scored, mode: co.mode,
                       note: co.applied && !scored ? 'Not applied — no scorecard on this decision' : co.status };
@@ -3885,12 +4207,12 @@
       if (cv.phone === 'BOTIM' && !rl.phone.relied) throw err('contactVerification.phone is BOTIM, but botim’s assertion does not support relying on it (' + rl.phone.reasons.join(', ') + ') — a one-time code is needed');
       if (cv.email === 'BOTIM' && !rl.email.relied) throw err('contactVerification.email is BOTIM, but botim’s assertion does not support relying on it (' + rl.email.reasons.join(', ') + ') — a one-time code is needed');
     }
-    return { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv };
+    return { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv, school };
   }
   function decide(application, internal) {
     ensureInit();
     const cd = computeDecision(application);
-    const { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv } = cd;
+    const { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv, school } = cd;
     const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
 
     S.seq += 1;
@@ -3898,6 +4220,14 @@
     const createdAt = nowIso();
     const consentAt = createdAt;
     const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
+    if (school) {
+      // v2.21 — the school directory: licensed and in the directory. Internal (the Decision log): the memo says "school verified" only.
+      pulls.push({ source: 'SCHOOL_DIRECTORY', status: 'VERIFIED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
+                   summary: { school: school.school.name + ' (illustrative)', regulator: school.school.regulator, city: school.school.city,
+                              partner: school.school.partner ? 'partner school — 0% for the parent' : 'other licensed school — monthly fee',
+                              payee: 'the school (' + school.school.ibanMasked + ')', invoice: (school.invoiceRef || '—') + ' · ' + aed(Math.round(amount)) +
+                              (school.dueDate ? ' · due ' + school.dueDate : '') } });
+    }
     if (eid) {
       // v2.16 — what the scan read, as flags: never the employer, the payer, the date of birth, the occupation or the nationality.
       pulls.push({ source: 'EMIRATES_ID', status: 'SCANNED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
@@ -3968,6 +4298,29 @@
     // v2.20 — how the mobile and the email were verified, logged with the inputs only when the journey says so
     // (records from the other journeys keep their earlier shape). Internal: the Decision log reads it; the memo never does.
     if (cv) record.inputs.contactVerification = clone(cv);
+    if (school) {
+      // v2.21 — the school's invoice as given (for reproduceDecision) and the 12-month plan, paid to the school. Internal: the
+      // memo carries "school verified" and "paid to the school" only — never the name, the merchant fee, the invoice or the child.
+      record.inputs.school = { schoolId: school.school.id, invoiceRef: school.invoiceRef, dueDate: school.dueDate };
+      const pr = ev.pricing, k = pr ? pr.kfs : null;
+      const bd = applicant.bankData || {}, cn = applicant.connected || {};
+      const salaryDay = Number.isFinite(bd.salaryCreditDay) ? bd.salaryCreditDay : (Number.isFinite(cn.salaryCreditDay) ? cn.salaryCreditDay : null);
+      const dates = k ? schoolPlanDates(createdAt.slice(0, 10), salaryDay, pol.regulatory.coolingOffDays || 5, school.dueDate) : null;
+      record.schoolFees = {
+        school: clone(school.school),
+        invoice: { ref: school.invoiceRef, amount: Math.round(amount), dueDate: school.dueDate },
+        months: SCHOOL_MONTHS,
+        amount: ev.limit.approved,
+        shortfall: ev.outcome === 'DECLINE' ? null : Math.max(0, Math.round(amount) - ev.limit.approved),
+        monthlyInstalment: k ? k.monthlyInstalment : null, monthlyFeeRate: pr ? pr.monthlyFeeRate : null,
+        totalFees: k ? k.totalFees : null, aprEquivalent: k ? k.aprEquivalent : null, planTotal: k ? k.planTotal : null,
+        payee: 'SCHOOL', bestDebitDay: dates ? dates.bestDebitDay : null,
+        coolingOffEndsOn: dates ? dates.coolingOffEndsOn : null,
+        firstPaymentDate: dates ? dates.firstPaymentDate : null, lastPaymentDate: dates ? dates.lastPaymentDate : null,
+        coolingOffEndsAfterDueDate: dates ? dates.coolingOffEndsAfterDueDate : false
+      };
+      record.audit[0].detail += ' · school fees · ' + (school.school.partner ? 'partner school (0%)' : 'other licensed school (monthly fee)') + ' · paid to the school';
+    }
     if (ev.redFlags) {
       // v2.9 — what the red-flag rule read (internal: the Decision log and the Workbench).
       // Never part of the credit memo: the lender sees the outcome and RC_RED_FLAGS_REVIEW only.
@@ -4128,6 +4481,12 @@
   //  - Findings (slide 7) are shared as words; the rules behind them stay inside Noor.
   // ---------------------------------------------------------------------------
   const DEFAULT_LENDERS = [{ id: 'partner-bank', name: 'Partner Bank', role: 'Lender of record' }];
+  // v2.21 — the school-fees memo: the product line, the purpose and two flags; the school's name is never shared.
+  const SCHOOL_MEMO_PRODUCT = 'School fees — 12 months';
+  const SCHOOL_MEMO_PURPOSE = 'Education — school fees, paid directly to the school';
+  const SCHOOL_MEMO_PAYEE = 'The school — paid directly by the lender';
+  const SCHOOL_MEMO_VERIFIED = 'School verified (licensed, in the directory)';
+  const SCHOOL_MEMO_PAID_TO = 'Paid to the school — funds cannot be diverted';
   const SHARE_WITH_LENDER_WORDING = 'By applying you agree Noor shares your application result (not your bank data) with the lender of record';
   // v2.18 — Noor's external line (slide 6), the methodology line (slide 7) and the memo's fixed notes.
   const EXTERNAL_LINE = 'NoorScore works with Open Finance data as its core component. For enrichment, we use different types of alternative data where available.';
@@ -4307,6 +4666,14 @@
       }
       return t;
     }
+    if (p.mode === 'SCHOOL_FEES' && p.kfs) {
+      // v2.21 — the 12-month school-fees plan: the parent's fee (0 at a partner school) and the APR equivalent; the payee is the
+      // school. Never the school's name, the merchant fee, a partner flag or the invoice.
+      const k = p.kfs;
+      return Object.assign({ amount: k.principal, tenorMonths: k.tenorMonths, monthlyFeeRate: p.monthlyFeeRate, aprEquivalent: k.aprEquivalent,
+                             monthlyPayment: k.monthlyInstalment, totalRepayable: k.planTotal, totalFees: k.totalFees,
+                             payee: SCHOOL_MEMO_PAYEE, earlySettlementFee: k.earlySettlementFee || 'None' }, base);
+    }
     if (p.mode === 'MONTHLY_FEE') {
       const plan = (p.plans || []).find(x => x.months === p.selectedMonths) || {};
       return Object.assign({ amount: p.principal, planMonths: p.selectedMonths, monthlyFeeRate: p.monthlyFeeRate,
@@ -4342,7 +4709,7 @@
     const viaOf = 'Open Finance (Al Tareq)' + (months ? ', ' + months + ' months' : '');
     let via;
     if (f.verifiedIncome === null || f.verifiedIncome === undefined) via = 'Not verified';
-    else if (rec.productId === 'personal_loan') via = f.incomeSource === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
+    else if (rec.productId === 'personal_loan' || rec.productId === SCHOOL_PID) via = f.incomeSource === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
     else if (rec.productId === 'salary_advance') via = of && a.bankData && a.bankData.source === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
     else if (rec.productId === 'car_loan') {
       via = !f.openFinance ? 'Salary certificate'
@@ -4399,7 +4766,7 @@
   //    1,311.70 = 3,788.30 → "AED 3,500–4,000 / month"; DBR 18.4% → "15–20%".
   // ---------------------------------------------------------------------------
   const ADDITIONAL_INCOME_MIN = 1000;
-  const SALARY_PRODUCTS = ['personal_loan', 'salary_advance', 'car_loan'];
+  const SALARY_PRODUCTS = ['personal_loan', 'salary_advance', 'car_loan', SCHOOL_PID];   // v2.21 — school fees reads the salary like the personal loan
   function ofGranted(rec) { return !!(rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted); }
   function incomeParts(rec) {
     const f = rec.features || {}, a = rec.applicantSnapshot || {}, cn = a.connected || {};
@@ -5245,7 +5612,8 @@
       lenderName: memoLenderName(lender),
       sharingAgreement: memoAgreement(ag),
       createdAt: rec.createdAt,
-      product: { productId: rec.productId, nameEn: man.nameEn || rec.productId },
+      product: rec.productId === SCHOOL_PID ? { productId: rec.productId, nameEn: SCHOOL_MEMO_PRODUCT, purpose: SCHOOL_MEMO_PURPOSE }
+                                            : { productId: rec.productId, nameEn: man.nameEn || rec.productId },
       policyVersion: rec.policyVersion,
       engineVersion: rec.engineVersion,
       // v2.18 — no KYC-source detail (UAE PASS / Emirates ID): the identity flag says verified or not verified
@@ -5310,7 +5678,9 @@
         purchaseVerified: rec.productId === 'split'
           ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
           : null
-      }, car ? memoCarFlags(rec) : {});
+      }, car ? memoCarFlags(rec) : {},
+      // v2.21 — school fees: the school is verified and the lender pays it directly (no name, no merchant fee, no partner flag)
+      rec.productId === SCHOOL_PID ? { school: SCHOOL_MEMO_VERIFIED, payee: SCHOOL_MEMO_PAID_TO } : {});
     }
     // v2.17 — completeness as the lender sees it: the percentage and counts only (no threshold, weights or bands)
     if (G('dataCompleteness') && dcm) {
@@ -5336,7 +5706,8 @@
     const t = memo.terms || {}, af = memo.affordability || {}, bu = memo.bureau || {};
     const s = (v) => (v === null || v === undefined ? '' : String(v));
     let aprOrFee = '';
-    if (Number.isFinite(t.monthlyFeeRate)) aprOrFee = 'Fee ' + pctStr(t.monthlyFeeRate) + '/mo (APR equivalent ' + pctStr(t.aprEquivalent) + ')';
+    if (t.payee === SCHOOL_MEMO_PAYEE && t.monthlyFeeRate === 0) aprOrFee = 'No interest, no fees (APR 0.00%)';   // v2.21 — a partner school
+    else if (Number.isFinite(t.monthlyFeeRate)) aprOrFee = 'Fee ' + pctStr(t.monthlyFeeRate) + '/mo (APR equivalent ' + pctStr(t.aprEquivalent) + ')';
     else if (Number.isFinite(t.flatFee)) aprOrFee = 'Flat fee ' + aed(t.flatFee);
     else if (Number.isFinite(t.apr)) aprOrFee = 'APR ' + pctStr(t.apr);
     else if (Number.isFinite(t.aprFrom)) aprOrFee = 'APR from ' + pctStr(t.aprFrom);
@@ -5444,6 +5815,7 @@
     if (rec.inputs.emiratesId !== null && rec.inputs.emiratesId !== undefined) app.emiratesId = clone(rec.inputs.emiratesId);
     if (rec.inputs.dataSources !== null && rec.inputs.dataSources !== undefined) app.dataSources = clone(rec.inputs.dataSources);
     if (rec.inputs.contactVerification) app.contactVerification = clone(rec.inputs.contactVerification);   // v2.20
+    if (rec.inputs.school) app.school = clone(rec.inputs.school);   // v2.21 — the school's invoice as given
     const saved = { pol: S.policies[pid], ew: S.policies[EW_BLOCK_ID], ticks: S.clockTicks, seq: S.seq };
     let run;
     try {
@@ -5487,6 +5859,7 @@
                app.emiratesId ? 'Emirates ID scan (front + back)' : null,
                app.dataSources ? 'Data sources: ' + (app.dataSources.approvedAccounts || []).length + ' approved accounts · ' + app.dataSources.months + ' months' : null,
                app.contactVerification ? 'Contact verification: ' + contactVerificationLine(app.contactVerification) : null,
+               app.school ? 'School invoice: the school (directory id ' + app.school.schoolId + '), ' + (app.school.invoiceRef || 'no reference') + (app.school.dueDate ? ', due ' + app.school.dueDate : '') : null,
                'Policy ' + pid + ' v' + rec.policyVersion + (ewSnap ? ' · early-warning block v' + ewVer : '') + ' · ' + rec.engineVersion].filter(Boolean),
       checks, diffs, notes
     };
@@ -5651,6 +6024,15 @@
     if (fcf !== null && fcf < 1500) est -= 30;
     const estBand = gradeToBand(pointsToGrade(est)) || 'C';
     const bandRange = prm.pricingBands[estBand];
+    // v2.21 — split school fees over 12 months, on the same income, spending, obligations and budget: the budget over 12
+    // months at a partner school (0%) and at another school (the estimate band's monthly fee), within 20× salary and the cap.
+    const budget = fcf === null ? Math.max(0, headroom) : Math.min(Math.max(0, headroom), fcfBudget);
+    const sfPrm = getPolicyRef(SCHOOL_PID).params;
+    const sfRate = schoolFeeRate(sfPrm, false, estBand);
+    const sfCap = (x) => Math.min(x, floor1000(bySalary), sfPrm.productCap);
+    const schoolFees = { months: SCHOOL_MONTHS, maxPartner: sfCap(schoolMaxPrincipal(budget, schoolFeeRate(sfPrm, true, estBand))),
+                         maxOther: sfCap(schoolMaxPrincipal(budget, sfRate)), instalmentBudgetMonthly: budget,
+                         nonPartnerBand: estBand, nonPartnerRate: sfRate };
     return {
       productId: PREQUAL.productId,
       indicativeMin: min,
@@ -5674,12 +6056,38 @@
       sources: ['OPEN_FINANCE'],
       assumptions: { tenorMonths: tenor, apr: topRate, dbrCapPct: dbrCap,
                      instalmentToFcfMaxPct: fcf === null ? null : PREQUAL.instalmentToFcfMaxPct,
-                     instalmentBudgetMonthly: fcf === null ? Math.max(0, headroom) : Math.min(Math.max(0, headroom), fcfBudget) },
+                     instalmentBudgetMonthly: budget },
       // Indicative pricing for the estimated band (the loan screen's "from X% APR").
       indicativePricing: { band: estBand, aprMin: bandRange[0], aprMax: bandRange[1], aprMid: round4((bandRange[0] + bandRange[1]) / 2),
                            termsMonths: [6, 12, 24] },
+      schoolFees,
       ...(dcq ? { status: 'OK', completeness: dcq } : {})
     };
+  }
+  // ---------------------------------------------------------------------------
+  // v2.21 — split school fees: the 12-month plan for the screen (pure: no record, no clock tick). quoteSchoolFees(amount,
+  // { schoolId, band }) → 12 equal instalments at the school's price: 0% at a partner school, else the band's monthly fee
+  // (band defaults to B, the pre-qualification estimate's band) with the APR equivalent from monthlyIrr().
+  // ---------------------------------------------------------------------------
+  function quoteSchoolFees(amount, opts) {
+    ensureInit();
+    if (!Number.isFinite(amount) || amount <= 0) throw err('quoteSchoolFees(amount, { schoolId, band }) needs a positive amount in AED');
+    const o = opts || {};
+    const s = schoolOf(o.schoolId);
+    const band = o.band === undefined || o.band === null ? 'B' : o.band;
+    if (!['A', 'B', 'C'].includes(band)) throw err('band must be A, B or C');
+    const prm = getPolicyRef(SCHOOL_PID).params;
+    const partner = s.partner === true;
+    const rate = schoolFeeRate(prm, partner, band);
+    const amt = Math.round(amount);
+    const plan = splitPlan(amt, SCHOOL_MONTHS, rate);
+    const n = (x) => money(x).replace(/\.00$/, '');
+    const line = partner ? SCHOOL_MONTHS + ' × ' + n(plan.monthlyPayment) + ' · 0% interest, no fees'
+      : SCHOOL_MONTHS + ' × ' + n(plan.monthlyPayment) + ' · monthly fee ' + pctStr(rate) + ' · APR equivalent ' + pctStr(plan.aprEquivalent);
+    return { productId: SCHOOL_PID, school: schoolPublic(s), partner, band: partner ? null : band, amount: amt, months: SCHOOL_MONTHS,
+             monthlyFeeRate: rate, monthlyInstalment: plan.monthlyPayment, monthlyFee: plan.monthlyFee, totalFees: plan.totalFees,
+             planTotal: plan.planTotal, aprEquivalent: plan.aprEquivalent, payee: 'SCHOOL', line,
+             minAmount: prm.minAmount, productCap: prm.productCap };
   }
   // Pure: the reducing-balance instalment Mizan uses for personal-loan KFS figures
   // (annual rate, 2-dp money) — for indicative quotes before a decision exists.
@@ -5790,7 +6198,7 @@
   ];
   // The owner's personal accounts are monitored under the owner's own consent, as an individual.
   const EW_CONSENT_WHY_OWNER = 'To check the guarantee you give for your company’s loan — and, while the business loan you guarantee is open, to spot early if repayments might become hard.';
-  const RF_PRODUCTS = ['personal_loan', 'car_loan', 'split'];
+  const RF_PRODUCTS = ['personal_loan', 'car_loan', 'split', SCHOOL_PID];   // v2.21 — school fees carries the origination gate
   const EW_RANK = { HIGH: 0, 'MEDIUM+': 1, MEDIUM: 2, LOW: 3, NONE: 4 };
   const EW_LENDER_STATUS = 'Early warning: elevated — Noor is in contact with the customer';
   const EW_PAUSED = ['Split capacity', 'Limit increases', 'Upgrade offers'];
@@ -5829,7 +6237,7 @@
     return {
       blockId: EW_BLOCK_ID, kind: 'SHARED_BLOCK', productId: null,
       nameEn: 'Early warning — UAE red flags', nameAr: 'الإنذار المبكر — مؤشرات المخاطر',
-      appliesTo: ['personal_loan', 'car_loan', 'split', 'sme_working_capital', 'monitoring'],
+      appliesTo: ['personal_loan', 'car_loan', 'split', 'sme_working_capital', SCHOOL_PID, 'monitoring'],   // v2.21 — + school fees
       version: 1, publishedAt: null, publishedBy: 'system (default block)', approvedBy: 'system',
       guardrails: clone(EW_GUARDRAILS),     // locked — shown as text, never editable
       actionLadder: clone(EW_LADDER),       // locked
@@ -6086,7 +6494,7 @@
     if (phase !== 'ORIGINATION' && phase !== 'MONITORING') throw err('redFlags phase must be ORIGINATION or MONITORING');
     return redFlagsWith(subject, phase, ewParamsFor(opts && opts.params));
   }
-  // Origination gate: only for split / personal loan / car loan, only when the applicant carries
+  // Origination gate: only for split / personal loan / car loan / school fees (v2.21), only when the applicant carries
   // redFlagData AND granted Open Finance consent (the signals come from their own accounts).
   function gateRedFlags(p, raw, consents, productId, ewOverride) {
     if (!RF_PRODUCTS.includes(productId) || !raw || !raw.redFlagData || !consents || consents.openFinance !== true) return p;
@@ -6202,7 +6610,9 @@
     return row.amount !== undefined ? row.amount : (row.purchaseAmount !== undefined ? row.purchaseAmount : 100000);
   }
   // Starter-loan rows carry no request: the upgrade is offered up to the tier ceiling.
+  // v2.21 — school fees reads the personal-loan sample book as 12-month school-fee requests (partner pricing: no school given).
   function rowRequest(productId, row) {
+    if (productId === SCHOOL_PID) return [rowAmount(row), SCHOOL_MONTHS];
     return productId === 'starter_loan' ? [null, null] : [rowAmount(row), row.tenorMonths || 12];
   }
   function decideRaw(productId, sampleRow) {
@@ -6219,7 +6629,7 @@
     if (productId === 'starter_loan') return D.sampleBook.starter_loan;
     if (productId === 'car_loan') return D.sampleBook.car_loan || [];
     if (productId === 'sme_working_capital') return D.sampleBook.sme_working_capital || [];
-    return productId === 'split' ? D.sampleBook.split : D.sampleBook.personal_loan;  // salary_advance reuses the loan book
+    return productId === 'split' ? D.sampleBook.split : D.sampleBook.personal_loan;  // salary_advance and school_fees (v2.21) reuse the loan book
   }
 
   function simulateBook(productId, candidateParams) {
@@ -6245,7 +6655,8 @@
     // Car loan (v2.7): most policy changes move amounts, not outcomes — sum the approved
     // amounts and count the approvals that shrink or grow.
     // v2.10 — the SME pack too: most of its levers (guarantee factor, DSCR budget) move amounts, not outcomes.
-    const isCar = productId === 'car_loan' || productId === 'sme_working_capital';
+    // v2.21 — and the school-fees pack: the sample book's amounts meet its AED 120,000 cap and the 12-month budget.
+    const isCar = productId === 'car_loan' || productId === 'sme_working_capital' || productId === SCHOOL_PID;
     const amt = { b: 0, a: 0, reduced: 0, raised: 0 };
     for (const row of book) {
       const rq = rowRequest(productId, row);
@@ -6480,7 +6891,8 @@
                        detail: rec.productId === 'sme_working_capital'
                          ? 'EXECUTED — the six-step sequence is complete (owner disclosures, guarantee signed, Noor-policy cooling-off); the business loan now exists'
                          : 'EXECUTED — consumer-protection sequence complete; ' +
-                               (rec.productId === 'split' ? 'the instalment plan now exists'
+                               (rec.productId === SCHOOL_PID ? 'the 12-month school-fees plan now exists and the school is paid'
+                                 : rec.productId === 'split' ? 'the instalment plan now exists'
                                  : (rec.kind === 'UPGRADE' ? 'the upgraded loan now exists' : 'the loan now exists')) });
     }
     return rec;
@@ -6557,7 +6969,7 @@
     ensureInit();
     const sd = S.seeded;
     const prod = {};
-    for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance', 'car_loan', 'sme_working_capital']) prod[pid] = Object.assign({}, sd.tot[pid]);
+    for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance', 'car_loan', 'sme_working_capital', SCHOOL_PID]) prod[pid] = Object.assign({}, sd.tot[pid]);
     const declineReasons = Object.assign({}, sd.declineReasons);
     const gradeDist = Object.assign({}, sd.gradeDist);
     const daily = clone(sd.daily);
@@ -6595,7 +7007,8 @@
       totals,
       stpPct: pct1(stpAll, totals.decisions),
       byProduct,
-      stpTargets: { split: 85, personal_loan: 80 },
+      // v2.21 — school fees: a straight-through target like split's (an instant in-app product with a verified payee)
+      stpTargets: { split: 85, personal_loan: 80, school_fees: 85 },
       declineReasons: Object.keys(declineReasons)
         .map(code => ({ code, labelEn: (D.reasonCodes[code] || { en: code }).en, count: declineReasons[code] }))
         .sort((a, b) => b.count - a.count),
@@ -6656,7 +7069,10 @@
     RED_FLAG_CODES: RF_CODES.slice(), RED_FLAG_ORIGINATION_CODES: RF_ORIGINATION.slice(),
     redFlags, earlyWarningScan, simulateEarlyWarning, askCustomer,
     // v2.10 — SME working capital: a pure live quote; the two business signal codes (monitoring only)
-    quoteSme, RED_FLAG_BUSINESS_CODES: RF_BUSINESS_CODES.slice(), REFER_SLA_HOURS: Object.assign({}, REFER_SLA_HOURS)
+    quoteSme, RED_FLAG_BUSINESS_CODES: RF_BUSINESS_CODES.slice(), REFER_SLA_HOURS: Object.assign({}, REFER_SLA_HOURS),
+    // v2.21 — split school fees over 12 months: the pure 12-month plan for the screen, and the school directory
+    quoteSchoolFees, SCHOOL_FEES_MONTHS: SCHOOL_MONTHS,
+    schools: function () { ensureInit(); return clone(schoolsAll().map(schoolPublic)); }
   };
 
   globalThis.MizanEngine = MizanEngine;
