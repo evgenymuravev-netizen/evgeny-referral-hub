@@ -1932,6 +1932,46 @@ label.bk-acct { position:relative; cursor:pointer; }
 .jr-rely-line { color:var(--ink-2); overflow-wrap:anywhere; }
 .jr-rely .callout { margin:0; }
 .jr-rely > .btn { align-self:flex-start; }
+/* ---------- v2.21 — split school fees over 12 months, the default product ---------- */
+.demo-strip.demo-12 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media (max-width:1300px) { .demo-strip.demo-12 { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:1100px) { .demo-strip.demo-12 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:600px) { .demo-strip.demo-12 { grid-template-columns:1fr; } }
+.demo-step.ds-main { border-color:var(--brand); box-shadow:inset 3px 0 0 var(--brand); }
+.sp-sf-link { display:block; margin-top:10px; text-align:left; white-space:normal; max-width:100%; }
+.ph-sf-form { display:flex; flex-direction:column; gap:12px; }
+.ph-sf-choice { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.ph-sf-card { display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0; text-align:left; cursor:pointer; color:var(--ink);
+  background:var(--panel); border:1.5px solid var(--ph-line); border-radius:16px; padding:12px 14px; }
+.ph-sf-card.sel { background:var(--brand-fill); border-color:var(--brand-fill); color:#fff; }
+.ph-sf-card-t { font-family:var(--font-display); font-weight:700; font-size:16px; line-height:21px; }
+.ph-sf-card-s { font-family:var(--font-ui); font-size:13px; line-height:18px; color:var(--muted); }
+.ph-sf-card.sel .ph-sf-card-s { color:rgba(255,255,255,.88); }
+.ph-sf-schools { display:flex; flex-direction:column; gap:8px; }
+.ph-sf-school { justify-content:space-between; min-height:62px; }
+.ph-sf-sch-m { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.ph-sf-sch-n { font-weight:600; font-size:16px; line-height:21px; }
+.ph-sf-sch-s { font-family:var(--font-label); font-size:12.5px; line-height:17px; color:var(--muted); }
+.ph-row.sel .ph-sf-sch-s { color:rgba(255,255,255,.88); }
+.ph-sf-badge { flex:0 0 auto; border-radius:var(--radius-pill); padding:3px 10px; font-family:var(--font-label); font-size:12px; font-weight:600; white-space:nowrap;
+  background:var(--ph-ground); color:var(--ink-2); border:1px solid var(--ph-line); }
+.ph-sf-badge.partner { background:var(--ok-soft); color:var(--ok); border-color:transparent; }
+.ph-row.sel .ph-sf-badge { background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.5); }
+.ph-sf-inv { gap:0; padding:4px 16px 12px; }
+.ph-sf-inv-r { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--ph-line); font-size:15px; line-height:20px; }
+.ph-sf-inv-k { color:var(--muted); }
+.ph-sf-inv-v { color:var(--ink); font-weight:600; text-align:right; }
+.ph-sf-inv .ph-small { margin-top:8px; font-size:13px; line-height:18px; }
+.ph-sf-line { display:flex; align-items:flex-start; gap:8px; margin:0; font-family:var(--font-ui); font-weight:600; font-size:16px; line-height:22px; color:var(--ink); }
+.ph-sf-line-ico { flex:0 0 18px; width:18px; height:18px; margin-top:2px; color:var(--ok); }
+.ph-sf-pq { gap:4px; }
+.ph-sf-pq-k { font-family:var(--font-label); font-size:15px; font-weight:500; color:var(--brand-ink); }
+.ph-sf-pq-v { font-family:var(--font-display); font-weight:800; font-size:34px; line-height:40px; letter-spacing:-.015em; color:var(--ink); font-variant-numeric:tabular-nums; }
+.ph-sf-pq-s { font-family:var(--font-ui); font-size:15px; line-height:21px; color:var(--ink-2); }
+.ph-sf-alt { gap:8px; background:transparent; border:1.5px dashed var(--ph-line); }
+.ph-sf-alt-t { font-family:var(--font-display); font-weight:700; font-size:17px; line-height:23px; color:var(--ink); }
+.ph-sf-alt .ph-btn { background:transparent; color:var(--ink); border:1.5px solid var(--ink); min-height:46px; font-size:16px; }
+.ph-sf-back { margin-bottom:-2px; }
 </style>
 
 <div id="fatal-banner" role="alert"></div>
@@ -2336,7 +2376,8 @@ label.bk-acct { position:relative; cursor:pointer; }
   const personasJourney = [
     { // j1 — pre-qualifies on connected accounts only, then APPROVE (grade B) at AED 15,000 · 12 months
       id: 'j1', name: 'Ravi Kumar', nameAr: 'رافي كومار',
-      tagline: 'Warehouse supervisor, 3 years in the UAE, Botim user — a family wedding at home',
+      // v2.21 — the default journey splits school fees; purpose and defaultRequest stay for the personal-loan path
+      tagline: 'Warehouse supervisor, 3 years in the UAE, botim user — his daughter starts Grade 1 in September',
       age: 31, residency: 'RESIDENT', monthsInUae: 36,
       employment: { employer: 'Logistics company, Jebel Ali', type: 'PRIVATE',
                     salaryMonthly: 12000, tenureMonths: 30, retiree: false },
@@ -2374,6 +2415,11 @@ label.bk-acct { position:relative; cursor:pointer; }
                    spendCategories: { Dining: 24, Groceries: 22, Transport: 12, Bills: 18, Shopping: 14, Other: 10 } },
       purpose: 'Family wedding',
       defaultRequest: { amount: 15000, tenorMonths: 12 },
+      // v2.21 — the school's fee invoice for the default product (split school fees over 12 months): Terms 1–3 at a partner
+      // school (fictitious, illustrative). The child is "Child 1 · Grade 1" — never a name. Read by the journey's school-fees
+      // form and decide({productId:'school_fees'}); the school's name, the invoice and the child never reach the credit memo.
+      schoolFees: { schoolId: 'sch-juniper', child: 'Child 1 · Grade 1', academicYear: '2026–27', terms: 'Terms 1–3', amount: 15000,
+                    dueDate: '2026-08-20', invoiceRef: 'INV-26-0815' },
       // v2.8 — the email botim shares at hand-off (synthetic, reserved domain). The journey shows it
       // masked; it never reaches the credit memo or the SFTP row.
       contact: { email: 'ravi.k@example.com', emailSharedBy: 'botim' },
@@ -2800,7 +2846,16 @@ label.bk-acct { position:relative; cursor:pointer; }
                   balanceNowAed: 45500, largestOutboundTransferAed: 3000, missedCollection: false },
         aecb: { cards: 1, cardLimitTotal: 30000, cardBalanceTotal: 6000 },
         business: { baseline: { inflows3mAvgAed: 125000, usualDrawingsAed: 28000, sameMonthLastYearDropPct: 29 },
-                    recent: { inflowsAed: 85000, largestTransferToOwnerAed: 28000 } } } }
+                    recent: { inflowsAed: 85000, largestTransferToOwnerAed: 28000 } } } },
+    // v2.21 — a split-school-fees plan under watch: a parent paying on time, nothing changed against her own history →
+    // NONE (no flag). The school, the invoice and the child are not part of a monitored loan.
+    { id: 'ML-09', customer: 'Maya Fernandes', productId: 'school_fees', amountAed: 18000, tenorMonths: 12,
+      disbursedAt: addDaysIso(TODAY, -40), contactChannel: 'In-app message',
+      redFlagData: {
+        baseline: { intlTransfersShareOfIncome6m: 0.08, salaryCreditDay: 26, avgBalance3m: 7800, cardUtilisationPct3mAgo: 30, onTimePaymentsRun: 1 },
+        recent: { incomeAed: 13500, intlTransfersAed: 1080, airlinePurchases: [], salaryLateDays: 0,
+                  balanceNowAed: 7400, largestOutboundTransferAed: 1080, missedCollection: false },
+        aecb: { cards: 1, cardLimitTotal: 15000, cardBalanceTotal: 4800 } } }
   ];
 
   // ---------------------------------------------------------------------------
@@ -3080,6 +3135,17 @@ label.bk-acct { position:relative; cursor:pointer; }
   // partner bank books, funds and collects the loan, and receives a credit memo
   // built from an allowlist (never Open Finance data).
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // The school directory (Addendum v2.21, SCHOOL-FEES-SPEC.md). Fictitious schools — shown
+  // everywhere with "(illustrative)". partner: true → 0% for the parent (the school pays a
+  // merchant fee); false → another licensed school, a monthly fee by band. The masked IBAN is
+  // where the lender pays the school; the credit memo never names the school.
+  // ---------------------------------------------------------------------------
+  const schools = [
+    { id: 'sch-juniper', name: 'Juniper Hill Primary School', city: 'Dubai', regulator: 'KHDA', partner: true, ibanMasked: 'AE•• •••• •••• •••• •••• 4410' },
+    { id: 'sch-falcon', name: 'Falcon Ridge Academy', city: 'Dubai', regulator: 'KHDA', partner: false, ibanMasked: 'AE•• •••• •••• •••• •••• 7783' }
+  ];
+
   const lenders = [
     { id: 'partner-bank', name: 'Partner Bank', nameAr: 'البنك الشريك', role: 'Lender of record', short: 'PB' },
     // v2.18 — an illustrative second lender with a narrower sharing agreement (Core outputs only)
@@ -3223,6 +3289,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     reasonCodeLibrary: reasonCodeLibrary,
     earlyWarning: earlyWarning,
     monitoredLoans: monitoredLoans,
+    schools: schools,
     sampleBook: { split: buildSplitBook(), personal_loan: buildLoanBook(), starter_loan: buildStarterBook(), car_loan: buildCarBook(),
                   sme_working_capital: buildSmeBook() },
     history: { days: 90, seed: 20260719 }
@@ -3257,6 +3324,12 @@ label.bk-acct { position:relative; cursor:pointer; }
  *                    separate consent) that verify the guarantee and the owner's income. Limit = the
  *                    business capacity (DSCR, revenue, product cap) × a guarantee
  *                    factor; the business and the owner are monitored while it is open
+ *   school_fees    — split a school's fee invoice into 12 equal monthly payments (Addendum
+ *                    v2.21, ../SCHOOL-FEES-SPEC.md): Partner Bank pays the school directly
+ *                    (the payee is the school, never the customer); 0% for the parent at a
+ *                    partner school (the school pays a merchant fee), a banded monthly fee
+ *                    otherwise. Underwritten exactly like the personal loan (scorecard v0,
+ *                    AECB, DBR, 20× salary, the instalment-to-FCF cap); the term is locked
  * Binding spec: ../NOOR-PIVOT.md (overrides ../CONTRACT.md where they conflict;
  * Addendum v2.1 covers the starter-loan upgrade).
  *
@@ -3336,6 +3409,10 @@ label.bk-acct { position:relative; cursor:pointer; }
  *    or which fallback code is needed. decide() can record how they were verified
  *    (contactVerification) — a Fraud & Integrity driver in the Decision log only; never a
  *    score, outcome, limit or price input, never in the memo.
+ *  - Split school fees (v2.21): 12 months, always (a locked rule — publish refuses
+ *    fixedTenorMonths); paid to the school, so the funds cannot be diverted. The memo says
+ *    "school verified (licensed, in the directory)" — never the school's name, the merchant
+ *    fee, the invoice file or anything about the child.
  *
  * Deterministic: no Math.random() in any decision path; synthetic timestamps and
  * seeded history derive from MizanData.TODAY + MizanData.history.seed. Stateful
@@ -3358,6 +3435,9 @@ label.bk-acct { position:relative; cursor:pointer; }
   // Car loan (v2.7, Reg 29/2011): ≤ 80% of the vehicle's value, tenor ≤ 60 months. No
   // salary multiple — the loan-to-value cap does that job for a secured car loan.
   const HARD_CAR = { ltvCapPct: 80, tenorCapMonths: 60 };
+  // Split school fees (v2.21): always 12 equal monthly payments — the pack's locked fixedTenorMonths.
+  const SCHOOL_PID = 'school_fees';
+  const SCHOOL_MONTHS = 12;
   const SPLIT_PLAN_MONTHS = [3, 6, 12];  // the only permitted split terms
   const CASH_FLOW_PROXY_BASE = 640;      // scorecard base on the AECB no-hit cash-flow path
 
@@ -3399,7 +3479,9 @@ label.bk-acct { position:relative; cursor:pointer; }
         salary_advance: 'Advance credited to the customer\'s account',
         starter_loan: 'Upgraded loan credited to the customer\'s account',
         car_loan: 'Partner Bank pays the dealer; the car is released with the mortgage registered',
-        sme_working_capital: 'Funds credited to the company’s business account'
+        sme_working_capital: 'Funds credited to the company’s business account',
+        // v2.21 — with a decision id, execSteps() adds the school's name: "… directly (Juniper Hill Primary School)"
+        school_fees: 'Partner Bank pays the school directly'
       },
       guard: 'funds must be disbursed to complete the sequence' }
   };
@@ -3439,7 +3521,10 @@ label.bk-acct { position:relative; cursor:pointer; }
       segment: 'CONSUMER', structure: 'Secured amortising loan (vehicle mortgage)', pricingMode: 'BANDED_APR' },
     // Addendum v2.10 — the SME route, appended sixth so every earlier product keeps its position.
     { productId: 'sme_working_capital', nameEn: 'Business working capital', nameAr: 'قرض رأس المال العامل',
-      segment: 'SME', structure: 'Amortising business loan with the owner\'s personal guarantee', pricingMode: 'BANDED_APR' }
+      segment: 'SME', structure: 'Amortising business loan with the owner\'s personal guarantee', pricingMode: 'BANDED_APR' },
+    // Addendum v2.21 — split school fees over 12 months, appended seventh so every earlier product keeps its position.
+    { productId: SCHOOL_PID, nameEn: 'Split school fees', nameAr: 'تقسيط الرسوم المدرسية',
+      segment: 'CONSUMER', structure: '12 equal monthly payments, paid directly to the school', pricingMode: 'SCHOOL_FEES' }
   ];
 
   // ---------------------------------------------------------------------------
@@ -3546,6 +3631,21 @@ label.bk-acct { position:relative; cursor:pointer; }
                   contingentInstalmentSharePct: 50, ownerBufferMinInstalments: 3, scoreDecline: 600, scoreRefer: 650,
                   // Annual interest rate, reducing balance, by grade band.
                   pricingBands: { A: [0.095, 0.115], B: [0.12, 0.14], C: [0.15, 0.18] }, tokenValidityDays: 14 }
+      },
+      // Split school fees over 12 months (Addendum v2.21). The personal loan's underwriting (scorecard v0, AECB, DBR,
+      // 20× salary, the instalment-to-FCF cap, data completeness, red flags, the Emirates ID rules, the footprint lanes);
+      // the term is locked at 12 months and the payee is the school. Pricing: 0% for the parent at a partner school (the
+      // school pays merchantFeePct — never shown to the customer, never in the memo); otherwise a monthly fee on the
+      // amount by band (illustrative), with the APR equivalent disclosed as for split.
+      school_fees: {
+        productId: SCHOOL_PID, version: 1,
+        publishedAt: null, publishedBy: 'system (default pack)', approvedBy: 'system',
+        regulatory: { dbrCapPct: 50, dbrCapRetireePct: 30, salaryMultipleCap: 20, fixedTenorMonths: SCHOOL_MONTHS,
+                      aecbCheckRequired: true, coolingOffDays: 5, payee: 'SCHOOL', earlySettlementFee: 'None' },
+        params: { minSalary: 5000, minAge: 21, maxAge: 65, scoreDecline: 620, scoreRefer: 680, maxEsrPct: 60, thinFileAction: 'REFER',
+                  minMonthsInUae: 6, chequeReturnsMax: 1, minAmount: 2000, productCap: 120000, instalmentToFcfMaxPct: 50,
+                  partnerSchoolParentFeePct: 0, merchantFeePct: 5, nonPartnerMonthlyFeeRate: { A: 0.005, B: 0.0075, C: 0.01 },
+                  completenessThresholdPct: 70, footprintOverlayMode: 'SHADOW', footprintOverlayCap: 20, tokenValidityDays: 14 }
       }
     };
     // Platform rules (v2.3) ride on every pack, read-only.
@@ -3582,6 +3682,13 @@ label.bk-acct { position:relative; cursor:pointer; }
                            revenueMultiple: [0.25, 3], unverifiedGuaranteeFactorPct: [30, 80], ownerDbrCapPct: [30, 50],
                            contingentInstalmentSharePct: [25, 100], ownerBufferMinInstalments: [1, 12],
                            scoreDecline: [550, 700], scoreRefer: [600, 760], tokenValidityDays: [3, 30] },
+    // v2.21 — split school fees. partnerSchoolParentFeePct is [0, 0]: 0% at a partner school is the product promise.
+    // nonPartnerMonthlyFeeRate: each band in [0, 0.02], risk-ordered A ≤ B ≤ C (checked in validateParams).
+    school_fees: { minSalary: [3000, 25000], minAge: [18, 25], maxAge: [60, 70], scoreDecline: [550, 720], scoreRefer: [600, 780],
+                   maxEsrPct: [30, 90], minMonthsInUae: [0, 24], chequeReturnsMax: [0, 5], minAmount: [500, 10000],
+                   productCap: [20000, 300000], instalmentToFcfMaxPct: [10, 80], partnerSchoolParentFeePct: [0, 0],
+                   merchantFeePct: [0, 10], nonPartnerMonthlyFeeRate: [0, 0.02], completenessThresholdPct: [50, 90],
+                   footprintOverlayCap: [0, 30], tokenValidityDays: [3, 30] },
     // v2.9 — the shared early-warning block (UAE red flags). The remittance multiple can never
     // go below 1.5×, so sending money home at the usual level can never become a flag.
     earlyWarning: { cardsMaxedUtilisationPct: [75, 100], cardsMaxedMinCards: [2, 5], cardsMaxedRisePp: [15, 60],
@@ -3661,6 +3768,8 @@ label.bk-acct { position:relative; cursor:pointer; }
   const SME_GUARANTEE_CONDITION = 'Personal guarantee signed by the owner via UAE PASS';
   const SME_LICENCE_CONDITION = 'Trade licence valid on the day of disbursement';
   const SME_DD_CONDITION = 'Direct debit mandate active on the company’s business account';
+  // v2.21 — split school fees: the lender pays the school against the fee invoice; the customer never receives the money
+  const SCHOOL_PAYEE_CONDITION = 'Paid directly to the school against the fee invoice — never to the customer';
   function tokenConditions(productId, repayment) {
     const repay = repayment ? REPAYMENT_METHODS[repayment.method].condition : null;
     const byProduct = {
@@ -3672,7 +3781,8 @@ label.bk-acct { position:relative; cursor:pointer; }
       car_loan: [KFS_CONDITION, repay],
       // v2.10 — a business loan: the owner acknowledges the key facts and the guarantee disclosure,
       // signs the personal guarantee, and the trade licence must still be valid when the money moves.
-      sme_working_capital: [SME_KFS_CONDITION, repayment && repayment.method === 'DIRECT_DEBIT' ? SME_DD_CONDITION : repay, SME_GUARANTEE_CONDITION, SME_LICENCE_CONDITION]
+      sme_working_capital: [SME_KFS_CONDITION, repayment && repayment.method === 'DIRECT_DEBIT' ? SME_DD_CONDITION : repay, SME_GUARANTEE_CONDITION, SME_LICENCE_CONDITION],
+      school_fees: [KFS_CONDITION, repay, SCHOOL_PAYEE_CONDITION]
     };
     return (byProduct[productId] || [KFS_CONDITION, repay]).filter(Boolean);
   }
@@ -4783,11 +4893,11 @@ label.bk-acct { position:relative; cursor:pointer; }
     };
   }
   // decide()'s dataSources: { approvedAccounts:[masks | accounts], months? }
-  function dcFromSources(applicant, ds) {
+  function dcFromSources(applicant, ds, threshold) {
     if (!ds || typeof ds !== 'object' || Array.isArray(ds)) throw err('application.dataSources must be { approvedAccounts:[…], months }');
     if (!Array.isArray(ds.approvedAccounts)) throw err('application.dataSources.approvedAccounts must list the accounts the customer approved');
     if (ds.months !== undefined && (!Number.isFinite(ds.months) || ds.months < 0)) throw err('application.dataSources.months must be a number of months');
-    return dataCompleteness(applicant, ds.approvedAccounts, { months: ds.months });
+    return dataCompleteness(applicant, ds.approvedAccounts, Number.isFinite(threshold) ? { months: ds.months, threshold } : { months: ds.months });
   }
 
   // ---------------------------------------------------------------------------
@@ -5073,6 +5183,247 @@ label.bk-acct { position:relative; cursor:pointer; }
     }
     return { profile: p, features, rules: rs.rules, score, limit, pricing,
              outcome, reasonCodes: rs.reasons, effTenor };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Split school fees over 12 months (Addendum v2.21, ../SCHOOL-FEES-SPEC.md)
+  //
+  // A parent splits a school's fee invoice into 12 equal monthly payments; Partner Bank pays
+  // the school directly. Underwriting is the personal loan's, rule for rule — scorecard v0
+  // (loanScore), the AECB pull, DBR double enforcement, 20× salary, the instalment-to-FCF cap,
+  // data completeness, the red-flag origination gate, the Emirates ID rules and the footprint
+  // lanes — so NoorScore, grade, reason codes and completeness match the personal loan for the
+  // same customer. Only the product, the amount, the instalment and the price differ. (The
+  // home-country evidence paths — Credit Passport, statements — stay with the personal loan.)
+  //
+  //   budget        = min(DBR headroom, instalmentToFcfMaxPct% × free cash flow)   (FCF only when spending is seen)
+  //   max principal = floor1000(12 × budget)                     at a partner school (0% for the parent)
+  //                 = floor1000(budget ÷ (1/12 + monthly fee))   at another licensed school
+  //   approved      = pickMin(invoice amount, max principal, 20× salary, productCap)
+  //   price         = splitPlan(approved, 12, fee): 12 equal instalments, the fee flat on the amount,
+  //                   the APR equivalent from monthlyIrr() (0% at a partner school)
+  // Ravi (j1), AED 15,000 at Juniper Hill Primary School (partner): 12 × AED 1,250.00, no fees, APR 0%;
+  // DBR (900 + 1,250) ÷ 12,000 = 17.9%; budget min(5,100, 50% × 3,700) = 1,850 → partner max AED 22,000.
+  // ---------------------------------------------------------------------------
+  function schoolsAll() { return (D && Array.isArray(D.schools)) ? D.schools : []; }
+  // The school as the record keeps it (internal): never the child, never the invoice file.
+  function schoolPublic(s) { return { id: s.id, name: s.name, partner: s.partner === true, regulator: s.regulator || null, city: s.city || null, ibanMasked: s.ibanMasked || null }; }
+  function schoolOf(schoolId) {
+    const s = schoolsAll().find(x => x.id === schoolId);
+    if (!s) throw err('unknown school "' + schoolId + '" — not in the school directory (MizanData.schools: ' + schoolsAll().map(x => x.id).join(', ') + ')');
+    return s;
+  }
+  // The parent's monthly fee on the amount: 0 at a partner school; else the band's non-partner rate.
+  function schoolFeeRate(prm, partner, band) {
+    if (partner) return (prm.partnerSchoolParentFeePct || 0) / 100;
+    const r = prm.nonPartnerMonthlyFeeRate || {};
+    return Number.isFinite(r[band]) ? r[band] : r.C;
+  }
+  // The largest principal whose 12-month instalment fits the monthly budget, floored to AED 1,000.
+  function schoolMaxPrincipal(budget, rate) {
+    if (!(budget > 0)) return 0;
+    return rate > 0 ? floor1000(budget / (1 / SCHOOL_MONTHS + rate)) : floor1000(SCHOOL_MONTHS * budget);
+  }
+  // Business days, Monday–Friday (the UAE working week).
+  function addBusinessDaysIso(isoDate, n) {
+    let d = isoDate, k = 0;
+    while (k < n) {
+      d = addDaysIso(d, 1);
+      const dow = new Date(d + 'T00:00:00Z').getUTCDay();
+      if (dow !== 0 && dow !== 6) k++;
+    }
+    return d;
+  }
+  // The plan's dates (v2.3 platform rule): cooling-off ends after coolingOffDays business days, the earliest payout
+  // without a waiver; the best debit date is the day after the salary credit (the 1st when the salary lands on the 28th
+  // or later); the first instalment is the first best debit date at least SCHOOL_FIRST_DUE_MIN_DAYS after payout.
+  const SCHOOL_FIRST_DUE_MIN_DAYS = 20;
+  function schoolPlanDates(decisionDate, salaryDay, coolingOffDays, dueDate) {
+    const coolingOffEndsOn = addBusinessDaysIso(decisionDate, coolingOffDays);
+    const bestDebitDay = Number.isFinite(salaryDay) ? (salaryDay < 28 ? salaryDay + 1 : 1) : 1;
+    const earliest = addDaysIso(coolingOffEndsOn, SCHOOL_FIRST_DUE_MIN_DAYS);
+    let [y, m] = earliest.split('-').map(Number);
+    const iso = (yy, mm) => new Date(Date.UTC(yy, mm - 1, bestDebitDay)).toISOString().slice(0, 10);
+    let first = iso(y, m);
+    if (first < earliest) { m += 1; if (m > 12) { m = 1; y += 1; } first = iso(y, m); }
+    const lm = m - 1 + (SCHOOL_MONTHS - 1);
+    const last = iso(y + Math.floor(lm / 12), (lm % 12) + 1);
+    return { coolingOffEndsOn, payoutEarliestOn: coolingOffEndsOn, bestDebitDay, firstPaymentDate: first, lastPaymentDate: last,
+             coolingOffEndsAfterDueDate: !!dueDate && coolingOffEndsOn > dueDate };
+  }
+  function evaluateSchoolFees(p, amount, tenorMonths, pol, consents, extra) {
+    const reg = pol.regulatory, prm = pol.params;
+    const rs = makeRuleSet();
+    // The school (decide() resolves it from the directory). Without one — a policy simulation over the sample
+    // book — the request is read as a partner school (partner pricing).
+    const school = extra && extra.school ? extra.school : null;
+    const partner = school ? school.partner === true : true;
+    const obligations = p.obligationsMonthly;
+    const openFinanceOk = !consents || consents.openFinance === true;
+    const connectedSalary = p.bankSource === 'ALTAREQ_TPP' && p.salaryDetected && openFinanceOk;
+
+    // REGULATORY — mandatory bureau check (Federal Law 6/2010; consent gated upstream)
+    rs.add('REG_AECB_CHECK', 'AECB consumer report pulled before credit decision', 'REGULATORY',
+           'PASS', p.aecbHit ? 'HIT' : 'NO_HIT', 'pull required');
+    // The term is a locked rule of the pack: 12 months. Any other request is set to 12 (RC_TENOR_CAP).
+    const effTenor = SCHOOL_MONTHS;
+    const termSet = tenorMonths !== SCHOOL_MONTHS;
+    rs.add('REG_FIXED_TERM', 'Term fixed at ' + SCHOOL_MONTHS + ' monthly payments (locked rule of the pack)', 'REGULATORY',
+           'PASS', termSet ? tenorMonths + ' → set to ' + SCHOOL_MONTHS : tenorMonths, SCHOOL_MONTHS + ' months', null);
+    if (termSet) rs.reason('RC_TENOR_CAP');
+
+    // POLICY knock-outs — the personal loan's
+    const ageOk = p.age >= prm.minAge && p.age <= prm.maxAge;
+    rs.add('POL_AGE', 'Applicant age within eligible range', 'POLICY',
+           ageOk ? 'PASS' : 'FAIL', p.age, prm.minAge + '–' + prm.maxAge, 'RC_AGE');
+    rs.add('POL_MIN_SALARY', 'Salary at or above product minimum', 'POLICY',
+           p.salaryMonthly >= prm.minSalary ? 'PASS' : 'FAIL', p.salaryMonthly, prm.minSalary, 'RC_SALARY_FLOOR');
+    rs.add('POL_MIN_MONTHS_UAE', 'Minimum UAE residency period', 'POLICY',
+           p.monthsInUae >= prm.minMonthsInUae ? 'PASS' : 'REFER', p.monthsInUae, prm.minMonthsInUae, 'RC_MANUAL_REVIEW');
+    rs.add('POL_INCOME_VERIFIED', 'Salary verified (connected accounts or documents)', 'POLICY',
+           p.salaryDetected ? 'PASS' : 'REFER',
+           p.salaryDetected ? (connectedSalary ? 'verified — connected account' : 'verified — documents') : 'not detected',
+           'verified', 'RC_INCOME_UNVERIFIED');
+    rs.add('POL_MAX_ESR', 'Bureau expense-to-salary ratio within bound', 'POLICY',
+           (p.esrPct === null || p.esrPct <= prm.maxEsrPct) ? 'PASS' : 'REFER',
+           p.esrPct === null ? 'n/a' : p.esrPct, prm.maxEsrPct, 'RC_MANUAL_REVIEW');
+    const delinq = p.worstDelinquency || 'NONE';
+    rs.add('POL_DELINQUENCY', 'Delinquency history acceptable', 'POLICY',
+           (delinq === 'DPD90' || delinq === 'WRITEOFF') ? 'FAIL' : (delinq === 'DPD30' ? 'REFER' : 'PASS'),
+           delinq, '≤ DPD30 refers, ≥ DPD90 declines', 'RC_DELINQUENCY');
+    rs.add('POL_CHEQUE_RETURNS', 'Returned cheques within tolerance', 'POLICY',
+           p.chequeReturns12m <= prm.chequeReturnsMax ? 'PASS' : 'FAIL',
+           p.chequeReturns12m, prm.chequeReturnsMax, 'RC_CHEQUE_RETURNS');
+    rs.add('POL_THIN_FILE', 'Credit file depth (thin-file strategy)', 'POLICY',
+           p.aecbHit ? 'PASS' : (prm.thinFileAction === 'DECLINE' ? 'FAIL' : 'REFER'),
+           p.aecbHit ? 'file present' : 'no-hit / thin file', 'AECB hit', 'RC_THIN_FILE');
+    // The school: licensed and in the directory (informational in the prototype — an unknown school never gets here).
+    rs.add('POL_SCHOOL_VERIFIED', 'School verified — licensed, in the directory (informational in the prototype)', 'POLICY',
+           school ? 'PASS' : 'INFO',
+           school ? 'in the directory · ' + (school.regulator || 'licensed') + ' · ' + (partner ? 'partner school' : 'other licensed school')
+                  : 'no school given — simulation, read as a partner school', 'in the directory', null);
+
+    // Scorecard v0 — the personal loan's, with the same footprint and completeness overlays
+    const dc = extra && extra.dataCompleteness;
+    const score = loanScore(p, false, connectedSalary, null, extra && extra.footprintOverlay,
+                            dc && Number.isFinite(dc.scoreOverlay) ? { delta: dc.scoreOverlay } : null);
+    const overlayNet = score.overlays.reduce((s, o) => s + o.delta, 0);
+    if (score.points !== null) {
+      const cutoffOk = score.points >= prm.scoreDecline && score.grade !== 'E';
+      rs.add('POL_SCORE_CUTOFF', 'Score at or above decline cut-off (grade E auto-fails)', 'POLICY',
+             cutoffOk ? 'PASS' : 'FAIL', score.points + ' (' + (score.grade || '—') + ')', prm.scoreDecline, 'RC_SCORE_LOW');
+      const referOk = score.points >= prm.scoreRefer || overlayNet > 0;
+      rs.add('POL_SCORE_REFER', 'Score above refer line (or strong positive overlays)', 'POLICY',
+             cutoffOk ? (referOk ? 'PASS' : 'REFER') : 'PASS',
+             score.points, prm.scoreRefer, 'RC_MANUAL_REVIEW');
+    } else {
+      rs.add('POL_SCORE_CUTOFF', 'Score at or above decline cut-off', 'POLICY', 'PASS', 'no score (thin file)', prm.scoreDecline, null);
+    }
+
+    // Limit: the instalment budget is the tighter of the DBR headroom and the free-cash-flow budget; each becomes a
+    // principal over 12 months at this school's price (partner: 12 × budget; other: budget ÷ (1/12 + fee)).
+    const dbrCap = dbrCapFor(reg, p.retiree);
+    const salaryMultiple = Math.min(reg.salaryMultipleCap, HARD.salaryMultipleCap);
+    const headroomMonthly = Math.round((dbrCap / 100) * p.salaryMonthly - obligations);
+    const band = gradeToBand(score.grade) || 'C';
+    const rate = schoolFeeRate(prm, partner, band);
+    const priceWord = partner ? 'partner school, 0%' : 'monthly fee ' + pctStr(rate) + ' (band ' + band + ')';
+    const maxByDbr = schoolMaxPrincipal(headroomMonthly, rate);
+    const maxBySalary = salaryMultiple * p.salaryMonthly;
+    const fcfSeen = connectedSalary && Number.isFinite(p.spendMonthly);
+    const freeCashFlowMonthly = fcfSeen ? Math.round(p.salaryMonthly - p.spendMonthly - obligations) : null;
+    const fcfBudget = fcfSeen ? Math.max(0, Math.floor((prm.instalmentToFcfMaxPct / 100) * freeCashFlowMonthly)) : null;
+    const maxByFcf = fcfSeen ? schoolMaxPrincipal(fcfBudget, rate) : null;
+    const budget = fcfSeen ? Math.min(Math.max(0, headroomMonthly), fcfBudget) : Math.max(0, headroomMonthly);
+    const candidates = [
+      { label: 'Invoice amount (requested)', value: amount, key: 'REQUESTED' },
+      { label: 'DBR headroom @ ' + dbrCap + '% cap — ' + aed(Math.max(0, headroomMonthly)) + '/month over ' + SCHOOL_MONTHS + ' months (' + priceWord + ')',
+        value: maxByDbr, key: p.retiree ? 'RETIREE_CAP' : 'DBR_HEADROOM' }
+    ];
+    if (fcfSeen) {
+      candidates.push({ label: 'Free cash flow — ' + prm.instalmentToFcfMaxPct + '% of ' + aed(freeCashFlowMonthly) + '/month (income ' + grp(p.salaryMonthly) +
+                               ' − spending ' + grp(p.spendMonthly) + ' − obligations ' + grp(obligations) + ')' +
+                               (fcfBudget > 0 ? ' = ' + aed(fcfBudget) + '/month over ' + SCHOOL_MONTHS + ' months (' + priceWord + ')' : ' — nothing left'),
+                        value: maxByFcf, key: 'FCF' });
+    }
+    candidates.push({ label: salaryMultiple + '× salary (Reg 29/2011)', value: maxBySalary, key: 'SALARY_MULTIPLE' },
+                    { label: 'Product cap', value: prm.productCap, key: 'PRODUCT_CAP' });
+    const picked = pickMin(candidates);
+    const approvedPre = picked.approved;
+    const binding = picked.binding;
+    rs.add('POL_MIN_AMOUNT', 'Amount at or above the product minimum', 'POLICY',
+           approvedPre >= prm.minAmount ? 'PASS' : 'FAIL',
+           aed(approvedPre) + (amount < prm.minAmount ? ' (requested ' + aed(amount) + ')' : ''), aed(prm.minAmount), 'RC_BELOW_MIN_AMOUNT');
+
+    // REGULATORY — the DBR double enforcement on the approved amount's instalment.
+    const plan = approvedPre > 0 ? splitPlan(approvedPre, SCHOOL_MONTHS, rate) : null;
+    const newInstallment = plan ? plan.monthlyPayment : 0;
+    const dbrPct = p.salaryMonthly > 0 ? Math.round(((obligations + newInstallment) / p.salaryMonthly) * 1000) / 10 : 999;
+    const dbrOk = headroomMonthly > 0 && dbrPct <= dbrCap + 0.05; // rounding guard only
+    rs.add('REG_DBR_CAP', 'Debt burden ratio within ' + dbrCap + '% cap (Reg 29/2011' + (p.retiree ? ', retiree' : '') + ')',
+           'REGULATORY', dbrOk ? 'PASS' : 'FAIL', dbrPct + '%', dbrCap + '%', 'RC_DBR_EXCEEDED');
+    rs.add('REG_SALARY_MULTIPLE', 'Amount within ' + salaryMultiple + '× salary (Reg 29/2011)', 'REGULATORY',
+           approvedPre <= maxBySalary ? 'PASS' : 'FAIL', approvedPre, maxBySalary, 'RC_DBR_EXCEEDED');
+    if (fcfSeen) {
+      const share = freeCashFlowMonthly > 0 ? Math.round((newInstallment / freeCashFlowMonthly) * 1000) / 10 : null;
+      rs.add('POL_INSTALMENT_TO_FCF', 'Instalment within ' + prm.instalmentToFcfMaxPct + '% of free cash flow (spending seen in connected accounts)', 'POLICY',
+             maxByFcf > 0 ? 'PASS' : 'FAIL',
+             maxByFcf > 0 ? (approvedPre > 0 ? money(newInstallment) + '/month = ' + share + '% of free cash flow ' + aed(freeCashFlowMonthly) + '/month'
+                                             : 'no instalment — nothing approved')
+                          : 'free cash flow ' + aed(freeCashFlowMonthly) + '/month — not enough left for an instalment',
+             '≤ ' + prm.instalmentToFcfMaxPct + '%', 'RC_FREE_CASH_FLOW');
+    }
+    emiratesIdRules(rs, extra && extra.emiratesId);
+    if (dc) {
+      rs.add('POL_DATA_COMPLETENESS', 'Data completeness at or above the threshold (refer only — never a decline, never a price change)', 'POLICY',
+             dc.aboveThreshold ? 'PASS' : 'REFER',
+             dc.pct + '% complete · ' + dc.counts.banks + (dc.counts.banks === 1 ? ' bank · ' : ' banks · ') + dc.counts.accounts + (dc.counts.accounts === 1 ? ' account · ' : ' accounts · ') + dc.counts.months + ' months' +
+               (dc.aboveThreshold ? (dc.scoreOverlay ? ' · NoorScore ' + dc.scoreOverlay : '') : ' · missing: ' + dc.ask.join(', ')),
+             '≥ ' + dc.threshold + '% (illustrative)', 'RC_DATA_INCOMPLETE');
+    }
+    redFlagRule(rs, p);   // v2.9 — POL_RED_FLAGS (REFER only); recorded only when the gate applies
+    const outcome = outcomeFromRules(rs.rules);
+    const approved = outcome === 'DECLINE' ? 0 : approvedPre;
+    if (outcome === 'APPROVE') {
+      if (binding === 'RETIREE_CAP') rs.reason('RC_RETIREE_CAP');
+      if (approved < amount) rs.reason('RC_LIMIT_REDUCED');
+    }
+    const features = {
+      verifiedIncome: p.salaryDetected ? p.salaryMonthly : null,
+      incomeSource: connectedSalary ? 'ALTAREQ_TPP' : (p.salaryDetected ? 'DOCUMENTS' : 'UNVERIFIED'),
+      salaryVerifiedViaConnectedAccount: connectedSalary,
+      existingObligations: obligations, esrPct: p.esrPct,
+      freeCashFlowMonthly,
+      instalmentToFcfPct: fcfSeen && freeCashFlowMonthly > 0 ? Math.round((newInstallment / freeCashFlowMonthly) * 1000) / 10 : null,
+      dbrCapApplied: dbrCap, headroomMonthly, newInstallment, dbrPct,
+      effectiveTenor: effTenor, scoreBase: score.base, overlayNet,
+      retiree: p.retiree, thinFile: !p.aecbHit,
+      // v2.21 — the school-fees figures (internal): the budget, the principal it supports, the price
+      instalmentBudgetMonthly: budget, maxPrincipal: fcfSeen ? Math.min(maxByDbr, maxByFcf) : maxByDbr,
+      schoolPartner: partner, schoolFeeRate: rate, schoolVerified: !!school
+    };
+    if (dc) features.dataCompletenessPct = dc.pct;
+    if (extra && extra.emiratesId) {
+      const ec = extra.emiratesId;
+      features.idExpiryValid = ec.expiryValid;
+      features.idNameMatch = ec.nameMatch.match;
+      features.employerMatch = ec.employerMatch.match;
+      features.employerMatchScore = ec.employerMatch.score;
+    }
+    const limit = { requested: amount, approved, bindingConstraint: binding,
+                    trace: candidates.map(c => ({ label: c.label, value: c.value, key: c.key })) };
+    // SCHOOL_FEES pricing: the 12-month plan on the approved amount (kfs.monthlyInstalment is the fingerprint's price).
+    // merchantFeePct is internal (the school's fee at a partner school): never in the memo, never shown to the customer.
+    let pricing = null;
+    if (outcome !== 'DECLINE' && plan) {
+      pricing = { mode: 'SCHOOL_FEES', band, partnerSchool: partner, monthlyFeeRate: rate, merchantFeePct: partner ? prm.merchantFeePct : null,
+                  payee: reg.payee || 'SCHOOL',
+                  kfs: { principal: approvedPre, tenorMonths: SCHOOL_MONTHS, monthlyInstalment: plan.monthlyPayment, monthlyFee: plan.monthlyFee,
+                         totalFees: plan.totalFees, planTotal: plan.planTotal, totalRepayable: plan.planTotal, aprEquivalent: plan.aprEquivalent,
+                         interest: 0, payee: reg.payee || 'SCHOOL', earlySettlementFee: reg.earlySettlementFee || 'None',
+                         coolingOffDays: reg.coolingOffDays || null } };
+    }
+    return { profile: p, features, rules: rs.rules, score, limit, pricing, outcome, reasonCodes: rs.reasons, effTenor };
   }
 
   // ---------------------------------------------------------------------------
@@ -6388,6 +6739,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     if (productId === 'car_loan') return attachRedFlags(evaluateCar(gateRedFlags(normalizeCar(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, opts && opts.vehicle));
     // v2.10 — the SME route: the red-flag gate reads the OWNER's personal accounts, under the owner's own consent
     if (productId === SME_PID) return attachRedFlags(evaluateSme(normalizeSme(rawApplicant), amount, tenorMonths, pol, consents, ew));
+    // v2.21 — split school fees: the personal loan's applicant shape and red-flag gate; opts carries the school
+    if (productId === SCHOOL_PID) return attachRedFlags(evaluateSchoolFees(gateRedFlags(normalizeLoan(rawApplicant), rawApplicant, consents, productId, ew), amount, tenorMonths, pol, consents, opts));
     throw err('unknown productId "' + productId + '"');
   }
 
@@ -6527,7 +6880,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     D = data;
     S = {
       policies: defaultPolicies(),
-      policyHistory: { split: [], personal_loan: [], starter_loan: [], salary_advance: [], car_loan: [], sme_working_capital: [] },
+      policyHistory: { split: [], personal_loan: [], starter_loan: [], salary_advance: [], car_loan: [], sme_working_capital: [], school_fees: [] },
       decisions: [],           // newest first via listDecisions()
       byId: Object.create(null),
       seq: 0, clockTicks: 0,
@@ -6574,8 +6927,10 @@ label.bk-acct { position:relative; cursor:pointer; }
       personal_loan: { base: 14.5, weekend: 0.55, friday: 0.8, A: 0.60, R: 0.18, stp: 0.78 }
     };
     const blank = () => ({ decisions: 0, APPROVE: 0, REFER: 0, DECLINE: 0, stp: 0 });
-    // car_loan (v2.7) and sme_working_capital (v2.10) are new packs: no seeded history — they count this session's decisions only.
-    const tot = { split: blank(), personal_loan: blank(), starter_loan: blank(), salary_advance: blank(), car_loan: blank(), sme_working_capital: blank() };
+    // car_loan (v2.7), sme_working_capital (v2.10) and school_fees (v2.21) are new packs: no seeded history — they count this
+    // session's decisions only, so the seeded numbers of the other products are unchanged.
+    const tot = { split: blank(), personal_loan: blank(), starter_loan: blank(), salary_advance: blank(), car_loan: blank(), sme_working_capital: blank(),
+                  school_fees: blank() };
     const daily = [];
     for (let d = 0; d < days; d++) {
       const date = addDaysIso(D.TODAY, -(days - 1 - d));
@@ -6676,7 +7031,8 @@ label.bk-acct { position:relative; cursor:pointer; }
   }
   // Refer SLAs: split is an in-app instant product; loans allow a working-day review.
   // v2.10 — an SME referral allows one working day (24 hours): the analyst reads two sets of accounts.
-  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, starter_loan: 4, salary_advance: 4, car_loan: 8, sme_working_capital: 24 };
+  // v2.21 — school fees refers like the personal loan it is underwritten as (one working day).
+  const REFER_SLA_HOURS = { split: 4, personal_loan: 8, starter_loan: 4, salary_advance: 4, car_loan: 8, sme_working_capital: 24, school_fees: 8 };
 
   function manifests() { ensureInit(); return clone(MANIFESTS); }
 
@@ -6687,13 +7043,15 @@ label.bk-acct { position:relative; cursor:pointer; }
   function execSteps(productId, decisionId) {
     const pid = productId || 'personal_loan';
     if (!MANIFESTS.some(m => m.productId === pid)) throw err('unknown productId "' + productId + '"');
-    let method = null;
+    let method = null, schoolName = null;
     if (decisionId !== undefined && decisionId !== null) {
       ensureInit();
       const rec = getDecisionRef(decisionId);
       if (rec.productId !== pid) throw err('decision ' + decisionId + ' is a ' + rec.productId + ' decision, not ' + pid);
       const done = rec.events.find(e => e.type === 'REPAYMENT_SET_UP');
       method = done && done.method ? done.method : (rec.repayment ? rec.repayment.method : null);
+      // v2.21 — "Partner Bank pays the school directly (Juniper Hill Primary School)"
+      if (rec.schoolFees && rec.schoolFees.school) schoolName = rec.schoolFees.school.name;
     }
     return EXEC_EVENTS.map(type => {
       const info = EXEC_STEP_INFO[type];
@@ -6707,6 +7065,7 @@ label.bk-acct { position:relative; cursor:pointer; }
       const sme = pid === 'sme_working_capital' ? SME_STEP_INFO[type] : null;
       if (sme && sme.description) description = sme.description;
       if (sme && sme.setup && method !== 'ALTAREQ') description = sme.setup;
+      if (type === 'DISBURSED' && schoolName) description += ' (' + schoolName + ')';
       const step = { type, label, description };
       if (type === 'REPAYMENT_SET_UP') step.method = method;
       return step;
@@ -6770,6 +7129,9 @@ label.bk-acct { position:relative; cursor:pointer; }
         throw err('"' + key + '" is a platform rule shared by every Noor product (' + PLATFORM_RULES.repaymentCollection.rule + ') — it cannot be edited via publishPolicy');
       }
       if (key in pol.regulatory) {
+        if (productId === SCHOOL_PID && ['fixedTenorMonths', 'payee', 'earlySettlementFee'].includes(key)) {
+          throw err('"' + key + '" is a locked rule of the school-fees pack (12 equal monthly payments, paid directly to the school, no early-settlement fee) — it cannot be edited via publishPolicy');
+        }
         if (pol.lockedBasis === 'NOOR_POLICY') {
           throw err('"' + key + '" is locked Noor policy for business loans (confirm with compliance) — it cannot be edited via publishPolicy');
         }
@@ -6793,6 +7155,15 @@ label.bk-acct { position:relative; cursor:pointer; }
           if (!(v && v[b] > 0 && v[b] <= 0.05)) throw err('monthlyFeeRate.' + b + ' must be in (0, 0.05]');
         }
         if (!(v.A <= v.B && v.B <= v.C)) throw err('monthlyFeeRate must be risk-ordered: A ≤ B ≤ C');
+      } else if (key === 'nonPartnerMonthlyFeeRate') {
+        // v2.21 — the parent's monthly fee at a school that is not a partner, by band: each in [0, 0.02], A ≤ B ≤ C
+        const bd = bounds[key];
+        if (!v || typeof v !== 'object' || Array.isArray(v)) throw err('nonPartnerMonthlyFeeRate must be {A, B, C}');
+        for (const b of Object.keys(v)) if (!['A', 'B', 'C'].includes(b)) throw err('unknown band "' + b + '" in nonPartnerMonthlyFeeRate — the bands are A, B and C');
+        for (const b of ['A', 'B', 'C']) {
+          if (!Number.isFinite(v[b]) || v[b] < bd[0] || v[b] > bd[1]) throw err('nonPartnerMonthlyFeeRate.' + b + ' must be in [' + bd[0] + ', ' + bd[1] + ']');
+        }
+        if (!(v.A <= v.B && v.B <= v.C)) throw err('nonPartnerMonthlyFeeRate must be risk-ordered: A ≤ B ≤ C');
       } else if (key === 'thinFileAction') {
         if (v !== 'REFER' && v !== 'DECLINE') throw err('thinFileAction must be REFER or DECLINE');
       } else if (key === 'footprintOverlayMode') {
@@ -6804,6 +7175,8 @@ label.bk-acct { position:relative; cursor:pointer; }
         if (!Array.isArray(v) || !v.length || v.some(n => !Number.isInteger(n) || n < bd[0] || n > bd[1]) || v.some((n, i) => i > 0 && n <= v[i - 1])) {
           throw err('tenorMonthsAllowed must be ascending whole months, each in [' + bd[0] + ', ' + bd[1] + ']');
         }
+      } else if (key === 'partnerSchoolParentFeePct' && v !== 0) {
+        throw err('partnerSchoolParentFeePct must stay 0 — 0% for the parent at a partner school is the product promise (bounds [0, 0])');
       } else if (productId === 'starter_loan' && key === 'starter') {
         checkNested('starter', v, STARTER_BOUNDS);
       } else if (productId === 'starter_loan' && key === 'tiers') {
@@ -7024,6 +7397,20 @@ label.bk-acct { position:relative; cursor:pointer; }
     // v2.7 — a car loan is decided on the vehicle: the dealer quote is part of the
     // application (defaults to the applicant's vehicleQuote) and is required.
     const vehicle = productId === 'car_loan' ? carVehicle(application.vehicle || applicant.vehicleQuote) : null;
+    // v2.21 — split school fees is decided on the school's invoice: { schoolId, invoiceRef, dueDate } (defaults to the
+    // applicant's schoolFees block). The school must be in the directory; an unknown school throws.
+    let school = null;
+    if (productId === SCHOOL_PID) {
+      const sIn = application.school || applicant.schoolFees || null;
+      if (!sIn || typeof sIn !== 'object' || Array.isArray(sIn) || typeof sIn.schoolId !== 'string') {
+        throw err('school fees are decided on the school’s invoice — application.school must be { schoolId, invoiceRef, dueDate }');
+      }
+      if (sIn.dueDate !== undefined && sIn.dueDate !== null && (typeof sIn.dueDate !== 'string' || isNaN(Date.parse(sIn.dueDate)))) {
+        throw err('application.school.dueDate must be an ISO date (the invoice’s due date)');
+      }
+      school = { school: schoolPublic(schoolOf(sIn.schoolId)), invoiceRef: sIn.invoiceRef ? String(sIn.invoiceRef) : null,
+                 dueDate: sIn.dueDate ? String(sIn.dueDate).slice(0, 10) : null };
+    }
 
     // v2.4 — home-country statements: a parseStatements() result (customer upload in a
     // journey, or what an underwriter requested), or the v2.1 consent flag, which
@@ -7061,19 +7448,21 @@ label.bk-acct { position:relative; cursor:pointer; }
     // Open Finance consent; without it the check waits until the accounts are connected (INFO).
     let eid = null;
     if (application.emiratesId !== undefined && application.emiratesId !== null && application.emiratesId !== false) {
-      if (productId !== 'personal_loan') throw err('the Emirates ID scan feeds personal-loan decisions only (not ' + productId + ')');
+      if (productId !== 'personal_loan' && productId !== SCHOOL_PID) throw err('the Emirates ID scan feeds personal-loan decisions only — and school fees, underwritten the same way (not ' + productId + ')');
       eid = checkEmiratesId(applicant, application.emiratesId, { openFinance: consents.openFinance === true });
     }
     // v2.17 — data completeness from the accounts the customer approved (personal loan, Open Finance only).
     let dcmp = null;
     if (application.dataSources !== undefined && application.dataSources !== null) {
-      if (productId !== 'personal_loan') throw err('data completeness feeds personal-loan decisions only (not ' + productId + ')');
+      if (productId !== 'personal_loan' && productId !== SCHOOL_PID) throw err('data completeness feeds personal-loan decisions only — and school fees, underwritten the same way (not ' + productId + ')');
       if (consents.openFinance !== true) throw err('data completeness is measured on connected accounts — Open Finance consent is required with dataSources');
-      dcmp = dcFromSources(applicant, application.dataSources);
+      // v2.21 — the school-fees pack carries its own threshold (the personal loan's reads its pack, as before)
+      dcmp = dcFromSources(applicant, application.dataSources, productId === SCHOOL_PID ? getPolicyRef(SCHOOL_PID).params.completenessThresholdPct : undefined);
     }
     const evExtra = {};
     if (eid) evExtra.emiratesId = eid;
     if (dcmp) evExtra.dataCompleteness = dcmp;
+    if (school) evExtra.school = school.school;
 
     const pol = getPolicyRef(productId);
     let ev = evaluate(productId, applicant, Math.round(amount), Math.round(tenorMonths), pol, consents, statements,
@@ -7089,7 +7478,7 @@ label.bk-acct { position:relative; cursor:pointer; }
                                                    mode: pol.params.footprintOverlayMode, cap: pol.params.footprintOverlayCap });
       const co = fpa.creditOverlay;
       if (co.eligible) {
-        const scored = Number.isFinite(ev.score.points) && (productId === 'personal_loan' || productId === 'split');
+        const scored = Number.isFinite(ev.score.points) && (productId === 'personal_loan' || productId === 'split' || productId === SCHOOL_PID);
         fpOverlay = { name: 'Digital footprint (vendor score ' + applicant.footprint.vendorScore + ')', delta: co.points,
                       applied: co.applied && scored, mode: co.mode,
                       note: co.applied && !scored ? 'Not applied — no scorecard on this decision' : co.status };
@@ -7120,12 +7509,12 @@ label.bk-acct { position:relative; cursor:pointer; }
       if (cv.phone === 'BOTIM' && !rl.phone.relied) throw err('contactVerification.phone is BOTIM, but botim’s assertion does not support relying on it (' + rl.phone.reasons.join(', ') + ') — a one-time code is needed');
       if (cv.email === 'BOTIM' && !rl.email.relied) throw err('contactVerification.email is BOTIM, but botim’s assertion does not support relying on it (' + rl.email.reasons.join(', ') + ') — a one-time code is needed');
     }
-    return { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv };
+    return { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv, school };
   }
   function decide(application, internal) {
     ensureInit();
     const cd = computeDecision(application);
-    const { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv } = cd;
+    const { productId, manifest, applicant, consents, amount, tenorMonths, vehicle, statements, orig, comms, fpc, eid, dcmp, pol, ev, fpa, fpOverlay, cv, school } = cd;
     const trigger = orig ? ((internal && internal.trigger) || 'CUSTOMER_UPLOAD') : null;
 
     S.seq += 1;
@@ -7133,6 +7522,14 @@ label.bk-acct { position:relative; cursor:pointer; }
     const createdAt = nowIso();
     const consentAt = createdAt;
     const pulls = buildDataPulls(productId, ev, consents, S.seq, statements);
+    if (school) {
+      // v2.21 — the school directory: licensed and in the directory. Internal (the Decision log): the memo says "school verified" only.
+      pulls.push({ source: 'SCHOOL_DIRECTORY', status: 'VERIFIED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
+                   summary: { school: school.school.name + ' (illustrative)', regulator: school.school.regulator, city: school.school.city,
+                              partner: school.school.partner ? 'partner school — 0% for the parent' : 'other licensed school — monthly fee',
+                              payee: 'the school (' + school.school.ibanMasked + ')', invoice: (school.invoiceRef || '—') + ' · ' + aed(Math.round(amount)) +
+                              (school.dueDate ? ' · due ' + school.dueDate : '') } });
+    }
     if (eid) {
       // v2.16 — what the scan read, as flags: never the employer, the payer, the date of birth, the occupation or the nationality.
       pulls.push({ source: 'EMIRATES_ID', status: 'SCANNED', latencyMs: pullLatency(S.seq, pulls.length), cached: false,
@@ -7203,6 +7600,29 @@ label.bk-acct { position:relative; cursor:pointer; }
     // v2.20 — how the mobile and the email were verified, logged with the inputs only when the journey says so
     // (records from the other journeys keep their earlier shape). Internal: the Decision log reads it; the memo never does.
     if (cv) record.inputs.contactVerification = clone(cv);
+    if (school) {
+      // v2.21 — the school's invoice as given (for reproduceDecision) and the 12-month plan, paid to the school. Internal: the
+      // memo carries "school verified" and "paid to the school" only — never the name, the merchant fee, the invoice or the child.
+      record.inputs.school = { schoolId: school.school.id, invoiceRef: school.invoiceRef, dueDate: school.dueDate };
+      const pr = ev.pricing, k = pr ? pr.kfs : null;
+      const bd = applicant.bankData || {}, cn = applicant.connected || {};
+      const salaryDay = Number.isFinite(bd.salaryCreditDay) ? bd.salaryCreditDay : (Number.isFinite(cn.salaryCreditDay) ? cn.salaryCreditDay : null);
+      const dates = k ? schoolPlanDates(createdAt.slice(0, 10), salaryDay, pol.regulatory.coolingOffDays || 5, school.dueDate) : null;
+      record.schoolFees = {
+        school: clone(school.school),
+        invoice: { ref: school.invoiceRef, amount: Math.round(amount), dueDate: school.dueDate },
+        months: SCHOOL_MONTHS,
+        amount: ev.limit.approved,
+        shortfall: ev.outcome === 'DECLINE' ? null : Math.max(0, Math.round(amount) - ev.limit.approved),
+        monthlyInstalment: k ? k.monthlyInstalment : null, monthlyFeeRate: pr ? pr.monthlyFeeRate : null,
+        totalFees: k ? k.totalFees : null, aprEquivalent: k ? k.aprEquivalent : null, planTotal: k ? k.planTotal : null,
+        payee: 'SCHOOL', bestDebitDay: dates ? dates.bestDebitDay : null,
+        coolingOffEndsOn: dates ? dates.coolingOffEndsOn : null,
+        firstPaymentDate: dates ? dates.firstPaymentDate : null, lastPaymentDate: dates ? dates.lastPaymentDate : null,
+        coolingOffEndsAfterDueDate: dates ? dates.coolingOffEndsAfterDueDate : false
+      };
+      record.audit[0].detail += ' · school fees · ' + (school.school.partner ? 'partner school (0%)' : 'other licensed school (monthly fee)') + ' · paid to the school';
+    }
     if (ev.redFlags) {
       // v2.9 — what the red-flag rule read (internal: the Decision log and the Workbench).
       // Never part of the credit memo: the lender sees the outcome and RC_RED_FLAGS_REVIEW only.
@@ -7363,6 +7783,12 @@ label.bk-acct { position:relative; cursor:pointer; }
   //  - Findings (slide 7) are shared as words; the rules behind them stay inside Noor.
   // ---------------------------------------------------------------------------
   const DEFAULT_LENDERS = [{ id: 'partner-bank', name: 'Partner Bank', role: 'Lender of record' }];
+  // v2.21 — the school-fees memo: the product line, the purpose and two flags; the school's name is never shared.
+  const SCHOOL_MEMO_PRODUCT = 'School fees — 12 months';
+  const SCHOOL_MEMO_PURPOSE = 'Education — school fees, paid directly to the school';
+  const SCHOOL_MEMO_PAYEE = 'The school — paid directly by the lender';
+  const SCHOOL_MEMO_VERIFIED = 'School verified (licensed, in the directory)';
+  const SCHOOL_MEMO_PAID_TO = 'Paid to the school — funds cannot be diverted';
   const SHARE_WITH_LENDER_WORDING = 'By applying you agree Noor shares your application result (not your bank data) with the lender of record';
   // v2.18 — Noor's external line (slide 6), the methodology line (slide 7) and the memo's fixed notes.
   const EXTERNAL_LINE = 'NoorScore works with Open Finance data as its core component. For enrichment, we use different types of alternative data where available.';
@@ -7542,6 +7968,14 @@ label.bk-acct { position:relative; cursor:pointer; }
       }
       return t;
     }
+    if (p.mode === 'SCHOOL_FEES' && p.kfs) {
+      // v2.21 — the 12-month school-fees plan: the parent's fee (0 at a partner school) and the APR equivalent; the payee is the
+      // school. Never the school's name, the merchant fee, a partner flag or the invoice.
+      const k = p.kfs;
+      return Object.assign({ amount: k.principal, tenorMonths: k.tenorMonths, monthlyFeeRate: p.monthlyFeeRate, aprEquivalent: k.aprEquivalent,
+                             monthlyPayment: k.monthlyInstalment, totalRepayable: k.planTotal, totalFees: k.totalFees,
+                             payee: SCHOOL_MEMO_PAYEE, earlySettlementFee: k.earlySettlementFee || 'None' }, base);
+    }
     if (p.mode === 'MONTHLY_FEE') {
       const plan = (p.plans || []).find(x => x.months === p.selectedMonths) || {};
       return Object.assign({ amount: p.principal, planMonths: p.selectedMonths, monthlyFeeRate: p.monthlyFeeRate,
@@ -7577,7 +8011,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     const viaOf = 'Open Finance (Al Tareq)' + (months ? ', ' + months + ' months' : '');
     let via;
     if (f.verifiedIncome === null || f.verifiedIncome === undefined) via = 'Not verified';
-    else if (rec.productId === 'personal_loan') via = f.incomeSource === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
+    else if (rec.productId === 'personal_loan' || rec.productId === SCHOOL_PID) via = f.incomeSource === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
     else if (rec.productId === 'salary_advance') via = of && a.bankData && a.bankData.source === 'ALTAREQ_TPP' ? viaOf : 'Salary documents';
     else if (rec.productId === 'car_loan') {
       via = !f.openFinance ? 'Salary certificate'
@@ -7634,7 +8068,7 @@ label.bk-acct { position:relative; cursor:pointer; }
   //    1,311.70 = 3,788.30 → "AED 3,500–4,000 / month"; DBR 18.4% → "15–20%".
   // ---------------------------------------------------------------------------
   const ADDITIONAL_INCOME_MIN = 1000;
-  const SALARY_PRODUCTS = ['personal_loan', 'salary_advance', 'car_loan'];
+  const SALARY_PRODUCTS = ['personal_loan', 'salary_advance', 'car_loan', SCHOOL_PID];   // v2.21 — school fees reads the salary like the personal loan
   function ofGranted(rec) { return !!(rec.consents && rec.consents.openFinance && rec.consents.openFinance.granted); }
   function incomeParts(rec) {
     const f = rec.features || {}, a = rec.applicantSnapshot || {}, cn = a.connected || {};
@@ -8480,7 +8914,8 @@ label.bk-acct { position:relative; cursor:pointer; }
       lenderName: memoLenderName(lender),
       sharingAgreement: memoAgreement(ag),
       createdAt: rec.createdAt,
-      product: { productId: rec.productId, nameEn: man.nameEn || rec.productId },
+      product: rec.productId === SCHOOL_PID ? { productId: rec.productId, nameEn: SCHOOL_MEMO_PRODUCT, purpose: SCHOOL_MEMO_PURPOSE }
+                                            : { productId: rec.productId, nameEn: man.nameEn || rec.productId },
       policyVersion: rec.policyVersion,
       engineVersion: rec.engineVersion,
       // v2.18 — no KYC-source detail (UAE PASS / Emirates ID): the identity flag says verified or not verified
@@ -8545,7 +8980,9 @@ label.bk-acct { position:relative; cursor:pointer; }
         purchaseVerified: rec.productId === 'split'
           ? (f.purchaseSeenInConnectedData ? (f.purchaseCategory || 'Purchase') + ' — verified purchase' : 'Purchase not verified')
           : null
-      }, car ? memoCarFlags(rec) : {});
+      }, car ? memoCarFlags(rec) : {},
+      // v2.21 — school fees: the school is verified and the lender pays it directly (no name, no merchant fee, no partner flag)
+      rec.productId === SCHOOL_PID ? { school: SCHOOL_MEMO_VERIFIED, payee: SCHOOL_MEMO_PAID_TO } : {});
     }
     // v2.17 — completeness as the lender sees it: the percentage and counts only (no threshold, weights or bands)
     if (G('dataCompleteness') && dcm) {
@@ -8571,7 +9008,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     const t = memo.terms || {}, af = memo.affordability || {}, bu = memo.bureau || {};
     const s = (v) => (v === null || v === undefined ? '' : String(v));
     let aprOrFee = '';
-    if (Number.isFinite(t.monthlyFeeRate)) aprOrFee = 'Fee ' + pctStr(t.monthlyFeeRate) + '/mo (APR equivalent ' + pctStr(t.aprEquivalent) + ')';
+    if (t.payee === SCHOOL_MEMO_PAYEE && t.monthlyFeeRate === 0) aprOrFee = 'No interest, no fees (APR 0.00%)';   // v2.21 — a partner school
+    else if (Number.isFinite(t.monthlyFeeRate)) aprOrFee = 'Fee ' + pctStr(t.monthlyFeeRate) + '/mo (APR equivalent ' + pctStr(t.aprEquivalent) + ')';
     else if (Number.isFinite(t.flatFee)) aprOrFee = 'Flat fee ' + aed(t.flatFee);
     else if (Number.isFinite(t.apr)) aprOrFee = 'APR ' + pctStr(t.apr);
     else if (Number.isFinite(t.aprFrom)) aprOrFee = 'APR from ' + pctStr(t.aprFrom);
@@ -8679,6 +9117,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     if (rec.inputs.emiratesId !== null && rec.inputs.emiratesId !== undefined) app.emiratesId = clone(rec.inputs.emiratesId);
     if (rec.inputs.dataSources !== null && rec.inputs.dataSources !== undefined) app.dataSources = clone(rec.inputs.dataSources);
     if (rec.inputs.contactVerification) app.contactVerification = clone(rec.inputs.contactVerification);   // v2.20
+    if (rec.inputs.school) app.school = clone(rec.inputs.school);   // v2.21 — the school's invoice as given
     const saved = { pol: S.policies[pid], ew: S.policies[EW_BLOCK_ID], ticks: S.clockTicks, seq: S.seq };
     let run;
     try {
@@ -8722,6 +9161,7 @@ label.bk-acct { position:relative; cursor:pointer; }
                app.emiratesId ? 'Emirates ID scan (front + back)' : null,
                app.dataSources ? 'Data sources: ' + (app.dataSources.approvedAccounts || []).length + ' approved accounts · ' + app.dataSources.months + ' months' : null,
                app.contactVerification ? 'Contact verification: ' + contactVerificationLine(app.contactVerification) : null,
+               app.school ? 'School invoice: the school (directory id ' + app.school.schoolId + '), ' + (app.school.invoiceRef || 'no reference') + (app.school.dueDate ? ', due ' + app.school.dueDate : '') : null,
                'Policy ' + pid + ' v' + rec.policyVersion + (ewSnap ? ' · early-warning block v' + ewVer : '') + ' · ' + rec.engineVersion].filter(Boolean),
       checks, diffs, notes
     };
@@ -8886,6 +9326,15 @@ label.bk-acct { position:relative; cursor:pointer; }
     if (fcf !== null && fcf < 1500) est -= 30;
     const estBand = gradeToBand(pointsToGrade(est)) || 'C';
     const bandRange = prm.pricingBands[estBand];
+    // v2.21 — split school fees over 12 months, on the same income, spending, obligations and budget: the budget over 12
+    // months at a partner school (0%) and at another school (the estimate band's monthly fee), within 20× salary and the cap.
+    const budget = fcf === null ? Math.max(0, headroom) : Math.min(Math.max(0, headroom), fcfBudget);
+    const sfPrm = getPolicyRef(SCHOOL_PID).params;
+    const sfRate = schoolFeeRate(sfPrm, false, estBand);
+    const sfCap = (x) => Math.min(x, floor1000(bySalary), sfPrm.productCap);
+    const schoolFees = { months: SCHOOL_MONTHS, maxPartner: sfCap(schoolMaxPrincipal(budget, schoolFeeRate(sfPrm, true, estBand))),
+                         maxOther: sfCap(schoolMaxPrincipal(budget, sfRate)), instalmentBudgetMonthly: budget,
+                         nonPartnerBand: estBand, nonPartnerRate: sfRate };
     return {
       productId: PREQUAL.productId,
       indicativeMin: min,
@@ -8909,12 +9358,38 @@ label.bk-acct { position:relative; cursor:pointer; }
       sources: ['OPEN_FINANCE'],
       assumptions: { tenorMonths: tenor, apr: topRate, dbrCapPct: dbrCap,
                      instalmentToFcfMaxPct: fcf === null ? null : PREQUAL.instalmentToFcfMaxPct,
-                     instalmentBudgetMonthly: fcf === null ? Math.max(0, headroom) : Math.min(Math.max(0, headroom), fcfBudget) },
+                     instalmentBudgetMonthly: budget },
       // Indicative pricing for the estimated band (the loan screen's "from X% APR").
       indicativePricing: { band: estBand, aprMin: bandRange[0], aprMax: bandRange[1], aprMid: round4((bandRange[0] + bandRange[1]) / 2),
                            termsMonths: [6, 12, 24] },
+      schoolFees,
       ...(dcq ? { status: 'OK', completeness: dcq } : {})
     };
+  }
+  // ---------------------------------------------------------------------------
+  // v2.21 — split school fees: the 12-month plan for the screen (pure: no record, no clock tick). quoteSchoolFees(amount,
+  // { schoolId, band }) → 12 equal instalments at the school's price: 0% at a partner school, else the band's monthly fee
+  // (band defaults to B, the pre-qualification estimate's band) with the APR equivalent from monthlyIrr().
+  // ---------------------------------------------------------------------------
+  function quoteSchoolFees(amount, opts) {
+    ensureInit();
+    if (!Number.isFinite(amount) || amount <= 0) throw err('quoteSchoolFees(amount, { schoolId, band }) needs a positive amount in AED');
+    const o = opts || {};
+    const s = schoolOf(o.schoolId);
+    const band = o.band === undefined || o.band === null ? 'B' : o.band;
+    if (!['A', 'B', 'C'].includes(band)) throw err('band must be A, B or C');
+    const prm = getPolicyRef(SCHOOL_PID).params;
+    const partner = s.partner === true;
+    const rate = schoolFeeRate(prm, partner, band);
+    const amt = Math.round(amount);
+    const plan = splitPlan(amt, SCHOOL_MONTHS, rate);
+    const n = (x) => money(x).replace(/\.00$/, '');
+    const line = partner ? SCHOOL_MONTHS + ' × ' + n(plan.monthlyPayment) + ' · 0% interest, no fees'
+      : SCHOOL_MONTHS + ' × ' + n(plan.monthlyPayment) + ' · monthly fee ' + pctStr(rate) + ' · APR equivalent ' + pctStr(plan.aprEquivalent);
+    return { productId: SCHOOL_PID, school: schoolPublic(s), partner, band: partner ? null : band, amount: amt, months: SCHOOL_MONTHS,
+             monthlyFeeRate: rate, monthlyInstalment: plan.monthlyPayment, monthlyFee: plan.monthlyFee, totalFees: plan.totalFees,
+             planTotal: plan.planTotal, aprEquivalent: plan.aprEquivalent, payee: 'SCHOOL', line,
+             minAmount: prm.minAmount, productCap: prm.productCap };
   }
   // Pure: the reducing-balance instalment Mizan uses for personal-loan KFS figures
   // (annual rate, 2-dp money) — for indicative quotes before a decision exists.
@@ -9025,7 +9500,7 @@ label.bk-acct { position:relative; cursor:pointer; }
   ];
   // The owner's personal accounts are monitored under the owner's own consent, as an individual.
   const EW_CONSENT_WHY_OWNER = 'To check the guarantee you give for your company’s loan — and, while the business loan you guarantee is open, to spot early if repayments might become hard.';
-  const RF_PRODUCTS = ['personal_loan', 'car_loan', 'split'];
+  const RF_PRODUCTS = ['personal_loan', 'car_loan', 'split', SCHOOL_PID];   // v2.21 — school fees carries the origination gate
   const EW_RANK = { HIGH: 0, 'MEDIUM+': 1, MEDIUM: 2, LOW: 3, NONE: 4 };
   const EW_LENDER_STATUS = 'Early warning: elevated — Noor is in contact with the customer';
   const EW_PAUSED = ['Split capacity', 'Limit increases', 'Upgrade offers'];
@@ -9064,7 +9539,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     return {
       blockId: EW_BLOCK_ID, kind: 'SHARED_BLOCK', productId: null,
       nameEn: 'Early warning — UAE red flags', nameAr: 'الإنذار المبكر — مؤشرات المخاطر',
-      appliesTo: ['personal_loan', 'car_loan', 'split', 'sme_working_capital', 'monitoring'],
+      appliesTo: ['personal_loan', 'car_loan', 'split', 'sme_working_capital', SCHOOL_PID, 'monitoring'],   // v2.21 — + school fees
       version: 1, publishedAt: null, publishedBy: 'system (default block)', approvedBy: 'system',
       guardrails: clone(EW_GUARDRAILS),     // locked — shown as text, never editable
       actionLadder: clone(EW_LADDER),       // locked
@@ -9321,7 +9796,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     if (phase !== 'ORIGINATION' && phase !== 'MONITORING') throw err('redFlags phase must be ORIGINATION or MONITORING');
     return redFlagsWith(subject, phase, ewParamsFor(opts && opts.params));
   }
-  // Origination gate: only for split / personal loan / car loan, only when the applicant carries
+  // Origination gate: only for split / personal loan / car loan / school fees (v2.21), only when the applicant carries
   // redFlagData AND granted Open Finance consent (the signals come from their own accounts).
   function gateRedFlags(p, raw, consents, productId, ewOverride) {
     if (!RF_PRODUCTS.includes(productId) || !raw || !raw.redFlagData || !consents || consents.openFinance !== true) return p;
@@ -9437,7 +9912,9 @@ label.bk-acct { position:relative; cursor:pointer; }
     return row.amount !== undefined ? row.amount : (row.purchaseAmount !== undefined ? row.purchaseAmount : 100000);
   }
   // Starter-loan rows carry no request: the upgrade is offered up to the tier ceiling.
+  // v2.21 — school fees reads the personal-loan sample book as 12-month school-fee requests (partner pricing: no school given).
   function rowRequest(productId, row) {
+    if (productId === SCHOOL_PID) return [rowAmount(row), SCHOOL_MONTHS];
     return productId === 'starter_loan' ? [null, null] : [rowAmount(row), row.tenorMonths || 12];
   }
   function decideRaw(productId, sampleRow) {
@@ -9454,7 +9931,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     if (productId === 'starter_loan') return D.sampleBook.starter_loan;
     if (productId === 'car_loan') return D.sampleBook.car_loan || [];
     if (productId === 'sme_working_capital') return D.sampleBook.sme_working_capital || [];
-    return productId === 'split' ? D.sampleBook.split : D.sampleBook.personal_loan;  // salary_advance reuses the loan book
+    return productId === 'split' ? D.sampleBook.split : D.sampleBook.personal_loan;  // salary_advance and school_fees (v2.21) reuse the loan book
   }
 
   function simulateBook(productId, candidateParams) {
@@ -9480,7 +9957,8 @@ label.bk-acct { position:relative; cursor:pointer; }
     // Car loan (v2.7): most policy changes move amounts, not outcomes — sum the approved
     // amounts and count the approvals that shrink or grow.
     // v2.10 — the SME pack too: most of its levers (guarantee factor, DSCR budget) move amounts, not outcomes.
-    const isCar = productId === 'car_loan' || productId === 'sme_working_capital';
+    // v2.21 — and the school-fees pack: the sample book's amounts meet its AED 120,000 cap and the 12-month budget.
+    const isCar = productId === 'car_loan' || productId === 'sme_working_capital' || productId === SCHOOL_PID;
     const amt = { b: 0, a: 0, reduced: 0, raised: 0 };
     for (const row of book) {
       const rq = rowRequest(productId, row);
@@ -9715,7 +10193,8 @@ label.bk-acct { position:relative; cursor:pointer; }
                        detail: rec.productId === 'sme_working_capital'
                          ? 'EXECUTED — the six-step sequence is complete (owner disclosures, guarantee signed, Noor-policy cooling-off); the business loan now exists'
                          : 'EXECUTED — consumer-protection sequence complete; ' +
-                               (rec.productId === 'split' ? 'the instalment plan now exists'
+                               (rec.productId === SCHOOL_PID ? 'the 12-month school-fees plan now exists and the school is paid'
+                                 : rec.productId === 'split' ? 'the instalment plan now exists'
                                  : (rec.kind === 'UPGRADE' ? 'the upgraded loan now exists' : 'the loan now exists')) });
     }
     return rec;
@@ -9792,7 +10271,7 @@ label.bk-acct { position:relative; cursor:pointer; }
     ensureInit();
     const sd = S.seeded;
     const prod = {};
-    for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance', 'car_loan', 'sme_working_capital']) prod[pid] = Object.assign({}, sd.tot[pid]);
+    for (const pid of ['split', 'personal_loan', 'starter_loan', 'salary_advance', 'car_loan', 'sme_working_capital', SCHOOL_PID]) prod[pid] = Object.assign({}, sd.tot[pid]);
     const declineReasons = Object.assign({}, sd.declineReasons);
     const gradeDist = Object.assign({}, sd.gradeDist);
     const daily = clone(sd.daily);
@@ -9830,7 +10309,8 @@ label.bk-acct { position:relative; cursor:pointer; }
       totals,
       stpPct: pct1(stpAll, totals.decisions),
       byProduct,
-      stpTargets: { split: 85, personal_loan: 80 },
+      // v2.21 — school fees: a straight-through target like split's (an instant in-app product with a verified payee)
+      stpTargets: { split: 85, personal_loan: 80, school_fees: 85 },
       declineReasons: Object.keys(declineReasons)
         .map(code => ({ code, labelEn: (D.reasonCodes[code] || { en: code }).en, count: declineReasons[code] }))
         .sort((a, b) => b.count - a.count),
@@ -9891,7 +10371,10 @@ label.bk-acct { position:relative; cursor:pointer; }
     RED_FLAG_CODES: RF_CODES.slice(), RED_FLAG_ORIGINATION_CODES: RF_ORIGINATION.slice(),
     redFlags, earlyWarningScan, simulateEarlyWarning, askCustomer,
     // v2.10 — SME working capital: a pure live quote; the two business signal codes (monitoring only)
-    quoteSme, RED_FLAG_BUSINESS_CODES: RF_BUSINESS_CODES.slice(), REFER_SLA_HOURS: Object.assign({}, REFER_SLA_HOURS)
+    quoteSme, RED_FLAG_BUSINESS_CODES: RF_BUSINESS_CODES.slice(), REFER_SLA_HOURS: Object.assign({}, REFER_SLA_HOURS),
+    // v2.21 — split school fees over 12 months: the pure 12-month plan for the screen, and the school directory
+    quoteSchoolFees, SCHOOL_FEES_MONTHS: SCHOOL_MONTHS,
+    schools: function () { ensureInit(); return clone(schoolsAll().map(schoolPublic)); }
   };
 
   globalThis.MizanEngine = MizanEngine;
@@ -9984,8 +10467,9 @@ function outcomeChip(oc) { return h('span', { class: 'oc oc-' + oc, text: oc });
 
 /* ================= Globals wired at boot ================= */
 var MD = null, ME = null;      // MizanData, MizanEngine
-var PRODUCT_LABEL = { split: 'Split a purchase', personal_loan: 'Personal loan', salary_advance: 'Salary advance' };
-var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', starter_loan: 'Starter loan', salary_advance: 'Salary advance', car_loan: 'Car loan', sme_working_capital: 'SME' };
+var PRODUCT_LABEL = { split: 'Split a purchase', personal_loan: 'Personal loan', salary_advance: 'Salary advance', school_fees: 'Split school fees (12 months)' };   /* v2.21 */
+var PRODUCT_SHORT = { split: 'Split', personal_loan: 'Personal loan', starter_loan: 'Starter loan', salary_advance: 'Salary advance', car_loan: 'Car loan', sme_working_capital: 'SME',
+                      school_fees: 'School fees' };
 function productLabel(pid, short) { return (short ? PRODUCT_SHORT[pid] : PRODUCT_LABEL[pid]) || pid || '—'; }
 var PULL_LABEL = {
   AECB_CONSUMER: 'AECB consumer report + score (real-time, consent-bound cache)',
@@ -10000,7 +10484,9 @@ var PULL_LABEL = {
   /* v2.10 — the SME route */
   AECB_COMMERCIAL: 'AECB commercial report — the company',
   KYB: 'Trade licence + UBO (KYB) — the company',
-  OPEN_FINANCE_OWNER: 'The owner’s personal accounts — Al Tareq B2C, the owner’s own consent'
+  OPEN_FINANCE_OWNER: 'The owner’s personal accounts — Al Tareq B2C, the owner’s own consent',
+  /* v2.21 — split school fees */
+  SCHOOL_DIRECTORY: 'School directory — the school is licensed and listed; the lender pays it directly (internal: the memo says “school verified” only)'
 };
 var EXEC_WHY = 'Why it matters: the customer accepts the offer, reads the Key Facts Statement in Arabic and English, e-signs via UAE PASS, sets up repayment collection from their own account (Al Tareq or direct debit — no salary transfer required) and gets the cooling-off period before any money moves (CBUAE Consumer Protection Regulation 8/2020 and Standards). An approval is not a loan.';
 /* Execution steps always come from the engine; with a decision id the repayment step carries that decision's method */
@@ -10255,6 +10741,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
   try { (ME.manifests() || []).forEach(function (m) { if (m.nameEn) PRODUCT_LABEL[m.productId] = m.nameEn; }); } catch (e) {}
+  PRODUCT_LABEL.school_fees = 'Split school fees (12 months)';   /* v2.21 — the console's label names the fixed term */
   $('#versions').textContent = (MD.VERSION || 'data-?') + ' · ' + (ME.VERSION || 'engine-?') + ' · today ' + (MD.TODAY || '');
 
   Overview.build();
@@ -10293,11 +10780,12 @@ var Overview = {
   build: function () {
     var root = clear($('#scr-overview'));
     root.appendChild(screenHead('Mizan · ميزان — Noor’s credit decisioning layer', 'One engine behind every Noor credit decision',
-      'Interactive prototype: Split a purchase, Personal loan, the Car loan, the starter-loan upgrade and Salary advance, the SME route (business working capital), the policy console, refer workbench, decision replay and monitoring — all running against a real simulated decision engine in the browser.'));
+      'Interactive prototype: Split school fees over 12 months (the default), Split a purchase, Personal loan, the Car loan, the starter-loan upgrade and Salary advance, the SME route (business working capital), the policy console, refer workbench, decision replay and monitoring — all running against a real simulated decision engine in the browser.'));
 
     root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'What Mizan is' }),
       h('p', { class: 'lead' }, 'Mizan is Noor’s credit decisioning layer — one engine every Noor credit product calls (',
-        h('strong', { text: 'Split a purchase, Personal loan, Car loan, Starter loan, Salary advance — and, for business owners, SME working capital' }),
+        /* v2.21 — split school fees over 12 months is the default product of the customer journey */
+        h('strong', { id: 'ov-products', text: 'Split school fees over 12 months (the default) · Split a purchase · Personal loan · Car loan · Starter loan · Salary advance — and, for business owners, SME working capital' }),
         ') for approve / refer / decline + limit + pricing, with consent, AECB, connected-account (Open Finance / Al Tareq) data, policy and scoring behind one API — and every decision replayable for CBUAE model-risk and consumer-protection audit.'),
       h('p', { class: 'lead', id: 'ov-pack-line' }, h('strong', { text: 'A new product is a policy pack, not a new engine. ' }),
         'The car loan reuses AECB, NoorScore, the DBR cap, banded APR pricing, repayment routing, the six execution steps and the credit memo; it adds one primitive — loan-to-value — and one evidence rule: regular income counts only when verified through Open Finance.'),
@@ -10320,22 +10808,24 @@ var Overview = {
     });
     root.appendChild(h('div', { class: 'panel' }, h('h3', { text: 'Six positions' }), pg));
 
+    /* v2.21 — split school fees, the main product, is step 1; the earlier steps renumber 2–12 */
     var demo = [
-      ['Step 1', 'Split — Mariam (c1)', 'School fees approved: pick a plan, then run the ' + execCount() + ' steps (try one out of order).', function () { showScreen('split'); Split.pickById('c1'); }],
-      ['Step 2', 'Thin file — Arjun (c4)', 'No AECB file — approved on connected-account cash flow.', function () { showScreen('split'); Split.pickById('c4'); }],
-      ['Step 3', 'Personal loan — Omar (r3)', 'DBR headroom binds the limit — see the trace and the KFS.', function () { showScreen('loan'); Loan.pickById('r3'); }],
-      ['Step 4', 'Policy self-service', 'Tighten a cut-off, simulate the book, publish with a second approver.', function () { showScreen('policy'); }],
-      ['Step 5', 'Monitoring', 'STP vs targets per product and day-zero early warning.', function () { showScreen('monitoring'); }],
-      ['Step 6', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
-      ['Step 7', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
-      ['Step 8', 'Lender view — the credit memo', 'What lenders receive, per sharing agreement: NoorScore, reason codes (green · yellow · red) and banded aggregates; Open Finance data never leaves Noor. Switch to Lender B, then Reproduce the decision in the Decision log.', function () { showScreen('lender'); }],
-      ['Step 9', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }],
-      ['Step 10', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }],
-      ['Step 11', 'SME working capital — Sara (s1)', 'The company’s accounts support AED 100,000; with Sara’s personal accounts AED 150,000, 2.5 points cheaper — business and owner watched while the loan is open.', function () { showScreen('sme'); Sme.reset(); }]
+      ['Step 1', 'School fees — Ravi (the main product)', 'AED 15,000 of school fees → 12 × AED 1,250 at 0%, paid straight to the school.', function () { Journey.openSchoolFees(); }],
+      ['Step 2', 'Split — Mariam (c1)', 'School fees approved: pick a plan, then run the ' + execCount() + ' steps (try one out of order).', function () { showScreen('split'); Split.pickById('c1'); }],
+      ['Step 3', 'Thin file — Arjun (c4)', 'No AECB file — approved on connected-account cash flow.', function () { showScreen('split'); Split.pickById('c4'); }],
+      ['Step 4', 'Personal loan — Omar (r3)', 'DBR headroom binds the limit — see the trace and the KFS.', function () { showScreen('loan'); Loan.pickById('r3'); }],
+      ['Step 5', 'Policy self-service', 'Tighten a cut-off, simulate the book, publish with a second approver.', function () { showScreen('policy'); }],
+      ['Step 6', 'Monitoring', 'STP vs targets per product and day-zero early warning.', function () { showScreen('monitoring'); }],
+      ['Step 7', 'Upgrade — Anita (u1)', 'Starter AED 1,000 → base offer; upload 6 months of Indian statements → up to AED 3,000 · 6 months · from 35% APR; the longer term earns the partner more at a lower rate.', function () { showScreen('upgrade'); Upgrade.pickById('u1'); }],
+      ['Step 8', 'Underwriter asks for statements — Priya (r2)', 'Refer → request 6 months of Indian statements → parsed → approved for more (AED 45,000 vs AED 30,000 on Credit Passport).', function () { Overview.openPriyaCase(); }],
+      ['Step 9', 'Lender view — the credit memo', 'What lenders receive, per sharing agreement: NoorScore, reason codes (green · yellow · red) and banded aggregates; Open Finance data never leaves Noor. Switch to Lender B, then Reproduce the decision in the Decision log.', function () { showScreen('lender'); }],
+      ['Step 10', 'Car loan — Karim', 'Salary alone supports AED 150,000; Open Finance verifies his rent → AED 180,000, the 80% LTV maximum (+AED 30,000).', function () { showScreen('car'); Car.reset(); }],
+      ['Step 11', 'Red flags — Marco (r6)', 'Cards maxed in 3 months + 89% of income sent abroad this month → REFER for a human review, never an automatic decline; Monitoring shows the exit-risk watch.', function () { RedFlagsUI.demo(); }],
+      ['Step 12', 'SME working capital — Sara (s1)', 'The company’s accounts support AED 100,000; with Sara’s personal accounts AED 150,000, 2.5 points cheaper — business and owner watched while the loan is open.', function () { showScreen('sme'); Sme.reset(); }]
     ];
-    var ds = h('div', { class: 'demo-strip demo-11' });
-    demo.forEach(function (d) {
-      ds.appendChild(h('button', { class: 'demo-step ds-top', onclick: d[3] },
+    var ds = h('div', { class: 'demo-strip demo-12', id: 'ov-demo' });
+    demo.forEach(function (d, i) {
+      ds.appendChild(h('button', { class: 'demo-step ds-top' + (i === 0 ? ' ds-main' : ''), id: i === 0 ? 'ov-demo-sf' : null, onclick: d[3] },
         h('div', { class: 'd-n', text: d[0] }), h('div', { class: 'd-t', text: d[1] }), h('div', { class: 'd-d', text: d[2] })));
     });
     var demoWord = NUM_WORD[demo.length] || String(demo.length);
@@ -10343,6 +10833,9 @@ var Overview = {
 
     var map = [
       ['Overview', 'Positioning · six positions', 'The argument, compressed'],
+      /* v2.21 */
+      ['Split school fees', 'The default product · a school from the directory (illustrative) · the fee invoice · 12 equal payments · 0% at partner schools (the school pays a fee), a monthly fee by band elsewhere · paid straight to the school · the personal loan’s underwriting',
+        'School fees — Ravi: AED 15,000 → 12 × AED 1,250 at 0%, paid straight to the school; the lender’s memo says “school verified” and never names the school'],
       ['Split a purchase', 'Detected purchase · consent · cash-flow underwriting · plans & KFS · execution order', 'Noor’s core product decided end-to-end: Pay in 3 / 6 / 12, APR equivalent disclosed, approval ≠ loan'],
       ['Split — thin-file path (c4)', 'AECB no-hit · connected-account history', 'Open banking makes a thin file approvable — proxy base 640, grade capped at B'],
       ['Split another purchase', 'Revolving split capacity · arrears check', 'A sub-second capacity check, not re-underwriting'],
@@ -11128,13 +11621,14 @@ var JR_FLOW = [
     c: 'Sees a range (B) or whether the request fits (A). Checking does not affect the credit score.',
     m: 'prequalify(): connected accounts only, no AECB inquiry, no record. The caps take the stricter of DBR headroom and 50% of free cash flow.',
     r: 'Indicative only; it never promises more than decide() allows (the Reg 29/2011 DBR cap, Noor policy instalmentToFcfMaxPct).' },
-  { t: 'Choose your loan', d: 'Amount, term, purpose', match: function (e, v) { return v === 'A' ? (e.n === 8 && e.sub === 1) : e.n === 8; },
-    c: 'Sets the amount, the term (6, 12 or 24 months) and the purpose.',
-    m: 'Indicative payments come from loanInstalment(). Nothing is recorded.',
-    r: 'Noor policy: the personal-loan pricing bands set the indicative rate. Reg 29/2011: at most 48 months.' },   /* v2.20 — no per-row “from” APR on the term rows */
+  /* v2.21 — split school fees over 12 months is the default product; the personal loan is the alternative */
+  { t: 'School fees or loan', d: 'School, invoice, 12 months (default) · or a personal loan', match: function (e, v) { return v === 'A' ? (e.n === 8 && e.sub === 1) : e.n === 8; },
+    c: 'Picks the school and checks the invoice: 12 equal payments, 0% at a partner school, paid straight to the school. Or chooses a personal loan instead: the amount, the term (6, 12 or 24 months) and the purpose.',
+    m: 'School fees: quoteSchoolFees() prices the 12-month plan for the school picked; a personal loan: indicative payments from loanInstalment(). Nothing is recorded.',
+    r: 'Noor policy: school fees are always 12 months and paid to the school (locked rules of the pack); the personal-loan pricing bands set the indicative rate. Reg 29/2011: at most 48 months.' },   /* v2.20 — no per-row “from” APR on the term rows */
   { t: 'Final checks', d: 'AECB consent · UAE PASS · decide()', match: function (e) { return e.n === 9; },
     c: 'Gives AECB consent, confirms with UAE PASS and applies.',
-    m: 'decide() for personal_loan: the journey’s first and only decision. It lands in the Decision log.',
+    m: 'decide() for the chosen product — school_fees (the default) or personal_loan: the journey’s first and only decision. It lands in the Decision log.',
     r: 'Federal Law 6/2010: AECB consent before any loan.' },
   { t: 'Offer · Partner Bank confirms', d: 'Offer, credit memo to the lender', orig: true, match: function (e) { return e.n === 10 || e.n === 11; },
     c: 'Sees the offer (amount, APR, instalment, total), then Partner Bank confirms.',
@@ -11145,8 +11639,9 @@ var JR_FLOW = [
     m: 'recordEvent(), in order: OFFER_ACCEPTED, KFS_ACKNOWLEDGED, AGREEMENT_SIGNED, REPAYMENT_SET_UP, COOLING_OFF_CLEARED.',
     r: 'CBUAE Consumer Protection Standards (the KFS first) and CPR 8/2020 (5 business days, waivable in writing).' },
   /* v2.13 — covers 16·0 (on its way), 16·1 (contact preferences), 16·2 (the PWA card) and 16·3 (back in botim) */
-  { t: 'Funded · contact preferences · back in botim', d: 'botim learns only “funded”', orig: true, match: function (e) { return e.n === 16; },
-    c: 'The money is on its way from Partner Bank. Picks how Noor reaches them about repayments, then botim shows “Loan funded · managed in Noor”, with no amount.',
+  /* v2.21 — "Paid": Partner Bank pays the school (school fees) or the customer (a personal loan) */
+  { t: 'Paid · back in botim', d: 'botim learns only “funded”', orig: true, match: function (e) { return e.n === 16; },
+    c: 'Partner Bank pays the school directly — or, for a personal loan, sends the money to the customer. Picks how Noor reaches them about repayments, then botim shows that it is paid and managed in Noor, with no amount.',
     m: 'DISBURSED makes the record EXECUTED, and recordCommunications() adds the contact consent to the loan. botim gets the funded event only.',
     r: 'CBUAE consumer protection: marketing only with prior consent and an easy opt-out. Noor’s position: botim receives events only, never channels, an amount or credit data.' }
 ];
@@ -11500,6 +11995,11 @@ var Split = {
       h('div', null, h('span', { class: 'pc-k', text: 'Category' }), h('span', { class: 'pc-v', text: pu.category })),
       h('div', null, h('span', { class: 'pc-k', text: 'Amount' }), h('span', { class: 'pc-v', text: fmtAED(pu.amount) })),
       h('div', null, h('span', { class: 'pc-k', text: 'Date' }), h('span', { class: 'pc-v', text: fmtLongDate(pu.date) + (ago !== null ? ' · ' + ago + ' days ago' : '') }))));
+    /* v2.21 — school fees not paid yet: split them over 12 months, paid straight to the school (the journey's default product) */
+    if (/school fees/i.test(pu.merchant || '') || /education/i.test(pu.category || '')) {
+      box.appendChild(h('button', { class: 'btn btn-ghost linkbtn sp-sf-link', type: 'button', id: 'sp-sf-link', onclick: function () { Journey.openSchoolFees(); } },
+        'Not paid yet? Split school fees over 12 months — paid straight to the school →'));
+    }
   },
   /* Plan selector — before the decision it captures the requested term; after, it shows the engine's priced plans */
   renderPlans: function () {
@@ -13893,6 +14393,14 @@ var REG_CITES_BY_PRODUCT = { salary_advance: { tenorCapMonths: 'Single repayment
     kybRequired: 'Noor policy — trade licence and ultimate beneficial owner verified before any decision · confirm with compliance',
     personalGuarantee: 'Noor policy — the owner guarantees personally; as an individual, the owner gets the guarantor disclosures in Arabic and English (consumer protection covers the guarantor, not the company) · confirm with compliance',
     coolingOffDays: 'Noor policy for micro businesses — 5 business days, waivable in writing by the owner; keeps the shared six-step sequence · confirm with compliance'
+  },
+  /* v2.21 — split school fees: the personal loan's DBR and salary multiple; the term, the payee and no early-settlement fee are locked rules of the pack */
+  school_fees: {
+    dbrCapPct: 'CBUAE Reg 29/2011 — DBR ≤ 50% of income; the school-fees instalment counts like any instalment, double-enforced by the engine',
+    salaryMultipleCap: 'CBUAE Reg 29/2011 — ≤ 20× monthly salary, as for the personal loan',
+    fixedTenorMonths: 'Locked rule of the pack — always 12 equal monthly payments (publish refuses it; any other request is set to 12)',
+    payee: 'Locked — the lender pays the school directly against the fee invoice; the funds cannot be diverted',
+    earlySettlementFee: 'Locked — no early-settlement fee on a school-fees plan'
   } };
 /* Editable-parameter metadata — bounds mirror the engine's enforced PARAM_BOUNDS (the engine re-validates on simulate and publish) */
 var PARAM_META = {
@@ -13980,6 +14488,27 @@ var PARAM_META = {
     scoreDecline: ['AECB score — decline below', 550, 700, 5],
     tokenValidityDays: ['Offer validity (days)', 3, 14, 1]
   },
+  /* v2.21 — split school fees: the personal loan's underwriting params, the school-fees price and the minimum */
+  school_fees: {
+    minSalary: ['Minimum monthly salary (AED)', 3000, 25000, 500],
+    minAge: ['Minimum age', 18, 25, 1],
+    maxAge: ['Maximum age at maturity', 60, 70, 1],
+    scoreDecline: ['AECB score — decline below', 550, 720, 5],
+    scoreRefer: ['AECB score — refer below (must be ≥ decline cut-off)', 600, 780, 5],
+    maxEsrPct: ['Max expense-to-salary ratio (ESR, %)', 30, 90, 5],
+    thinFileAction: ['Thin-file action', null, null, null],
+    minMonthsInUae: ['Minimum months in UAE', 0, 24, 1],
+    chequeReturnsMax: ['Max cheque returns (12m)', 0, 5, 1],
+    minAmount: ['Minimum amount (AED)', 500, 10000, 500],
+    productCap: ['Product cap (AED)', 20000, 300000, 5000],
+    instalmentToFcfMaxPct: ['Max instalment as % of free cash flow (when spending is seen)', 10, 80, 5],
+    partnerSchoolParentFeePct: ['Partner school — the parent’s fee (%) · 0% is the product promise', 0, 0, 1],
+    merchantFeePct: ['Partner school — the school’s merchant fee (%, illustrative; never shown to the customer, never in the memo)', 0, 10, 0.5],
+    completenessThresholdPct: ['Data-completeness threshold (%, illustrative) — below it no score is issued and decide() refers', 50, 90, 5],
+    footprintOverlayMode: ['Digital-footprint thin-file overlay — SHADOW logs it, LIVE applies it', null, null, null],
+    footprintOverlayCap: ['Digital-footprint overlay cap (points, positive-only)', 0, 30, 5],
+    tokenValidityDays: ['Offer validity (days)', 3, 30, 1]
+  },
   /* v2.9 — the shared early-warning block (UAE red flags): thresholds only; the guardrails are locked text */
   earlyWarning: {
     redFlagsAtOrigination: ['Red-flag rule at origination (refer only)', null, null, null],
@@ -14000,7 +14529,10 @@ var PARAM_META = {
 var BAND_META = {
   splitCapacityMultiple: { label: 'Split capacity multiple of free cash flow, by grade', unit: '×', scale: 1, step: 0.5, min: 0.5, max: 6, note: 'each in (0, 6]' },
   monthlyFeeRate: { label: 'Monthly fee rate on the principal, by grade', unit: '% / mo', scale: 100, step: 0.05, min: 0.05, max: 5, note: 'each in (0, 5%] per month; must stay A ≤ B ≤ C' },
-  pricingBands: { label: 'APR bands (annual interest, reducing balance), by grade', unit: '% p.a.', scale: 100, step: 0.01, min: 0.01, max: 30, note: '0 < min < max ≤ 30%', pair: true }
+  pricingBands: { label: 'APR bands (annual interest, reducing balance), by grade', unit: '% p.a.', scale: 100, step: 0.01, min: 0.01, max: 30, note: '0 < min < max ≤ 30%', pair: true },
+  /* v2.21 — school fees at a school that is not a partner */
+  nonPartnerMonthlyFeeRate: { label: 'Other licensed school — the parent’s monthly fee on the amount, by grade band (illustrative)', unit: '% / mo', scale: 100, step: 0.05, min: 0, max: 2,
+    note: 'each in [0, 2%] per month; must stay A ≤ B ≤ C · partner schools are 0% for the parent' }
 };
 /* Starter-loan nested params (starter offer + upgrade tiers): [label, display scale, step] — APRs edited in % */
 var NESTED_META = {
@@ -14091,8 +14623,8 @@ var Policy = {
     }
     t.appendChild(tb);
     box.appendChild(h('div', { class: 'tbl-scroll' }, t));
-    /* v2.18 §6 — the lender's policy, read-only on the personal-loan pack */
-    if (Policy.pid === 'personal_loan') box.appendChild(h('div', { class: 'callout callout-info small', id: 'pc-lender-policy', style: 'margin-top:8px;' },
+    /* v2.18 §6 — the lender's policy, read-only on the personal-loan pack (v2.21: and the school-fees pack) */
+    if (Policy.pid === 'personal_loan' || Policy.pid === 'school_fees') box.appendChild(h('div', { class: 'callout callout-info small', id: 'pc-lender-policy', style: 'margin-top:8px;' },
       h('span', { class: 'lock-ico', 'aria-hidden': 'true', text: '🔒' }), ' ', h('strong', { text: 'Lender policy: Partner Bank — loaded into Mizan for end-to-end decisioning' }),
       h('span', { class: 'muted', text: ' · read-only · Noor owns assessment to pre-offer; origination stays with botim and its lender' })));
   },
@@ -14299,10 +14831,13 @@ var Policy = {
     var sb = MD.sampleBook || {};
     var n = Policy.pid === 'split' ? (sb.split || []).length + ' split' : (Policy.pid === 'starter_loan' ? (sb.starter_loan || []).length + ' starter-loan'
       : (Policy.pid === 'car_loan' ? (sb.car_loan || []).length + ' car-loan'
-        : (Policy.pid === 'sme_working_capital' ? (sb.sme_working_capital || []).length + ' SME' : (sb.personal_loan || []).length + ' personal-loan')));
+        : (Policy.pid === 'sme_working_capital' ? (sb.sme_working_capital || []).length + ' SME'
+          : (sb.personal_loan || []).length + ' personal-loan')));
     var tryIt = Policy.pid === 'starter_loan' ? 'Try lowering the enhanced tier’s APR at max tenor: outcomes stay put, and the pricing impact shows what it does to APRs and partner income.'
       : (Policy.pid === 'car_loan' ? 'Try setting regularIncomeCountedPct to 0: the rows with verified rent lose it — one approval shrinks, one becomes a decline.'
-        : (Policy.pid === 'sme_working_capital' ? 'Try setting unverifiedGuaranteeFactorPct to 50: the approvals without the owner’s accounts shrink; the verified ones do not move.' : 'Try raising the decline cut-off.'));
+        : (Policy.pid === 'sme_working_capital' ? 'Try setting unverifiedGuaranteeFactorPct to 50: the approvals without the owner’s accounts shrink; the verified ones do not move.'
+          : (Policy.pid === 'school_fees' ? 'The personal-loan sample is read as 12-month school-fee requests at partner pricing. Try lowering productCap to 20,000: the outcomes stay put, and the approved amounts shrink to the cap.'
+            : 'Try raising the decline cut-off.')));
     box.appendChild(h('p', { class: 'small muted', text: 'Runs the draft parameters against the seeded application sample (' + n + ' applications) and diffs outcomes against the live pack — the console never publishes blind. ' + tryIt }));
     box.appendChild(h('div', { class: 'btnrow' }, h('button', { class: 'btn btn-primary', id: 'pc-sim-run', text: 'Run simulation', onclick: function () {
       var res;
@@ -14359,7 +14894,7 @@ var Policy = {
       var ai = result.amountImpact;
       var dAmt = ai.approvedAmountAfter - ai.approvedAmountBefore;
       box.appendChild(h('div', { id: 'pc-sim-amounts', class: 'pi-tiles' },
-        h('strong', { class: 'small', text: 'Amount impact — most ' + (Policy.pid === 'sme_working_capital' ? 'SME' : 'car-loan') + ' policy changes move amounts, not outcomes' }),
+        h('strong', { class: 'small', text: 'Amount impact — most ' + (Policy.pid === 'sme_working_capital' ? 'SME' : (Policy.pid === 'school_fees' ? 'school-fees' : 'car-loan')) + ' policy changes move amounts, not outcomes' }),
         h('div', { class: 'tbl-scroll', style: 'margin-top:4px;' }, h('table', { class: 'tbl' },
           h('thead', null, h('tr', null, h('th', { text: 'Measure' }), h('th', { class: 'num', text: 'Live pack' }), h('th', { class: 'num', text: 'Draft' }), h('th', { class: 'num', text: 'Change' }))),
           h('tbody', null,
@@ -14979,6 +15514,21 @@ var LogScreen = {
       : (up ? 'none yet — the customer has not chosen an option' : '—'));
     return h('div', { id: 'lg-upgrade', style: 'margin:4px 0 12px;' }, h('h3', { text: 'Credit lifecycle — starter loan → upgrade' }), kv);
   },
+  /* v2.21 — the school-fees record: the 12-month plan and the payee (internal — the memo carries "school verified" only) */
+  schoolFees: function (rec) {
+    var sf = rec.schoolFees || {}, sc = sf.school || {}, inv = sf.invoice || {}, pr = rec.pricing || {};
+    var kv = h('div', { class: 'kv' });
+    function row(k, label, text) { kv.appendChild(h('dt', { text: label })); kv.appendChild(h('dd', { dataset: { k: k }, text: text })); }
+    row('plan', 'Plan', isNum(sf.monthlyInstalment) ? sf.months + ' × ' + fmtMoney(sf.monthlyInstalment) + ' · ' + (sf.monthlyFeeRate ? 'monthly fee ' + fmtRate(sf.monthlyFeeRate) + ' · fees ' + fmtMoney(sf.totalFees) + ' · APR equivalent ' + fmtRate(sf.aprEquivalent)
+      : '0% interest, no fees · APR ' + fmtRate(0)) + ' · total ' + fmtMoney(sf.planTotal) : 'no plan — ' + rec.outcome.toLowerCase());
+    row('payee', 'Payee', 'The school — ' + (sc.name || '—') + ' (illustrative) · ' + (sc.regulator || '') + ' · ' + (sc.partner ? 'partner school' : 'other licensed school') + ' · IBAN ' + (sc.ibanMasked || '—') + ' · paid directly by the lender');
+    row('invoice', 'Invoice', (inv.ref || '—') + ' · ' + fmtAED(inv.amount) + (inv.dueDate ? ' · due ' + fmtLongDate(inv.dueDate) : '') +
+      (sf.shortfall > 0 ? ' · Noor splits ' + fmtAED(sf.amount) + '; the parent pays the remaining ' + fmtAED(sf.shortfall) + ' to the school' : ''));
+    if (sf.firstPaymentDate) row('dates', 'Payments', 'first ' + fmtLongDate(sf.firstPaymentDate) + ' · last ' + fmtLongDate(sf.lastPaymentDate) + ' · on the ' + jrDayNth(sf.bestDebitDay) + ' (the day after the salary)');
+    if (sf.coolingOffEndsOn) row('coolingOff', 'Cooling-off', 'ends ' + fmtLongDate(sf.coolingOffEndsOn) + (sf.coolingOffEndsAfterDueDate ? ' — after the invoice is due: the waiver is offered, never automatic' : ' — before the invoice is due'));
+    if (pr.partnerSchool && isNum(pr.merchantFeePct)) row('merchantFee', 'Merchant fee', 'The school pays ' + pr.merchantFeePct + '% (illustrative) — never shown to the customer, never in the memo');
+    return h('div', { id: 'lg-school-fees', style: 'margin:4px 0 12px;' }, h('h3', { text: 'Split school fees — the plan and the payee (internal)' }), kv);
+  },
   renderReplay: function (id) {
     var box = clear($('#lg-replay'));
     var rec = null;
@@ -15034,6 +15584,7 @@ var LogScreen = {
     }
     panel.appendChild(logExplain(rec));   /* v2.18 — the contribution chart, the six components; v2.19 — the reason codes with their rules (internal) */
     if (rec.kind === 'UPGRADE') panel.appendChild(LogScreen.lifecycle(rec));
+    if (rec.schoolFees) panel.appendChild(LogScreen.schoolFees(rec));   /* v2.21 */
     panel.appendChild(decisionSummaryPanel(rec, {}));
     panel.appendChild(h('div', { style: 'margin-top:14px;' }, h('h3', { text: 'Pre-assembled file (as the analyst and the auditor see it)' }), caseFile(rec)));
 
@@ -15120,7 +15671,7 @@ function memoTermsTiles(m) {
       : 'No terms — the application was declined. The reasons below are the ones the customer received.');
   }
   var tiles = [];
-  if (isNum(t.amount)) tiles.push(kfTile('amount', 'Amount', fmtAED(t.amount), m.product.nameEn));
+  if (isNum(t.amount)) tiles.push(kfTile('amount', 'Amount', fmtAED(t.amount), m.product.purpose ? m.product.nameEn + ' · ' + m.product.purpose : m.product.nameEn));
   else if (isNum(t.offerUpTo)) tiles.push(kfTile('amount', 'Offer', 'up to ' + fmtAED(t.offerUpTo), 'customer still choosing'));
   /* v2.7 — the vehicle (dealer-quote data, exact figures allowed) */
   if (t.vehicle) {
@@ -15133,7 +15684,9 @@ function memoTermsTiles(m) {
   if (isNum(t.planMonths)) tiles.push(kfTile('term', 'Plan', 'Pay in ' + t.planMonths, t.planMonths + ' monthly instalments'));
   else if (isNum(t.tenorMonths)) tiles.push(kfTile('term', 'Term', monthsTxt(t.tenorMonths), 'equal monthly instalments'));
   else if (isNum(t.maxTenorMonths)) tiles.push(kfTile('term', 'Term', 'up to ' + monthsTxt(t.maxTenorMonths), 'customer still choosing'));
-  if (isNum(t.monthlyFeeRate)) tiles.push(kfTile('apr', 'Monthly fee', fmtRate(t.monthlyFeeRate), 'APR equivalent ' + fmtRate(t.aprEquivalent)));
+  /* v2.21 — school fees: 0% (no interest, no fees) or the parent's monthly fee with its APR equivalent */
+  if (t.payee && t.monthlyFeeRate === 0) tiles.push(kfTile('apr', 'Interest and fees', '0% — none', 'APR ' + fmtRate(t.aprEquivalent || 0)));
+  else if (isNum(t.monthlyFeeRate)) tiles.push(kfTile('apr', 'Monthly fee', fmtRate(t.monthlyFeeRate), 'APR equivalent ' + fmtRate(t.aprEquivalent)));
   else if (isNum(t.flatFee)) tiles.push(kfTile('apr', 'Fee', fmtMoney(t.flatFee) + ' flat', 'no interest'));
   else if (isNum(t.apr)) tiles.push(kfTile('apr', 'APR', fmtRate(t.apr), t.aprBand ? 'band ' + fmtRate(t.aprBand[0]) + ' – ' + fmtRate(t.aprBand[1]) : 'reducing balance'));
   else if (isNum(t.aprFrom)) tiles.push(kfTile('apr', 'APR', 'from ' + fmtRate(t.aprFrom), 'falls with a longer term'));
@@ -15150,6 +15703,8 @@ function memoTermsTiles(m) {
     tiles.push(h('div', { class: 'kf kf-wide', dataset: { kfs: 'guarantee', status: tb.guaranteeStatus || '' } }, h('span', { class: 'kf-l', text: 'Personal guarantee' }),
       h('span', { class: 'kf-v', text: tb.guaranteeStatus || '—' }), h('span', { class: 'kf-s', text: tb.guaranteeFlag || '' })));
   }
+  if (t.payee) tiles.push(h('div', { class: 'kf kf-wide', dataset: { kfs: 'payee' } }, h('span', { class: 'kf-l', text: 'Payee' }), h('span', { class: 'kf-v', text: t.payee }),
+    h('span', { class: 'kf-s', text: 'the funds cannot be diverted · no early-settlement fee' })));
   if (t.repaymentMethodLabel) {
     tiles.push(h('div', { class: 'kf kf-wide', dataset: { kfs: 'repayment', method: t.repaymentMethod } },
       h('span', { class: 'kf-l', text: 'Repayment method' }), h('span', { class: 'kf-v', text: t.repaymentMethodLabel }),
@@ -15323,7 +15878,9 @@ function memoDoc(m) {
       : [['AECB checked', bu ? (bu.aecbChecked ? 'Yes' : 'No') : null, 'aecb'], ['AECB score band', bu && bu.aecbScoreBand, 'aecbBand'], ['Delinquency', bu && bu.delinquencyFlag, 'delinquency'],
          ['Returned cheques', bu && bu.chequeReturnsFlag, 'cheques'], ['Home-country credit history', bu && bu.homeCountryFile, 'cpass'], ['Identity', ve && ve.identity, 'identity'],
          ['Additional evidence', ve && ve.additionalEvidence, 'evidence'], ['Purchase', ve && ve.purchaseVerified, 'purchase'],
-         ['Other income', ve && ve.otherIncome, 'otherIncome'], ['Down-payment source', ve && ve.downPaymentSource, 'downPaymentSource']];
+         ['Other income', ve && ve.otherIncome, 'otherIncome'], ['Down-payment source', ve && ve.downPaymentSource, 'downPaymentSource'],
+         /* v2.21 — school fees: the school is verified and paid directly (never its name) */
+         ['School', ve && ve.school, 'school'], ['Paid to', ve && ve.payee, 'payee']];
     body.appendChild(h('section', { class: 'memo-sec', id: 'lv-flags' }, h('h4', { text: 'Bureau & verification — flags' }), memoKv(flags)));
   }
   if (m.consents) {
@@ -15440,7 +15997,7 @@ var Lender = {
     var m = memoFor(id);
     if (!m) return;
     if (deepLinkDecision.seeded === id) right.appendChild(h('div', { class: 'callout callout-info small', id: 'lv-seeded' }, h('strong', { text: 'Seeded example. ' }),
-      'The link opened with no decision in this session, so Mizan decided Ravi’s journey application (AED 15,000 · 12 months) to show a real memo.'));
+      'The link opened with no decision in this session, so Mizan decided Ravi’s journey application — split school fees, AED 15,000 over 12 months, the default product — to show a real memo.'));
     right.appendChild(memoDoc(m));
     right.appendChild(noorIpPanel(m));
     var seg = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Delivery channel' });
@@ -15481,7 +16038,9 @@ var Lender = {
   }
 };
 /* v2.18 — deep links: #lender and #log land on that screen with the most recent journey decision selected (any decision
-   if none came from the journey); with no decision at all, a seeded example — Ravi's journey decision, on the real engine */
+   if none came from the journey); with no decision at all, a seeded example — Ravi's journey decision, on the real engine.
+   v2.21 — the seeded example is Ravi's school-fees decision (the default product); the personal-loan memo stays reachable
+   by deciding the personal loan in the journey. */
 function deepLinkDecision() {
   var list = [];
   try { list = ME.listDecisions() || []; } catch (e) {}
@@ -15490,7 +16049,9 @@ function deepLinkDecision() {
   if (jr) return jr.id;
   try {
     var p = Journey.persona;
-    var rec = ME.decide({ productId: 'personal_loan', applicant: p, amount: 15000, tenorMonths: 12, lenderId: 'partner-bank',
+    var inv = p.schoolFees || {};
+    var rec = ME.decide({ productId: 'school_fees', applicant: p, amount: inv.amount || 15000, tenorMonths: 12, lenderId: 'partner-bank',
+      school: { schoolId: inv.schoolId, invoiceRef: inv.invoiceRef, dueDate: inv.dueDate },
       consents: { aecb: true, openFinance: true, digitalFootprint: { basis: 'TERMS', termsVersion: JR_TERMS.version, acceptedAt: jrTermsAt() } },
       emiratesId: true, dataSources: { approvedAccounts: ((p.connected && p.connected.accounts) || []).map(function (a) { return a.mask; }), months: jrMonthsSeen() },
       contactVerification: { phone: 'BOTIM', email: 'BOTIM' } });   /* v2.20 — the default journey relies on botim's verification */
@@ -15663,6 +16224,8 @@ function jrFresh(variant) {
            allMenu: false, phoneScn: 'skip', otpSkipped: false, uaePhone: '', uaePhoneErr: null,
            reliance: null, relyLine: null, emailBy: null, relyWhatIf: null,
            insights: null, pq: null, pqErr: null, amount: 15000, months: 12, purpose: 'Family wedding', aecb: true,
+           /* v2.21 — the product (school fees by default), the school picked, the amount (from the invoice), the simulated invoice upload */
+           product: 'school_fees', sfSchool: jrInvoice().schoolId || 'sch-juniper', sfAmount: jrInvoice().amount || 15000, sfUpload: null, sfQuoteKey: null,
            recId: null, applyErr: null, eventErr: null, kfsLang: 'en', kfsSheet: false, waive: false, memoSent: null, pwaOpen: false,
            calls: [], botim: [], logged: {} };
 }
@@ -15722,6 +16285,36 @@ function jrFirstDue() {
   var d = new Date(Date.UTC(Number(t[0]), Number(t[1]), day));
   return { day: day, iso: d.toISOString().slice(0, 10) };
 }
+/* ---------- v2.21 — split school fees over 12 months, the default product (SCHOOL-FEES-SPEC.md) ----------
+   Journey.S.product: 'school_fees' (the default; Restart resets to it) or 'personal_loan'. Once the customer picks the
+   personal loan, every screen, number, event and memo is v2.20's. School names are fictitious and always "(illustrative)";
+   the child is "Child 1 · Grade 1" — never a name. */
+var JR_SF_ILLUS = '(illustrative)';
+function jrSF() { return !!Journey.S && Journey.S.product === 'school_fees'; }
+function jrInvoice() { return (Journey.persona && Journey.persona.schoolFees) || {}; }
+function jrSchools() { try { return ME.schools() || []; } catch (e) { return []; } }
+function jrSchool(id) { var k = id || (Journey.S && Journey.S.sfSchool); return jrSchools().filter(function (x) { return x.id === k; })[0] || null; }
+/* The non-partner band: the pre-qualification estimate's once the accounts are read, else B (the spec's default line) */
+function jrSfBand() { var pq = Journey.S && Journey.S.pq; return pq && pq.schoolFees ? pq.schoolFees.nonPartnerBand : 'B'; }
+function jrSfQuote(amount, schoolId) {
+  try { return ME.quoteSchoolFees(amount || Journey.S.sfAmount, { schoolId: schoolId || Journey.S.sfSchool, band: jrSfBand() }); } catch (e) { return null; }
+}
+/* The most Noor can split at the school picked, from prequalify().schoolFees (null before the accounts are read) */
+function jrSfMax(schoolId) {
+  var pq = Journey.S && Journey.S.pq, sch = jrSchool(schoolId);
+  if (!pq || !pq.schoolFees || !sch) return null;
+  return sch.partner ? pq.schoolFees.maxPartner : pq.schoolFees.maxOther;
+}
+function jrSfSchoolName(sch) { return sch ? sch.name + ' ' + JR_SF_ILLUS : '—'; }
+/* The step list's product-aware titles */
+function jrStepTitle(s) {
+  if (!jrSF()) return s.title;
+  if (s.n === 8 && s.sub === undefined) return 'Your school fees';
+  if (s.n === 8 && s.sub === 1) return 'What do you need?';
+  if (s.n === 10) return 'Your school-fees plan';
+  if (s.n === 16 && s.sub === undefined) return 'Done — the school is paid';
+  return s.title;
+}
 var Journey = {
   S: null, persona: null, timer: null, otpTimer: null, toastTimer: null, map: null,
   /* v2.8 — the A/B test: the variant survives restarts; the event log is this session's, across journeys */
@@ -15753,6 +16346,18 @@ var Journey = {
     Journey.run += 1;
     Journey.S = jrFresh(Journey.variant);
     Journey.render();
+  },
+  /* v2.21 — the Overview's step 1 and the Split screen's cross-link: the journey at its start, with the product school fees */
+  openSchoolFees: function () {
+    showScreen('journey');
+    Journey.restart();
+    fmScrollTo($('#jr-stage'));
+  },
+  /* v2.21 — the customer picks the product: 'school_fees' (the default) or 'personal_loan' (v2.20's path, unchanged) */
+  setProduct: function (pid) {
+    var S = Journey.S;
+    if (pid !== 'school_fees' && pid !== 'personal_loan') return;
+    S.product = pid;
   },
   /* Switching the experiment variant restarts the journey (the session's event log is kept) */
   setVariant: function (v) {
@@ -15834,10 +16439,14 @@ var Journey = {
         if (S.pq.status === 'NEEDS_DATA') {
           Journey.log(pqCall, 'NEEDS_DATA · data ' + S.pq.completeness.pct + '% — below the threshold · ask: ' + S.pq.ask.join(', ') + ' · no score, no record, no AECB pull');
         } else {
+          /* v2.21 — prequalify() → schoolFees: the same budget over 12 months, at a partner school and elsewhere */
+          var pqSf = S.pq.schoolFees ? 'school fees up to ' + fmtAED(S.pq.schoolFees.maxPartner) + ' at a partner school (0%) · ' + fmtAED(S.pq.schoolFees.maxOther) +
+            ' elsewhere (band ' + S.pq.schoolFees.nonPartnerBand + ')' : '';
           Journey.log(pqCall, (S.step === 8
-            ? 'affordability check · caps 6 → ' + fmtAED(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtAED(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtAED(S.pq.maxByTermMonths[24])
+            ? (jrSF() && pqSf ? 'affordability check · ' + pqSf + ' · budget ' + fmtAED(S.pq.schoolFees.instalmentBudgetMonthly) + '/month'
+                              : 'affordability check · caps 6 → ' + fmtAED(S.pq.maxByTermMonths[6]) + ' · 12 → ' + fmtAED(S.pq.maxByTermMonths[12]) + ' · 24 → ' + fmtAED(S.pq.maxByTermMonths[24]))
             : fmtAED(S.pq.indicativeMin) + ' – ' + fmtAED(S.pq.indicativeMax) + ' · NoorScore estimate ' + S.pq.noorScoreEstimateBand) +
-            ' · data ' + S.pq.completeness.pct + '% · no record, no AECB pull');
+            ' · data ' + S.pq.completeness.pct + '% · no record, no AECB pull' + (S.step === 7 && pqSf ? ' · ' + pqSf : ''));
           /* variant B shows the approvable amount first, so the slider starts inside it; variant A keeps the customer's ask for the check */
           if (S.step === 7 && S.amount > S.pq.indicativeMax) S.amount = S.pq.indicativeMax;
         }
@@ -16099,14 +16708,19 @@ var Journey = {
     var dsMasks = Journey.dcMasks();
     /* v2.20 — how the mobile and the email were verified: botim relied on (no code) or Noor's one-time code */
     var cv = Journey.contactVerification();
-    var call = 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months, consents:{aecb:' + !!S.aecb + ', openFinance:true' +
+    /* v2.21 — the chosen product: school fees (12 months, the school's invoice) or the personal loan (v2.20's call, unchanged) */
+    var sf = jrSF(), inv = jrInvoice();
+    var call = (sf ? 'decide({school_fees, j1, ' + fmtAED(S.sfAmount) + ', 12 months, school:{' + S.sfSchool + ', ' + (inv.invoiceRef || '—') + '}'
+                   : 'decide({personal_loan, j1, ' + fmtAED(S.amount) + ', ' + S.months + ' months') + ', consents:{aecb:' + !!S.aecb + ', openFinance:true' +
       (fpc ? ', digitalFootprint:{basis:TERMS, termsVersion:' + fpc.termsVersion + '}' : '') + '}' + (eid ? ', emiratesId:{front, back}' : '') +
       (dsMasks.length ? ', dataSources:{' + dsMasks.length + ' accounts, ' + jrMonthsSeen() + ' months}' : '') +
       ', contactVerification:{phone:' + cv.phone + ', email:' + cv.email + '}})';
     var cons = { aecb: !!S.aecb, openFinance: true };
     if (fpc) cons.digitalFootprint = fpc;
     try {
-      var app = { productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' };
+      var app = sf ? { productId: 'school_fees', applicant: p, amount: S.sfAmount, tenorMonths: 12, school: { schoolId: S.sfSchool, invoiceRef: inv.invoiceRef, dueDate: inv.dueDate },
+                       consents: cons, lenderId: 'partner-bank' }
+                   : { productId: 'personal_loan', applicant: p, amount: S.amount, tenorMonths: S.months, consents: cons, lenderId: 'partner-bank' };
       if (eid) app.emiratesId = true;
       if (dsMasks.length) app.dataSources = { approvedAccounts: dsMasks, months: jrMonthsSeen() };
       app.contactVerification = cv;
@@ -16122,6 +16736,7 @@ var Journey = {
     S.botim = S.botim.filter(function (b) { return b.key !== 'funded'; });
     Journey.emit('applied');
     Journey.log(call, rec.id + ' · ' + rec.outcome + (rec.outcome === 'APPROVE' ? ' · ' + fmtAED(rec.limit.approved) + ' · NoorScore ' + rec.score.points + ' (' + (rec.noorScore || {}).band + ')' : '') +
+      (sf && rec.pricing && rec.pricing.kfs ? ' · 12 × ' + fmtMoney(rec.pricing.kfs.monthlyInstalment) + ' · paid to the school' : '') +
       (eid ? ' · ' + (rec.rules || []).filter(function (x) { return x.id === 'POL_ID_VALID' || x.id === 'POL_EMPLOYER_MATCH'; }).map(function (x) { return x.id + ' ' + x.result; }).join(' · ') : '') +
       (rec.dataCompleteness ? ' · POL_DATA_COMPLETENESS ' + ((rec.rules || []).filter(function (x) { return x.id === 'POL_DATA_COMPLETENESS'; }).map(function (x) { return x.result; })[0] || '—') + ' (' + rec.dataCompleteness.pct + '%)' : ''));
     afterEngineMutation();
@@ -16266,7 +16881,7 @@ var Journey = {
     return h('div', { class: 'wv bfr' + (cls ? ' ' + cls : ''), id: 'bf-frame' },
       h('div', { class: 'bf-bar' },
         h('button', { class: 'wv-x bf-x', type: 'button', id: 'bf-back', 'aria-label': 'Back to botim money', onclick: function () { Journey.closeWebview(); } }, jrSvg('M10 3.5L5.5 8l4.5 4.5', null, '1.8')),
-        h('div', { class: 'bf-title' }, h('span', { class: 'bf-name', id: 'bf-name' }, h('b', { text: 'botim' }), ' · loan (with Partner Bank)'),
+        h('div', { class: 'bf-title' }, h('span', { class: 'bf-name', id: 'bf-name' }, h('b', { text: 'botim' }), (Journey.rec() || {}).productId === 'school_fees' ? ' · school fees (with Partner Bank)' : ' · loan (with Partner Bank)'),
           h('span', { class: 'bf-tag', id: 'bf-host-tag', text: 'Concept — illustrative host app' }))),
       h('div', { class: 'wv-body' }, body),
       cta ? h('div', { class: 'wv-cta' }, cta) : null);
@@ -16283,7 +16898,8 @@ var Journey = {
     if (S.intent !== 'loan') return null;
     return S.variant === 'A'
       ? h('div', { class: 'ph-note ph-note-info', id: 'jr-connect-first' }, jrSvg(JR_ICON.shield, 'ph-note-ico'),
-          h('span', null, h('strong', { text: 'Next: your Noor account and your bank accounts. ' }), 'Noor checks that ' + fmtAED(S.amount) + ' over ' + jrMonths(S.months) + ' fits your budget — it takes a minute.'))
+          h('span', null, h('strong', { text: 'Next: your Noor account and your bank accounts. ' }), (jrSF() ? 'Noor checks that splitting ' + fmtAED(S.sfAmount) + ' of school fees over 12 months fits your budget — it takes a minute.'
+            : 'Noor checks that ' + fmtAED(S.amount) + ' over ' + jrMonths(S.months) + ' fits your budget — it takes a minute.')))
       : h('div', { class: 'ph-note ph-note-info', id: 'jr-connect-first' }, jrSvg(JR_ICON.shield, 'ph-note-ico'),
           h('span', null, h('strong', { text: 'First, connect your bank accounts. ' }), 'Noor works out what you can borrow from them — it takes a minute.'));
   },
@@ -16347,7 +16963,7 @@ var Journey = {
       body.appendChild(h('div', { class: 'bm-banner bh-banner bh-banner-funded noor-embed', id: 'bh-banner', dataset: { embed: 'banner', surface: 'home', state: 'funded' } },
         Journey.byNoor(),
         h('span', { class: 'noor-logo bm-banner-logo', role: 'img', 'aria-label': 'noor finance' }),
-        h('span', { class: 'bm-banner-t', text: 'Loan funded · managed in Noor' }),
+        h('span', { class: 'bm-banner-t', text: r.productId === 'school_fees' ? 'School fees paid · managed in Noor' : 'Loan funded · managed in Noor' }),
         h('span', { class: 'bm-banner-s', text: 'Lender: Partner Bank · arranged by noor finance' })));
     } else {
       body.appendChild(h('button', { class: 'bm-banner bh-banner noor-embed', type: 'button', id: 'bh-banner', dataset: { embed: 'banner', surface: 'home' }, onclick: function () { Journey.entry('home'); } },
@@ -16535,9 +17151,10 @@ var Journey = {
     var S = Journey.S, r = Journey.rec();
     var funded = !!(r && r.status === 'EXECUTED' && S.botim.some(function (b) { return b.key === 'funded'; }));
     if (funded) {
-      body.appendChild(h('div', { class: 'bm-loan noor-embed', id: 'bm-loan-card', dataset: { embed: 'credit-card' } }, Journey.byNoor(),
-        h('span', { class: 'bm-loan-top' }, h('span', { class: 'bm-loan-k', text: 'Personal loan' }), h('span', { class: 'bm-active', text: 'Active' })),
-        h('span', { class: 'bm-loan-t', text: 'Loan funded · managed in Noor' }),
+      var sfFunded = r.productId === 'school_fees';   /* v2.21 */
+      body.appendChild(h('div', { class: 'bm-loan noor-embed', id: 'bm-loan-card', dataset: { embed: 'credit-card', product: r.productId } }, Journey.byNoor(),
+        h('span', { class: 'bm-loan-top' }, h('span', { class: 'bm-loan-k', text: sfFunded ? 'School fees · 12 months' : 'Personal loan' }), h('span', { class: 'bm-active', text: 'Active' })),
+        h('span', { class: 'bm-loan-t', text: sfFunded ? 'School fees paid · managed in Noor' : 'Loan funded · managed in Noor' }),
         h('span', { class: 'bm-loan-s', text: 'Lender: Partner Bank · arranged by noor finance' }),
         h('span', { class: 'bm-link bm-link-static' }, 'Open in Noor', jrSvg(JR_ICON.arrowR, 'bm-link-ico'))));
     }
@@ -16551,7 +17168,8 @@ var Journey = {
         h('button', { class: 'bm-loan-row bm-loans-noor noor-embed', type: 'button', id: 'bm-loans-noor', dataset: { embed: 'loans-tile' }, onclick: function () { Journey.loansNoor(); } },
           Journey.byNoor(),
           h('span', { class: 'bm-loan-ico' }, h('span', { class: 'noor-icon', 'aria-hidden': 'true' })),
-          h('span', { class: 'bm-loan-main' }, h('span', { class: 'bm-loan-n', text: 'Personal loan · noor finance' }), h('span', { class: 'bm-loan-d', text: 'AED 1,000–50,000 · Apply in minutes' })),
+          /* v2.21 — the default product first; anything else is the personal loan */
+          h('span', { class: 'bm-loan-main' }, h('span', { class: 'bm-loan-n', text: 'Noor — split school fees over 12 months' }), h('span', { class: 'bm-loan-d', text: 'or borrow for anything else' })),
           jrSvg(JR_ICON.arrowR, 'bm-chev'))));
       Journey.emit('impression', 'money');
       body.appendChild(h('div', { class: 'bm-muted', text: 'Loans in botim money come from partners. The Noor tile is served by noor finance; botim never sees your bank data or credit decision.' }));
@@ -16768,7 +17386,7 @@ var Journey = {
         Journey.dataCard(Journey.dataNow()),
         /* v2.16 — the Emirates ID cross-check: the employer on the card ↔ the WPS payer on the salary credits; the name ↔ the account holder */
         Journey.eidMatchCard()),
-        S.variant === 'A' ? B('Apply for a personal loan', function () { Journey.S.intent = 'loan'; Journey.go(8, 1, 1); }, 'jr-cta')
+        S.variant === 'A' ? B('Apply for a personal loan', function () { Journey.S.intent = 'loan'; Journey.setProduct('personal_loan'); Journey.go(8, 1, 1); }, 'jr-cta')
                           : B('See what you could borrow', function () { Journey.go(7, 3, 1); }, 'jr-cta')) };
     }
     if (st === 7 && sub === 3) {
@@ -16776,6 +17394,7 @@ var Journey = {
       if (!pq) return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-center' }, h('h2', { class: 'ph-h1', text: 'We couldn’t check right now' }), h('p', { class: 'ph-small', text: S.pqErr || '' })), null) };
       if (pq.status === 'NEEDS_DATA') return { kind: 'webview', node: Journey.almostView(pq) };   /* v2.17 */
       var pqDc = pq.completeness || null;
+      if (pq.schoolFees) return { kind: 'webview', node: Journey.prequalSfView(pq) };   /* v2.21 — school fees first */
       return { kind: 'webview', node: Journey.wv(h('div', { id: 'jr-prequal', dataset: { min: String(pq.indicativeMin), max: String(pq.indicativeMax) } },
         h('h2', { class: 'ph-hero', id: 'jr-pq-head', text: 'You could borrow up to ' + fmtAED(pq.indicativeMax) }),
         h('p', { class: 'ph-p', id: 'jr-pq-range' }, 'Your range: ', h('strong', { text: fmtAED(pq.indicativeMin) + ' – ' + fmtAED(pq.indicativeMax).replace('AED ', '') })),
@@ -16790,26 +17409,29 @@ var Journey = {
         h('p', { class: 'ph-small ph-muted', text: 'Indicative for ' + pq.validForDays + ' days.' })),
         B('Choose your loan', function () { Journey.go(8, 0, 1); }, 'jr-cta')) };
     }
-    if (st === 8 && sub === 1) return { kind: 'webview', node: Journey.needView() };
+    /* v2.21 — 8·1 is "What do you need?" (school fees by default); the personal loan opens v2.20's "How much do you need?" */
+    if (st === 8 && sub === 1) return { kind: 'webview', node: jrSF() ? Journey.whatView() : Journey.needView() };
     /* v2.17 — below the completeness threshold there is no range to choose from: "Almost there" */
     if (st === 8 && S.pq && S.pq.status === 'NEEDS_DATA') return { kind: 'webview', node: Journey.almostView(S.pq) };
-    if (st === 8 && sub === 2) return { kind: 'webview', node: Journey.affordView() };
-    if (st === 8) return { kind: 'webview', node: Journey.chooseView() };
+    if (st === 8 && sub === 2) return { kind: 'webview', node: jrSF() ? Journey.sfAffordView() : Journey.affordView() };
+    if (st === 8) return { kind: 'webview', node: jrSF() ? Journey.sfChooseView() : Journey.chooseView() };
     if (st === 9 && sub === 0) return { kind: 'webview', node: Journey.checksView() };
     if (st === 9 && sub === 1) {
       return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-center ph-loading' }, h('span', { class: 'ph-spin', 'aria-hidden': 'true' }),
         h('h2', { class: 'ph-h2', text: 'Checking…' }), h('p', { class: 'ph-label ph-muted', text: 'Confirmed with UAE PASS · credit bureau · affordability' })), null) };
     }
-    if (st === 10) return { kind: 'webview', node: Journey.offerView() };
+    if (st === 10) return { kind: 'webview', node: (Journey.rec() || {}).productId === 'school_fees' ? Journey.sfPlanView() : Journey.offerView() };
     if (st === 11 && sub === 0) {
       return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-center ph-loading' }, h('span', { class: 'ph-spin', 'aria-hidden': 'true' }),
         h('h2', { class: 'ph-h2', text: 'Partner Bank is confirming your loan…' }), h('p', { class: 'ph-label ph-muted', text: 'Noor sent your application result — never your bank data' })), null) };
     }
     if (st === 11) {
+      var sf11 = (Journey.rec() || {}).productId === 'school_fees';   /* v2.21 */
       return { kind: 'webview', node: Journey.wv(h('div', { class: 'ph-center', id: 'jr-confirmed' },
         h('span', { class: 'ph-okico', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.2')),
         h('h2', { class: 'ph-h1', text: 'Confirmed' }),
-        h('p', { class: 'ph-p', text: 'Partner Bank confirmed your loan. Noor arranged it; Partner Bank is your lender.' }),
+        h('p', { class: 'ph-p', text: sf11 ? 'Partner Bank confirmed your school-fees plan. Noor arranged it; Partner Bank is your lender and pays the school.'
+                                           : 'Partner Bank confirmed your loan. Noor arranged it; Partner Bank is your lender.' }),
         h('p', { class: 'ph-small', text: 'Next: read the Key Facts, sign with UAE PASS and set up repayments.' })),
         B('Read the Key Facts', function () { Journey.go(12, 0, 1); }, 'jr-cta')) };
     }
@@ -17163,12 +17785,221 @@ var Journey = {
     return Journey.wv(h('div', { id: 'jr-contact' },
       h('span', { class: 'ph-tag', id: 'jr-back-in-noor', text: 'Back in Noor' }),
       h('h2', { class: 'ph-h1', text: 'How should we contact you?' }),
-      h('p', { class: 'ph-small', id: 'jr-contact-lead', text: 'Your loan is on its way. Pick how we reach you about repayments and your account.' }),
+      h('p', { class: 'ph-small', id: 'jr-contact-lead', text: ((Journey.rec() || {}).productId === 'school_fees' ? 'The school is paid. ' : 'Your loan is on its way. ') + 'Pick how we reach you about repayments and your account.' }),
       group('service', 'About your account and loan', 'Required', 'Some messages are required by law — like your Key Facts and payment reminders. We send them on the channels you choose.', 'jr-comms-service'),
       none ? h('div', { class: 'ph-note ph-note-err', id: 'jr-comms-err', role: 'alert' }, h('span', null, h('strong', { text: 'Choose at least one channel. ' }), 'We need one way to reach you about your account and loan.')) : null,
       group('marketing', 'Offers and news', 'Optional', 'Change this anytime in Settings. We never share your contact details with botim or the lender.', 'jr-comms-mkt'),
       Journey.inlineEngineError(S.commsErr, 'We couldn’t save your choice. ')),
       B('Continue', function () { if (none) return; Journey.saveComms(); }, 'jr-cta', { disabled: none }));
+  },
+  /* ---------- v2.21 — split school fees over 12 months (the default product) ---------- */
+  /* Log a quote once per school × amount (pure: no record, no clock tick) */
+  sfQuoteLog: function (q) {
+    var S = Journey.S;
+    if (!q) return;
+    var key = q.school.id + ':' + q.amount;
+    if (S.sfQuoteKey === key) return;
+    S.sfQuoteKey = key;
+    Journey.log('quoteSchoolFees(' + fmtAED(q.amount) + ', {' + q.school.id + (q.partner ? '' : ', band ' + q.band) + '})', q.line + ' · pure, no record');
+  },
+  /* The school-fees form (#jr-sf-form): the school picker over the directory, the invoice (read-only), the amount (a slider
+     from the pack's minimum to AED 50,000, step 500, prefilled from the invoice), the due date, the 12-month line and the
+     optional invoice upload (simulated, kept inside Noor). opts.max — the most Noor can split at the school picked, once known. */
+  sfForm: function () {
+    var S = Journey.S, inv = jrInvoice();
+    var q0 = jrSfQuote(S.sfAmount) || {};
+    var minA = q0.minAmount || 2000;
+    if (S.sfAmount < minA) S.sfAmount = minA;
+    if (S.sfAmount > 50000) S.sfAmount = 50000;
+    var form = h('div', { class: 'ph-sf-form', id: 'jr-sf-form', dataset: { school: S.sfSchool, amount: String(S.sfAmount) } });
+    /* the school picker */
+    var picker = h('div', { class: 'ph-sf-schools', id: 'jr-sf-schools', role: 'radiogroup', 'aria-label': 'Your child’s school' });
+    jrSchools().forEach(function (sch) {
+      var on = S.sfSchool === sch.id;
+      picker.appendChild(h('button', { class: 'ph-row ph-sf-school' + (on ? ' sel' : ''), type: 'button', role: 'radio', id: 'jr-sf-school-' + sch.id, 'aria-checked': on ? 'true' : 'false',
+        dataset: { school: sch.id, partner: String(!!sch.partner) }, onclick: function () { S.sfSchool = sch.id; Journey.render(); } },
+        h('span', { class: 'ph-sf-sch-m' }, h('span', { class: 'ph-sf-sch-n', text: sch.name }), h('span', { class: 'ph-sf-sch-s', text: sch.city + ' · ' + sch.regulator + ' · ' + JR_SF_ILLUS })),
+        h('span', { class: 'ph-sf-badge' + (sch.partner ? ' partner' : ''), text: sch.partner ? 'Partner school · 0%' : 'Monthly fee' })));
+    });
+    form.appendChild(h('div', { class: 'ph-field' }, h('span', { class: 'ph-field-l', text: 'School' }), picker));
+    /* the invoice, read-only */
+    form.appendChild(h('div', { class: 'ph-card ph-sf-inv', id: 'jr-sf-invoice' },
+      h('div', { class: 'ph-sf-inv-r' }, h('span', { class: 'ph-sf-inv-k', text: 'Child' }), h('span', { class: 'ph-sf-inv-v', id: 'jr-sf-child', text: inv.child || '—' })),
+      h('div', { class: 'ph-sf-inv-r' }, h('span', { class: 'ph-sf-inv-k', text: 'Academic year' }), h('span', { class: 'ph-sf-inv-v', text: inv.academicYear || '—' })),
+      h('div', { class: 'ph-sf-inv-r' }, h('span', { class: 'ph-sf-inv-k', text: 'Terms' }), h('span', { class: 'ph-sf-inv-v', text: inv.terms || '—' })),
+      h('div', { class: 'ph-sf-inv-r' }, h('span', { class: 'ph-sf-inv-k', text: 'Invoice' }), h('span', { class: 'ph-sf-inv-v', text: inv.invoiceRef || '—' })),
+      h('div', { class: 'ph-sf-inv-r' }, h('span', { class: 'ph-sf-inv-k', text: 'Due date' }), h('span', { class: 'ph-sf-inv-v', id: 'jr-sf-due', text: fmtLongDate(inv.dueDate) })),
+      h('span', { class: 'ph-small ph-block', text: 'From the school’s invoice — read-only.' })));
+    /* the amount */
+    var amt = h('input', { type: 'range', id: 'jr-sf-amount', min: String(minA), max: '50000', step: '500', value: String(S.sfAmount), 'aria-label': 'School fees to split, in AED' });
+    var amtV = h('div', { class: 'ph-amount', id: 'jr-sf-amount-v', text: fmtAED(S.sfAmount) });
+    var line = h('p', { class: 'ph-sf-line', id: 'jr-sf-line', role: 'status' });
+    var capNote = h('div', { id: 'jr-sf-cap' });
+    function paint() {
+      amt.value = String(S.sfAmount); amtV.textContent = fmtAED(S.sfAmount);
+      form.dataset.amount = String(S.sfAmount);
+      var q = jrSfQuote(S.sfAmount);
+      clear(line);
+      if (q) {
+        line.dataset.instalment = String(q.monthlyInstalment); line.dataset.partner = String(q.partner); line.dataset.apr = String(q.aprEquivalent);
+        line.appendChild(jrSvg(JR_ICON.check, 'ph-sf-line-ico', '2.2'));
+        line.appendChild(h('span', { text: q.line }));
+      }
+      clear(capNote);
+      var max = jrSfMax();
+      if (max !== null) {
+        capNote.appendChild(S.sfAmount > max
+          ? h('div', { class: 'ph-note ph-note-info', id: 'jr-sf-shortfall' }, h('span', null, h('strong', { text: 'Noor splits up to ' + fmtAED(max) + ' at this school. ' }),
+              'Split ' + fmtAED(max) + '; pay the remaining ' + fmtAED(S.sfAmount - max) + ' to the school directly.'))
+          : h('p', { class: 'ph-small', id: 'jr-sf-fits', text: 'Fits your budget — up to ' + fmtAED(max) + ' at this school, from your connected accounts.' }));
+      }
+    }
+    amt.addEventListener('input', function () { S.sfAmount = Number(amt.value); paint(); });
+    paint();
+    form.appendChild(amtV);
+    form.appendChild(h('div', { class: 'ph-slider' }, amt, h('div', { class: 'ph-slider-l' }, h('span', { text: fmtAED(minA) }), h('span', { text: 'AED 50,000' }))));
+    form.appendChild(line);
+    form.appendChild(capNote);
+    form.appendChild(h('p', { class: 'ph-small', id: 'jr-sf-why', text: 'Partner Bank pays the school directly — 12 equal monthly payments from your own account.' }));
+    /* the optional invoice upload — simulated; kept inside Noor, never sent to the lender */
+    form.appendChild(S.sfUpload
+      ? h('div', { class: 'ph-note ph-note-ok', id: 'jr-sf-uploaded' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'),
+          h('span', { text: S.sfUpload.file + ' uploaded (simulated) — kept inside Noor, never sent to the lender.' }))
+      : h('button', { class: 'ph-textlink', type: 'button', id: 'jr-sf-upload', onclick: function () {
+          S.sfUpload = { file: 'Fee invoice ' + (inv.invoiceRef || '') + '.pdf', at: new Date(new Date(MD.TODAY + 'T09:00:00Z').getTime() - 60000).toISOString() };
+          Journey.log('Fee invoice uploaded (simulated)', S.sfUpload.file + ' · kept inside Noor — never sent to the lender, never in the credit memo');
+          Journey.render(); } }, jrSvg(JR_ICON.plus, 'ph-tl-ico'), 'Upload the fee invoice (PDF) — optional'));
+    return form;
+  },
+  /* 8·1 (variant A) — "What do you need?": school fees (selected by default) or something else — the personal loan */
+  whatView: function () {
+    var S = Journey.S, B = Journey.btn;
+    var choice = h('div', { class: 'ph-sf-choice', id: 'jr-need-choice', role: 'radiogroup', 'aria-label': 'What do you need?' },
+      h('button', { class: 'ph-sf-card sel', type: 'button', role: 'radio', id: 'jr-need-sf', 'aria-checked': 'true', onclick: function () { Journey.setProduct('school_fees'); Journey.render(); } },
+        h('span', { class: 'ph-sf-card-t', text: 'School fees · 12 months' }), h('span', { class: 'ph-sf-card-s', text: 'Paid straight to the school · 0% at partner schools' })),
+      h('button', { class: 'ph-sf-card', type: 'button', role: 'radio', id: 'jr-need-pl', 'aria-checked': 'false', onclick: function () { Journey.setProduct('personal_loan'); Journey.render(); } },
+        h('span', { class: 'ph-sf-card-t', text: 'Something else — personal loan' }), h('span', { class: 'ph-sf-card-s', text: 'AED 1,000–50,000 over 6, 12 or 24 months' })));
+    var wrap = h('div', { id: 'jr-need-what', dataset: { product: S.product } },
+      h('span', { class: 'ph-tag', text: 'noor finance' }),
+      h('h2', { class: 'ph-h1', text: 'What do you need?' }),
+      choice,
+      Journey.sfForm(),
+      h('p', { class: 'ph-small', text: S.connected ? 'We’ll check it against your connected accounts next — no credit check yet.'
+        : 'Next: a Noor account and your bank accounts, so we can check it fits your budget. No credit check yet.' }));
+    return Journey.wv(wrap, B('Continue', function () { Journey.sfQuoteLog(jrSfQuote(S.sfAmount)); Journey.needNext(); }, 'jr-cta'));
+  },
+  /* 8·0 (variant B) — "Your school fees": the same form, with the most Noor can split at the school picked */
+  sfChooseView: function () {
+    var S = Journey.S, B = Journey.btn;
+    return Journey.wv(h('div', { id: 'jr-sf-choose' },
+      h('span', { class: 'ph-tag', text: 'Split school fees · noor finance' }),
+      h('h2', { class: 'ph-h1', text: 'Your school fees' }),
+      Journey.sfForm()),
+      B('Continue', function () {
+        /* the invoice amount goes to decide(): above the maximum, Mizan splits the maximum (RC_LIMIT_REDUCED) and the rest goes to the school directly */
+        var max = jrSfMax();
+        Journey.sfQuoteLog(jrSfQuote(max !== null && S.sfAmount > max ? max : S.sfAmount));
+        Journey.go(9, 0, 1);
+      }, 'jr-cta'));
+  },
+  /* 8·2 (variant A) — the affordability check on prequalify().schoolFees */
+  sfAffordView: function () {
+    var S = Journey.S, B = Journey.btn, pq = S.pq;
+    if (!pq || !pq.schoolFees) return Journey.wv(h('div', { class: 'ph-center' }, h('h2', { class: 'ph-h1', text: 'We couldn’t check right now' }), h('p', { class: 'ph-small', text: S.pqErr || '' })), null);
+    var sch = jrSchool(), max = jrSfMax(), fits = S.sfAmount <= max;
+    var q = jrSfQuote(fits ? S.sfAmount : max) || {};
+    var box = h('div', { id: 'jr-afford', dataset: { fits: String(fits), cap: String(max), amount: String(S.sfAmount), months: '12', product: 'school_fees' } });
+    if (fits) {
+      box.appendChild(h('span', { class: 'ph-okico', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.2')));
+      box.appendChild(h('h2', { class: 'ph-hero', id: 'jr-afford-head', text: 'Good news — ' + fmtAED(S.sfAmount) + ' of school fees fits your budget' }));
+      box.appendChild(h('p', { class: 'ph-p', id: 'jr-afford-line', text: (q.line || '') + ' — paid straight to ' + jrSfSchoolName(sch) + '.' }));
+      box.appendChild(h('p', { class: 'ph-small', text: 'Checked against your connected accounts. Next, the final checks — your plan is confirmed after a credit check.' }));
+    } else {
+      box.appendChild(h('h2', { class: 'ph-h1', id: 'jr-afford-head', text: 'Based on your accounts, Noor can split up to ' + fmtAED(max) + ' of school fees over 12 months' }));
+      box.appendChild(h('p', { class: 'ph-p', text: 'Your invoice is ' + fmtAED(S.sfAmount) + '. We keep the monthly payment within half of what’s left after your spending' +
+        (pq.schoolFees.instalmentBudgetMonthly ? ' (about ' + fmtAED(pq.schoolFees.instalmentBudgetMonthly) + ' a month)' : '') + '.' }));
+      box.appendChild(h('div', { class: 'ph-note ph-note-info', id: 'jr-sf-shortfall' }, h('span', null, h('strong', { text: 'Split ' + fmtAED(max) + '; pay the rest to the school directly. ' }),
+        'That is ' + fmtAED(S.sfAmount - max) + ' you pay the school yourself.')));
+    }
+    box.appendChild(h('div', { class: 'ph-card ph-okline' }, h('span', { class: 'ph-okico ph-okico-sm', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.4')),
+      h('span', null, h('strong', { text: 'Checking this didn’t affect your credit score' }), h('span', { class: 'ph-small ph-block', text: 'Worked out from your connected accounts only.' }))));
+    return Journey.wv(box, fits
+      ? B('Continue to final checks', function () { Journey.sfQuoteLog(jrSfQuote(S.sfAmount)); Journey.go(9, 0, 1); }, 'jr-cta')
+      : h('div', null,
+          /* the invoice amount still goes to decide(): Mizan splits the maximum (RC_LIMIT_REDUCED); the rest is paid to the school directly */
+          B('Split ' + fmtAED(max) + '; pay the rest to the school directly', function () { Journey.sfQuoteLog(jrSfQuote(max)); Journey.go(9, 0, 1); }, 'jr-afford-accept'),
+          B('Change the amount', function () { Journey.go(8, 1, -1); }, 'jr-afford-term', { ghost: true })));
+  },
+  /* 7·3 (variant B) — pre-qualified: split school fees first; the personal-loan range below it */
+  prequalSfView: function (pq) {
+    var S = Journey.S, B = Journey.btn, sf = pq.schoolFees, pqDc = pq.completeness || null;
+    return Journey.wv(h('div', { id: 'jr-prequal', dataset: { min: String(pq.indicativeMin), max: String(pq.indicativeMax), sfMax: String(sf.maxPartner), sfOther: String(sf.maxOther) } },
+      h('span', { class: 'ph-tag', text: 'Pre-qualified · noor finance' }),
+      h('div', { class: 'ph-card ph-sf-pq', id: 'jr-pq-sf' },
+        h('span', { class: 'ph-sf-pq-k', text: 'Split school fees over 12 months' }),
+        h('span', { class: 'ph-sf-pq-v', id: 'jr-pq-sf-head', text: 'up to ' + fmtAED(sf.maxPartner) }),
+        h('span', { class: 'ph-sf-pq-s', id: 'jr-pq-sf-line', text: '0% at partner schools · paid straight to the school · up to ' + fmtAED(sf.maxOther) + ' at other schools (monthly fee)' })),
+      /* v2.17 — what it rests on */
+      pqDc ? h('p', { class: 'ph-small', id: 'jr-pq-data', text: 'Based on ' + pqDc.pct + '% complete data · ' + pqDc.counts.banks + (pqDc.counts.banks === 1 ? ' bank' : ' banks') + ' · ' + pqDc.counts.accounts + (pqDc.counts.accounts === 1 ? ' account' : ' accounts') }) : null,
+      h('div', { class: 'ph-tags' }, h('span', { class: 'ph-tag', id: 'jr-pq-band', text: 'NoorScore estimate · ' + pq.noorScoreEstimateBand })),
+      h('div', { class: 'ph-card ph-okline' }, h('span', { class: 'ph-okico ph-okico-sm', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.4')),
+        h('span', null, h('strong', { text: 'Checking this didn’t affect your credit score' }), h('span', { class: 'ph-small ph-block', text: 'Worked out from your connected accounts only. Your exact amount is confirmed after a credit check.' }))),
+      /* the personal loan — today's range from prequalify(), as a secondary card */
+      h('div', { class: 'ph-card ph-sf-alt', id: 'jr-pq-pl-card' },
+        h('span', { class: 'ph-sf-alt-t', id: 'jr-pq-range', text: 'Or a personal loan: ' + fmtAED(pq.indicativeMin) + '–' + fmtAED(pq.indicativeMax).replace('AED ', '') }),
+        h('span', { class: 'ph-small ph-block', id: 'jr-pq-fcf', text: 'Up to ' + fmtAED(pq.indicativeMax) + ' over ' + pq.assumptions.tenorMonths + ' months — we keep the monthly payment within half of what’s left after your spending' +
+          (pq.assumptions.instalmentBudgetMonthly ? ' (about ' + fmtAED(pq.assumptions.instalmentBudgetMonthly) + ' a month)' : '') + '. Shorter terms mean smaller amounts.' }),
+        B('Choose a personal loan', function () { Journey.setProduct('personal_loan'); Journey.go(8, 0, 1); }, 'jr-pq-pl', { secondary: true })),
+      Journey.dataCard(pqDc),
+      h('p', { class: 'ph-small ph-muted', text: 'Indicative for ' + pq.validForDays + ' days.' })),
+      B('Split my school fees', function () { Journey.setProduct('school_fees'); Journey.go(8, 0, 1); }, 'jr-cta'));
+  },
+  /* 10 — "Your school-fees plan": read from the decision record (12 × instalment, the price, the dates, the payee) */
+  sfPlanView: function () {
+    var S = Journey.S, B = Journey.btn, r = Journey.rec();
+    var reasons = h('div', { class: 'ph-reasons' }, (r.reasonCodes || []).map(function (c) {
+      return h('div', { class: 'ph-reason', dataset: { code: c } }, h('span', { class: 'ph-reason-en', text: rcEn(c) }), h('span', { class: 'ar ph-reason-ar', lang: 'ar', dir: 'rtl', text: rcAr(c) }));
+    }));
+    if (r.outcome !== 'APPROVE') {
+      return Journey.wv(h('div', { id: 'jr-offer', dataset: { outcome: r.outcome, id: r.id, product: 'school_fees' } },
+        h('h2', { class: 'ph-h1', text: r.outcome === 'REFER' ? 'We need a closer look' : 'We can’t split these school fees right now' }),
+        h('p', { class: 'ph-p', text: r.outcome === 'REFER' ? 'A Noor credit analyst will review your application — usually within a working day. Here’s why:' : 'Here’s why — and Noor keeps helping with your budget in the meantime:' }),
+        reasons),
+        h('div', null, B('Change the amount', function () { Journey.changeLoan(); }, 'jr-cta'), B('Back to botim', function () { Journey.closeWebview(); }, 'jr-cta-2', { ghost: true })));
+    }
+    var sf = r.schoolFees || {}, k = r.pricing.kfs, sch = sf.school || {}, tok = r.token || {}, partner = r.pricing.partnerSchool;
+    var priceText = partner ? '0% — no interest, no fees' : 'Monthly fee ' + fmtRate(r.pricing.monthlyFeeRate) + ' · APR equivalent ' + fmtRate(k.aprEquivalent);
+    return Journey.wv(h('div', { id: 'jr-offer', dataset: { outcome: r.outcome, id: r.id, product: 'school_fees', amount: String(r.limit.approved), months: String(k.tenorMonths),
+        instalment: String(k.monthlyInstalment), total: String(k.planTotal), apr: String(k.aprEquivalent), fees: String(k.totalFees) } },
+      h('div', { class: 'ph-tags' }, h('span', { class: 'ph-tag ph-tag-pre', id: 'jr-preoffer-tag', text: 'Noor’s pre-offer' }),
+        h('span', { class: 'ph-tag', text: 'Approved · NoorScore ' + r.score.points + ' · ' + ((r.noorScore || {}).band || '') })),
+      h('h2', { class: 'ph-h2', id: 'jr-sf-plan-head', text: 'Your school-fees plan' }),
+      sf.shortfall > 0 ? h('div', { class: 'ph-note ph-note-info', id: 'jr-sf-shortfall' }, h('span', null, h('strong', { text: 'Noor splits ' + fmtAED(r.limit.approved) + '; ' }),
+        'pay the remaining ' + fmtAED(sf.shortfall) + ' to the school directly.', reasons)) : null,
+      h('div', { class: 'ph-offer-v', id: 'jr-sf-plan-v', text: k.tenorMonths + ' × ' + fmtMoney(k.monthlyInstalment) }),
+      h('div', { class: 'ph-label', id: 'jr-sf-plan-l', text: fmtAED(r.limit.approved) + ' of school fees · ' + (partner ? '0% interest, no fees' : 'monthly fee ' + fmtRate(r.pricing.monthlyFeeRate)) }),
+      h('div', { class: 'ph-card ph-rows', id: 'jr-sf-plan-rows' },
+        h('div', { class: 'ph-r' }, h('span', { text: 'Monthly payment' }), h('strong', { id: 'jr-offer-inst', text: fmtMoney(k.monthlyInstalment) + ' × ' + k.tenorMonths })),
+        h('div', { class: 'ph-r' }, h('span', { text: 'Interest and fees' }), h('strong', { id: 'jr-offer-apr', text: priceText })),
+        h('div', { class: 'ph-r' }, h('span', { text: 'Total' }), h('strong', { id: 'jr-offer-total', text: fmtMoney(k.planTotal) })),
+        h('div', { class: 'ph-r' }, h('span', { text: 'First payment' }), h('strong', { id: 'jr-sf-first', text: fmtLongDate(sf.firstPaymentDate) })),
+        h('div', { class: 'ph-r' }, h('span', { text: 'Last payment' }), h('strong', { id: 'jr-sf-last', text: fmtLongDate(sf.lastPaymentDate) })),
+        h('div', { class: 'ph-r' }, h('span', { text: 'Repayment' }), h('strong', { text: r.repayment ? r.repayment.label : '—' }))),
+      h('p', { class: 'ph-p ph-strong', id: 'jr-sf-payee' }, 'Partner Bank pays ' + (sch.name || 'the school') + ' directly', h('span', { class: 'ph-muted', text: ' ' + JR_SF_ILLUS })),
+      sf.coolingOffEndsAfterDueDate ? h('div', { class: 'ph-note ph-note-info', id: 'jr-sf-due-note' }, h('span', null, h('strong', { text: 'Your invoice is due ' + fmtLongDate(sf.invoice && sf.invoice.dueDate) + ', before the cooling-off period ends (' + fmtLongDate(sf.coolingOffEndsOn) + '). ' }),
+        'To pay the school on time you can waive the cooling-off in writing at the cooling-off step — it is never waived for you.')) : null,
+      h('p', { class: 'ph-small', id: 'jr-offer-lender', text: 'Lender: Partner Bank · arranged by Noor' }),
+      h('p', { class: 'ph-small ph-muted', text: 'Offer valid until ' + fmtLongDate(tok.expiresAt) + '.' }),
+      h('button', { class: 'ph-textlink', type: 'button', id: 'jr-kfs-link', onclick: function () { S.kfsSheet = true; Journey.render(); } }, 'Key Facts Statement', jrSvg(JR_ICON.arrowR, 'ph-tl-ico')),
+      S.kfsSheet ? h('div', { class: 'ph-overlay', id: 'jr-kfs-sheet' }, h('div', { class: 'ph-sheet ph-sheet-kfs' },
+        h('div', { class: 'ph-sheet-h' }, h('span', { class: 'ph-sheet-t', text: 'Key Facts Statement' }),
+          h('button', { class: 'wv-x', type: 'button', id: 'jr-kfs-close', 'aria-label': 'Close the Key Facts Statement', onclick: function () { S.kfsSheet = false; Journey.render(); } }, jrSvg(JR_ICON.close, null, '1.8'))),
+        Journey.kfsDoc(r, 'en'), h('p', { class: 'ph-small ph-muted', text: 'You’ll read it in Arabic or English and acknowledge it before you sign.' }))) : null,
+      /* v2.18 §6 — Noor owns assessment → pre-offer; origination stays with botim and its lender (unchanged) */
+      h('div', { class: 'ph-card ph-handoff', id: 'jr-handoff-botim' }, h('strong', { text: 'Noor’s part ends here: assessment, recommendation and the credit memo.' }),
+        ' botim finalises your loan with its lender.')),
+      h('div', null, B('Continue in botim', function () { Journey.go(11, 0, 1); }, 'jr-cta'),
+        sf.shortfall > 0 ? B('Change the amount', function () { Journey.changeLoan(); }, 'jr-cta-2', { ghost: true }) : null));
   },
   /* v2.8 — variant A, sub-step 8·1: the customer names an amount first (no pre-qualification yet) */
   needView: function () {
@@ -17196,6 +18027,8 @@ var Journey = {
     }
     amt.addEventListener('input', function () { S.amount = Number(amt.value); paint(); });
     paint();
+    /* v2.21 — back to "What do you need?" (school fees is the default product) */
+    wrap.appendChild(h('button', { class: 'ph-textlink ph-sf-back', type: 'button', id: 'jr-need-back', onclick: function () { Journey.setProduct('school_fees'); Journey.render(); } }, '← What do you need?'));
     wrap.appendChild(h('span', { class: 'ph-tag', text: 'Personal loan · noor finance' }));
     wrap.appendChild(h('h2', { class: 'ph-h1', text: 'How much do you need?' }));
     wrap.appendChild(amtV);
@@ -17279,9 +18112,12 @@ var Journey = {
     var S = Journey.S, B = Journey.btn;
     var cb = h('input', { type: 'checkbox', id: 'jr-aecb', onchange: function (ev) { S.aecb = ev.target.checked; if (S.aecb) S.applyErr = null; Journey.render(); } });   /* v2.18 — pre-ticked (opt-out) */
     cb.checked = !!S.aecb;
+    var sf9 = jrSF(), sch9 = jrSchool(), max9 = jrSfMax(), split9 = max9 !== null && S.sfAmount > max9 ? max9 : S.sfAmount;   /* v2.21 */
     return Journey.wv(h('div', null,
       h('h2', { class: 'ph-h1', text: 'Final checks' }),
-      h('div', { class: 'ph-card ph-sum' }, h('span', { class: 'ph-sum-v', text: fmtAED(S.amount) + ' · ' + jrMonths(S.months) }), h('span', { class: 'ph-sum-s', text: S.purpose || 'Personal loan' })),
+      sf9 ? h('div', { class: 'ph-card ph-sum', id: 'jr-sum' }, h('span', { class: 'ph-sum-v', text: fmtAED(split9) + ' · 12 months' }),
+              h('span', { class: 'ph-sum-s', text: 'School fees · ' + jrSfSchoolName(sch9) + (split9 < S.sfAmount ? ' · the remaining ' + fmtAED(S.sfAmount - split9) + ' paid to the school directly' : '') }))
+          : h('div', { class: 'ph-card ph-sum' }, h('span', { class: 'ph-sum-v', text: fmtAED(S.amount) + ' · ' + jrMonths(S.months) }), h('span', { class: 'ph-sum-s', text: S.purpose || 'Personal loan' })),
       h('label', { class: 'ph-card ph-check' + (S.applyErr ? ' ph-check-err' : ''), for: 'jr-aecb' }, cb,
         h('span', null, h('span', { class: 'ph-check-t', id: 'jr-aecb-t', text: 'Check my credit report (AECB) — untick if you don’t agree' }), h('span', { class: 'ph-check-s', text: 'Required by law before any loan — Federal Law 6/2010' }))),
       S.applyErr ? h('div', { class: 'ph-note ph-note-err', id: 'jr-apply-err', role: 'alert' },
@@ -17289,7 +18125,8 @@ var Journey = {
           /AECB/.test(S.applyErr) ? 'Tick the box above and confirm again.' : 'Check your contact choices, then confirm again.',
           h('span', { class: 'ph-small ph-block ph-mono-msg', text: S.applyErr }))) : null,
       h('div', { class: 'ph-card ph-lender', id: 'jr-lender-line' },
-        h('span', { class: 'ph-lender-t', text: 'Noor arranges your loan with Partner Bank, the lender. We share your application result — never your bank data' }),
+        h('span', { class: 'ph-lender-t', text: sf9 ? 'Noor arranges your school-fees plan with Partner Bank, the lender — it pays the school directly. We share your application result — never your bank data'
+                                                    : 'Noor arranges your loan with Partner Bank, the lender. We share your application result — never your bank data' }),
         h('span', { class: 'ph-small ph-block', text: LENDER_SHARE_LINE + '.' }))),
       h('div', null, B('Confirm it’s you with UAE PASS', function () { Journey.apply(); }, 'jr-cta'), h('div', { class: 'ph-foot', text: 'UAE PASS sign-in is simulated in this prototype' })));
   },
@@ -17332,7 +18169,43 @@ var Journey = {
       h('div', null, B('Continue in botim', function () { Journey.go(11, 0, 1); }, 'jr-cta'),
         reduced ? B('Change my loan', function () { Journey.changeLoan(); }, 'jr-cta-2', { ghost: true }) : null));
   },
+  /* v2.21 — the school-fees Key Facts: 12 instalments, 0% (partner) or the monthly fee with its APR equivalent, the school as payee */
+  sfKfsDoc: function (r, lang) {
+    var k = r.pricing.kfs, rep = r.repayment || {}, sf = r.schoolFees || {}, sch = sf.school || {}, partner = r.pricing.partnerSchool;
+    var feeR = r.pricing.monthlyFeeRate || 0;
+    if (lang === 'ar') {
+      var ar = [['الجهة المُقرِضة', ['البنك الشريك ', h('bdi', { dir: 'ltr', class: 'nowrap', text: 'Partner Bank' }), ' — بترتيب من نور']],
+        ['الجهة المستفيدة', ['المدرسة مباشرةً — ', h('bdi', { dir: 'ltr', text: (sch.name || '') + ' ' + JR_SF_ILLUS })]],
+        ['المبلغ', fmtN(k.principal) + ' درهم إماراتي'], ['عدد الأقساط', k.tenorMonths + ' قسطاً شهرياً متساوياً'],
+        ['القسط الشهري', fmtMoney(k.monthlyInstalment).replace('AED ', '') + ' درهم'],
+        ['الفائدة والرسوم', partner ? '0٪ — بدون فائدة وبدون رسوم' : 'رسوم شهرية ' + (feeR * 100).toFixed(2) + '٪ من المبلغ'],
+        ['معدل النسبة السنوية', (k.aprEquivalent * 100).toFixed(2) + '٪' + (partner ? '' : ' (ما يعادل معدل النسبة السنوية)')],
+        ['إجمالي الرسوم', fmtMoney(k.totalFees).replace('AED ', '') + ' درهم'], ['إجمالي المبلغ المستحق السداد', fmtMoney(k.planTotal).replace('AED ', '') + ' درهم'],
+        ['رسوم السداد المبكر', 'لا توجد'], ['فترة التراجع', (k.coolingOffDays || 5) + ' أيام عمل، ويجوز التنازل عنها كتابياً'],
+        ['طريقة السداد', (rep.labelAr || '') + ' من حسابك المصرفي الخاص']];
+      /* the invoice falls due before the cooling-off ends: say so, offer the written waiver — never waive it automatically */
+      if (sf.coolingOffEndsAfterDueDate) ar.push(['تاريخ استحقاق الفاتورة', ['تستحق الفاتورة في ', h('bdi', { dir: 'ltr', class: 'nowrap', text: fmtLongDate(sf.invoice && sf.invoice.dueDate) }),
+        '، قبل انتهاء فترة التراجع (', h('bdi', { dir: 'ltr', class: 'nowrap', text: fmtLongDate(sf.coolingOffEndsOn) }), '). يمكنك التنازل عنها كتابياً لتُدفع المدرسة في موعدها، ولا يتم التنازل عنها نيابةً عنك أبداً.']]);
+      return h('div', { class: 'ph-kfs ar', lang: 'ar', dir: 'rtl', id: 'jr-kfs-ar', dataset: { lang: 'ar', product: 'school_fees' } },
+        h('div', { class: 'ph-kfs-t', text: 'بيان الحقائق الأساسية — تقسيط الرسوم المدرسية (12 شهراً)' }),
+        ar.map(function (x) { return h('div', { class: 'ph-kfs-r' }, h('span', { class: 'ph-kfs-k', text: x[0] }), Array.isArray(x[1]) ? h('span', { class: 'ph-kfs-v' }, x[1]) : h('span', { class: 'ph-kfs-v', text: x[1] })); }),
+        h('div', { class: 'ph-kfs-n', text: 'يُرجى قراءة هذا البيان بعناية قبل التوقيع. يحق لك الحصول عليه باللغتين العربية والإنجليزية.' }));
+    }
+    var en = [['Lender', 'Partner Bank · arranged by Noor'], ['Payee', (sch.name || 'The school') + ' ' + JR_SF_ILLUS + ' — paid directly by Partner Bank'],
+      ['Amount', fmtAED(k.principal)], ['Number of payments', k.tenorMonths + ' equal monthly payments'], ['Monthly instalment', fmtMoney(k.monthlyInstalment)],
+      ['Interest and fees', partner ? '0% — no interest, no fees' : 'Monthly fee ' + fmtRate(feeR) + ' of the amount'],
+      ['APR', partner ? fmtRate(k.aprEquivalent) : fmtRate(k.aprEquivalent) + ' (APR equivalent)'], ['Total fees', fmtMoney(k.totalFees)], ['Total repayable', fmtMoney(k.planTotal)],
+      ['First and last payment', fmtLongDate(sf.firstPaymentDate) + ' · ' + fmtLongDate(sf.lastPaymentDate)], ['Early-settlement fee', 'None'],
+      ['Cooling-off', (k.coolingOffDays || 5) + ' business days — you can waive it in writing'], ['Repayment', (rep.label || '—') + ' from your own account']];
+    /* the invoice falls due before the cooling-off ends: say so, offer the written waiver — never waive it automatically */
+    if (sf.coolingOffEndsAfterDueDate) en.push(['Invoice due', fmtLongDate(sf.invoice && sf.invoice.dueDate) + ', before the cooling-off ends (' + fmtLongDate(sf.coolingOffEndsOn) +
+      '). You can waive the cooling-off in writing so the school is paid on time — it is never waived for you.']);
+    return h('div', { class: 'ph-kfs', id: 'jr-kfs-en', dataset: { lang: 'en', product: 'school_fees' } },
+      h('div', { class: 'ph-kfs-t', text: 'Key Facts Statement — Split school fees (12 months)' }),
+      en.map(function (x) { return h('div', { class: 'ph-kfs-r', dataset: { k: x[0] } }, h('span', { class: 'ph-kfs-k', text: x[0] }), h('span', { class: 'ph-kfs-v', text: x[1] })); }));
+  },
   kfsDoc: function (r, lang) {
+    if (r && r.productId === 'school_fees') return Journey.sfKfsDoc(r, lang);   /* v2.21 */
     var k = r.pricing.kfs, rep = r.repayment || {};
     if (lang === 'ar') {
       var ar = [['الجهة المُقرِضة', ['البنك الشريك ', h('bdi', { dir: 'ltr', class: 'nowrap', text: 'Partner Bank' }), ' — بترتيب من نور']], ['مبلغ القرض', fmtN(k.principal) + ' درهم إماراتي'],
@@ -17370,12 +18243,14 @@ var Journey = {
   signView: function () {
     var S = Journey.S, B = Journey.btn, r = Journey.rec(), k = r.pricing.kfs;
     var done = r.events.some(function (e) { return e.type === 'AGREEMENT_SIGNED'; });
+    var sf13 = r.productId === 'school_fees';   /* v2.21 */
     return Journey.wv(h('div', null,
       h('h2', { class: 'ph-h1', text: 'Sign your agreement' }),
       h('div', { class: 'ph-card ph-doc' },
-        h('span', { class: 'ph-doc-k', text: 'Loan agreement' }),
-        h('span', { class: 'ph-doc-t', text: 'Partner Bank · arranged by Noor' }),
-        h('span', { class: 'ph-doc-s', text: fmtAED(k.principal) + ' · ' + jrMonths(k.tenorMonths) + ' · ' + fmtRate(k.rateMid) + ' APR · ' + fmtMoney(k.monthlyInstalment) + '/mo' })),
+        h('span', { class: 'ph-doc-k', text: sf13 ? 'School-fees plan agreement' : 'Loan agreement' }),
+        h('span', { class: 'ph-doc-t', text: sf13 ? 'Partner Bank · arranged by Noor · pays the school' : 'Partner Bank · arranged by Noor' }),
+        h('span', { class: 'ph-doc-s', text: sf13 ? fmtAED(k.principal) + ' · 12 months · ' + fmtRate(k.aprEquivalent) + ' APR · ' + fmtMoney(k.monthlyInstalment) + '/mo'
+                                                  : fmtAED(k.principal) + ' · ' + jrMonths(k.tenorMonths) + ' · ' + fmtRate(k.rateMid) + ' APR · ' + fmtMoney(k.monthlyInstalment) + '/mo' })),
       h('p', { class: 'ph-small', text: 'You sign with UAE PASS — the same identity you use for government services.' }),
       done ? h('div', { class: 'ph-note ph-note-ok' }, jrSvg(JR_ICON.check, 'ph-note-ico', '2.2'), h('span', { text: 'Signed with UAE PASS' })) : null,
       Journey.inlineEngineError(S.eventErr)),
@@ -17388,6 +18263,7 @@ var Journey = {
     var rep = r.repayment || repayFor(r.limit.approved);
     var acct = ((p.connected && p.connected.accounts) || []).filter(function (a) { return a.salaryAccount; })[0] || { bank: 'ENBD', mask: '4821' };
     var due = jrFirstDue();
+    if (r.schoolFees && r.schoolFees.firstPaymentDate) due = { day: r.schoolFees.bestDebitDay, iso: r.schoolFees.firstPaymentDate };   /* v2.21 */
     var done = r.events.some(function (e) { return e.type === 'REPAYMENT_SET_UP'; });
     var dd = rep.method === 'DIRECT_DEBIT';
     return Journey.wv(h('div', { id: 'jr-repay', dataset: { method: rep.method } },
@@ -17410,9 +18286,13 @@ var Journey = {
     var done = r.events.some(function (e) { return e.type === 'COOLING_OFF_CLEARED'; });
     var cb = h('input', { type: 'checkbox', id: 'jr-waive', onchange: function (ev) { S.waive = ev.target.checked; Journey.render(); } });
     cb.checked = !!S.waive;
+    var sf15 = r.schoolFees || null;   /* v2.21 */
     return Journey.wv(h('div', null,
       h('h2', { class: 'ph-h1', text: 'You have 5 business days to change your mind' }),
-      h('p', { class: 'ph-p', text: 'Nothing is paid out until the cooling-off period ends — or you waive it in writing.' }),
+      h('p', { class: 'ph-p', text: sf15 ? 'Nothing is paid to the school until the cooling-off period ends — or you waive it in writing.' : 'Nothing is paid out until the cooling-off period ends — or you waive it in writing.' }),
+      sf15 && sf15.coolingOffEndsAfterDueDate ? h('div', { class: 'ph-note ph-note-info', id: 'jr-sf-due-note' }, h('span', null,
+        h('strong', { text: 'Your invoice is due ' + fmtLongDate(sf15.invoice && sf15.invoice.dueDate) + ', before the cooling-off period ends (' + fmtLongDate(sf15.coolingOffEndsOn) + '). ' }),
+        'To pay the school on time you can waive it in writing below — it is never waived for you.')) : null,
       h('div', { class: 'ph-card ph-opt' }, jrSvg(JR_ICON.clock, 'ph-opt-ico', '1.5'),
         h('span', null, h('span', { class: 'ph-check-t', text: 'Wait 5 business days' }), h('span', { class: 'ph-check-s', text: 'Simulated: fast-forward to the end of the period' })),
         h('button', { class: 'ph-btn-sm', type: 'button', id: 'jr-wait', disabled: done ? 'disabled' : null, onclick: function () { Journey.exec(['COOLING_OFF_CLEARED'], 16); } }, 'Wait')),
@@ -17426,6 +18306,18 @@ var Journey = {
   doneView: function () {
     var S = Journey.S, B = Journey.btn, r = Journey.rec();
     var k = r.pricing.kfs, due = jrFirstDue(), ok = r.status === 'EXECUTED';
+    if (r.productId === 'school_fees') {
+      /* v2.21 — Partner Bank pays the school directly */
+      var sf = r.schoolFees || {}, sch = sf.school || {};
+      return Journey.wv(h('div', { class: 'ph-center', id: 'jr-done', dataset: { status: r.status, product: 'school_fees' } },
+        h('span', { class: 'ph-okico', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.2')),
+        h('h2', { class: 'ph-hero', id: 'jr-done-head', text: ok ? 'Done — the school is paid' : 'Almost there' }),
+        h('p', { class: 'ph-p', id: 'jr-done-line', text: ok ? 'Partner Bank paid ' + fmtAED(r.limit.approved) + ' to ' + (sch.name || 'the school') + ' ' + JR_SF_ILLUS + '. First instalment ' + fmtMoney(k.monthlyInstalment) + ' on ' +
+          fmtLongDate(sf.firstPaymentDate) + '; the last on ' + fmtLongDate(sf.lastPaymentDate) + '.' : '' }),
+        h('p', { class: 'ph-small', text: 'Manage your plan in Noor — statements, early settlement and help.' }),
+        Journey.inlineEngineError(S.eventErr)),
+        ok ? B('Continue', function () { Journey.go(16, 1, 1); }, 'jr-cta') : B('Back to botim', function () { Journey.go(16, 3, 1); }, 'jr-cta'));
+    }
     return Journey.wv(h('div', { class: 'ph-center', id: 'jr-done', dataset: { status: r.status } },
       h('span', { class: 'ph-okico', 'aria-hidden': 'true' }, jrSvg(JR_ICON.check, null, '2.2')),
       h('h2', { class: 'ph-hero', id: 'jr-done-head', text: ok ? fmtAED(r.limit.approved) + ' is on its way from Partner Bank' : 'Almost there' }),
@@ -17448,7 +18340,7 @@ var Journey = {
       h('h2', { class: 'ph-h1', id: 'jr-allset-head', text: 'You’re all set' }),
       cc ? h('p', { class: 'ph-p', id: 'jr-comms-saved', text: 'We’ll reach you about repayments and your account by ' + said(cc.service) + '. ' +
         (cc.marketing.length ? 'Offers and news: ' + said(cc.marketing) + '.' : 'No offers or news.') }) : null,
-      h('p', { class: 'ph-small', text: 'Change this anytime in Settings. Manage your loan in Noor — statements, early settlement and help.' }),
+      h('p', { class: 'ph-small', text: 'Change this anytime in Settings. ' + (r && r.productId === 'school_fees' ? 'Manage your plan in Noor' : 'Manage your loan in Noor') + ' — statements, early settlement and help.' }),
       /* v2.8 — the PWA: a second, Noor-owned servicing channel (installing needs the phone's browser) */
       ok ? h('div', { class: 'ph-card ph-pwa', id: 'jr-pwa' },
         h('span', { class: 'ph-pwa-ico', 'aria-hidden': 'true' }, h('span', { class: 'noor-icon' })),
@@ -17531,7 +18423,11 @@ var Journey = {
             'No AECB inquiry and no decision record: indicative only, so it can’t affect the credit score.',
             'Two affordability tests, the stricter wins: the CBUAE DBR cap (50% of income − repayments already going out = AED 5,100/month) and Noor’s cash-flow budget (50% of what’s left after spending and repayments: AED 3,700 → AED 1,850/month). Here the cash-flow budget binds — the DBR cap alone would have said “up to AED 110,000”, a payment Ravi’s budget can’t carry.',
             'Max = that budget over 24 months at the top of band B (9.99%), capped at 20× salary and the product cap; each term gets its own cap (' + caps + '); min = 25% of max.',
-            'decide() applies the same rule since v2.8 (POL_INSTALMENT_TO_FCF), so pre-qualification never promises more than the engine approves.']]),
+            'decide() applies the same rule since v2.8 (POL_INSTALMENT_TO_FCF), so pre-qualification never promises more than the engine approves.',
+            /* v2.21 */
+            'Split school fees, the default product, uses the same budget over 12 months (prequalify().schoolFees): ' + (S.pq && S.pq.schoolFees
+              ? 'up to ' + fmtAED(S.pq.schoolFees.maxPartner) + ' at a partner school (0%), ' + fmtAED(S.pq.schoolFees.maxOther) + ' elsewhere (band ' + S.pq.schoolFees.nonPartnerBand + ', ' + fmtRate(S.pq.schoolFees.nonPartnerRate) + ' a month).'
+              : 'the budget × 12 at a partner school; budget ÷ (1/12 + the monthly fee) elsewhere.')]]),
       8: sub === 1 ? ['Variant A — the customer names an amount first', [
             'botim’s Loans list carries a Noor tile (a Noor embed); tapping it opens the Noor web-view at “How much do you need?” — AED 1,000–50,000 over 6, 12 or 24 months.',
             'No pre-qualification yet: the amount comes from the customer, not from their accounts. The affordability check runs once the bank is connected.',
@@ -17571,6 +18467,9 @@ var Journey = {
           'botim money’s Credit tab shows “Loan funded · managed in Noor” (a Noor embed) — no amount, no terms.']]
     };
     var b = B[st] || B[0];
+    /* v2.21 — split school fees, the default product: one panel at 8 / 8·1 / 8·2 and at 10 */
+    var sfBts = (st === 8 && jrSF() && !(S.pq && S.pq.status === 'NEEDS_DATA')) || (st === 10 && r && r.productId === 'school_fees');
+    if (sfBts) b = Journey.sfBts(st, sub, r);
     /* v2.17 — 7·3 below the completeness threshold: step 1 comes first, nothing is scored */
     if (st === 7 && sub === 3 && S.pq && S.pq.status === 'NEEDS_DATA') {
       b = ['prequalify() — step 1 first: not enough data to score yet', [
@@ -17624,11 +18523,14 @@ var Journey = {
     }
     /* v2.16 — the Emirates ID: what the scan read (3·2); the cross-check once the accounts are read (7·2; 8·2 in variant A); the what-if */
     if ((st === 3 && sub === 2) || (S.eidDone && ((st === 7 && sub === 2) || (st === 8 && sub === 2)))) wrap.appendChild(Journey.eidEngineBox());
+    if (sfBts) wrap.appendChild(Journey.sfCallsBox(r));   /* v2.21 — the Mizan calls behind school fees */
     if (st === 7 && sub === 3 && S.pq && S.pq.status !== 'NEEDS_DATA') {
       var pq = S.pq;
       wrap.appendChild(h('div', { class: 'jr-engine', id: 'jr-pq-out' },
         h('div', { class: 'jr-engine-h' }, h('code', { text: 'prequalify(j1, {openFinance:true})' })),
         h('div', { class: 'kv' }, h('dt', { text: 'Range' }), h('dd', { class: 'num', text: fmtAED(pq.indicativeMin) + ' – ' + fmtAED(pq.indicativeMax) }),
+          pq.schoolFees ? h('dt', { text: 'School fees' }) : null,
+          pq.schoolFees ? h('dd', { id: 'jr-pq-out-sf', text: 'up to ' + fmtAED(pq.schoolFees.maxPartner) + ' (partner, 0%) · ' + fmtAED(pq.schoolFees.maxOther) + ' (other, band ' + pq.schoolFees.nonPartnerBand + ') · 12 months' }) : null,
           h('dt', { text: 'NoorScore estimate' }), h('dd', { text: pq.noorScoreEstimateBand }),
           h('dt', { text: 'Valid' }), h('dd', { text: pq.validForDays + ' days' }),
           h('dt', { text: 'Note' }), h('dd', { text: pq.note })),
@@ -17701,7 +18603,7 @@ var Journey = {
         h('button', { class: 'btn btn-primary', type: 'button', id: 'jr-see-memo', text: 'See what the bank received →', onclick: function () { Lender.open(r.id); } })));
     }
     if (r && st >= 12) {
-      var steps = execStepsFor('personal_loan', r.id), done = {};
+      var steps = execStepsFor(r.productId, r.id), done = {};
       (r.events || []).forEach(function (e) { done[e.type] = e.at; });
       var ol = h('ol', { class: 'jr-exec', id: 'jr-exec' });
       steps.forEach(function (s) { ol.appendChild(h('li', { class: done[s.type] ? 'done' : '', dataset: { type: s.type } }, h('span', { class: 'jr-exec-l', text: s.label }), h('span', { class: 'jr-exec-t', text: done[s.type] ? fmtDT(done[s.type]).slice(11) : '' }))); });
@@ -17723,6 +18625,31 @@ var Journey = {
           h('li', { text: 'iOS web push needs iOS 16.4+ and a Home Screen install.' }))));
     }
     return wrap;
+  },
+  /* v2.21 — "Split school fees — the default product" (behind the scenes for 8 / 8·1 / 8·2 and 10) */
+  sfBts: function (st, sub, r) {
+    var S = Journey.S, A = S.variant === 'A', sf = S.pq && S.pq.schoolFees;
+    var lines = [
+      'Paid to the school: Partner Bank pays the school directly against the fee invoice — the money never reaches the customer, so it cannot be diverted.',
+      '0% for partner schools: no interest and no fees for the parent; the school pays a merchant fee (illustrative — never shown to the customer, never in the memo).',
+      'Other licensed schools: a monthly fee on the amount, by band — A 0.50%, B 0.75%, C 1.00% (illustrative) — with the APR equivalent in the Key Facts.',
+      'The same underwriting as the personal loan: NoorScore, the AECB check, the DBR cap, 20× salary and the cash-flow budget — so the score, the grade and the reason codes match. Always 12 equal monthly payments.'];
+    if (st === 8 && sub === 1) lines.push('Variant A: “What do you need?” has school fees selected by default; “Something else — personal loan” opens “How much do you need?”, unchanged.');
+    else if (st === 8 && sub === 2) lines.push('Affordability check on prequalify().schoolFees: fits → the final checks; above the maximum → split the maximum and pay the rest to the school directly.');
+    else if (st === 8) lines.push('Each school gets its own maximum from the same budget' + (sf ? ': up to ' + fmtAED(sf.maxPartner) + ' at a partner school, ' + fmtAED(sf.maxOther) + ' elsewhere.' : '.'));
+    if (st === 10) lines.push('Every figure here is read from ' + (r ? r.id : 'the decision record') + ': the plan, the first and last payments and the payee. The lender’s memo says “school verified (licensed, in the directory)” and never names the school, the child or the merchant fee.');
+    lines.push('Uploading the fee invoice is optional and simulated here: the file is kept inside Noor and never sent to the lender.');
+    return ['Split school fees — the default product', lines];
+  },
+  sfCallsBox: function (r) {
+    var S = Journey.S, max = jrSfMax();
+    /* the amount Noor splits: the decision's, else the invoice capped at the school's maximum */
+    var qAmt = r && r.productId === 'school_fees' && r.limit && isNum(r.limit.approved) && r.limit.approved > 0 ? r.limit.approved : (max !== null && S.sfAmount > max ? max : S.sfAmount);
+    var calls = [['prequalify() → schoolFees', S.pq && S.pq.schoolFees ? 'up to ' + fmtAED(S.pq.schoolFees.maxPartner) + ' at a partner school · ' + fmtAED(S.pq.schoolFees.maxOther) + ' elsewhere' : 'once the accounts are read'],
+      ['quoteSchoolFees()', (jrSfQuote(qAmt) || {}).line || '—'],
+      ['decide({school_fees …})', r && r.productId === 'school_fees' ? r.id + ' · ' + r.outcome + (r.pricing && r.pricing.kfs ? ' · 12 × ' + fmtMoney(r.pricing.kfs.monthlyInstalment) : '') : 'at the final checks (step 9)']];
+    return h('div', { class: 'jr-engine', id: 'jr-sf-calls' }, h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Mizan calls' }), h('span', { class: 'small muted', text: ' · split school fees' })),
+      h('div', { class: 'kv' }, calls.reduce(function (a, c) { return a.concat([h('dt', null, h('code', { text: c[0] })), h('dd', { text: c[1] })]); }, [])));
   },
   renderBehind: function () {
     var box = clear($('#jr-behind')), S = Journey.S;
@@ -17794,7 +18721,7 @@ var Journey = {
     var box = clear($('#jr-steps')), S = Journey.S, r = Journey.rec();
     box.appendChild(h('h3', { class: 'jr-steps-h' }, h('span', null, 'Steps ', h('span', { class: 'h3-note', text: '— variant ' + S.variant + ' · tap any step you have reached' })),
       h('button', { class: 'btn', type: 'button', id: 'jr-restart', text: 'Restart journey', onclick: function () { Journey.restart(); } })));
-    var ex = r ? execStepsFor('personal_loan', r.id) : execStepsFor('personal_loan');
+    var ex = r ? execStepsFor(r.productId, r.id) : execStepsFor('personal_loan');
     var done = {}; if (r) (r.events || []).forEach(function (e) { done[e.type] = true; });
     var path = jrPath(), curIdx = jrIdx(S.step, S.sub);
     var list = h('div', { class: 'jr-steplist', dataset: { variant: S.variant } });
@@ -17815,7 +18742,7 @@ var Journey = {
         col.appendChild(h('button', { class: 'jr-step' + (cur ? ' cur' : '') + (reached ? ' reached' : '') + (s.sub !== undefined ? ' jr-substep' : '') + (skipped ? ' jr-skipped' : ''), type: 'button', dataset: ds,
           disabled: reached && !skipped ? null : 'disabled', 'aria-current': cur ? 'step' : null, onclick: function () { Journey.jump(i); } },
           h('span', { class: 'jr-n', text: execDone ? '✓' : String(s.n) + (s.sub !== undefined ? '·' + s.sub : '') }),
-          h('span', { class: 'jr-st' }, h('span', { class: 'jr-st-t', text: s.title }), tag ? h('span', { class: 'jr-st-e' + (s.exec ? ' exec' : '') + (skipped ? ' skip' : ''), text: tag }) : null)));
+          h('span', { class: 'jr-st' }, h('span', { class: 'jr-st-t', text: jrStepTitle(s) }), tag ? h('span', { class: 'jr-st-e' + (s.exec ? ' exec' : '') + (skipped ? ' skip' : ''), text: tag }) : null)));
       });
     });
     box.appendChild(list);
@@ -17968,16 +18895,19 @@ var Monitoring = {
     if (!box) return;
     box.appendChild(h('h3', { text: 'Decisions by product — 90d seeded history + this session' }));
     var bp = m.byProduct || {};
+    /* v2.21 — the STP target beside each product's STP, where one is set (split, personal loan, school fees) */
+    var tg = m.stpTargets || {};
     var t = h('table', { class: 'tbl' }, h('thead', null, h('tr', null,
       h('th', { text: 'Product' }), h('th', { class: 'num', text: 'Decisions' }), h('th', { class: 'num', text: 'Approve' }), h('th', { class: 'num', text: 'Refer' }),
-      h('th', { class: 'num', text: 'Decline' }), h('th', { class: 'num', text: 'STP' }))));
+      h('th', { class: 'num', text: 'Decline' }), h('th', { class: 'num', text: 'STP' }), h('th', { class: 'num', text: 'STP target' }))));
     var tb = h('tbody');
     Object.keys(bp).forEach(function (pid) {
       var b = bp[pid];
       tb.appendChild(h('tr', { dataset: { product: pid } },
-        h('td', null, h('span', { class: 'chip prod-chip', text: productLabel(pid, true) }), pid === 'car_loan' || pid === 'sme_working_capital' ? h('span', { class: 'small muted', text: ' new pack — no seeded history' }) : null),
+        h('td', null, h('span', { class: 'chip prod-chip', text: productLabel(pid, true) }), pid === 'car_loan' || pid === 'sme_working_capital' || pid === 'school_fees' ? h('span', { class: 'small muted', text: ' new pack — no seeded history' }) : null),
         h('td', { class: 'num', text: fmtN(b.decisions) }), h('td', { class: 'num', text: fmtN(b.APPROVE) }), h('td', { class: 'num', text: fmtN(b.REFER) }),
-        h('td', { class: 'num', text: fmtN(b.DECLINE) }), h('td', { class: 'num', text: b.decisions ? fmtPct(b.stpPct, 1) : '—' })));
+        h('td', { class: 'num', text: fmtN(b.DECLINE) }), h('td', { class: 'num', text: b.decisions ? fmtPct(b.stpPct, 1) : '—' }),
+        h('td', { class: 'num', dataset: { k: 'target' }, text: isNum(tg[pid]) ? '≥ ' + tg[pid] + '%' : '—' })));
     });
     t.appendChild(tb);
     box.appendChild(h('div', { class: 'tbl-scroll' }, t));
