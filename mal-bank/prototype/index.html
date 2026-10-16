@@ -2370,6 +2370,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
   try { (ME.manifests() || []).forEach(function (m) { if (m.nameEn) PRODUCT_LABEL[m.productId] = m.nameEn; }); } catch (e) {}
+  PRODUCT_LABEL.school_fees = 'Split school fees (12 months)';   /* v2.21 — the console's label names the fixed term */
   $('#versions').textContent = (MD.VERSION || 'data-?') + ' · ' + (ME.VERSION || 'engine-?') + ' · today ' + (MD.TODAY || '');
 
   Overview.build();
@@ -3252,11 +3253,11 @@ var JR_FLOW = [
   /* v2.21 — split school fees over 12 months is the default product; the personal loan is the alternative */
   { t: 'School fees or loan', d: 'School, invoice, 12 months (default) · or a personal loan', match: function (e, v) { return v === 'A' ? (e.n === 8 && e.sub === 1) : e.n === 8; },
     c: 'Picks the school and checks the invoice: 12 equal payments, 0% at a partner school, paid straight to the school. Or chooses a personal loan instead: the amount, the term (6, 12 or 24 months) and the purpose.',
-    m: 'School fees: quoteSchoolFees() prices the 12-month plan for the school picked. A personal loan: indicative payments from loanInstalment(). Nothing is recorded.',
+    m: 'School fees: quoteSchoolFees() prices the 12-month plan for the school picked; a personal loan: indicative payments from loanInstalment(). Nothing is recorded.',
     r: 'Noor policy: school fees are always 12 months and paid to the school (locked rules of the pack); the personal-loan pricing bands set the indicative rate. Reg 29/2011: at most 48 months.' },   /* v2.20 — no per-row “from” APR on the term rows */
   { t: 'Final checks', d: 'AECB consent · UAE PASS · decide()', match: function (e) { return e.n === 9; },
     c: 'Gives AECB consent, confirms with UAE PASS and applies.',
-    m: 'decide() for personal_loan: the journey’s first and only decision. It lands in the Decision log.',
+    m: 'decide() for the chosen product — school_fees (the default) or personal_loan: the journey’s first and only decision. It lands in the Decision log.',
     r: 'Federal Law 6/2010: AECB consent before any loan.' },
   { t: 'Offer · Partner Bank confirms', d: 'Offer, credit memo to the lender', orig: true, match: function (e) { return e.n === 10 || e.n === 11; },
     c: 'Sees the offer (amount, APR, instalment, total), then Partner Bank confirms.',
@@ -9811,6 +9812,9 @@ var Journey = {
         ['إجمالي الرسوم', fmtMoney(k.totalFees).replace('AED ', '') + ' درهم'], ['إجمالي المبلغ المستحق السداد', fmtMoney(k.planTotal).replace('AED ', '') + ' درهم'],
         ['رسوم السداد المبكر', 'لا توجد'], ['فترة التراجع', (k.coolingOffDays || 5) + ' أيام عمل، ويجوز التنازل عنها كتابياً'],
         ['طريقة السداد', (rep.labelAr || '') + ' من حسابك المصرفي الخاص']];
+      /* the invoice falls due before the cooling-off ends: say so, offer the written waiver — never waive it automatically */
+      if (sf.coolingOffEndsAfterDueDate) ar.push(['تاريخ استحقاق الفاتورة', ['تستحق الفاتورة في ', h('bdi', { dir: 'ltr', class: 'nowrap', text: fmtLongDate(sf.invoice && sf.invoice.dueDate) }),
+        '، قبل انتهاء فترة التراجع (', h('bdi', { dir: 'ltr', class: 'nowrap', text: fmtLongDate(sf.coolingOffEndsOn) }), '). يمكنك التنازل عنها كتابياً لتُدفع المدرسة في موعدها، ولا يتم التنازل عنها نيابةً عنك أبداً.']]);
       return h('div', { class: 'ph-kfs ar', lang: 'ar', dir: 'rtl', id: 'jr-kfs-ar', dataset: { lang: 'ar', product: 'school_fees' } },
         h('div', { class: 'ph-kfs-t', text: 'بيان الحقائق الأساسية — تقسيط الرسوم المدرسية (12 شهراً)' }),
         ar.map(function (x) { return h('div', { class: 'ph-kfs-r' }, h('span', { class: 'ph-kfs-k', text: x[0] }), Array.isArray(x[1]) ? h('span', { class: 'ph-kfs-v' }, x[1]) : h('span', { class: 'ph-kfs-v', text: x[1] })); }),
@@ -9822,6 +9826,9 @@ var Journey = {
       ['APR', partner ? fmtRate(k.aprEquivalent) : fmtRate(k.aprEquivalent) + ' (APR equivalent)'], ['Total fees', fmtMoney(k.totalFees)], ['Total repayable', fmtMoney(k.planTotal)],
       ['First and last payment', fmtLongDate(sf.firstPaymentDate) + ' · ' + fmtLongDate(sf.lastPaymentDate)], ['Early-settlement fee', 'None'],
       ['Cooling-off', (k.coolingOffDays || 5) + ' business days — you can waive it in writing'], ['Repayment', (rep.label || '—') + ' from your own account']];
+    /* the invoice falls due before the cooling-off ends: say so, offer the written waiver — never waive it automatically */
+    if (sf.coolingOffEndsAfterDueDate) en.push(['Invoice due', fmtLongDate(sf.invoice && sf.invoice.dueDate) + ', before the cooling-off ends (' + fmtLongDate(sf.coolingOffEndsOn) +
+      '). You can waive the cooling-off in writing so the school is paid on time — it is never waived for you.']);
     return h('div', { class: 'ph-kfs', id: 'jr-kfs-en', dataset: { lang: 'en', product: 'school_fees' } },
       h('div', { class: 'ph-kfs-t', text: 'Key Facts Statement — Split school fees (12 months)' }),
       en.map(function (x) { return h('div', { class: 'ph-kfs-r', dataset: { k: x[0] } }, h('span', { class: 'ph-kfs-k', text: x[0] }), h('span', { class: 'ph-kfs-v', text: x[1] })); }));
@@ -10264,9 +10271,11 @@ var Journey = {
     return ['Split school fees — the default product', lines];
   },
   sfCallsBox: function (r) {
-    var S = Journey.S;
+    var S = Journey.S, max = jrSfMax();
+    /* the amount Noor splits: the decision's, else the invoice capped at the school's maximum */
+    var qAmt = r && r.productId === 'school_fees' && r.limit && isNum(r.limit.approved) && r.limit.approved > 0 ? r.limit.approved : (max !== null && S.sfAmount > max ? max : S.sfAmount);
     var calls = [['prequalify() → schoolFees', S.pq && S.pq.schoolFees ? 'up to ' + fmtAED(S.pq.schoolFees.maxPartner) + ' at a partner school · ' + fmtAED(S.pq.schoolFees.maxOther) + ' elsewhere' : 'once the accounts are read'],
-      ['quoteSchoolFees()', (jrSfQuote(S.sfAmount) || {}).line || '—'],
+      ['quoteSchoolFees()', (jrSfQuote(qAmt) || {}).line || '—'],
       ['decide({school_fees …})', r && r.productId === 'school_fees' ? r.id + ' · ' + r.outcome + (r.pricing && r.pricing.kfs ? ' · 12 × ' + fmtMoney(r.pricing.kfs.monthlyInstalment) : '') : 'at the final checks (step 9)']];
     return h('div', { class: 'jr-engine', id: 'jr-sf-calls' }, h('div', { class: 'jr-engine-h' }, h('strong', { text: 'Mizan calls' }), h('span', { class: 'small muted', text: ' · split school fees' })),
       h('div', { class: 'kv' }, calls.reduce(function (a, c) { return a.concat([h('dt', null, h('code', { text: c[0] })), h('dd', { text: c[1] })]); }, [])));

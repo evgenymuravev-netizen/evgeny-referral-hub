@@ -1993,3 +1993,105 @@ fingerprints match. UAE PASS at step 9 and the Emirates ID step (3·2) are uncha
     variant-A walk, v2.18's and v2.19's `AFTER_EMAIL`, and v2.19's step-10 walk. v2.18's (a) and (c) walks keep their OTP
     clicks.
 - The Noor skin `<style>` block is byte-identical; the v2.20 CSS sits at the end of "Noor additions".
+
+### As built — v2.21 (split school fees over 12 months, the default product)
+
+Built as SCHOOL-FEES-SPEC.md specifies. Selftest 2080 green: the 1946 earlier checks (8 rewritten in place, listed below)
+plus 134 in group 28. Acceptance 1582 green: the 1445 earlier checks (rewritten in place where listed below) plus
+137 in the new "v2.21 — split school fees over 12 months" section. Every persona outcome, score, limit and price is
+unchanged, and the v2.9 fingerprints match. The personal-loan path is v2.20's once the customer picks it. Decisions and
+deviations:
+
+- **Data.**
+  - `schools`: the spec's two fictitious schools (Juniper Hill Primary School, partner; Falcon Ridge Academy, not a partner),
+    always shown with "(illustrative)". Exported as `MizanData.schools`.
+  - j1 carries `schoolFees` as specified and the new tagline. `purpose` and `defaultRequest` stay for the personal loan.
+    The child is "Child 1 · Grade 1" — never a name.
+  - A ninth monitored loan, ML-09 (Maya Fernandes, school fees, AED 18,000 over 12 months, no flag), gives the early-warning
+    scan its school-fees row. ML-01 … ML-08 keep their severities.
+- **Engine.**
+  - `school_fees` is appended last to MANIFESTS and to the packs (no seeded history; the seeded PRNG is untouched), with the
+    spec's locked block, params and bounds. Publish refuses `fixedTenorMonths`, `payee` and `earlySettlementFee` ("a locked
+    rule of the school-fees pack"); `partnerSchoolParentFeePct` must stay 0; `nonPartnerMonthlyFeeRate` takes A, B and C, each
+    in [0, 0.02], A ≤ B ≤ C.
+  - `evaluateSchoolFees()` reuses the personal loan's rules, scorecard (`loanScore`, scorecard_v0 0.4), footprint and
+    completeness overlays, DBR double enforcement, 20× salary and the instalment-to-FCF cap.
+    - The limit is `pickMin(invoice, DBR headroom, FCF budget, 20× salary, productCap)`; each candidate's maximum principal is
+      `floor1000(12 × budget)` at a partner school or `floor1000(budget ÷ (1/12 + rate))` elsewhere. The binding key is in the
+      trace. Below the invoice → RC_LIMIT_REDUCED (Y09).
+    - Any tenor other than 12 is set to 12 with RC_TENOR_CAP (Y10). `POL_SCHOOL_VERIFIED` is PASS (informational).
+    - Pricing: `mode:'SCHOOL_FEES'`, `kfs.monthlyInstalment`, the APR equivalent from `splitPlan()` and `monthlyIrr()`; the
+      merchant fee sits on the record's pricing (internal) only.
+  - `decide()` takes `school:{schoolId, invoiceRef, dueDate}` (or j1's `schoolFees`); an unknown school throws. It accepts the
+    personal loan's optional `emiratesId`, `dataSources` and `contactVerification`. `record.schoolFees` holds the spec's fields
+    plus the payee, the shortfall, the best debit day and the cooling-off end.
+    - First instalment: the first best debit date (the 28th for Ravi) at least 20 days after the earliest payout.
+    - `coolingOffEndsAfterDueDate` is set when the invoice falls due before the cooling-off ends.
+  - `prequalify()` adds `schoolFees: {months, maxPartner, maxOther, instalmentBudgetMonthly, nonPartnerBand, nonPartnerRate}`
+    from the same budget. `quoteSchoolFees(amount, {schoolId, band})` is pure (band B when none is given).
+  - The memo: "School fees — 12 months", the purpose line, the terms (0% — none, APR 0.00%, the payee "The school — paid
+    directly by the lender"), the flags "School verified (licensed, in the directory)" and "Paid to the school — funds cannot be
+    diverted". No school name, merchant fee, partner flag, child or invoice. SFTP `product` = `school_fees`; `apr_or_fee` reads
+    "No interest, no fees (APR 0.00%)" at a partner school.
+  - No new reason codes: every RC_* (52) still maps to exactly one of the 38 library codes. `RF_PRODUCTS`, the early-warning block's
+    `appliesTo`, `metrics()` (STP target 85%), the refer SLA (8 hours) and `simulateBook()` include `school_fees`.
+  - The DISBURSED step reads "Partner Bank pays the school directly (Juniper Hill Primary School)".
+  - Selftest group 28 (134 checks): the manifest, directory and j1; the pack (locked, params, bounds, the fixed term, 4-eyes);
+    Ravi's plan, DBR 17.9%, budget, trace, dates, token and pulls; the same score, codes and memo outputs as the personal loan;
+    prequal 22,000 / 20,000; Falcon Ridge (12 × AED 1,362.50, fees AED 1,350, APR equivalent 16.22%); quotes; an invoice of
+    AED 30,000 → AED 22,000 with Y09 (12 × AED 1,833.33, shortfall AED 8,000); tenor 6 → 12 with Y10; an unknown school; red
+    flags REFER (r6-style data); completeness 30% → REFER, 70% → 727; memo hygiene for Partner Bank and Lender B; the privacy
+    and Noor-IP scans; execution; the cooling-off flag; reproduce and tamper; `simulateBook()`; publish; metrics, ML-09 and the
+    queue SLA; nationality changes nothing; every V27 fingerprint; determinism and vocabulary.
+- **Ravi's numbers.** Plan 12 × AED 1,250, fees AED 0, APR 0%, total AED 15,000; NoorScore 737 (B); DBR 17.9%; memo DBR band
+  15–20%, headroom AED 3,500–4,000; prequal budget AED 1,850 → up to AED 22,000 at a partner school, AED 20,000 elsewhere
+  (band B); library codes G02–G11 and PR-PB-G01, as for the personal loan; first payment 28 Aug 2026, last 28 Jul 2027.
+- **Journey.**
+  - `Journey.S.product` is `school_fees` on every new journey (Restart resets it). The step list and the flow map are
+    product-aware: "Your school fees", "What do you need?", "Your school-fees plan", "Done — the school is paid"; phase 6
+    "School fees or loan", phase 10 "Paid · back in botim".
+  - Variant A: the Loans tile, 8·1 "What do you need?" (school fees selected, the form below), 8·2 on
+    `prequalify().schoolFees` with "Split AED {max}; pay the rest to the school directly".
+  - Variant B: 7·3 leads with the school-fees card; the personal-loan range is the secondary card with "Choose a personal
+    loan"; 8·0 is "Your school fees" (the same form).
+  - The form: the picker with badges, the read-only invoice, the amount slider (minAmount–50,000, step 500), the plan line,
+    the cap or shortfall note, and the simulated invoice upload (logged; kept inside Noor).
+  - Step 9 calls `decide({school_fees …})` with the school and the invoice reference. Step 10 "Your school-fees plan" reads
+    the record; the KFS (EN and AR) shows 12 payments, the price, the APR (or its equivalent) and the school as payee.
+    11–16 run in the botim frame as "botim · school fees (with Partner Bank)"; the six events are unchanged.
+  - Behind the scenes at 8, 8·1, 8·2 and 10: the panel "Split school fees — the default product" and the three Mizan calls.
+    botim's events carry no product.
+- **Other screens.** The Overview's product sentence, the new Step 1 (a twelve-step strip, `demo-12`), the screen-map row; the
+  seeded #lender / #log example is Ravi's school-fees decision; the Decision log's "Split school fees (12 months)" and its plan
+  and payee block (internal, with the merchant fee); the Policy console pack (with the lender-policy line and Simulate reading
+  the personal-loan book as 12-month school-fee requests); Monitoring's product row and ML-09; the Split cross-link.
+- **Deviations.**
+  - `decide()` adds a `SCHOOL_DIRECTORY` pull to the record (the school lookup), after the existing pulls.
+  - Accepting the shortfall keeps the invoice amount in `decide()`, so the engine itself reduces it (RC_LIMIT_REDUCED → Y09)
+    and the plan shows the remainder paid to the school directly.
+  - The product choice holds until Restart (the Loans tile reopens it). Variant A's personal-loan "How much do you need?" is
+    v2.20's screen plus a "← What do you need?" link at the top.
+  - Monitoring's STP targets are a new "STP target" column in the product table, not a fifth tile, so the four tiles stay.
+  - The KFS (EN and AR) and the plan screen add an "Invoice due" note only when the invoice falls due before the cooling-off
+    ends; the waiver stays at the cooling-off step, never automatic.
+  - Flow-map phase 7's Mizan copy now names the chosen product.
+  - The selftest privacy scan ignores the word "School fees" in the memo's product line and purpose; it is one of the split
+    merchant words the scan was built for.
+- **Changed existing selftest checks** (each keeps its intent): the manifest order and the pricing modes now end with
+  school fees; the monitored-loan count, ids and "nine different names"; the early-warning block's `appliesTo`; the scan order
+  ending "ML-09:NONE"; the exit-risk watch (NONE 2, 9 rows); "ML-01 … ML-06 keep their v2.9 severities" skips the new row.
+- **Changed existing acceptance checks** (each keeps its intent; "the personal loan" means the click picks it first):
+  - Overview: the demo strip has 12 steps; the `nth-child` of the car (10), upgrade (7), Priya (8, twice), red-flags (11) and
+    SME (12, three times) steps; "a twelve-step click path". Messages renumbered.
+  - Main B walk: 7·3's headline is now the school-fees card ("up to AED 22,000") with "Or a personal loan: AED 10,000–40,000";
+    7·3 → the personal loan.
+  - Variant A: the Loans tile copy; "Something else — personal loan" before "How much do you need?" (also in v2.20's
+    variant-A rows).
+  - Monitoring: red-flag tiles NONE 2; nine rows ending ML-09:NONE.
+  - Flow map: phase 6 "School fees or loan", phase 10 "Paid · back in botim" (v2.11 titles; v2.13 phase 10 title and detail
+    heading).
+  - v2.13: a fresh step list's 16·0 reads "Done — the school is paid".
+  - v2.17: `#jr-pq-head` → `#jr-pq-range` (same range, twice).
+  - The personal loan at 7·3 in: v2.12 `WALK_TO_9`, v2.13 `BANK_TO_9`, v2.14's decision walk, v2.15's caps walk, v2.16's
+    decide walk, v2.17's two decision walks, v2.18 `TO_9` and v2.20 `TO_8`.
+- The Noor skin `<style>` block is byte-identical; the v2.21 CSS sits at the end of "Noor additions".
